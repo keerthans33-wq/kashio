@@ -1,16 +1,26 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Papa from "papaparse";
+
+type ParsedRow = {
+  date: string;
+  description: string;
+  amount: string;
+  [key: string]: string;
+};
 
 export default function CsvUploader() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [rows, setRows] = useState<ParsedRow[] | null>(null);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files?.[0] ?? null;
     setFile(selected);
     setError(null);
+    setRows(null);
   }
 
   function handleUpload() {
@@ -18,8 +28,16 @@ export default function CsvUploader() {
       setError("Please select a CSV file before uploading.");
       return;
     }
-    // Parsing will be added here
-    console.log("File ready to parse:", file.name);
+
+    Papa.parse<ParsedRow>(file, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: (h) => h.trim().toLowerCase(),
+      complete(results) {
+        console.log("Parsed rows:", results.data);
+        setRows(results.data);
+      },
+    });
   }
 
   return (
@@ -60,6 +78,12 @@ export default function CsvUploader() {
       >
         Upload
       </button>
+
+      {rows && (
+        <p className="mt-4 text-sm text-gray-500">
+          {rows.length} row{rows.length !== 1 ? "s" : ""} parsed. Check the console for details.
+        </p>
+      )}
     </div>
   );
 }
