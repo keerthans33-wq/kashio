@@ -68,17 +68,13 @@ app/
     layout.tsx        ← app shell: renders Nav
   components/
     shell/            ← layout components (Nav)
-    ui/               ← reusable UI primitives (empty for now)
   layout.tsx          ← root layout: html/body only
   globals.css         ← Tailwind + base styles
-lib/                  ← non-UI logic: CSV parsing, rules, formatting
+lib/                  ← non-UI logic (CSV parsing, rules, formatting — to be added)
 public/               ← static assets
 ```
 
-**Rule of thumb:**
-- Pages stay thin — no business logic in route files
-- UI components → `app/components/`
-- Logic with no React → `lib/`
+**Rule of thumb:** pages stay thin — no business logic in route files.
 
 ---
 
