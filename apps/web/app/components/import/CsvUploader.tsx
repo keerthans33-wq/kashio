@@ -17,6 +17,7 @@ export default function CsvUploader() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [parseError, setParseError] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [columnError, setColumnError] = useState<string | null>(null);
 
@@ -24,6 +25,7 @@ export default function CsvUploader() {
     const selected = e.target.files?.[0] ?? null;
     setFile(selected);
     setFileError(null);
+    setParseError(null);
     setResult(null);
     setColumnError(null);
   }
@@ -38,20 +40,38 @@ export default function CsvUploader() {
       header: true,
       skipEmptyLines: true,
       transformHeader: (h) => h.trim().toLowerCase(),
+      error(err) {
+        setParseError(`Could not read file: ${err.message}`);
+        setResult(null);
+        setColumnError(null);
+      },
       complete(results) {
-        const { valid, invalid, columnError } = validateCsv(results.data);
+        if (results.errors.length > 0) {
+          const first = results.errors[0];
+          setParseError(`Could not read file: ${first.message} (row ${first.row ?? "unknown"})`);
+          setResult(null);
+          setColumnError(null);
+          return;
+        }
+
+        const headers = results.meta.fields ?? [];
+        const { valid, invalid, columnError } = validateCsv(results.data, headers);
 
         if (columnError) {
           setColumnError(columnError);
+          setParseError(null);
           setResult(null);
           return;
         }
 
+        setParseError(null);
         setColumnError(null);
         setResult({ raw: results.data, valid, invalid });
       },
     });
   }
+
+  const noUsableRows = result && result.valid.length === 0;
 
   return (
     <div className="mt-8">
@@ -93,6 +113,13 @@ export default function CsvUploader() {
           Upload
         </button>
 
+        {parseError && (
+          <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4">
+            <p className="text-sm font-medium text-red-700">Could not read file</p>
+            <p className="mt-1 text-sm text-red-600">{parseError}</p>
+          </div>
+        )}
+
         {columnError && (
           <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4">
             <p className="text-sm font-medium text-red-700">Could not read file</p>
@@ -100,7 +127,16 @@ export default function CsvUploader() {
           </div>
         )}
 
-        {result && (
+        {noUsableRows && (
+          <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4">
+            <p className="text-sm font-medium text-red-700">No usable rows</p>
+            <p className="mt-1 text-sm text-red-600">
+              Every row in this file was skipped. Check the errors below and fix your CSV.
+            </p>
+          </div>
+        )}
+
+        {result && !noUsableRows && (
           <div className="mt-4 space-y-3">
             <p className="text-sm text-gray-700">
               <span className="font-medium">{result.valid.length}</span> valid row{result.valid.length !== 1 ? "s" : ""} ready to import
@@ -127,7 +163,7 @@ export default function CsvUploader() {
         )}
       </div>
 
-      {result && (
+      {result && !noUsableRows && (
         <PreviewTable rows={result.raw} invalidRows={result.invalid} />
       )}
     </div>
