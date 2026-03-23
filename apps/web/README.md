@@ -21,6 +21,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `npm run start` | Run the production build |
 | `npm run typecheck` | Check TypeScript types without building |
 | `npm run lint` | Run ESLint |
+| `npm run test` | Run tests (placeholder — no tests yet) |
+| `npm run verify` | Run typecheck + lint + build (full health check) |
 
 ## Folder conventions
 
