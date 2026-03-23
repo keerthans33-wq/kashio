@@ -1,3 +1,5 @@
+import CsvUploader from "../../components/import/CsvUploader";
+
 export default function Import() {
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
@@ -5,6 +7,7 @@ export default function Import() {
       <p className="mt-3 text-gray-500">
         Upload a CSV file exported from your bank to get started.
       </p>
+      <CsvUploader />
     </main>
   );
 }
