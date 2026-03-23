@@ -59,7 +59,7 @@ The following are explicitly out of scope:
 ## Core Features
 
 ### 1. Import Transactions
-Users connect a bank account or upload a CSV of transactions. Kashio reads the description, amount, and date of each transaction.
+Users upload a CSV file exported from their bank. Kashio reads the description, amount, and date of each transaction.
 
 ### 2. Detect Possible Deductions
 Kashio scans transactions and flags ones that look work-related (e.g. office supplies, work travel, phone bills, subscriptions). These are suggestions — not confirmed deductions.

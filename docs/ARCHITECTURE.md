@@ -11,7 +11,6 @@ Kashio is a web application. It has:
 - A **backend** that handles logic and data
 - A **database** that stores everything
 - **File storage** for receipts and invoices
-- **AI** to help explain deductions in plain language
 
 All of these run together as a single Next.js application.
 
@@ -29,7 +28,6 @@ Key pages:
 - Transaction list
 - Deduction review
 - Evidence tracker
-- WFH hours log
 - EOFY export
 
 ---
@@ -58,7 +56,6 @@ Key tables:
 - `transactions` — imported bank transactions
 - `deductions` — flagged deduction candidates and their status
 - `evidence` — links between deductions and uploaded files
-- `wfh_logs` — weekly working-from-home hour entries
 
 ---
 
@@ -74,19 +71,6 @@ This keeps the database small and file uploads fast.
 
 ---
 
-## AI
-
-**Technology: Claude API (Anthropic)**
-
-AI is used in one place only: generating a plain-English explanation of why a transaction was flagged as a possible deduction.
-
-Example:
-> "This looks like a software subscription. If you use it for work, you may be able to claim it."
-
-AI does **not** make decisions. It does **not** confirm deductions. The user always reviews and decides.
-
----
-
 ## How It All Fits Together
 
 ```
@@ -94,8 +78,7 @@ Browser
   └── Next.js Frontend (pages + components)
         └── Next.js API Routes (backend logic)
               ├── PostgreSQL via Prisma (data)
-              ├── Object Storage (receipts)
-              └── Claude API (explanations)
+              └── Object Storage (receipts)
 ```
 
 ---
@@ -106,3 +89,4 @@ Browser
 - No mobile app
 - No real-time features or websockets
 - No bank API integrations (CSV only for MVP)
+- No AI or external language model integration (deferred post-MVP)

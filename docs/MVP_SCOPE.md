@@ -14,7 +14,12 @@ Nothing outside this scope will be built until the MVP is complete and validated
 ### 2. Transaction Import (CSV)
 - Users upload a CSV file exported from their bank
 - Kashio parses and stores each transaction (date, amount, description)
-- Invalid or unrecognised rows are flagged clearly
+- Supported columns: date, amount, description (order may vary; user maps on upload)
+- Supported date formats: DD/MM/YYYY and YYYY-MM-DD
+- Transactions outside the current financial year (1 July – 30 June) are excluded
+- Duplicate rows (same date + amount + description) are silently skipped
+- Credits and refunds are imported but not flagged as deduction candidates
+- Invalid or unrecognised rows are shown to the user before import is confirmed
 
 ### 3. Transaction List
 - Users can view all imported transactions
@@ -40,15 +45,10 @@ Nothing outside this scope will be built until the MVP is complete and validated
 - Kashio shows which claims are missing evidence
 - Missing evidence is surfaced clearly before EOFY export
 
-### 8. Working-From-Home Hours Log
-- Users can log the number of hours they worked from home each week
-- This supports the ATO fixed-rate method for WFH deductions
-- The log is included in the EOFY export
-
-### 9. EOFY Export
+### 8. EOFY Export
 - Users can export a summary of all claimed deductions
 - Export includes: date, merchant, amount, category, notes, and evidence status
-- Format: PDF and/or CSV
+- Format: CSV
 
 ---
 
@@ -64,6 +64,7 @@ The following will **not** be built as part of the MVP:
 | Cryptocurrency | Out of product scope entirely |
 | Financial advice | Not permitted without a financial services licence |
 | AI chatbot | Not needed to validate core value |
+| AI-generated explanations | Adds vendor dependency and cost — deferred post-MVP |
 
 ---
 
@@ -74,5 +75,4 @@ The MVP is complete when a user can:
 2. Upload a CSV of transactions
 3. Review deduction candidates and mark them
 4. Attach evidence to claimed deductions
-5. Log WFH hours
-6. Export a complete EOFY summary
+5. Export a complete EOFY summary
