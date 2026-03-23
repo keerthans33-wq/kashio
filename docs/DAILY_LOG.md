@@ -65,3 +65,25 @@
 - Simpler structure now will make future work easier
 
 **Next step:** Start building real product behavior, beginning with CSV import flow
+
+---
+
+## Day 5 — 2026-03-24
+
+**Goal:** Build CSV import feature
+
+**What I did:**
+- Defined CSV format
+- Built upload UI
+- Parsed CSV
+- Added validation
+- Showed preview table
+- Added normalization
+- Reviewed with Codex
+
+**What I learned:**
+- CSV parsing complexity
+- Importance of validation
+- Handling messy data
+
+**Next step:** Store transactions in database
