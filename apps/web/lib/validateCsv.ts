@@ -1,3 +1,5 @@
+import { normalizeMerchant } from "./normalizeMerchant";
+
 const REQUIRED_COLUMNS = ["date", "description", "amount"] as const;
 
 const DATE_FORMATS = [
@@ -10,6 +12,7 @@ export type RawRow = { [key: string]: string };
 export type ValidRow = {
   date: string;
   description: string;
+  merchant: string;
   amount: string;
 };
 
@@ -79,7 +82,13 @@ export function validateCsv(rows: RawRow[]): ValidationResult {
       return;
     }
 
-    valid.push({ date: date.trim(), description: description.trim(), amount: amount.trim() });
+    const trimmedDescription = description.trim();
+    valid.push({
+      date: date.trim(),
+      description: trimmedDescription,
+      merchant: normalizeMerchant(trimmedDescription),
+      amount: amount.trim(),
+    });
   });
 
   return { valid, invalid, columnError: null };

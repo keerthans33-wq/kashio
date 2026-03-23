@@ -1,4 +1,5 @@
 import type { InvalidRow } from "../../../lib/validateCsv";
+import { normalizeMerchant } from "../../../lib/normalizeMerchant";
 
 type RawRow = { [key: string]: string };
 
@@ -11,7 +12,6 @@ const PREVIEW_LIMIT = 20;
 
 export default function PreviewTable({ rows, invalidRows }: Props) {
   const invalidRowNumbers = new Set(invalidRows.map((r) => r.rowNumber));
-  // rowNumber in InvalidRow is 1-based with header = row 1, so data row 0 = rowNumber 2
   const invalidReasonMap = Object.fromEntries(
     invalidRows.map((r) => [r.rowNumber, r.reason])
   );
@@ -29,7 +29,8 @@ export default function PreviewTable({ rows, invalidRows }: Props) {
           <thead className="bg-gray-50 text-left text-gray-500">
             <tr>
               <th className="px-4 py-2 font-medium">Date</th>
-              <th className="px-4 py-2 font-medium">Description</th>
+              <th className="px-4 py-2 font-medium">Merchant</th>
+              <th className="px-4 py-2 font-medium text-gray-400">Raw description</th>
               <th className="px-4 py-2 font-medium text-right">Amount</th>
             </tr>
           </thead>
@@ -38,6 +39,7 @@ export default function PreviewTable({ rows, invalidRows }: Props) {
               const rowNumber = index + 2; // +2: row 1 is header
               const isInvalid = invalidRowNumbers.has(rowNumber);
               const reason = invalidReasonMap[rowNumber];
+              const merchant = row.description ? normalizeMerchant(row.description) : "";
 
               return (
                 <tr
@@ -46,13 +48,16 @@ export default function PreviewTable({ rows, invalidRows }: Props) {
                   title={isInvalid ? reason : undefined}
                 >
                   <td className={`px-4 py-2 ${isInvalid ? "text-red-600" : "text-gray-900"}`}>
-                    {row.date || <span className="text-red-400 italic">missing</span>}
+                    {row.date || <span className="italic text-red-400">missing</span>}
                   </td>
-                  <td className={`px-4 py-2 ${isInvalid ? "text-red-600" : "text-gray-900"}`}>
-                    {row.description || <span className="text-red-400 italic">missing</span>}
+                  <td className={`px-4 py-2 font-medium ${isInvalid ? "text-red-600" : "text-gray-900"}`}>
+                    {isInvalid ? "—" : merchant}
+                  </td>
+                  <td className={`px-4 py-2 ${isInvalid ? "text-red-500" : "text-gray-400"}`}>
+                    {row.description || <span className="italic text-red-400">missing</span>}
                   </td>
                   <td className={`px-4 py-2 text-right ${isInvalid ? "text-red-600" : "text-gray-900"}`}>
-                    {row.amount || <span className="text-red-400 italic">missing</span>}
+                    {row.amount || <span className="italic text-red-400">missing</span>}
                   </td>
                 </tr>
               );
