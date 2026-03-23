@@ -2,30 +2,33 @@
 
 import { useRef, useState } from "react";
 import Papa from "papaparse";
+import { validateCsv, type ValidRow, type InvalidRow } from "../../../lib/validateCsv";
 
-type ParsedRow = {
-  date: string;
-  description: string;
-  amount: string;
-  [key: string]: string;
+type ParsedRow = { [key: string]: string };
+
+type Result = {
+  valid: ValidRow[];
+  invalid: InvalidRow[];
 };
 
 export default function CsvUploader() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [rows, setRows] = useState<ParsedRow[] | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [result, setResult] = useState<Result | null>(null);
+  const [columnError, setColumnError] = useState<string | null>(null);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files?.[0] ?? null;
     setFile(selected);
-    setError(null);
-    setRows(null);
+    setFileError(null);
+    setResult(null);
+    setColumnError(null);
   }
 
   function handleUpload() {
     if (!file) {
-      setError("Please select a CSV file before uploading.");
+      setFileError("Please select a CSV file before uploading.");
       return;
     }
 
@@ -34,8 +37,18 @@ export default function CsvUploader() {
       skipEmptyLines: true,
       transformHeader: (h) => h.trim().toLowerCase(),
       complete(results) {
-        console.log("Parsed rows:", results.data);
-        setRows(results.data);
+        const { valid, invalid, columnError } = validateCsv(results.data);
+
+        if (columnError) {
+          setColumnError(columnError);
+          setResult(null);
+          return;
+        }
+
+        console.log("Valid rows:", valid);
+        console.log("Invalid rows:", invalid);
+        setColumnError(null);
+        setResult({ valid, invalid });
       },
     });
   }
@@ -67,8 +80,8 @@ export default function CsvUploader() {
         className="hidden"
       />
 
-      {error && (
-        <p className="mt-3 text-sm text-red-600">{error}</p>
+      {fileError && (
+        <p className="mt-3 text-sm text-red-600">{fileError}</p>
       )}
 
       <button
@@ -79,10 +92,34 @@ export default function CsvUploader() {
         Upload
       </button>
 
-      {rows && (
-        <p className="mt-4 text-sm text-gray-500">
-          {rows.length} row{rows.length !== 1 ? "s" : ""} parsed. Check the console for details.
-        </p>
+      {columnError && (
+        <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4">
+          <p className="text-sm font-medium text-red-700">Could not read file</p>
+          <p className="mt-1 text-sm text-red-600">{columnError}</p>
+        </div>
+      )}
+
+      {result && (
+        <div className="mt-4 space-y-3">
+          <p className="text-sm text-gray-700">
+            <span className="font-medium">{result.valid.length}</span> valid row{result.valid.length !== 1 ? "s" : ""} ready to import.
+          </p>
+
+          {result.invalid.length > 0 && (
+            <div className="rounded-md border border-yellow-200 bg-yellow-50 p-4">
+              <p className="text-sm font-medium text-yellow-800">
+                {result.invalid.length} row{result.invalid.length !== 1 ? "s" : ""} skipped
+              </p>
+              <ul className="mt-2 space-y-1">
+                {result.invalid.map((row) => (
+                  <li key={row.rowNumber} className="text-sm text-yellow-700">
+                    Row {row.rowNumber}: {row.reason}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
