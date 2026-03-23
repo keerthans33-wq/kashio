@@ -23,3 +23,21 @@
 - What Kashio actually is
 
 **Next step:** Start building app (Day 3)
+
+---
+
+## Day 3 — 2026-03-23
+
+**Goal:** Build first working app
+
+**What I did:**
+- Created Next.js app
+- Ran app locally
+- Added basic pages
+- Reviewed with Codex
+
+**What I learned:**
+- How frontend works
+- How to run local app
+
+**Next step:** Start backend + database
