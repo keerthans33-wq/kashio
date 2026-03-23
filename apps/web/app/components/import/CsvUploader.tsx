@@ -2,10 +2,12 @@
 
 import { useRef, useState } from "react";
 import Papa from "papaparse";
-import { validateCsv, type ValidRow, type InvalidRow } from "../../../lib/validateCsv";
+import { validateCsv, type ValidRow, type InvalidRow, type RawRow } from "../../../lib/validateCsv";
+import { remapColumns, type ColumnMapping } from "../../../lib/remapColumns";
 import PreviewTable from "./PreviewTable";
+import ColumnMapper from "./ColumnMapper";
 
-type RawRow = { [key: string]: string };
+const REQUIRED_COLUMNS = ["date", "description", "amount"];
 
 type Result = {
   raw: RawRow[];
@@ -13,21 +15,54 @@ type Result = {
   invalid: InvalidRow[];
 };
 
+// Returns true if the first row of the file looks like a header row
+// with the expected column names.
+function hasMatchingHeaders(firstRow: string[]): boolean {
+  const lower = firstRow.map((h) => h.trim().toLowerCase());
+  return REQUIRED_COLUMNS.every((col) => lower.includes(col));
+}
+
+// Converts raw string arrays into RawRow objects using first row as headers.
+function toMappedRows(rows: string[][], headers: string[]): RawRow[] {
+  return rows.map((row) => {
+    const obj: RawRow = {};
+    headers.forEach((h, i) => {
+      obj[h] = row[i]?.trim() ?? "";
+    });
+    return obj;
+  });
+}
+
 export default function CsvUploader() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
+  const [rawRows, setRawRows] = useState<string[][] | null>(null);
   const [result, setResult] = useState<Result | null>(null);
-  const [columnError, setColumnError] = useState<string | null>(null);
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const selected = e.target.files?.[0] ?? null;
-    setFile(selected);
+  function reset() {
     setFileError(null);
     setParseError(null);
+    setRawRows(null);
     setResult(null);
-    setColumnError(null);
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setFile(e.target.files?.[0] ?? null);
+    reset();
+  }
+
+  function runValidation(rows: RawRow[], headers: string[]) {
+    const { valid, invalid, columnError } = validateCsv(rows, headers);
+
+    if (columnError) {
+      setParseError(columnError);
+      setResult(null);
+      return;
+    }
+
+    setResult({ raw: rows, valid, invalid });
   }
 
   function handleUpload() {
@@ -36,39 +71,45 @@ export default function CsvUploader() {
       return;
     }
 
-    Papa.parse<RawRow>(file, {
-      header: true,
+    Papa.parse<string[]>(file, {
+      header: false,
       skipEmptyLines: true,
-      transformHeader: (h) => h.trim().toLowerCase(),
       error(err) {
         setParseError(`Could not read file: ${err.message}`);
-        setResult(null);
-        setColumnError(null);
       },
       complete(results) {
         if (results.errors.length > 0) {
           const first = results.errors[0];
           setParseError(`Could not read file: ${first.message} (row ${first.row ?? "unknown"})`);
-          setResult(null);
-          setColumnError(null);
           return;
         }
 
-        const headers = results.meta.fields ?? [];
-        const { valid, invalid, columnError } = validateCsv(results.data, headers);
-
-        if (columnError) {
-          setColumnError(columnError);
-          setParseError(null);
-          setResult(null);
+        const allRows = results.data;
+        if (allRows.length === 0) {
+          setParseError("The file has no rows.");
           return;
         }
 
-        setParseError(null);
-        setColumnError(null);
-        setResult({ raw: results.data, valid, invalid });
+        const firstRow = allRows[0];
+
+        if (hasMatchingHeaders(firstRow)) {
+          // First row is a valid header row — use it directly
+          const headers = firstRow.map((h) => h.trim().toLowerCase());
+          const dataRows = toMappedRows(allRows.slice(1), headers);
+          runValidation(dataRows, headers);
+        } else {
+          // No matching headers — show column mapper
+          setRawRows(allRows);
+        }
       },
     });
+  }
+
+  function handleMappingConfirmed(mapping: ColumnMapping) {
+    if (!rawRows) return;
+    const remapped = remapColumns(rawRows, mapping);
+    runValidation(remapped, REQUIRED_COLUMNS);
+    setRawRows(null);
   }
 
   const noUsableRows = result && result.valid.length === 0;
@@ -120,13 +161,6 @@ export default function CsvUploader() {
           </div>
         )}
 
-        {columnError && (
-          <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4">
-            <p className="text-sm font-medium text-red-700">Could not read file</p>
-            <p className="mt-1 text-sm text-red-600">{columnError}</p>
-          </div>
-        )}
-
         {noUsableRows && (
           <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4">
             <p className="text-sm font-medium text-red-700">No usable rows</p>
@@ -162,6 +196,10 @@ export default function CsvUploader() {
           </div>
         )}
       </div>
+
+      {rawRows && (
+        <ColumnMapper rows={rawRows} onConfirm={handleMappingConfirmed} />
+      )}
 
       {result && !noUsableRows && (
         <PreviewTable rows={result.raw} invalidRows={result.invalid} />
