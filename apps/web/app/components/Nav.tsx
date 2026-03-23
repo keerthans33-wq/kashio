@@ -6,7 +6,6 @@ const links = [
   { href: "/opportunities", label: "Opportunities" },
   { href: "/evidence", label: "Evidence" },
   { href: "/export", label: "Export" },
-  { href: "/settings", label: "Settings" },
 ];
 
 export default function Nav() {
