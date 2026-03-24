@@ -87,3 +87,30 @@
 - Handling messy data
 
 **Next step:** Store transactions in database
+
+---
+
+## Day 6 — 2026-03-24
+
+**Goal:** Make CSV import robust and store transactions
+
+**What I did:**
+- Fixed parser error handling
+- Improved column validation
+- Added real date validation
+- Improved amount parsing
+- Improved empty row handling
+- Improved preview UX
+- Separated validation and normalization
+- Set up database
+- Saved transactions
+- Built transactions page
+- Reviewed with Codex
+
+**What I learned:**
+- Real-world data is messy
+- Validation is critical
+- Separation of concerns matters
+- Database integration basics
+
+**Next step:** Build deduction detection system
