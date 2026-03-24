@@ -1,0 +1,10 @@
+// Canonical category names used by detection rules, the UI, and future export logic.
+// Always reference these constants instead of writing the string directly,
+// so names stay consistent if they ever need to change.
+export const CATEGORIES = {
+  WORK_SOFTWARE:            "Work Software & Tools",
+  OFFICE_SUPPLIES:          "Office Supplies & Equipment",
+  PROFESSIONAL_DEVELOPMENT: "Professional Development",
+  WORK_TRAVEL:              "Work-Related Travel",
+  HOME_OFFICE:              "Home Office",
+} as const;
