@@ -3,7 +3,11 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 
 function createClient() {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const isLocal = process.env.DATABASE_URL?.includes("localhost");
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: isLocal ? undefined : { rejectUnauthorized: false },
+  });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const adapter = new PrismaPg(pool as any);
   return new PrismaClient({ adapter });
