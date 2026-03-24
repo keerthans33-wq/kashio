@@ -8,12 +8,38 @@ datasource db {
 }
 
 model Transaction {
-  id                 String   @id @default(cuid())
-  date               String   // always stored as YYYY-MM-DD — normalised by parseDate before insert
-  description        String   // raw bank description
-  normalizedMerchant String   // cleaned merchant name
-  amount             Float    // negative = debit, positive = credit
-  createdAt          DateTime @default(now())
+  id                 String              @id @default(cuid())
+  date               String              // always stored as YYYY-MM-DD — normalised by parseDate before insert
+  description        String              // raw bank description
+  normalizedMerchant String              // cleaned merchant name
+  amount             Float               // negative = debit, positive = credit
+  createdAt          DateTime            @default(now())
+  deductionCandidate DeductionCandidate?
 
   @@unique([date, description, amount])
+}
+
+// How confident the detection rule is that this transaction is a deduction.
+enum Confidence {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+// What the user has decided about this candidate.
+enum DeductionStatus {
+  NEEDS_REVIEW
+  CONFIRMED
+  REJECTED
+}
+
+model DeductionCandidate {
+  id            String          @id @default(cuid())
+  transaction   Transaction     @relation(fields: [transactionId], references: [id])
+  transactionId String          @unique  // one candidate per transaction for MVP
+  category      String          // e.g. "Work Software & Tools"
+  confidence    Confidence
+  reason        String          // short explanation, e.g. "Matches known software subscription"
+  status        DeductionStatus @default(NEEDS_REVIEW)
+  createdAt     DateTime        @default(now())
 }
