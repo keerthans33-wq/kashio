@@ -114,3 +114,28 @@
 - Database integration basics
 
 **Next step:** Build deduction detection system
+
+---
+
+## Day 7 — 2026-03-24
+
+**Goal:** Make CSV import trustworthy end to end
+
+**What I did:**
+- Added strict server-side validation
+- Created shared parsing and normalization logic
+- Canonicalized stored dates
+- Unified amount parsing
+- Improved duplicate reporting
+- Improved client fetch error handling
+- Improved row numbering
+- Improved parse error reporting
+- Reviewed the pipeline again with Codex
+
+**What I learned:**
+- Client validation is not enough
+- Server validation protects data integrity
+- Canonical data formats make sorting and duplicate detection reliable
+- Silent duplicate handling damages trust
+
+**Next step:** Start the first deduction detection rules on top of imported transactions
