@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
   const result = await db.transaction.createMany({ data: rows, skipDuplicates: true });
 
   return NextResponse.json({
-    imported: result.count,
+    inserted: result.count,
     duplicates: rows.length - result.count,
   });
 }

@@ -7,9 +7,15 @@ import { remapColumns, type ColumnMapping } from "../../../lib/remapColumns";
 import PreviewTable from "./PreviewTable";
 import ColumnMapper from "./ColumnMapper";
 
-type ImportResult = { imported: number; duplicates: number };
+type ImportResult = {
+  inserted: number;   // new rows written to the database
+  duplicates: number; // rows skipped because they already existed
+  invalid: number;    // rows rejected before upload due to validation errors
+};
 
-async function saveTransactions(transactions: ValidRow[]): Promise<ImportResult> {
+async function saveTransactions(
+  transactions: ValidRow[],
+): Promise<{ inserted: number; duplicates: number }> {
   const res = await fetch("/api/transactions/import", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -26,7 +32,7 @@ async function saveTransactions(transactions: ValidRow[]): Promise<ImportResult>
     throw new Error(message);
   }
   const data = await res.json();
-  return { imported: data.imported as number, duplicates: data.duplicates as number };
+  return { inserted: data.inserted as number, duplicates: data.duplicates as number };
 }
 
 const REQUIRED_COLUMNS = ["date", "description", "amount"];
@@ -80,8 +86,8 @@ export default function CsvUploader() {
     setImporting(true);
     setImportError(null);
     try {
-      const result2 = await saveTransactions(result.valid);
-      setImportResult(result2);
+      const { inserted, duplicates } = await saveTransactions(result.valid);
+      setImportResult({ inserted, duplicates, invalid: result.invalid.length });
     } catch (err) {
       setImportError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -240,15 +246,23 @@ export default function CsvUploader() {
             )}
 
             {importResult !== null ? (
-              <div className="rounded-md border border-green-200 bg-green-50 p-4">
-                <p className="text-sm font-medium text-green-800">
-                  {importResult.imported} transaction{importResult.imported !== 1 ? "s" : ""} imported successfully.
-                </p>
-                {importResult.duplicates > 0 && (
-                  <p className="mt-1 text-sm text-green-700">
-                    {importResult.duplicates} already existed and were skipped.
-                  </p>
-                )}
+              <div className="rounded-md border border-gray-200 bg-gray-50 p-4">
+                <p className="text-sm font-medium text-gray-800">Import complete</p>
+                <ul className="mt-2 space-y-1 text-sm">
+                  <li className="text-green-700">
+                    {importResult.inserted} inserted
+                  </li>
+                  {importResult.duplicates > 0 && (
+                    <li className="text-yellow-700">
+                      {importResult.duplicates} duplicate{importResult.duplicates !== 1 ? "s" : ""} skipped
+                    </li>
+                  )}
+                  {importResult.invalid > 0 && (
+                    <li className="text-red-600">
+                      {importResult.invalid} invalid row{importResult.invalid !== 1 ? "s" : ""} rejected
+                    </li>
+                  )}
+                </ul>
               </div>
             ) : (
               <button
