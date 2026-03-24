@@ -117,6 +117,28 @@
 
 ---
 
+## Day 8 — 2026-03-25
+
+**Goal:** Build first deduction detection system
+
+**What I did:**
+- Created DeductionCandidate model
+- Built rules engine structure
+- Implemented work software rule
+- Generated candidates after import
+- Displayed candidates in review page
+- Added confirm/reject actions
+- Reviewed rules with Codex
+
+**What I learned:**
+- How rules engine works
+- How to detect patterns in transactions
+- Importance of deterministic logic
+
+**Next step:** Add more deduction rules and improve accuracy
+
+---
+
 ## Day 7 — 2026-03-24
 
 **Goal:** Make CSV import trustworthy end to end
