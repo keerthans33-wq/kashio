@@ -7,18 +7,26 @@ import { remapColumns, type ColumnMapping } from "../../../lib/remapColumns";
 import PreviewTable from "./PreviewTable";
 import ColumnMapper from "./ColumnMapper";
 
-async function saveTransactions(transactions: ValidRow[]): Promise<number> {
+type ImportResult = { imported: number; duplicates: number };
+
+async function saveTransactions(transactions: ValidRow[]): Promise<ImportResult> {
   const res = await fetch("/api/transactions/import", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ transactions }),
   });
   if (!res.ok) {
-    const data = await res.json();
-    throw new Error(data.error ?? "Failed to save transactions.");
+    let message = "Failed to save transactions.";
+    try {
+      const data = await res.json();
+      message = data.error ?? message;
+    } catch {
+      // non-JSON error response — use default message
+    }
+    throw new Error(message);
   }
   const data = await res.json();
-  return data.imported as number;
+  return { imported: data.imported as number, duplicates: data.duplicates as number };
 }
 
 const REQUIRED_COLUMNS = ["date", "description", "amount"];
@@ -55,7 +63,7 @@ export default function CsvUploader() {
   const [rawRows, setRawRows] = useState<string[][] | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [importing, setImporting] = useState(false);
-  const [importedCount, setImportedCount] = useState<number | null>(null);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
 
   function reset() {
@@ -63,7 +71,7 @@ export default function CsvUploader() {
     setParseError(null);
     setRawRows(null);
     setResult(null);
-    setImportedCount(null);
+    setImportResult(null);
     setImportError(null);
   }
 
@@ -72,8 +80,8 @@ export default function CsvUploader() {
     setImporting(true);
     setImportError(null);
     try {
-      const count = await saveTransactions(result.valid);
-      setImportedCount(count);
+      const result2 = await saveTransactions(result.valid);
+      setImportResult(result2);
     } catch (err) {
       setImportError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -86,8 +94,8 @@ export default function CsvUploader() {
     reset();
   }
 
-  function runValidation(rows: RawRow[], headers: string[]) {
-    const { valid, invalid, columnError } = validateCsv(rows, headers);
+  function runValidation(rows: RawRow[], headers: string[], rowOffset = 2) {
+    const { valid, invalid, columnError } = validateCsv(rows, headers, rowOffset);
 
     if (columnError) {
       setParseError(columnError);
@@ -112,8 +120,12 @@ export default function CsvUploader() {
       },
       complete(results) {
         if (results.errors.length > 0) {
-          const first = results.errors[0];
-          setParseError(`Could not read file: ${first.message} (row ${first.row ?? "unknown"})`);
+          const shown = results.errors.slice(0, 5);
+          const msgs = shown
+            .map((e) => `row ${e.row ?? "?"}: ${e.message}`)
+            .join("; ");
+          const suffix = results.errors.length > 5 ? ` (and ${results.errors.length - 5} more)` : "";
+          setParseError(`Could not read file: ${msgs}${suffix}`);
           return;
         }
 
@@ -141,7 +153,7 @@ export default function CsvUploader() {
   function handleMappingConfirmed(mapping: ColumnMapping) {
     if (!rawRows) return;
     const remapped = remapColumns(rawRows, mapping);
-    runValidation(remapped, REQUIRED_COLUMNS);
+    runValidation(remapped, REQUIRED_COLUMNS, 1);
     setRawRows(null);
   }
 
@@ -227,11 +239,16 @@ export default function CsvUploader() {
               </div>
             )}
 
-            {importedCount !== null ? (
+            {importResult !== null ? (
               <div className="rounded-md border border-green-200 bg-green-50 p-4">
                 <p className="text-sm font-medium text-green-800">
-                  {importedCount} transaction{importedCount !== 1 ? "s" : ""} imported successfully.
+                  {importResult.imported} transaction{importResult.imported !== 1 ? "s" : ""} imported successfully.
                 </p>
+                {importResult.duplicates > 0 && (
+                  <p className="mt-1 text-sm text-green-700">
+                    {importResult.duplicates} already existed and were skipped.
+                  </p>
+                )}
               </div>
             ) : (
               <button

@@ -55,8 +55,16 @@ function isEffectivelyEmpty(row: RawRow): boolean {
   return Object.values(row).every((v) => !v?.trim());
 }
 
+// Normalizes any accepted date format to YYYY-MM-DD for consistent storage and sorting.
+function normalizeDate(value: string): string {
+  const dmy = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (dmy) return `${dmy[3]}-${dmy[2]}-${dmy[1]}`;
+  return value; // already YYYY-MM-DD
+}
+
 // headers: column names from the parser (meta.fields), not derived from row data
-export function validateCsv(rows: RawRow[], headers: string[]): ValidationResult {
+// rowOffset: file row number of the first data row (2 when a header row was consumed, 1 for headerless)
+export function validateCsv(rows: RawRow[], headers: string[], rowOffset = 2): ValidationResult {
   if (rows.length === 0) {
     return { valid: [], invalid: [], columnError: "The file has no rows." };
   }
@@ -74,7 +82,7 @@ export function validateCsv(rows: RawRow[], headers: string[]): ValidationResult
   const invalid: InvalidRow[] = [];
 
   rows.forEach((row, index) => {
-    const rowNumber = index + 2; // +2: row 1 is header
+    const rowNumber = index + rowOffset;
 
     if (isEffectivelyEmpty(row)) return; // silently skip blank rows
 
@@ -120,7 +128,7 @@ export function validateCsv(rows: RawRow[], headers: string[]): ValidationResult
     }
 
     valid.push({
-      date: date.trim(),
+      date: normalizeDate(date.trim()),
       description: description.trim(),
       amount: amount.replace(/[$,]/g, "").trim(),
     });
