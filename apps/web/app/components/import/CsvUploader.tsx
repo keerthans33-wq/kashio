@@ -156,10 +156,12 @@ export default function CsvUploader() {
     });
   }
 
-  function handleMappingConfirmed(mapping: ColumnMapping) {
+  function handleMappingConfirmed(mapping: ColumnMapping, skipFirstRow: boolean) {
     if (!rawRows) return;
-    const remapped = remapColumns(rawRows, mapping);
-    runValidation(remapped, REQUIRED_COLUMNS, 1);
+    const dataRows = skipFirstRow ? rawRows.slice(1) : rawRows;
+    const remapped = remapColumns(dataRows, mapping);
+    // rowOffset: 2 when first row was a header, 1 when all rows are data
+    runValidation(remapped, REQUIRED_COLUMNS, skipFirstRow ? 2 : 1);
     setRawRows(null);
   }
 

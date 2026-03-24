@@ -64,7 +64,16 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const result = await db.transaction.createMany({ data: rows, skipDuplicates: true });
+  let result: { count: number };
+  try {
+    result = await db.transaction.createMany({ data: rows, skipDuplicates: true });
+  } catch (err) {
+    console.error("DB write failed:", err);
+    return NextResponse.json(
+      { error: "Could not save transactions. The database may be unavailable." },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({
     inserted: result.count,

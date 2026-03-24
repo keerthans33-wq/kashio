@@ -5,7 +5,7 @@ import type { ColumnMapping } from "../../../lib/remapColumns";
 
 type Props = {
   rows: string[][];
-  onConfirm: (mapping: ColumnMapping) => void;
+  onConfirm: (mapping: ColumnMapping, skipFirstRow: boolean) => void;
 };
 
 const PREVIEW_ROWS = 3;
@@ -25,6 +25,7 @@ export default function ColumnMapper({ rows, onConfirm }: Props) {
     description: 1,
     amount: 2,
   });
+  const [skipFirstRow, setSkipFirstRow] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function handleConfirm() {
@@ -35,7 +36,7 @@ export default function ColumnMapper({ rows, onConfirm }: Props) {
       return;
     }
     setError(null);
-    onConfirm(mapping);
+    onConfirm(mapping, skipFirstRow);
   }
 
   return (
@@ -99,6 +100,16 @@ export default function ColumnMapper({ rows, onConfirm }: Props) {
           </div>
         ))}
       </div>
+
+      <label className="mt-6 flex items-center gap-2 text-sm text-gray-600">
+        <input
+          type="checkbox"
+          checked={skipFirstRow}
+          onChange={(e) => setSkipFirstRow(e.target.checked)}
+          className="rounded border-gray-300"
+        />
+        First row is a header — skip it
+      </label>
 
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
