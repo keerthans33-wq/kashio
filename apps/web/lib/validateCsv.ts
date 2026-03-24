@@ -1,16 +1,13 @@
-const REQUIRED_COLUMNS = ["date", "description", "amount"] as const;
+import { parseAmount, parseDate } from "./importRules";
 
-const DATE_FORMATS = [
-  /^\d{2}\/\d{2}\/\d{4}$/, // DD/MM/YYYY
-  /^\d{4}-\d{2}-\d{2}$/,   // YYYY-MM-DD
-];
+const REQUIRED_COLUMNS = ["date", "description", "amount"] as const;
 
 export type RawRow = { [key: string]: string };
 
 export type ValidRow = {
-  date: string;
+  date: string;        // YYYY-MM-DD
   description: string;
-  amount: string;
+  amount: number;      // parsed float, negative = debit
 };
 
 export type InvalidRow = {
@@ -24,42 +21,8 @@ export type ValidationResult = {
   columnError: string | null;
 };
 
-function isRealDate(value: string): boolean {
-  // Parse DD/MM/YYYY
-  const dmy = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (dmy) {
-    const [, d, m, y] = dmy.map(Number);
-    const date = new Date(y, m - 1, d);
-    return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
-  }
-
-  // Parse YYYY-MM-DD
-  const ymd = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (ymd) {
-    const [, y, m, d] = ymd.map(Number);
-    const date = new Date(y, m - 1, d);
-    return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
-  }
-
-  return false;
-}
-
-function parseAmount(value: string): number | null {
-  // Strip currency symbols and commas before parsing
-  const cleaned = value.replace(/[$,]/g, "").trim();
-  const n = Number(cleaned);
-  return isNaN(n) ? null : n;
-}
-
 function isEffectivelyEmpty(row: RawRow): boolean {
   return Object.values(row).every((v) => !v?.trim());
-}
-
-// Normalizes any accepted date format to YYYY-MM-DD for consistent storage and sorting.
-function normalizeDate(value: string): string {
-  const dmy = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (dmy) return `${dmy[3]}-${dmy[2]}-${dmy[1]}`;
-  return value; // already YYYY-MM-DD
 }
 
 // headers: column names from the parser (meta.fields), not derived from row data
@@ -84,40 +47,34 @@ export function validateCsv(rows: RawRow[], headers: string[], rowOffset = 2): V
   rows.forEach((row, index) => {
     const rowNumber = index + rowOffset;
 
-    if (isEffectivelyEmpty(row)) return; // silently skip blank rows
+    if (isEffectivelyEmpty(row)) return;
 
-    const { date, description, amount } = row;
+    const { date: rawDate, description, amount: rawAmount } = row;
 
-    if (!date?.trim()) {
+    if (!rawDate?.trim()) {
       invalid.push({ rowNumber, reason: "Missing date." });
       return;
     }
 
-    if (!DATE_FORMATS.some((fmt) => fmt.test(date.trim()))) {
+    const date = parseDate(rawDate);
+    if (!date) {
       invalid.push({
         rowNumber,
-        reason: `Invalid date "${date}". Use DD/MM/YYYY or YYYY-MM-DD.`,
+        reason: `Invalid date "${rawDate}". Use DD/MM/YYYY or YYYY-MM-DD.`,
       });
       return;
     }
 
-    if (!isRealDate(date.trim())) {
-      invalid.push({
-        rowNumber,
-        reason: `Impossible date "${date}". Check the day and month values.`,
-      });
-      return;
-    }
-
-    if (!amount?.trim()) {
+    if (!rawAmount?.trim()) {
       invalid.push({ rowNumber, reason: "Missing amount." });
       return;
     }
 
-    if (parseAmount(amount) === null) {
+    const amount = parseAmount(rawAmount);
+    if (amount === null) {
       invalid.push({
         rowNumber,
-        reason: `Invalid amount "${amount}". Must be a number like -42.50 or 120.00.`,
+        reason: `Invalid amount "${rawAmount}". Must be a number like -42.50 or 120.00.`,
       });
       return;
     }
@@ -128,9 +85,9 @@ export function validateCsv(rows: RawRow[], headers: string[], rowOffset = 2): V
     }
 
     valid.push({
-      date: normalizeDate(date.trim()),
+      date,
       description: description.trim(),
-      amount: amount.replace(/[$,]/g, "").trim(),
+      amount,
     });
   });
 

@@ -29,7 +29,9 @@ export default function PreviewTable({ rows }: Props) {
               <tr key={index} className="bg-white">
                 <td className="px-4 py-2 text-gray-900">{row.date}</td>
                 <td className="px-4 py-2 text-gray-500">{row.description}</td>
-                <td className="px-4 py-2 text-right text-gray-900">{row.amount}</td>
+                <td className="px-4 py-2 text-right text-gray-900">
+                  {row.amount < 0 ? "-" : "+"}${Math.abs(row.amount).toFixed(2)}
+                </td>
               </tr>
             ))}
           </tbody>
