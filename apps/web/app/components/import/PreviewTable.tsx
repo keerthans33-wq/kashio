@@ -1,27 +1,19 @@
-import type { InvalidRow } from "../../../lib/validateCsv";
-
-type RawRow = { [key: string]: string };
+import type { ValidRow } from "../../../lib/validateCsv";
 
 type Props = {
-  rows: RawRow[];
-  invalidRows: InvalidRow[];
+  rows: ValidRow[];
 };
 
 const PREVIEW_LIMIT = 20;
 
-export default function PreviewTable({ rows, invalidRows }: Props) {
-  const invalidRowNumbers = new Set(invalidRows.map((r) => r.rowNumber));
-  const invalidReasonMap = Object.fromEntries(
-    invalidRows.map((r) => [r.rowNumber, r.reason])
-  );
-
+export default function PreviewTable({ rows }: Props) {
   const preview = rows.slice(0, PREVIEW_LIMIT);
   const hasMore = rows.length > PREVIEW_LIMIT;
 
   return (
     <div className="mt-6">
       <p className="mb-2 text-sm font-medium text-gray-700">
-        Preview — first {Math.min(rows.length, PREVIEW_LIMIT)} of {rows.length} row{rows.length !== 1 ? "s" : ""}
+        Preview — {Math.min(rows.length, PREVIEW_LIMIT)} of {rows.length} valid transaction{rows.length !== 1 ? "s" : ""}
       </p>
       <div className="overflow-x-auto rounded-md border border-gray-200">
         <table className="w-full text-sm">
@@ -33,29 +25,13 @@ export default function PreviewTable({ rows, invalidRows }: Props) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {preview.map((row, index) => {
-              const rowNumber = index + 2;
-              const isInvalid = invalidRowNumbers.has(rowNumber);
-              const reason = invalidReasonMap[rowNumber];
-
-              return (
-                <tr
-                  key={index}
-                  className={isInvalid ? "bg-red-50" : "bg-white"}
-                  title={isInvalid ? reason : undefined}
-                >
-                  <td className={`px-4 py-2 ${isInvalid ? "text-red-600" : "text-gray-900"}`}>
-                    {row.date || <span className="italic text-red-400">missing</span>}
-                  </td>
-                  <td className={`px-4 py-2 ${isInvalid ? "text-red-600" : "text-gray-500"}`}>
-                    {row.description || <span className="italic text-red-400">missing</span>}
-                  </td>
-                  <td className={`px-4 py-2 text-right ${isInvalid ? "text-red-600" : "text-gray-900"}`}>
-                    {row.amount || <span className="italic text-red-400">missing</span>}
-                  </td>
-                </tr>
-              );
-            })}
+            {preview.map((row, index) => (
+              <tr key={index} className="bg-white">
+                <td className="px-4 py-2 text-gray-900">{row.date}</td>
+                <td className="px-4 py-2 text-gray-500">{row.description}</td>
+                <td className="px-4 py-2 text-right text-gray-900">{row.amount}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

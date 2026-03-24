@@ -163,7 +163,7 @@ export default function CsvUploader() {
 
         {noUsableRows && (
           <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4">
-            <p className="text-sm font-medium text-red-700">No usable rows</p>
+            <p className="text-sm font-medium text-red-700">No valid transactions found</p>
             <p className="mt-1 text-sm text-red-600">
               Every row in this file was skipped. Check the errors below and fix your CSV.
             </p>
@@ -202,7 +202,7 @@ export default function CsvUploader() {
       )}
 
       {result && !noUsableRows && (
-        <PreviewTable rows={result.raw} invalidRows={result.invalid} />
+        <PreviewTable rows={result.valid} />
       )}
     </div>
   );
