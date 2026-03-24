@@ -1,0 +1,17 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Transaction {
+  id                 String   @id @default(cuid())
+  date               String   // stored as DD/MM/YYYY or YYYY-MM-DD string
+  description        String   // raw bank description
+  normalizedMerchant String   // cleaned merchant name
+  amount             Float    // negative = debit, positive = credit
+  createdAt          DateTime @default(now())
+}

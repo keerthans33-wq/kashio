@@ -12,3 +12,5 @@ out/
 
 # misc
 .DS_Store
+
+/lib/generated/prisma
