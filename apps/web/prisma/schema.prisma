@@ -9,7 +9,7 @@ datasource db {
 
 model Transaction {
   id                 String   @id @default(cuid())
-  date               String   // stored as DD/MM/YYYY or YYYY-MM-DD string
+  date               String   // always stored as YYYY-MM-DD — normalised by parseDate before insert
   description        String   // raw bank description
   normalizedMerchant String   // cleaned merchant name
   amount             Float    // negative = debit, positive = credit
