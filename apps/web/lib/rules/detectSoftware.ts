@@ -21,8 +21,8 @@ export const detectSoftware: Rule = (transaction) => {
   if (KNOWN_SOFTWARE.some((name) => merchant.includes(name))) {
     return {
       category: "Work Software & Tools",
-      confidence: "HIGH",
-      reason: `Matches known software subscription: ${transaction.normalizedMerchant}`,
+      confidence: "MEDIUM",
+      reason: `${transaction.normalizedMerchant} looks like a software subscription — confirm if used for work`,
     };
   }
 
