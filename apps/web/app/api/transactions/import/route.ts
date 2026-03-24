@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "../../../../lib/db";
 import { normalizeMerchant } from "../../../../lib/normalizeMerchant";
 import { parseDate } from "../../../../lib/importRules";
+import { detectDeduction } from "../../../../lib/rules";
 
 export async function POST(req: NextRequest) {
   let body: unknown;
@@ -73,6 +74,42 @@ export async function POST(req: NextRequest) {
       { error: "Could not save transactions. The database may be unavailable." },
       { status: 500 },
     );
+  }
+
+  // Fetch the saved transactions (includes both new and pre-existing duplicates)
+  // so we can run detection on everything that was submitted.
+  const savedTransactions = await db.transaction.findMany({
+    where: {
+      OR: rows.map((r) => ({
+        date: r.date,
+        description: r.description,
+        amount: r.amount,
+      })),
+    },
+  });
+
+  // Run each transaction through the rules engine.
+  const candidates = savedTransactions
+    .map((t) => {
+      const match = detectDeduction({
+        description: t.description,
+        normalizedMerchant: t.normalizedMerchant,
+        amount: t.amount,
+      });
+      if (!match) return null;
+      return {
+        transactionId: t.id,
+        category: match.category,
+        confidence: match.confidence,
+        reason: match.reason,
+      };
+    })
+    .filter((c): c is NonNullable<typeof c> => c !== null);
+
+  // Store candidates. skipDuplicates means transactions that already have
+  // a candidate (transactionId is unique) are safely skipped.
+  if (candidates.length > 0) {
+    await db.deductionCandidate.createMany({ data: candidates, skipDuplicates: true });
   }
 
   return NextResponse.json({
