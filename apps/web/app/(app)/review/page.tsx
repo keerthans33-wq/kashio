@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { db } from "../../../lib/db";
 
 export const dynamic = "force-dynamic";
@@ -8,6 +9,30 @@ const CONFIDENCE_STYLES = {
   LOW:    "bg-gray-100 text-gray-600",
 };
 
+const STATUS_STYLES = {
+  NEEDS_REVIEW: "text-gray-400",
+  CONFIRMED:    "text-green-600 font-medium",
+  REJECTED:     "text-red-500 font-medium",
+};
+
+const STATUS_LABELS = {
+  NEEDS_REVIEW: "Needs review",
+  CONFIRMED:    "Confirmed",
+  REJECTED:     "Rejected",
+};
+
+async function confirmCandidate(id: string) {
+  "use server";
+  await db.deductionCandidate.update({ where: { id }, data: { status: "CONFIRMED" } });
+  revalidatePath("/review");
+}
+
+async function rejectCandidate(id: string) {
+  "use server";
+  await db.deductionCandidate.update({ where: { id }, data: { status: "REJECTED" } });
+  revalidatePath("/review");
+}
+
 export default async function Review() {
   const candidates = await db.deductionCandidate.findMany({
     include: { transaction: true },
@@ -15,7 +40,7 @@ export default async function Review() {
   });
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
+    <main className="mx-auto max-w-6xl px-6 py-10">
       <h1 className="text-2xl font-semibold text-gray-900">Review</h1>
       <p className="mt-1 text-gray-500">
         {candidates.length} deduction candidate{candidates.length !== 1 ? "s" : ""} found
@@ -35,6 +60,8 @@ export default async function Review() {
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Category</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Confidence</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Reason</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
@@ -55,6 +82,29 @@ export default async function Review() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gray-500">{c.reason}</td>
+                  <td className={`whitespace-nowrap px-4 py-3 text-sm ${STATUS_STYLES[c.status]}`}>
+                    {STATUS_LABELS[c.status]}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <div className="flex gap-2">
+                      <form action={confirmCandidate.bind(null, c.id)}>
+                        <button
+                          type="submit"
+                          className="rounded border border-green-300 px-3 py-1 text-xs font-medium text-green-700 hover:bg-green-50"
+                        >
+                          Confirm
+                        </button>
+                      </form>
+                      <form action={rejectCandidate.bind(null, c.id)}>
+                        <button
+                          type="submit"
+                          className="rounded border border-red-300 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                        >
+                          Reject
+                        </button>
+                      </form>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
