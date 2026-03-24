@@ -65,55 +65,53 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  let result: { count: number };
+  let inserted: number;
   try {
-    result = await db.transaction.createMany({ data: rows, skipDuplicates: true });
+    const result = await db.transaction.createMany({ data: rows, skipDuplicates: true });
+    inserted = result.count;
+
+    // Fetch saved transactions so we have their DB ids for candidate creation.
+    const savedTransactions = await db.transaction.findMany({
+      where: {
+        OR: rows.map((r) => ({
+          date: r.date,
+          description: r.description,
+          amount: r.amount,
+        })),
+      },
+    });
+
+    // Run each transaction through the rules engine.
+    const candidates = savedTransactions
+      .map((t) => {
+        const match = detectDeduction({
+          description: t.description,
+          normalizedMerchant: t.normalizedMerchant,
+          amount: t.amount,
+        });
+        if (!match) return null;
+        return {
+          transactionId: t.id,
+          category: match.category,
+          confidence: match.confidence,
+          reason: match.reason,
+        };
+      })
+      .filter((c): c is NonNullable<typeof c> => c !== null);
+
+    if (candidates.length > 0) {
+      await db.deductionCandidate.createMany({ data: candidates, skipDuplicates: true });
+    }
   } catch (err) {
-    console.error("DB write failed:", err);
+    console.error("DB error during import:", err);
     return NextResponse.json(
       { error: "Could not save transactions. The database may be unavailable." },
       { status: 500 },
     );
   }
 
-  // Fetch the saved transactions (includes both new and pre-existing duplicates)
-  // so we can run detection on everything that was submitted.
-  const savedTransactions = await db.transaction.findMany({
-    where: {
-      OR: rows.map((r) => ({
-        date: r.date,
-        description: r.description,
-        amount: r.amount,
-      })),
-    },
-  });
-
-  // Run each transaction through the rules engine.
-  const candidates = savedTransactions
-    .map((t) => {
-      const match = detectDeduction({
-        description: t.description,
-        normalizedMerchant: t.normalizedMerchant,
-        amount: t.amount,
-      });
-      if (!match) return null;
-      return {
-        transactionId: t.id,
-        category: match.category,
-        confidence: match.confidence,
-        reason: match.reason,
-      };
-    })
-    .filter((c): c is NonNullable<typeof c> => c !== null);
-
-  // Store candidates. skipDuplicates means transactions that already have
-  // a candidate (transactionId is unique) are safely skipped.
-  if (candidates.length > 0) {
-    await db.deductionCandidate.createMany({ data: candidates, skipDuplicates: true });
-  }
-
   return NextResponse.json({
-    inserted: result.count,
-    duplicates: rows.length - result.count,
+    inserted,
+    duplicates: rows.length - inserted,
   });
 }
