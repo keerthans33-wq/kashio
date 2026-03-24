@@ -3,9 +3,17 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 
 function createClient() {
-  const isLocal = process.env.DATABASE_URL?.includes("localhost");
+  // Strip sslmode from the URL — pg-connection-string v2.7+ treats 'require'
+  // as 'verify-full', which rejects Supabase's certificate chain. We set SSL
+  // explicitly on the Pool instead so rejectUnauthorized: false takes effect.
+  const rawUrl = process.env.DATABASE_URL ?? "";
+  const url = new URL(rawUrl);
+  url.searchParams.delete("sslmode");
+  const connectionString = url.toString();
+
+  const isLocal = connectionString.includes("localhost");
   const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString,
     ssl: isLocal ? undefined : { rejectUnauthorized: false },
   });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
