@@ -7,6 +7,20 @@ import { remapColumns, type ColumnMapping } from "../../../lib/remapColumns";
 import PreviewTable from "./PreviewTable";
 import ColumnMapper from "./ColumnMapper";
 
+async function saveTransactions(transactions: ValidRow[]): Promise<number> {
+  const res = await fetch("/api/transactions/import", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ transactions }),
+  });
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.error ?? "Failed to save transactions.");
+  }
+  const data = await res.json();
+  return data.imported as number;
+}
+
 const REQUIRED_COLUMNS = ["date", "description", "amount"];
 
 type Result = {
@@ -40,12 +54,31 @@ export default function CsvUploader() {
   const [parseError, setParseError] = useState<string | null>(null);
   const [rawRows, setRawRows] = useState<string[][] | null>(null);
   const [result, setResult] = useState<Result | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importedCount, setImportedCount] = useState<number | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
 
   function reset() {
     setFileError(null);
     setParseError(null);
     setRawRows(null);
     setResult(null);
+    setImportedCount(null);
+    setImportError(null);
+  }
+
+  async function handleImport() {
+    if (!result || result.valid.length === 0) return;
+    setImporting(true);
+    setImportError(null);
+    try {
+      const count = await saveTransactions(result.valid);
+      setImportedCount(count);
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setImporting(false);
+    }
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -192,6 +225,27 @@ export default function CsvUploader() {
                   ))}
                 </ul>
               </div>
+            )}
+
+            {importedCount !== null ? (
+              <div className="rounded-md border border-green-200 bg-green-50 p-4">
+                <p className="text-sm font-medium text-green-800">
+                  {importedCount} transaction{importedCount !== 1 ? "s" : ""} imported successfully.
+                </p>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleImport}
+                disabled={importing}
+                className="rounded-md bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+              >
+                {importing ? "Importing…" : `Import ${result.valid.length} transaction${result.valid.length !== 1 ? "s" : ""}`}
+              </button>
+            )}
+
+            {importError && (
+              <p className="text-sm text-red-600">{importError}</p>
             )}
           </div>
         )}

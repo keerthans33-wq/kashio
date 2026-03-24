@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../lib/generated/prisma"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -14,4 +14,6 @@ model Transaction {
   normalizedMerchant String   // cleaned merchant name
   amount             Float    // negative = debit, positive = credit
   createdAt          DateTime @default(now())
+
+  @@unique([date, description, amount])
 }
