@@ -12,3 +12,8 @@ export async function rejectCandidate(id: string) {
   await db.deductionCandidate.update({ where: { id }, data: { status: "REJECTED" } });
   revalidatePath("/review");
 }
+
+export async function resetCandidate(id: string) {
+  await db.deductionCandidate.update({ where: { id }, data: { status: "NEEDS_REVIEW" } });
+  revalidatePath("/review");
+}

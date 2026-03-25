@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { confirmCandidate, rejectCandidate } from "./actions";
+import { confirmCandidate, rejectCandidate, resetCandidate } from "./actions";
 
 type Status     = "NEEDS_REVIEW" | "CONFIRMED" | "REJECTED";
 type Confidence = "LOW" | "MEDIUM" | "HIGH";
@@ -63,6 +63,20 @@ export function CandidateCard({ id, status: initialStatus, confidence, category,
     });
   }
 
+  function handleReset() {
+    const prev = status;
+    setStatus("NEEDS_REVIEW");
+    setError(null);
+    startTransition(async () => {
+      try {
+        await resetCandidate(id);
+      } catch {
+        setStatus(prev);
+        setError("Failed to save. Try again.");
+      }
+    });
+  }
+
   return (
     <div className={`rounded-lg border bg-white p-4 transition-colors ${STATUS_BORDER[status]}`}>
       <div className="flex items-start justify-between gap-4">
@@ -97,20 +111,32 @@ export function CandidateCard({ id, status: initialStatus, confidence, category,
           {!error && status === "NEEDS_REVIEW"   && (isPending ? "Saving…" : "Awaiting review")}
         </p>
         <div className="flex gap-2">
-          <button
-            onClick={handleConfirm}
-            disabled={isPending || settled}
-            className="rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Confirm
-          </button>
-          <button
-            onClick={handleReject}
-            disabled={isPending || settled}
-            className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition-opacity hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Reject
-          </button>
+          {settled ? (
+            <button
+              onClick={handleReset}
+              disabled={isPending}
+              className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 transition-opacity hover:bg-gray-50 disabled:opacity-40"
+            >
+              Undo
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={handleConfirm}
+                disabled={isPending}
+                className="rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:bg-green-700 disabled:opacity-40"
+              >
+                Confirm
+              </button>
+              <button
+                onClick={handleReject}
+                disabled={isPending}
+                className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition-opacity hover:bg-gray-50 disabled:opacity-40"
+              >
+                Reject
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
