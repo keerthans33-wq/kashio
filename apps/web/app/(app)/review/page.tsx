@@ -1,6 +1,7 @@
 import { db } from "../../../lib/db";
 import { ReviewFilters } from "./ReviewFilters";
-import { CandidateCard, type CandidateCardProps } from "./CandidateCard";
+import { ReviewList } from "./ReviewList";
+import type { CandidateCardProps } from "./CandidateCard";
 
 export const dynamic = "force-dynamic";
 
@@ -19,20 +20,6 @@ function toCardProps(c: Candidate): CandidateCardProps {
     reason:      c.reason,
     transaction: c.transaction,
   };
-}
-
-function Section({ title, candidates }: { title: string; candidates: Candidate[] }) {
-  if (candidates.length === 0) return null;
-  return (
-    <div>
-      <h2 className="mb-3 text-sm font-medium text-gray-500 uppercase tracking-wide">
-        {title} ({candidates.length})
-      </h2>
-      <div className="space-y-3">
-        {candidates.map((c) => <CandidateCard key={c.id} {...toCardProps(c)} />)}
-      </div>
-    </div>
-  );
 }
 
 type SearchParams = { status?: string; category?: string; confidence?: string; sort?: string };
@@ -104,10 +91,12 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
       ) : candidates.length === 0 ? (
         <p className="mt-10 text-center text-gray-400">No candidates match these filters.</p>
       ) : (
-        <div className="mt-6 space-y-8">
-          <Section title="Needs Review" candidates={needsReview} />
-          <Section title="Confirmed"    candidates={confirmed} />
-          <Section title="Rejected"     candidates={rejected} />
+        <div className="mt-6">
+          <ReviewList
+            needsReview={needsReview.map(toCardProps)}
+            confirmed={confirmed.map(toCardProps)}
+            rejected={rejected.map(toCardProps)}
+          />
         </div>
       )}
     </main>
