@@ -60,13 +60,14 @@ export const detectSoftware: Rule = (transaction) => {
 
   // Broad merchants require a software keyword in the description to reduce
   // false positives (e.g. Microsoft Xbox, Zoom personal, GitHub personal)
-  if (isBroad && !SOFTWARE_KEYWORDS.some((k) => desc.includes(k))) return null;
+  const matchedKeyword = SOFTWARE_KEYWORDS.find((k) => desc.includes(k));
+  if (isBroad && !matchedKeyword) return null;
 
   return {
     category:   CATEGORIES.WORK_SOFTWARE,
     confidence: "LOW",
     reason: isSpecific
-      ? `${transaction.normalizedMerchant} is a work software tool — confirm if used for work`
-      : `${transaction.normalizedMerchant} description suggests a software subscription — confirm if used for work`,
+      ? `Looks like a software tool — check if you use ${transaction.normalizedMerchant} for work`
+      : `Description includes "${matchedKeyword}" — check if this ${transaction.normalizedMerchant} charge is for work`,
   };
 };

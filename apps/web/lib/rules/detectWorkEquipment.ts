@@ -29,16 +29,16 @@ export const detectWorkEquipment: Rule = (transaction) => {
   const desc     = transaction.description.toLowerCase();
   const merchant = transaction.normalizedMerchant.toLowerCase();
 
-  const inDescription = KEYWORDS.some((k) => desc.includes(k));
-  const inMerchant    = KEYWORDS.some((k) => merchant.includes(k));
+  const matchedInDesc     = KEYWORDS.find((k) => desc.includes(k));
+  const matchedInMerchant = KEYWORDS.find((k) => merchant.includes(k));
 
-  if (!inDescription && !inMerchant) return null;
+  if (!matchedInDesc && !matchedInMerchant) return null;
 
   return {
     category:   CATEGORIES.OFFICE_SUPPLIES,
     confidence: "LOW",
-    reason: inDescription
-      ? `description mentions work equipment at ${transaction.normalizedMerchant} — confirm if purchased for work`
-      : `${transaction.normalizedMerchant} may sell work equipment — confirm if this purchase was work-related`,
+    reason: matchedInDesc
+      ? `Description includes "${matchedInDesc}" — check if this was purchased for work use`
+      : `Merchant name includes "${matchedInMerchant}" — check if this purchase was work-related`,
   };
 };

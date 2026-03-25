@@ -29,16 +29,16 @@ export const detectOfficeSupplies: Rule = (transaction) => {
   const descLower = transaction.description.toLowerCase();
 
   const merchantMatch = MERCHANTS.some((m) => merchant.includes(m));
-  const keywordMatch  = KEYWORDS.some((k) => descLower.includes(k) || merchant.includes(k));
+  const matchedKeyword = KEYWORDS.find((k) => descLower.includes(k) || merchant.includes(k));
 
-  if (!merchantMatch && !keywordMatch) return null;
+  if (!merchantMatch && !matchedKeyword) return null;
 
   // Both signals present → stronger evidence it's a work purchase
-  if (merchantMatch && keywordMatch) {
+  if (merchantMatch && matchedKeyword) {
     return {
       category:   CATEGORIES.OFFICE_SUPPLIES,
       confidence: "MEDIUM",
-      reason:     `${transaction.normalizedMerchant} matches a known retailer and description — confirm if purchased for work`,
+      reason:     `Purchased at ${transaction.normalizedMerchant} and description includes "${matchedKeyword}" — looks like it could be a work purchase`,
     };
   }
 
@@ -47,7 +47,7 @@ export const detectOfficeSupplies: Rule = (transaction) => {
     category:   CATEGORIES.OFFICE_SUPPLIES,
     confidence: "LOW",
     reason:     merchantMatch
-      ? `${transaction.normalizedMerchant} is an office supply retailer — confirm if purchased for work`
-      : `${transaction.normalizedMerchant} description suggests office supplies — confirm if used for work`,
+      ? `${transaction.normalizedMerchant} is a known office supply retailer — check if this was purchased for work`
+      : `Description includes "${matchedKeyword}" — check if this was purchased for work`,
   };
 };

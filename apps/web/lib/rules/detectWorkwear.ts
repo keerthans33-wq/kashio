@@ -53,15 +53,16 @@ export const detectWorkwear: Rule = (transaction) => {
     return {
       category:   CATEGORIES.WORK_CLOTHING,
       confidence: "MEDIUM",
-      reason:     `${transaction.normalizedMerchant} is a workwear retailer — confirm if purchased for work use`,
+      reason:     `Looks like a dedicated workwear retailer — check if purchased for work use`,
     };
   }
 
-  if (KEYWORDS.some((k) => combined.includes(k))) {
+  const matchedKeyword = KEYWORDS.find((k) => combined.includes(k));
+  if (matchedKeyword) {
     return {
       category:   CATEGORIES.WORK_CLOTHING,
       confidence: "LOW",
-      reason:     `${transaction.normalizedMerchant} description suggests work clothing — confirm if deductible`,
+      reason:     `Description includes "${matchedKeyword}" — check if this is deductible work clothing`,
     };
   }
 
