@@ -92,7 +92,7 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
       setLastIds(ids);
       setSuccessMsg(`${count} candidate${count !== 1 ? "s" : ""} ${label}.`);
     } catch {
-      setError("Could not save. Please try again.");
+      setError("Could not save bulk changes. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -108,7 +108,7 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
       setLastIds([]);
       setSuccessMsg(`${count} candidate${count !== 1 ? "s" : ""} moved back to needs review.`);
     } catch {
-      setError("Could not undo. Please try again.");
+      setError("Could not undo bulk changes. Please try again.");
     } finally {
       setIsSaving(false);
     }

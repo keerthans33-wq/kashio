@@ -77,7 +77,7 @@ export function CandidateCard({
       await action();
       setStatus(next);
     } catch {
-      setError("Could not save. Please try again.");
+      setError("Could not save this review decision. Please try again.");
     } finally {
       setIsSaving(false);
     }
