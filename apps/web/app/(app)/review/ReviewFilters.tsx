@@ -1,0 +1,74 @@
+"use client";
+
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { CATEGORIES } from "../../../lib/rules/categories";
+
+const ALL_CATEGORIES = Object.values(CATEGORIES);
+
+export function ReviewFilters() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
+
+  function update(key: string, value: string) {
+    const next = new URLSearchParams(params.toString());
+    if (value === "") {
+      next.delete(key);
+    } else {
+      next.set(key, value);
+    }
+    router.push(`${pathname}?${next.toString()}`);
+  }
+
+  const status     = params.get("status") ?? "";
+  const category   = params.get("category") ?? "";
+  const confidence = params.get("confidence") ?? "";
+
+  const hasFilters = status || category || confidence;
+
+  return (
+    <div className="mt-4 flex flex-wrap items-center gap-3">
+      <select
+        value={status}
+        onChange={(e) => update("status", e.target.value)}
+        className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300"
+      >
+        <option value="">All statuses</option>
+        <option value="NEEDS_REVIEW">Needs Review</option>
+        <option value="CONFIRMED">Confirmed</option>
+        <option value="REJECTED">Rejected</option>
+      </select>
+
+      <select
+        value={category}
+        onChange={(e) => update("category", e.target.value)}
+        className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300"
+      >
+        <option value="">All categories</option>
+        {ALL_CATEGORIES.map((c) => (
+          <option key={c} value={c}>{c}</option>
+        ))}
+      </select>
+
+      <select
+        value={confidence}
+        onChange={(e) => update("confidence", e.target.value)}
+        className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300"
+      >
+        <option value="">All confidence</option>
+        <option value="HIGH">High</option>
+        <option value="MEDIUM">Medium</option>
+        <option value="LOW">Low</option>
+      </select>
+
+      {hasFilters && (
+        <button
+          onClick={() => router.push(pathname)}
+          className="text-sm text-gray-400 hover:text-gray-600 underline"
+        >
+          Clear filters
+        </button>
+      )}
+    </div>
+  );
+}

@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "../../../lib/db";
 import type { Confidence, DeductionStatus } from "@prisma/client";
+import { ReviewFilters } from "./ReviewFilters";
 
 export const dynamic = "force-dynamic";
 
@@ -97,27 +98,45 @@ function Section({ title, candidates }: { title: string; candidates: Candidate[]
   );
 }
 
-export default async function Review() {
-  const candidates = await db.deductionCandidate.findMany({
+type SearchParams = { status?: string; category?: string; confidence?: string };
+
+export default async function Review({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const { status, category, confidence } = await searchParams;
+
+  const all = await db.deductionCandidate.findMany({
     include: { transaction: true },
     orderBy: { transaction: { date: "desc" } },
+  });
+
+  const candidates = all.filter((c) => {
+    if (status     && c.status     !== status)     return false;
+    if (category   && c.category   !== category)   return false;
+    if (confidence && c.confidence !== confidence) return false;
+    return true;
   });
 
   const needsReview = candidates.filter((c) => c.status === "NEEDS_REVIEW");
   const confirmed   = candidates.filter((c) => c.status === "CONFIRMED");
   const rejected    = candidates.filter((c) => c.status === "REJECTED");
 
+  const isFiltered = status || category || confidence;
+
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
       <h1 className="text-2xl font-semibold text-gray-900">Review</h1>
       <p className="mt-1 text-gray-500">
-        {candidates.length} deduction candidate{candidates.length !== 1 ? "s" : ""} found
+        {all.length} deduction candidate{all.length !== 1 ? "s" : ""} found
+        {isFiltered && ` · ${candidates.length} shown`}
       </p>
 
-      {candidates.length === 0 ? (
+      <ReviewFilters />
+
+      {all.length === 0 ? (
         <p className="mt-10 text-center text-gray-400">
           No candidates yet. Import a CSV to detect deductions.
         </p>
+      ) : candidates.length === 0 ? (
+        <p className="mt-10 text-center text-gray-400">No candidates match these filters.</p>
       ) : (
         <div className="mt-6 space-y-8">
           <Section title="Needs Review" candidates={needsReview} />
