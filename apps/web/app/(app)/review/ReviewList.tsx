@@ -13,11 +13,13 @@ type Props = {
 function Section({
   title,
   candidates,
+  selectable,
   selected,
   onToggle,
 }: {
   title:      string;
   candidates: CandidateCardProps[];
+  selectable: boolean;
   selected:   Set<string>;
   onToggle:   (id: string) => void;
 }) {
@@ -30,12 +32,17 @@ function Section({
       <div className="space-y-3">
         {candidates.map((c) => (
           <div key={c.id} className="flex items-start gap-3">
-            <input
-              type="checkbox"
-              checked={selected.has(c.id)}
-              onChange={() => onToggle(c.id)}
-              className="mt-6 h-4 w-4 shrink-0 cursor-pointer rounded border-gray-300 accent-green-600"
-            />
+            {selectable ? (
+              <input
+                type="checkbox"
+                checked={selected.has(c.id)}
+                onChange={() => onToggle(c.id)}
+                className="mt-6 h-4 w-4 shrink-0 cursor-pointer rounded border-gray-300 accent-green-600"
+              />
+            ) : (
+              // Spacer keeps card alignment consistent across sections
+              <div className="mt-6 h-4 w-4 shrink-0" />
+            )}
             <div className="min-w-0 flex-1">
               <CandidateCard {...c} />
             </div>
@@ -47,9 +54,14 @@ function Section({
 }
 
 export function ReviewList({ needsReview, confirmed, rejected }: Props) {
-  const [selected, setSelected]   = useState<Set<string>>(new Set());
-  const [isSaving, setIsSaving]   = useState(false);
-  const [error, setError]         = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError]       = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  // Bulk actions only apply to NEEDS_REVIEW — confirmed and rejected cards
+  // are intentionally excluded to keep the workflow conceptually clean.
+  const needsReviewIds = needsReview.map((c) => c.id);
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -59,18 +71,23 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
     });
   }
 
-  const allIds = [...needsReview, ...confirmed, ...rejected].map((c) => c.id);
-
   function toggleAll() {
-    setSelected(selected.size === allIds.length ? new Set() : new Set(allIds));
+    setSelected(
+      selected.size === needsReviewIds.length
+        ? new Set()
+        : new Set(needsReviewIds),
+    );
   }
 
-  async function bulkAction(action: (ids: string[]) => Promise<void>) {
+  async function bulkAction(action: (ids: string[]) => Promise<void>, label: string) {
+    const count = selected.size;
     setIsSaving(true);
     setError(null);
+    setSuccessMsg(null);
     try {
       await action([...selected]);
       setSelected(new Set());
+      setSuccessMsg(`${count} candidate${count !== 1 ? "s" : ""} ${label}. Use Undo on individual cards to revert.`);
     } catch {
       setError("Could not save. Please try again.");
     } finally {
@@ -80,25 +97,33 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
 
   return (
     <div>
-      {/* Bulk action bar */}
+      {/* Success message */}
+      {successMsg && !isSaving && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-green-200 bg-green-50 px-4 py-3">
+          <p className="text-sm text-green-700">{successMsg}</p>
+          <button onClick={() => setSuccessMsg(null)} className="ml-4 text-xs text-green-500 hover:text-green-700">
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Bulk action bar — only visible when needs-review candidates are selected */}
       {selected.size > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm">
-          <span className="text-sm text-gray-600">
-            {selected.size} selected
-          </span>
+          <span className="text-sm text-gray-600">{selected.size} selected</span>
           <button
-            onClick={() => bulkAction(bulkConfirmCandidates)}
+            onClick={() => bulkAction(bulkConfirmCandidates, "confirmed")}
             disabled={isSaving}
             className="rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-40"
           >
-            Confirm all
+            {isSaving ? "Saving…" : "Confirm all"}
           </button>
           <button
-            onClick={() => bulkAction(bulkRejectCandidates)}
+            onClick={() => bulkAction(bulkRejectCandidates, "rejected")}
             disabled={isSaving}
             className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40"
           >
-            Reject all
+            {isSaving ? "Saving…" : "Reject all"}
           </button>
           <button
             onClick={() => setSelected(new Set())}
@@ -111,23 +136,25 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
         </div>
       )}
 
-      {/* Select all toggle */}
-      <div className="mb-4 flex items-center gap-2">
-        <input
-          type="checkbox"
-          checked={allIds.length > 0 && selected.size === allIds.length}
-          onChange={toggleAll}
-          className="h-4 w-4 cursor-pointer rounded border-gray-300 accent-green-600"
-        />
-        <span className="text-xs text-gray-400">
-          {selected.size === allIds.length && allIds.length > 0 ? "Deselect all" : "Select all"}
-        </span>
-      </div>
+      {/* Select all — scoped to needs-review only */}
+      {needsReviewIds.length > 0 && (
+        <div className="mb-4 flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={needsReviewIds.length > 0 && selected.size === needsReviewIds.length}
+            onChange={toggleAll}
+            className="h-4 w-4 cursor-pointer rounded border-gray-300 accent-green-600"
+          />
+          <span className="text-xs text-gray-400">
+            {selected.size === needsReviewIds.length ? "Deselect all" : "Select all pending"}
+          </span>
+        </div>
+      )}
 
       <div className="space-y-8">
-        <Section title="Needs Review" candidates={needsReview} selected={selected} onToggle={toggle} />
-        <Section title="Confirmed"    candidates={confirmed}   selected={selected} onToggle={toggle} />
-        <Section title="Rejected"     candidates={rejected}    selected={selected} onToggle={toggle} />
+        <Section title="Needs Review" candidates={needsReview} selectable={true}  selected={selected} onToggle={toggle} />
+        <Section title="Confirmed"    candidates={confirmed}   selectable={false} selected={selected} onToggle={toggle} />
+        <Section title="Rejected"     candidates={rejected}    selectable={false} selected={selected} onToggle={toggle} />
       </div>
     </div>
   );

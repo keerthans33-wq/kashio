@@ -89,7 +89,10 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
           No candidates yet. Import a CSV to detect deductions.
         </p>
       ) : candidates.length === 0 ? (
-        <p className="mt-10 text-center text-gray-400">No candidates match these filters.</p>
+        <p className="mt-10 text-center text-gray-400">
+          No candidates match these filters.{" "}
+          <a href="/review" className="underline hover:text-gray-600">Clear filters</a>
+        </p>
       ) : (
         <div className="mt-6">
           <ReviewList
