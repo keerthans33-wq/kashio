@@ -21,6 +21,12 @@ const CONFIDENCE_BADGE: Record<Confidence, string> = {
   LOW:    "bg-gray-100 text-gray-500",
 };
 
+const CONFIDENCE_HINT: Record<Confidence, string> = {
+  HIGH:   "Strong signal",
+  MEDIUM: "Retailer and description both matched",
+  LOW:    "Single signal only — may be personal",
+};
+
 const STATUS_BORDER: Record<Status, string> = {
   NEEDS_REVIEW: "border-gray-200",
   CONFIRMED:    "border-green-400",
@@ -109,6 +115,7 @@ export function CandidateCard({
           <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${CONFIDENCE_BADGE[confidence]}`}>
             {confidence}
           </span>
+          <p className="mt-1 text-xs text-gray-400">{CONFIDENCE_HINT[confidence]}</p>
         </Field>
       </div>
 
