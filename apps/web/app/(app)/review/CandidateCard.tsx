@@ -23,8 +23,8 @@ const CONFIDENCE_BADGE: Record<Confidence, string> = {
 
 const CONFIDENCE_HINT: Record<Confidence, string> = {
   HIGH:   "Strong signal",
-  MEDIUM: "Retailer and description both matched",
-  LOW:    "Single signal only — may be personal",
+  MEDIUM: "Reasonable match — worth confirming",
+  LOW:    "Weak signal — could easily be personal",
 };
 
 const STATUS_BORDER: Record<Status, string> = {

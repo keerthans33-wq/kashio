@@ -9,14 +9,13 @@ import type { Rule } from "./types";
 import { CATEGORIES } from "./categories";
 import { isExcluded } from "./shared";
 
-// Dedicated workwear retailers — purchase is almost certainly work clothing
+// Dedicated workwear retailers — specific brand names only.
+// Avoid broad substrings like "workwear" or "work wear" that could
+// over-match general retailers who happen to stock some PPE.
 const MERCHANTS = [
   "hard yakka",
   "king gee",
-  "bisley",
-  "workwear",
-  "work wear",
-  "tradie",
+  "bisley workwear",
   "totally workwear",
   "safe-t-disposable",
   "safety world",

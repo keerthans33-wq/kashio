@@ -55,7 +55,6 @@ export function ReviewFilters() {
         className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300"
       >
         <option value="">All confidence</option>
-        <option value="HIGH">High</option>
         <option value="MEDIUM">Medium</option>
         <option value="LOW">Low</option>
       </select>
