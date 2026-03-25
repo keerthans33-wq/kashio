@@ -2,11 +2,13 @@ import type { TransactionInput, DeductionMatch, Rule } from "./types";
 import { detectSoftware } from "./detectSoftware";
 import { detectOfficeSupplies } from "./detectOfficeSupplies";
 import { detectWorkEquipment } from "./detectWorkEquipment";
+import { detectWorkwear } from "./detectWorkwear";
 
 const rules: Rule[] = [
   detectSoftware,
   detectOfficeSupplies,
   detectWorkEquipment,
+  detectWorkwear,
 ];
 
 // Confidence rank used to resolve conflicts when multiple rules match.

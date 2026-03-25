@@ -4,6 +4,7 @@
 export const CATEGORIES = {
   WORK_SOFTWARE:            "Work Software & Tools",
   OFFICE_SUPPLIES:          "Office Supplies & Equipment",
+  WORK_CLOTHING:            "Work Clothing & Uniforms",
   PROFESSIONAL_DEVELOPMENT: "Professional Development",
   WORK_TRAVEL:              "Work-Related Travel",
   HOME_OFFICE:              "Home Office",
@@ -14,4 +15,5 @@ export const CATEGORIES = {
 export const ACTIVE_CATEGORIES: string[] = [
   CATEGORIES.WORK_SOFTWARE,
   CATEGORIES.OFFICE_SUPPLIES,
+  CATEGORIES.WORK_CLOTHING,
 ];
