@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CandidateCard, type CandidateCardProps } from "./CandidateCard";
-import { bulkConfirmCandidates, bulkRejectCandidates } from "./actions";
+import { bulkConfirmCandidates, bulkRejectCandidates, bulkResetCandidates } from "./actions";
 
 type Props = {
   needsReview: CandidateCardProps[];
@@ -54,10 +54,11 @@ function Section({
 }
 
 export function ReviewList({ needsReview, confirmed, rejected }: Props) {
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError]       = useState<string | null>(null);
+  const [selected, setSelected]     = useState<Set<string>>(new Set());
+  const [isSaving, setIsSaving]     = useState(false);
+  const [error, setError]           = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [lastIds, setLastIds]       = useState<string[]>([]);
 
   // Bulk actions only apply to NEEDS_REVIEW — confirmed and rejected cards
   // are intentionally excluded to keep the workflow conceptually clean.
@@ -80,16 +81,34 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
   }
 
   async function bulkAction(action: (ids: string[]) => Promise<void>, label: string) {
-    const count = selected.size;
+    const ids   = [...selected];
+    const count = ids.length;
     setIsSaving(true);
     setError(null);
     setSuccessMsg(null);
     try {
-      await action([...selected]);
+      await action(ids);
       setSelected(new Set());
-      setSuccessMsg(`${count} candidate${count !== 1 ? "s" : ""} ${label}. Use Undo on individual cards to revert.`);
+      setLastIds(ids);
+      setSuccessMsg(`${count} candidate${count !== 1 ? "s" : ""} ${label}.`);
     } catch {
       setError("Could not save. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleBulkUndo() {
+    const ids   = lastIds;
+    const count = ids.length;
+    setIsSaving(true);
+    setError(null);
+    try {
+      await bulkResetCandidates(ids);
+      setLastIds([]);
+      setSuccessMsg(`${count} candidate${count !== 1 ? "s" : ""} moved back to needs review.`);
+    } catch {
+      setError("Could not undo. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -99,11 +118,21 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
     <div>
       {/* Success message */}
       {successMsg && !isSaving && (
-        <div className="mb-4 flex items-center justify-between rounded-lg border border-green-200 bg-green-50 px-4 py-3">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
           <p className="text-sm text-green-700">{successMsg}</p>
-          <button onClick={() => setSuccessMsg(null)} className="ml-4 text-xs text-green-500 hover:text-green-700">
-            Dismiss
-          </button>
+          <div className="flex items-center gap-3">
+            {lastIds.length > 0 && (
+              <button
+                onClick={handleBulkUndo}
+                className="text-xs font-medium text-green-700 underline hover:text-green-900"
+              >
+                Undo
+              </button>
+            )}
+            <button onClick={() => { setSuccessMsg(null); setLastIds([]); }} className="text-xs text-green-500 hover:text-green-700">
+              Dismiss
+            </button>
+          </div>
         </div>
       )}
 

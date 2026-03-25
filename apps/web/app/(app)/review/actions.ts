@@ -27,3 +27,8 @@ export async function bulkRejectCandidates(ids: string[]) {
   await db.deductionCandidate.updateMany({ where: { id: { in: ids } }, data: { status: "REJECTED" } });
   revalidatePath("/review");
 }
+
+export async function bulkResetCandidates(ids: string[]) {
+  await db.deductionCandidate.updateMany({ where: { id: { in: ids } }, data: { status: "NEEDS_REVIEW" } });
+  revalidatePath("/review");
+}
