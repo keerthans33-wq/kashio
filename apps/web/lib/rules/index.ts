@@ -3,23 +3,32 @@ import { detectSoftware } from "./detectSoftware";
 import { detectOfficeSupplies } from "./detectOfficeSupplies";
 import { detectWorkEquipment } from "./detectWorkEquipment";
 
-// All active rules, checked in order.
-// IMPORTANT: the engine returns the FIRST match only — one candidate per transaction.
-// Place more specific rules before broader ones to avoid the wrong rule winning.
 const rules: Rule[] = [
-  detectSoftware,        // merchant list match — most precise
-  detectOfficeSupplies,  // known retailers + consumable keywords
-  detectWorkEquipment,   // hardware keywords in description — broadest
+  detectSoftware,
+  detectOfficeSupplies,
+  detectWorkEquipment,
 ];
 
-// Runs each rule in order and returns the first match, or null if none match.
-// Deterministic — same transaction always produces the same result.
+// Confidence rank used to resolve conflicts when multiple rules match.
+const CONFIDENCE_RANK: Record<DeductionMatch["confidence"], number> = {
+  HIGH:   3,
+  MEDIUM: 2,
+  LOW:    1,
+};
+
+// Runs all rules against a transaction and returns the highest-confidence
+// match, or null if nothing matches. Ties go to whichever rule appears
+// first in the array above — behaviour is always deterministic.
 export function detectDeduction(transaction: TransactionInput): DeductionMatch | null {
-  for (const rule of rules) {
-    const match = rule(transaction);
-    if (match) return match;
-  }
-  return null;
+  const matches = rules
+    .map((rule) => rule(transaction))
+    .filter((m): m is DeductionMatch => m !== null);
+
+  if (matches.length === 0) return null;
+
+  return matches.reduce((best, current) =>
+    CONFIDENCE_RANK[current.confidence] > CONFIDENCE_RANK[best.confidence] ? current : best,
+  );
 }
 
 export type { TransactionInput, DeductionMatch };
