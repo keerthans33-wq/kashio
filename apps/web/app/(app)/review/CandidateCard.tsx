@@ -23,11 +23,28 @@ const CONFIDENCE_BADGE: Record<Confidence, string> = {
 
 const STATUS_BORDER: Record<Status, string> = {
   NEEDS_REVIEW: "border-gray-200",
-  CONFIRMED:    "border-green-300",
-  REJECTED:     "border-red-200",
+  CONFIRMED:    "border-green-400",
+  REJECTED:     "border-red-300",
 };
 
-export function CandidateCard({ id, status: initialStatus, confidence, category, reason, transaction }: CandidateCardProps) {
+const STATUS_BG: Record<Status, string> = {
+  NEEDS_REVIEW: "bg-white",
+  CONFIRMED:    "bg-green-50",
+  REJECTED:     "bg-red-50",
+};
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-xs font-medium uppercase tracking-wide text-gray-400">{label}</p>
+      <div className="mt-0.5">{children}</div>
+    </div>
+  );
+}
+
+export function CandidateCard({
+  id, status: initialStatus, confidence, category, reason, transaction,
+}: CandidateCardProps) {
   const [status, setStatus]          = useState<Status>(initialStatus);
   const [error, setError]            = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -40,12 +57,8 @@ export function CandidateCard({ id, status: initialStatus, confidence, category,
     setStatus("CONFIRMED");
     setError(null);
     startTransition(async () => {
-      try {
-        await confirmCandidate(id);
-      } catch {
-        setStatus(prev);
-        setError("Failed to save. Try again.");
-      }
+      try { await confirmCandidate(id); }
+      catch { setStatus(prev); setError("Failed to save. Try again."); }
     });
   }
 
@@ -54,12 +67,8 @@ export function CandidateCard({ id, status: initialStatus, confidence, category,
     setStatus("REJECTED");
     setError(null);
     startTransition(async () => {
-      try {
-        await rejectCandidate(id);
-      } catch {
-        setStatus(prev);
-        setError("Failed to save. Try again.");
-      }
+      try { await rejectCandidate(id); }
+      catch { setStatus(prev); setError("Failed to save. Try again."); }
     });
   }
 
@@ -68,54 +77,69 @@ export function CandidateCard({ id, status: initialStatus, confidence, category,
     setStatus("NEEDS_REVIEW");
     setError(null);
     startTransition(async () => {
-      try {
-        await resetCandidate(id);
-      } catch {
-        setStatus(prev);
-        setError("Failed to save. Try again.");
-      }
+      try { await resetCandidate(id); }
+      catch { setStatus(prev); setError("Failed to save. Try again."); }
     });
   }
 
   return (
-    <div className={`rounded-lg border bg-white p-4 transition-colors ${STATUS_BORDER[status]}`}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-gray-900">{transaction.normalizedMerchant}</span>
-            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${CONFIDENCE_BADGE[confidence]}`}>
-              {confidence}
-            </span>
-          </div>
-          <p className="mt-0.5 text-sm text-gray-500">{category}</p>
-          <p className="mt-1 text-sm text-gray-400">{reason}</p>
-          {transaction.description !== transaction.normalizedMerchant && (
-            <p className="mt-1 truncate text-xs text-gray-300" title={transaction.description}>
-              {transaction.description}
-            </p>
-          )}
-        </div>
-        <div className="shrink-0 text-right">
-          <p className={`text-base font-semibold ${amount < 0 ? "text-red-600" : "text-green-600"}`}>
+    <div className={`rounded-lg border p-5 transition-colors ${STATUS_BORDER[status]} ${STATUS_BG[status]}`}>
+
+      {/* Row 1: merchant + amount */}
+      <div className="flex items-start justify-between gap-6">
+        <Field label="Merchant">
+          <p className="text-base font-semibold text-gray-900">{transaction.normalizedMerchant}</p>
+        </Field>
+        <Field label="Amount">
+          <p className={`text-base font-semibold tabular-nums ${amount < 0 ? "text-red-600" : "text-green-600"}`}>
             {amount < 0 ? "-" : "+"}${Math.abs(amount).toFixed(2)}
           </p>
-          <p className="mt-0.5 text-xs text-gray-400">{transaction.date}</p>
-        </div>
+        </Field>
       </div>
 
-      <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
+      {/* Row 2: date + category + confidence */}
+      <div className="mt-4 flex flex-wrap gap-6">
+        <Field label="Date">
+          <p className="text-sm text-gray-700">{transaction.date}</p>
+        </Field>
+        <Field label="Category">
+          <p className="text-sm text-gray-700">{category}</p>
+        </Field>
+        <Field label="Confidence">
+          <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${CONFIDENCE_BADGE[confidence]}`}>
+            {confidence}
+          </span>
+        </Field>
+      </div>
+
+      {/* Row 3: raw description */}
+      <div className="mt-4">
+        <Field label="Bank description">
+          <p className="text-sm text-gray-600 break-words">{transaction.description}</p>
+        </Field>
+      </div>
+
+      {/* Row 4: reason */}
+      <div className="mt-4">
+        <Field label="Why flagged">
+          <p className="text-sm text-gray-500">{reason}</p>
+        </Field>
+      </div>
+
+      {/* Footer: status + actions */}
+      <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-4">
         <p className="text-xs text-gray-400">
-          {error                                 && <span className="text-red-500">{error}</span>}
-          {!error && status === "CONFIRMED"      && "✓ Confirmed"}
-          {!error && status === "REJECTED"       && "✗ Rejected"}
-          {!error && status === "NEEDS_REVIEW"   && (isPending ? "Saving…" : "Awaiting review")}
+          {error                               && <span className="text-red-500">{error}</span>}
+          {!error && status === "CONFIRMED"    && "✓ Confirmed"}
+          {!error && status === "REJECTED"     && "✗ Rejected"}
+          {!error && status === "NEEDS_REVIEW" && (isPending ? "Saving…" : "Awaiting review")}
         </p>
         <div className="flex gap-2">
           {settled ? (
             <button
               onClick={handleReset}
               disabled={isPending}
-              className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 transition-opacity hover:bg-gray-50 disabled:opacity-40"
+              className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 transition-opacity hover:bg-white disabled:opacity-40"
             >
               Undo
             </button>
