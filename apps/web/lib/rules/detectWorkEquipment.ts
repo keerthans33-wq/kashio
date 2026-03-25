@@ -1,34 +1,44 @@
 // Category:   Office Supplies & Equipment
-// Confidence: LOW
-// Detects:    Hardware/equipment keywords in description or merchant
+// Confidence: LOW — all items here are consumer-heavy enough that a keyword
+//             match alone is never strong evidence. Description matches are
+//             slightly more informative than merchant-name matches, so the
+//             reason text distinguishes between them, but confidence stays LOW
+//             in both cases.
+// Detects:    Work-equipment keywords in description or merchant name
 
 import type { Rule } from "./types";
 import { CATEGORIES } from "./categories";
 import { isExcluded } from "./shared";
 
+// Items with meaningful work use but also common in personal/gaming contexts.
+// Intentionally excludes laptop, headset, and desk lamp (too consumer-heavy).
 const KEYWORDS = [
-  "monitor",
-  "keyboard",
-  "webcam",
-  "hard drive",
-  "usb hub",
-  "standing desk",
-  "docking station",
+  "docking station",  // strongest signal — rarely personal
+  "standing desk",    // home-office furniture, still needs confirmation
+  "usb hub",          // mostly work, occasionally personal
+  "webcam",           // work or streaming — needs confirmation
+  "hard drive",       // work backup or personal storage — needs confirmation
+  "monitor",          // work or gaming — needs confirmation
+  "keyboard",         // work or gaming — needs confirmation
 ];
 
 export const detectWorkEquipment: Rule = (transaction) => {
   if (transaction.amount >= 0) return null;
   if (isExcluded(transaction.description)) return null;
 
-  const combined =
-    transaction.description.toLowerCase() + " " +
-    transaction.normalizedMerchant.toLowerCase();
+  const desc     = transaction.description.toLowerCase();
+  const merchant = transaction.normalizedMerchant.toLowerCase();
 
-  if (!KEYWORDS.some((k) => combined.includes(k))) return null;
+  const inDescription = KEYWORDS.some((k) => desc.includes(k));
+  const inMerchant    = KEYWORDS.some((k) => merchant.includes(k));
+
+  if (!inDescription && !inMerchant) return null;
 
   return {
-    category: CATEGORIES.OFFICE_SUPPLIES,
+    category:   CATEGORIES.OFFICE_SUPPLIES,
     confidence: "LOW",
-    reason: `${transaction.normalizedMerchant} may include work equipment — confirm if purchased for work use`,
+    reason: inDescription
+      ? `description mentions work equipment at ${transaction.normalizedMerchant} — confirm if purchased for work`
+      : `${transaction.normalizedMerchant} may sell work equipment — confirm if this purchase was work-related`,
   };
 };
