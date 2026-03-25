@@ -1,23 +1,49 @@
 // Category:   Work Software & Tools
-// Confidence: LOW — software merchants are consumer-heavy (Microsoft, Zoom, GitHub
-//             all have personal tiers), so a merchant match alone is weak signal.
-// Detects:    Known software subscription merchants
+// Confidence: LOW throughout — even specific merchants have personal tiers,
+//             so a match is a prompt to confirm, not a strong assertion.
+//
+// Two tiers of merchants:
+//   SPECIFIC  — tools that are almost exclusively used for work (Figma, Slack,
+//               etc.). Merchant match alone is enough to flag.
+//   BROAD     — consumer-heavy merchants (Microsoft, Zoom, GitHub) that also
+//               sell gaming, personal storage, and free/personal plans.
+//               Require a software keyword in the raw description to match.
 
 import type { Rule } from "./types";
 import { CATEGORIES } from "./categories";
 import { isExcluded } from "./shared";
 
-const MERCHANTS = [
+// Mostly B2B / professional tools — personal use is uncommon
+const SPECIFIC_MERCHANTS = [
   "adobe",
   "canva",
   "dropbox",
   "figma",
-  "github",
   "google workspace",
-  "microsoft",
   "notion",
   "slack",
+];
+
+// High personal-use overlap — need description confirmation
+const BROAD_MERCHANTS = [
+  "github",
+  "microsoft",
   "zoom",
+];
+
+// Keywords that suggest a subscription rather than a one-off or personal purchase
+const SOFTWARE_KEYWORDS = [
+  "subscription",
+  "license",
+  "licence",
+  "monthly",
+  "annual",
+  "renewal",
+  "365",
+  "workspace",
+  "pro plan",
+  "premium plan",
+  "business plan",
 ];
 
 export const detectSoftware: Rule = (transaction) => {
@@ -25,11 +51,22 @@ export const detectSoftware: Rule = (transaction) => {
   if (isExcluded(transaction.description)) return null;
 
   const merchant = transaction.normalizedMerchant.toLowerCase();
-  if (!MERCHANTS.some((m) => merchant.includes(m))) return null;
+  const desc     = transaction.description.toLowerCase();
+
+  const isSpecific = SPECIFIC_MERCHANTS.some((m) => merchant.includes(m));
+  const isBroad    = !isSpecific && BROAD_MERCHANTS.some((m) => merchant.includes(m));
+
+  if (!isSpecific && !isBroad) return null;
+
+  // Broad merchants require a software keyword in the description to reduce
+  // false positives (e.g. Microsoft Xbox, Zoom personal, GitHub personal)
+  if (isBroad && !SOFTWARE_KEYWORDS.some((k) => desc.includes(k))) return null;
 
   return {
-    category: CATEGORIES.WORK_SOFTWARE,
+    category:   CATEGORIES.WORK_SOFTWARE,
     confidence: "LOW",
-    reason: `${transaction.normalizedMerchant} looks like a software subscription — confirm if used for work`,
+    reason: isSpecific
+      ? `${transaction.normalizedMerchant} is a work software tool — confirm if used for work`
+      : `${transaction.normalizedMerchant} description suggests a software subscription — confirm if used for work`,
   };
 };
