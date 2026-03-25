@@ -170,7 +170,7 @@ export default function CsvUploader() {
   return (
     <div className="mt-8">
       <div className="max-w-md">
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Bank CSV file
         </label>
 
@@ -178,11 +178,11 @@ export default function CsvUploader() {
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            className="rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
           >
             Choose file
           </button>
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-gray-500 dark:text-gray-400">
             {file ? file.name : "No file chosen"}
           </span>
         </div>
@@ -202,22 +202,22 @@ export default function CsvUploader() {
         <button
           type="button"
           onClick={handleUpload}
-          className="mt-4 rounded-md bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700"
+          className="mt-4 rounded-md bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300"
         >
           Upload
         </button>
 
         {parseError && (
-          <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4">
-            <p className="text-sm font-medium text-red-700">Could not read file</p>
-            <p className="mt-1 text-sm text-red-600">{parseError}</p>
+          <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+            <p className="text-sm font-medium text-red-700 dark:text-red-400">Could not read file</p>
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{parseError}</p>
           </div>
         )}
 
         {noUsableRows && (
-          <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4">
-            <p className="text-sm font-medium text-red-700">No valid transactions found</p>
-            <p className="mt-1 text-sm text-red-600">
+          <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+            <p className="text-sm font-medium text-red-700 dark:text-red-400">No valid transactions found</p>
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
               Every row in this file was skipped. Check the errors below and fix your CSV.
             </p>
           </div>
@@ -227,27 +227,27 @@ export default function CsvUploader() {
           <div className="mt-4 space-y-3">
 
             {/* Summary — updates after import to show final counts */}
-            <div className="rounded-md border border-gray-200 bg-gray-50 p-4 text-sm">
-              <p className="font-medium text-gray-800">
+            <div className="rounded-md border border-gray-200 bg-gray-50 p-4 text-sm dark:border-gray-700 dark:bg-gray-800">
+              <p className="font-medium text-gray-800 dark:text-gray-200">
                 {importResult !== null ? "Import complete" : "Ready to import"}
               </p>
               <ul className="mt-2 space-y-1">
-                <li className="text-gray-500">{result.raw.length} rows read from file</li>
+                <li className="text-gray-500 dark:text-gray-400">{result.raw.length} rows read from file</li>
                 {importResult !== null ? (
                   <>
-                    <li className="text-green-700">{importResult.inserted} inserted</li>
+                    <li className="text-green-700 dark:text-green-400">{importResult.inserted} inserted</li>
                     {importResult.duplicates > 0 && (
-                      <li className="text-yellow-700">{importResult.duplicates} duplicates — already saved, skipped</li>
+                      <li className="text-yellow-700 dark:text-yellow-400">{importResult.duplicates} duplicates — already saved, skipped</li>
                     )}
                     {importResult.invalid > 0 && (
-                      <li className="text-red-600">{importResult.invalid} invalid — rejected before upload</li>
+                      <li className="text-red-600 dark:text-red-400">{importResult.invalid} invalid — rejected before upload</li>
                     )}
                   </>
                 ) : (
                   <>
-                    <li className="text-green-700">{result.valid.length} valid — ready to import</li>
+                    <li className="text-green-700 dark:text-green-400">{result.valid.length} valid — ready to import</li>
                     {result.invalid.length > 0 && (
-                      <li className="text-yellow-700">{result.invalid.length} invalid — see details below</li>
+                      <li className="text-yellow-700 dark:text-yellow-400">{result.invalid.length} invalid — see details below</li>
                     )}
                   </>
                 )}
@@ -256,13 +256,13 @@ export default function CsvUploader() {
 
             {/* Invalid row details */}
             {result.invalid.length > 0 && (
-              <div className="rounded-md border border-yellow-200 bg-yellow-50 p-4">
-                <p className="text-sm font-medium text-yellow-800">
+              <div className="rounded-md border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/20">
+                <p className="text-sm font-medium text-yellow-800 dark:text-yellow-400">
                   {result.invalid.length} row{result.invalid.length !== 1 ? "s" : ""} rejected
                 </p>
                 <ul className="mt-2 space-y-1">
                   {result.invalid.map((row) => (
-                    <li key={row.rowNumber} className="text-sm text-yellow-700">
+                    <li key={row.rowNumber} className="text-sm text-yellow-700 dark:text-yellow-400">
                       Row {row.rowNumber}: {row.reason}
                     </li>
                   ))}
@@ -275,14 +275,14 @@ export default function CsvUploader() {
                 type="button"
                 onClick={handleImport}
                 disabled={importing}
-                className="rounded-md bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+                className="rounded-md bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300"
               >
                 {importing ? "Importing…" : `Import ${result.valid.length} transaction${result.valid.length !== 1 ? "s" : ""}`}
               </button>
             )}
 
             {importError && (
-              <p className="text-sm text-red-600">{importError}</p>
+              <p className="text-sm text-red-600 dark:text-red-400">{importError}</p>
             )}
           </div>
         )}

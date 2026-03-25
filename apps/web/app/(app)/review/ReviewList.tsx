@@ -26,7 +26,7 @@ function Section({
   if (candidates.length === 0) return null;
   return (
     <div>
-      <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-gray-500">
+      <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
         {title} ({candidates.length})
       </h2>
       <div className="space-y-3">
@@ -37,7 +37,7 @@ function Section({
                 type="checkbox"
                 checked={selected.has(c.id)}
                 onChange={() => onToggle(c.id)}
-                className="mt-6 h-4 w-4 shrink-0 cursor-pointer rounded border-gray-300 accent-green-600"
+                className="mt-6 h-4 w-4 shrink-0 cursor-pointer rounded border-gray-300 accent-green-600 dark:border-gray-600"
               />
             ) : (
               // Spacer keeps card alignment consistent across sections
@@ -118,18 +118,18 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
     <div>
       {/* Success message */}
       {successMsg && !isSaving && (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
-          <p className="text-sm text-green-700">{successMsg}</p>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 dark:border-green-800 dark:bg-green-900/20">
+          <p className="text-sm text-green-700 dark:text-green-400">{successMsg}</p>
           <div className="flex items-center gap-3">
             {lastIds.length > 0 && (
               <button
                 onClick={handleBulkUndo}
-                className="text-xs font-medium text-green-700 underline hover:text-green-900"
+                className="text-xs font-medium text-green-700 underline hover:text-green-900 dark:text-green-400 dark:hover:text-green-200"
               >
                 Undo
               </button>
             )}
-            <button onClick={() => { setSuccessMsg(null); setLastIds([]); }} className="text-xs text-green-500 hover:text-green-700">
+            <button onClick={() => { setSuccessMsg(null); setLastIds([]); }} className="text-xs text-green-500 hover:text-green-700 dark:text-green-500 dark:hover:text-green-300">
               Dismiss
             </button>
           </div>
@@ -138,8 +138,8 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
 
       {/* Bulk action bar — only visible when needs-review candidates are selected */}
       {selected.size > 0 && (
-        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm">
-          <span className="text-sm text-gray-600">{selected.size} selected</span>
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <span className="text-sm text-gray-600 dark:text-gray-400">{selected.size} selected</span>
           <button
             onClick={() => bulkAction(bulkConfirmCandidates, "confirmed")}
             disabled={isSaving}
@@ -150,14 +150,14 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
           <button
             onClick={() => bulkAction(bulkRejectCandidates, "rejected")}
             disabled={isSaving}
-            className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+            className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
           >
             {isSaving ? "Saving…" : "Reject all"}
           </button>
           <button
             onClick={() => setSelected(new Set())}
             disabled={isSaving}
-            className="text-xs text-gray-400 hover:text-gray-600 underline disabled:opacity-40"
+            className="text-xs text-gray-400 hover:text-gray-600 underline disabled:opacity-40 dark:text-gray-500 dark:hover:text-gray-300"
           >
             Clear
           </button>
@@ -172,9 +172,9 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
             type="checkbox"
             checked={needsReviewIds.length > 0 && selected.size === needsReviewIds.length}
             onChange={toggleAll}
-            className="h-4 w-4 cursor-pointer rounded border-gray-300 accent-green-600"
+            className="h-4 w-4 cursor-pointer rounded border-gray-300 accent-green-600 dark:border-gray-600"
           />
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-gray-400 dark:text-gray-500">
             {selected.size === needsReviewIds.length ? "Deselect all" : "Select all pending"}
           </span>
         </div>
@@ -182,8 +182,50 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
 
       <div className="space-y-8">
         <Section title="Needs Review" candidates={needsReview} selectable={true}  selected={selected} onToggle={toggle} />
-        <Section title="Confirmed"    candidates={confirmed}   selectable={false} selected={selected} onToggle={toggle} />
-        <Section title="Rejected"     candidates={rejected}    selectable={false} selected={selected} onToggle={toggle} />
+
+        {/* Confirmed — split by evidence readiness */}
+        {(() => {
+          const missingEvidence = confirmed.filter((c) => !c.hasEvidence);
+          const evidenceReady   = confirmed.filter((c) => c.hasEvidence);
+          return (
+            <>
+              {missingEvidence.length > 0 && (
+                <div>
+                  <div className="mb-3 flex items-center gap-2">
+                    <h2 className="text-sm font-medium uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                      Confirmed — needs evidence ({missingEvidence.length})
+                    </h2>
+                  </div>
+                  <div className="space-y-3">
+                    {missingEvidence.map((c) => (
+                      <div key={c.id} className="flex items-start gap-3">
+                        <div className="mt-6 h-4 w-4 shrink-0" />
+                        <div className="min-w-0 flex-1"><CandidateCard {...c} /></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {evidenceReady.length > 0 && (
+                <div>
+                  <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    Confirmed — evidence ready ({evidenceReady.length})
+                  </h2>
+                  <div className="space-y-3">
+                    {evidenceReady.map((c) => (
+                      <div key={c.id} className="flex items-start gap-3">
+                        <div className="mt-6 h-4 w-4 shrink-0" />
+                        <div className="min-w-0 flex-1"><CandidateCard {...c} /></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          );
+        })()}
+
+        <Section title="Rejected" candidates={rejected} selectable={false} selected={selected} onToggle={toggle} />
       </div>
     </div>
   );

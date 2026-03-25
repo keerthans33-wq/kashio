@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* Enable class-based dark mode: .dark on <html> activates dark: variants */
+@custom-variant dark (&:where(.dark, .dark *));
+
 body {
   font-family: system-ui, sans-serif;
+}
+
+.dark body {
+  background-color: #111827;
+  color: #f9fafb;
 }

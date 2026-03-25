@@ -30,7 +30,7 @@ export function ReviewFilters() {
       <select
         value={status}
         onChange={(e) => update("status", e.target.value)}
-        className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300"
+        className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:focus:ring-gray-600"
       >
         <option value="">All statuses</option>
         <option value="NEEDS_REVIEW">Needs Review</option>
@@ -41,7 +41,7 @@ export function ReviewFilters() {
       <select
         value={category}
         onChange={(e) => update("category", e.target.value)}
-        className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300"
+        className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:focus:ring-gray-600"
       >
         <option value="">All categories</option>
         {ACTIVE_CATEGORIES.map((c) => (
@@ -52,19 +52,19 @@ export function ReviewFilters() {
       <select
         value={confidence}
         onChange={(e) => update("confidence", e.target.value)}
-        className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300"
+        className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:focus:ring-gray-600"
       >
         <option value="">All confidence</option>
         <option value="MEDIUM">Medium</option>
         <option value="LOW">Low</option>
       </select>
 
-      <div className="h-5 w-px bg-gray-200" />
+      <div className="h-5 w-px bg-gray-200 dark:bg-gray-700" />
 
       <select
         value={sort}
         onChange={(e) => update("sort", e.target.value)}
-        className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300"
+        className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:focus:ring-gray-600"
       >
         <option value="">Sort: Date</option>
         <option value="amount">Sort: Amount</option>
@@ -74,7 +74,7 @@ export function ReviewFilters() {
       {hasFilters && (
         <button
           onClick={() => router.push(`${pathname}${sort ? `?sort=${sort}` : ""}`)}
-          className="text-sm text-gray-400 hover:text-gray-600 underline"
+          className="text-sm text-gray-400 hover:text-gray-600 underline dark:text-gray-500 dark:hover:text-gray-300"
         >
           Clear filters
         </button>
