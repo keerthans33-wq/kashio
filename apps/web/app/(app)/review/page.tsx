@@ -29,8 +29,10 @@ const STATUS_BORDER: Record<DeductionStatus, string> = {
   REJECTED:     "border-red-200",
 };
 
+const CONFIDENCE_RANK: Record<string, number> = { HIGH: 3, MEDIUM: 2, LOW: 1 };
+
 type Candidate = Awaited<ReturnType<typeof db.deductionCandidate.findMany>>[number] & {
-  transaction: { normalizedMerchant: string; amount: number };
+  transaction: { normalizedMerchant: string; amount: number; date: string };
 };
 
 function CandidateCard({ c }: { c: Candidate }) {
@@ -98,21 +100,27 @@ function Section({ title, candidates }: { title: string; candidates: Candidate[]
   );
 }
 
-type SearchParams = { status?: string; category?: string; confidence?: string };
+type SearchParams = { status?: string; category?: string; confidence?: string; sort?: string };
 
 export default async function Review({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const { status, category, confidence } = await searchParams;
+  const { status, category, confidence, sort } = await searchParams;
 
   const all = await db.deductionCandidate.findMany({
     include: { transaction: true },
     orderBy: { transaction: { date: "desc" } },
   });
 
-  const candidates = all.filter((c) => {
+  const filtered = all.filter((c) => {
     if (status     && c.status     !== status)     return false;
     if (category   && c.category   !== category)   return false;
     if (confidence && c.confidence !== confidence) return false;
     return true;
+  });
+
+  const candidates = [...filtered].sort((a, b) => {
+    if (sort === "amount")     return Math.abs(b.transaction.amount) - Math.abs(a.transaction.amount);
+    if (sort === "confidence") return CONFIDENCE_RANK[b.confidence] - CONFIDENCE_RANK[a.confidence];
+    return 0; // default: keep date desc from DB
   });
 
   const needsReview = candidates.filter((c) => c.status === "NEEDS_REVIEW");
@@ -120,6 +128,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
   const rejected    = candidates.filter((c) => c.status === "REJECTED");
 
   const isFiltered = status || category || confidence;
+
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">

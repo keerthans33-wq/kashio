@@ -23,6 +23,7 @@ export function ReviewFilters() {
   const status     = params.get("status") ?? "";
   const category   = params.get("category") ?? "";
   const confidence = params.get("confidence") ?? "";
+  const sort       = params.get("sort") ?? "";
 
   const hasFilters = status || category || confidence;
 
@@ -61,9 +62,21 @@ export function ReviewFilters() {
         <option value="LOW">Low</option>
       </select>
 
+      <div className="h-5 w-px bg-gray-200" />
+
+      <select
+        value={sort}
+        onChange={(e) => update("sort", e.target.value)}
+        className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300"
+      >
+        <option value="">Sort: Date</option>
+        <option value="amount">Sort: Amount</option>
+        <option value="confidence">Sort: Confidence</option>
+      </select>
+
       {hasFilters && (
         <button
-          onClick={() => router.push(pathname)}
+          onClick={() => router.push(`${pathname}${sort ? `?sort=${sort}` : ""}`)}
           className="text-sm text-gray-400 hover:text-gray-600 underline"
         >
           Clear filters
