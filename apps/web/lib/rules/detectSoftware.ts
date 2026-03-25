@@ -1,5 +1,6 @@
 // Category:   Work Software & Tools
-// Confidence: MEDIUM
+// Confidence: LOW — software merchants are consumer-heavy (Microsoft, Zoom, GitHub
+//             all have personal tiers), so a merchant match alone is weak signal.
 // Detects:    Known software subscription merchants
 
 import type { Rule } from "./types";

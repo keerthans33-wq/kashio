@@ -1,6 +1,6 @@
 // Category:   Work Clothing & Uniforms
-// Confidence: MEDIUM for known workwear merchants and specific keywords,
-//             LOW for general clothing stores with a workwear keyword.
+// Confidence: MEDIUM for known dedicated workwear retailers (strong merchant signal)
+//             LOW for keyword-only matches (description could still be personal)
 // Detects:    Occupation-specific clothing and protective gear.
 //             Conventional clothing (suits, shirts) is NOT deductible
 //             under ATO rules and is intentionally excluded.
@@ -60,7 +60,7 @@ export const detectWorkwear: Rule = (transaction) => {
   if (KEYWORDS.some((k) => combined.includes(k))) {
     return {
       category:   CATEGORIES.WORK_CLOTHING,
-      confidence: "MEDIUM",
+      confidence: "LOW",
       reason:     `${transaction.normalizedMerchant} description suggests work clothing — confirm if deductible`,
     };
   }
