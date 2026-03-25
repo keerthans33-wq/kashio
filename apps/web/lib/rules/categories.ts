@@ -8,3 +8,10 @@ export const CATEGORIES = {
   WORK_TRAVEL:              "Work-Related Travel",
   HOME_OFFICE:              "Home Office",
 } as const;
+
+// Only categories that at least one active rule can produce.
+// Update this when new rules are added.
+export const ACTIVE_CATEGORIES: string[] = [
+  CATEGORIES.WORK_SOFTWARE,
+  CATEGORIES.OFFICE_SUPPLIES,
+];

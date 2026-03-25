@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 const CONFIDENCE_RANK: Record<string, number> = { HIGH: 3, MEDIUM: 2, LOW: 1 };
 
 type Candidate = Awaited<ReturnType<typeof db.deductionCandidate.findMany>>[number] & {
-  transaction: { normalizedMerchant: string; amount: number; date: string };
+  transaction: { normalizedMerchant: string; amount: number; date: string; description: string };
 };
 
 function toCardProps(c: Candidate): CandidateCardProps {

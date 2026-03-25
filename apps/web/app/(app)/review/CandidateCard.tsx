@@ -12,7 +12,7 @@ export type CandidateCardProps = {
   confidence: Confidence;
   category:   string;
   reason:     string;
-  transaction: { normalizedMerchant: string; amount: number };
+  transaction: { normalizedMerchant: string; amount: number; date: string; description: string };
 };
 
 const CONFIDENCE_BADGE: Record<Confidence, string> = {
@@ -28,20 +28,39 @@ const STATUS_BORDER: Record<Status, string> = {
 };
 
 export function CandidateCard({ id, status: initialStatus, confidence, category, reason, transaction }: CandidateCardProps) {
-  const [status, setStatus]   = useState<Status>(initialStatus);
+  const [status, setStatus]          = useState<Status>(initialStatus);
+  const [error, setError]            = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const amount  = transaction.amount;
   const settled = status !== "NEEDS_REVIEW";
 
   function handleConfirm() {
+    const prev = status;
     setStatus("CONFIRMED");
-    startTransition(() => confirmCandidate(id));
+    setError(null);
+    startTransition(async () => {
+      try {
+        await confirmCandidate(id);
+      } catch {
+        setStatus(prev);
+        setError("Failed to save. Try again.");
+      }
+    });
   }
 
   function handleReject() {
+    const prev = status;
     setStatus("REJECTED");
-    startTransition(() => rejectCandidate(id));
+    setError(null);
+    startTransition(async () => {
+      try {
+        await rejectCandidate(id);
+      } catch {
+        setStatus(prev);
+        setError("Failed to save. Try again.");
+      }
+    });
   }
 
   return (
@@ -56,19 +75,26 @@ export function CandidateCard({ id, status: initialStatus, confidence, category,
           </div>
           <p className="mt-0.5 text-sm text-gray-500">{category}</p>
           <p className="mt-1 text-sm text-gray-400">{reason}</p>
+          {transaction.description !== transaction.normalizedMerchant && (
+            <p className="mt-1 truncate text-xs text-gray-300" title={transaction.description}>
+              {transaction.description}
+            </p>
+          )}
         </div>
-        <div className="text-right">
+        <div className="shrink-0 text-right">
           <p className={`text-base font-semibold ${amount < 0 ? "text-red-600" : "text-green-600"}`}>
             {amount < 0 ? "-" : "+"}${Math.abs(amount).toFixed(2)}
           </p>
+          <p className="mt-0.5 text-xs text-gray-400">{transaction.date}</p>
         </div>
       </div>
 
       <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
         <p className="text-xs text-gray-400">
-          {status === "CONFIRMED" && "✓ Confirmed"}
-          {status === "REJECTED"  && "✗ Rejected"}
-          {status === "NEEDS_REVIEW" && (isPending ? "Saving…" : "Awaiting review")}
+          {error                                 && <span className="text-red-500">{error}</span>}
+          {!error && status === "CONFIRMED"      && "✓ Confirmed"}
+          {!error && status === "REJECTED"       && "✗ Rejected"}
+          {!error && status === "NEEDS_REVIEW"   && (isPending ? "Saving…" : "Awaiting review")}
         </p>
         <div className="flex gap-2">
           <button

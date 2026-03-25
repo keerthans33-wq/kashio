@@ -1,9 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { CATEGORIES } from "../../../lib/rules/categories";
-
-const ALL_CATEGORIES = Object.values(CATEGORIES);
+import { ACTIVE_CATEGORIES } from "../../../lib/rules/categories";
 
 export function ReviewFilters() {
   const router = useRouter();
@@ -46,7 +44,7 @@ export function ReviewFilters() {
         className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300"
       >
         <option value="">All categories</option>
-        {ALL_CATEGORIES.map((c) => (
+        {ACTIVE_CATEGORIES.map((c) => (
           <option key={c} value={c}>{c}</option>
         ))}
       </select>

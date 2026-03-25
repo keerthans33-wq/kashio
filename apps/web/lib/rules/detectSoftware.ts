@@ -28,7 +28,7 @@ export const detectSoftware: Rule = (transaction) => {
 
   return {
     category: CATEGORIES.WORK_SOFTWARE,
-    confidence: "MEDIUM",
+    confidence: "LOW",
     reason: `${transaction.normalizedMerchant} looks like a software subscription — confirm if used for work`,
   };
 };

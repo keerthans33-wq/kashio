@@ -17,9 +17,6 @@ const KEYWORDS = [
   "ink cartridge",
   "toner",
   "printer paper",
-  "notebook",
-  "ballpoint",
-  "whiteboard",
 ];
 
 export const detectOfficeSupplies: Rule = (transaction) => {

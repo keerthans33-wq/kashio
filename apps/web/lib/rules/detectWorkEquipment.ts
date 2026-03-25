@@ -10,12 +10,9 @@ const KEYWORDS = [
   "monitor",
   "keyboard",
   "webcam",
-  "headset",
-  "laptop",
   "hard drive",
   "usb hub",
   "standing desk",
-  "desk lamp",
   "docking station",
 ];
 
