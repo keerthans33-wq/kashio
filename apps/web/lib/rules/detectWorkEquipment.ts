@@ -1,9 +1,12 @@
+// Category:   Office Supplies & Equipment
+// Confidence: LOW
+// Detects:    Hardware/equipment keywords in description or merchant
+
 import type { Rule } from "./types";
 import { CATEGORIES } from "./categories";
+import { isExcluded } from "./shared";
 
-// Hardware keywords that suggest a work equipment purchase.
-// Checked against both the raw description and normalised merchant name.
-const EQUIPMENT_KEYWORDS = [
+const KEYWORDS = [
   "monitor",
   "keyboard",
   "webcam",
@@ -16,25 +19,19 @@ const EQUIPMENT_KEYWORDS = [
   "docking station",
 ];
 
-const EXCLUSION_WORDS = ["refund", "reversal"];
-
 export const detectWorkEquipment: Rule = (transaction) => {
-  // Debits only — refunds are not deductions.
   if (transaction.amount >= 0) return null;
+  if (isExcluded(transaction.description)) return null;
 
-  const descLower = transaction.description.toLowerCase();
-  if (EXCLUSION_WORDS.some((w) => descLower.includes(w))) return null;
+  const combined =
+    transaction.description.toLowerCase() + " " +
+    transaction.normalizedMerchant.toLowerCase();
 
-  const merchant = transaction.normalizedMerchant.toLowerCase();
-  const combined = `${descLower} ${merchant}`;
+  if (!KEYWORDS.some((k) => combined.includes(k))) return null;
 
-  if (EQUIPMENT_KEYWORDS.some((k) => combined.includes(k))) {
-    return {
-      category: CATEGORIES.OFFICE_SUPPLIES,
-      confidence: "LOW",
-      reason: `${transaction.normalizedMerchant} may include work equipment — confirm if purchased for work use`,
-    };
-  }
-
-  return null;
+  return {
+    category: CATEGORIES.OFFICE_SUPPLIES,
+    confidence: "LOW",
+    reason: `${transaction.normalizedMerchant} may include work equipment — confirm if purchased for work use`,
+  };
 };
