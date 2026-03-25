@@ -43,7 +43,7 @@ export default async function Export() {
             <table className="min-w-full divide-y divide-gray-100 text-sm">
               <thead className="bg-gray-50">
                 <tr>
-                  {["Date", "Merchant", "Amount", "Category"].map((h) => (
+                  {["Date", "Merchant", "Description", "Amount", "Category", "Confidence", "Reason"].map((h) => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
                       {h}
                     </th>
@@ -54,9 +54,12 @@ export default async function Export() {
                 {confirmed.map((c) => (
                   <tr key={c.id}>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-700">{c.transaction.date}</td>
-                    <td className="px-4 py-3 text-gray-900">{c.transaction.normalizedMerchant}</td>
+                    <td className="px-4 py-3 font-medium text-gray-900">{c.transaction.normalizedMerchant}</td>
+                    <td className="px-4 py-3 text-gray-500 max-w-xs truncate">{c.transaction.description}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-700">${Math.abs(c.transaction.amount).toFixed(2)}</td>
                     <td className="px-4 py-3 text-gray-500">{c.category}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-gray-400">{c.confidence}</td>
+                    <td className="px-4 py-3 text-gray-400 max-w-xs truncate">{c.reason}</td>
                   </tr>
                 ))}
               </tbody>

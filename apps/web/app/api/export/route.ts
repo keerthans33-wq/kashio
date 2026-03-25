@@ -12,12 +12,15 @@ export async function GET() {
     return NextResponse.json({ error: "No confirmed candidates to export." }, { status: 404 });
   }
 
-  const header = ["Date", "Merchant", "Amount", "Category"];
+  const header = ["Date", "Merchant", "Description", "Amount", "Category", "Confidence", "Reason"];
   const rows   = candidates.map((c) => [
     c.transaction.date,
     `"${c.transaction.normalizedMerchant.replace(/"/g, '""')}"`,
+    `"${c.transaction.description.replace(/"/g, '""')}"`,
     Math.abs(c.transaction.amount).toFixed(2),
     `"${c.category.replace(/"/g, '""')}"`,
+    c.confidence,
+    `"${c.reason.replace(/"/g, '""')}"`,
   ]);
 
   const csv  = [header, ...rows].map((r) => r.join(",")).join("\n");
