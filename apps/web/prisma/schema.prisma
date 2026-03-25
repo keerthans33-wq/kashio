@@ -41,5 +41,7 @@ model DeductionCandidate {
   confidence    Confidence
   reason        String          // short explanation, e.g. "Matches known software subscription"
   status        DeductionStatus @default(NEEDS_REVIEW)
+  hasEvidence   Boolean         @default(false)
+  evidenceNote  String?         // optional free text, e.g. "Bunnings receipt Feb 2025"
   createdAt     DateTime        @default(now())
 }

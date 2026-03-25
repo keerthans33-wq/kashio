@@ -13,12 +13,14 @@ type Candidate = Awaited<ReturnType<typeof db.deductionCandidate.findMany>>[numb
 
 function toCardProps(c: Candidate): CandidateCardProps {
   return {
-    id:          c.id,
-    status:      c.status,
-    confidence:  c.confidence,
-    category:    c.category,
-    reason:      c.reason,
-    transaction: c.transaction,
+    id:           c.id,
+    status:       c.status,
+    confidence:   c.confidence,
+    category:     c.category,
+    reason:       c.reason,
+    hasEvidence:  c.hasEvidence,
+    evidenceNote: c.evidenceNote ?? null,
+    transaction:  c.transaction,
   };
 }
 

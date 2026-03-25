@@ -32,3 +32,12 @@ export async function bulkResetCandidates(ids: string[]) {
   await db.deductionCandidate.updateMany({ where: { id: { in: ids } }, data: { status: "NEEDS_REVIEW" } });
   revalidatePath("/review");
 }
+
+export async function saveEvidence(id: string, hasEvidence: boolean, evidenceNote: string) {
+  await db.deductionCandidate.update({
+    where: { id },
+    data:  { hasEvidence, evidenceNote: evidenceNote.trim() || null },
+  });
+  revalidatePath("/review");
+  revalidatePath("/export");
+}

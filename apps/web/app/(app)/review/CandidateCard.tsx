@@ -1,18 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { confirmCandidate, rejectCandidate, resetCandidate } from "./actions";
+import { confirmCandidate, rejectCandidate, resetCandidate, saveEvidence } from "./actions";
 
 type Status     = "NEEDS_REVIEW" | "CONFIRMED" | "REJECTED";
 type Confidence = "LOW" | "MEDIUM" | "HIGH";
 
 export type CandidateCardProps = {
-  id:         string;
-  status:     Status;
-  confidence: Confidence;
-  category:   string;
-  reason:     string;
-  transaction: { normalizedMerchant: string; amount: number; date: string; description: string };
+  id:           string;
+  status:       Status;
+  confidence:   Confidence;
+  category:     string;
+  reason:       string;
+  hasEvidence:  boolean;
+  evidenceNote: string | null;
+  transaction:  { normalizedMerchant: string; amount: number; date: string; description: string };
 };
 
 const CONFIDENCE_BADGE: Record<Confidence, string> = {
@@ -61,11 +63,14 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 export function CandidateCard({
-  id, status: initialStatus, confidence, category, reason, transaction,
+  id, status: initialStatus, confidence, category, reason, hasEvidence, evidenceNote, transaction,
 }: CandidateCardProps) {
-  const [status, setStatus] = useState<Status>(initialStatus);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError]   = useState<string | null>(null);
+  const [status, setStatus]           = useState<Status>(initialStatus);
+  const [isSaving, setIsSaving]       = useState(false);
+  const [error, setError]             = useState<string | null>(null);
+  const [evidence, setEvidence]       = useState(hasEvidence);
+  const [note, setNote]               = useState(evidenceNote ?? "");
+  const [evidenceSaving, setEvidenceSaving] = useState(false);
 
   const amount  = transaction.amount;
   const settled = status !== "NEEDS_REVIEW";
@@ -94,12 +99,24 @@ export function CandidateCard({
 
       {/* Status badge — only shown when settled */}
       {badge && (
-        <div className="mb-3">
+        <div className="mb-3 flex items-center gap-2 flex-wrap">
           <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${badge.className}`}>
             {badge.label}
           </span>
+          {status === "CONFIRMED" && (
+            evidence ? (
+              <span className="inline-block rounded-full px-3 py-1 text-xs font-medium bg-blue-50 text-blue-600">
+                Evidence ready
+              </span>
+            ) : (
+              <span className="inline-block rounded-full px-3 py-1 text-xs font-medium bg-amber-50 text-amber-600">
+                Needs evidence
+              </span>
+            )
+          )}
         </div>
       )}
+
 
       {/* Row 1: merchant + amount */}
       <div className="flex items-start justify-between gap-6">
@@ -142,6 +159,40 @@ export function CandidateCard({
           <p className="text-sm text-gray-500">{reason}</p>
         </Field>
       </div>
+
+      {/* Evidence — only shown for confirmed cards */}
+      {status === "CONFIRMED" && (
+        <div className="mt-4 rounded-md border border-gray-100 bg-white px-4 py-3 space-y-2">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={evidence}
+              disabled={evidenceSaving}
+              onChange={async (e) => {
+                const next = e.target.checked;
+                setEvidence(next);
+                setEvidenceSaving(true);
+                try { await saveEvidence(id, next, note); } finally { setEvidenceSaving(false); }
+              }}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600"
+            />
+            <span className="text-sm text-gray-700">I have a receipt or invoice for this</span>
+          </label>
+          {evidence && (
+            <input
+              type="text"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              onBlur={async () => {
+                setEvidenceSaving(true);
+                try { await saveEvidence(id, evidence, note); } finally { setEvidenceSaving(false); }
+              }}
+              placeholder="Optional note — e.g. Bunnings receipt Feb 2025"
+              className="w-full rounded border border-gray-200 px-3 py-1.5 text-sm text-gray-700 placeholder-gray-300 focus:border-gray-400 focus:outline-none"
+            />
+          )}
+        </div>
+      )}
 
       {/* Footer: status + actions */}
       <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-4">

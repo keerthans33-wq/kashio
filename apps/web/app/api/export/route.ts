@@ -13,7 +13,7 @@ export async function GET() {
     return NextResponse.json({ error: "No confirmed candidates to export." }, { status: 404 });
   }
 
-  const header = ["Date", "Merchant", "Description", "Category", "Amount"];
+  const header = ["Date", "Merchant", "Description", "Category", "Amount", "Evidence"];
   const rows   = candidates.map((c) => {
     const row = mapExportRow(c);
     return [
@@ -22,11 +22,12 @@ export async function GET() {
       `"${row.description.replace(/"/g, '""')}"`,
       `"${row.category.replace(/"/g, '""')}"`,
       row.amount.toFixed(2),
+      c.hasEvidence ? "Ready" : "Missing",
     ];
   });
 
   const total = candidates.reduce((sum, c) => sum + Math.abs(c.transaction.amount), 0);
-  const totalRow = ["", "", "", "Total", total.toFixed(2)];
+  const totalRow = ["", "", "", "Total", total.toFixed(2), ""];
 
   const csv  = [header, ...rows, totalRow].map((r) => r.join(",")).join("\n");
   const year = new Date().getFullYear();
