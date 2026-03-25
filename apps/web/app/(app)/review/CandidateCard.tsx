@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { confirmCandidate, rejectCandidate, resetCandidate } from "./actions";
 
 type Status     = "NEEDS_REVIEW" | "CONFIRMED" | "REJECTED";
@@ -51,42 +51,29 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 export function CandidateCard({
   id, status: initialStatus, confidence, category, reason, transaction,
 }: CandidateCardProps) {
-  const [status, setStatus]          = useState<Status>(initialStatus);
-  const [error, setError]            = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [status, setStatus] = useState<Status>(initialStatus);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError]   = useState<string | null>(null);
 
   const amount  = transaction.amount;
   const settled = status !== "NEEDS_REVIEW";
 
-  function handleConfirm() {
-    const prev = status;
-    setStatus("CONFIRMED");
+  async function save(action: () => Promise<void>, next: Status) {
+    setIsSaving(true);
     setError(null);
-    startTransition(async () => {
-      try { await confirmCandidate(id); }
-      catch { setStatus(prev); setError("Failed to save. Try again."); }
-    });
+    try {
+      await action();
+      setStatus(next);
+    } catch {
+      setError("Could not save. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
-  function handleReject() {
-    const prev = status;
-    setStatus("REJECTED");
-    setError(null);
-    startTransition(async () => {
-      try { await rejectCandidate(id); }
-      catch { setStatus(prev); setError("Failed to save. Try again."); }
-    });
-  }
-
-  function handleReset() {
-    const prev = status;
-    setStatus("NEEDS_REVIEW");
-    setError(null);
-    startTransition(async () => {
-      try { await resetCandidate(id); }
-      catch { setStatus(prev); setError("Failed to save. Try again."); }
-    });
-  }
+  const handleConfirm = () => save(() => confirmCandidate(id), "CONFIRMED");
+  const handleReject  = () => save(() => rejectCandidate(id),  "REJECTED");
+  const handleReset   = () => save(() => resetCandidate(id),   "NEEDS_REVIEW");
 
   return (
     <div className={`rounded-lg border p-5 transition-colors ${STATUS_BORDER[status]} ${STATUS_BG[status]}`}>
@@ -135,33 +122,33 @@ export function CandidateCard({
 
       {/* Footer: status + actions */}
       <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-4">
-        <p className="text-xs text-gray-400">
+        <p className="text-xs">
           {error                               && <span className="text-red-500">{error}</span>}
-          {!error && status === "CONFIRMED"    && "✓ Confirmed"}
-          {!error && status === "REJECTED"     && "✗ Rejected"}
-          {!error && status === "NEEDS_REVIEW" && (isPending ? "Saving…" : "Awaiting review")}
+          {!error && status === "CONFIRMED"    && <span className="text-gray-400">✓ Confirmed</span>}
+          {!error && status === "REJECTED"     && <span className="text-gray-400">✗ Rejected</span>}
+          {!error && status === "NEEDS_REVIEW" && <span className="text-gray-400">{isSaving ? "Saving…" : "Awaiting review"}</span>}
         </p>
         <div className="flex gap-2">
           {settled ? (
             <button
               onClick={handleReset}
-              disabled={isPending}
+              disabled={isSaving}
               className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 transition-opacity hover:bg-white disabled:opacity-40"
             >
-              Undo
+              {isSaving ? "Saving…" : "Undo"}
             </button>
           ) : (
             <>
               <button
                 onClick={handleConfirm}
-                disabled={isPending}
+                disabled={isSaving}
                 className="rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:bg-green-700 disabled:opacity-40"
               >
-                Confirm
+                {isSaving ? "Saving…" : "Confirm"}
               </button>
               <button
                 onClick={handleReject}
-                disabled={isPending}
+                disabled={isSaving}
                 className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition-opacity hover:bg-gray-50 disabled:opacity-40"
               >
                 Reject
