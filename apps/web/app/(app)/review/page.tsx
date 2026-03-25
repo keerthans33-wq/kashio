@@ -105,10 +105,13 @@ type SearchParams = { status?: string; category?: string; confidence?: string; s
 export default async function Review({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const { status, category, confidence, sort } = await searchParams;
 
-  const all = await db.deductionCandidate.findMany({
-    include: { transaction: true },
-    orderBy: { transaction: { date: "desc" } },
-  });
+  const [all, totalTransactions] = await Promise.all([
+    db.deductionCandidate.findMany({
+      include: { transaction: true },
+      orderBy: { transaction: { date: "desc" } },
+    }),
+    db.transaction.count(),
+  ]);
 
   const filtered = all.filter((c) => {
     if (status     && c.status     !== status)     return false;
@@ -123,9 +126,13 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
     return 0; // default: keep date desc from DB
   });
 
-  const needsReview = candidates.filter((c) => c.status === "NEEDS_REVIEW");
-  const confirmed   = candidates.filter((c) => c.status === "CONFIRMED");
-  const rejected    = candidates.filter((c) => c.status === "REJECTED");
+  const needsReview   = candidates.filter((c) => c.status === "NEEDS_REVIEW");
+  const confirmed     = candidates.filter((c) => c.status === "CONFIRMED");
+  const rejected      = candidates.filter((c) => c.status === "REJECTED");
+
+  // Summary counts are always over the full unfiltered set
+  const totalConfirmed = all.filter((c) => c.status === "CONFIRMED").length;
+  const totalRejected  = all.filter((c) => c.status === "REJECTED").length;
 
   const isFiltered = status || category || confidence;
 
@@ -133,10 +140,26 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
       <h1 className="text-2xl font-semibold text-gray-900">Review</h1>
-      <p className="mt-1 text-gray-500">
-        {all.length} deduction candidate{all.length !== 1 ? "s" : ""} found
-        {isFiltered && ` · ${candidates.length} shown`}
-      </p>
+
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[
+          { label: "Transactions",  value: totalTransactions },
+          { label: "Candidates",    value: all.length },
+          { label: "Confirmed",     value: totalConfirmed },
+          { label: "Rejected",      value: totalRejected },
+        ].map(({ label, value }) => (
+          <div key={label} className="rounded-lg border border-gray-200 bg-white px-4 py-3">
+            <p className="text-xs text-gray-400 uppercase tracking-wide">{label}</p>
+            <p className="mt-1 text-2xl font-semibold text-gray-900">{value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4 flex items-center justify-between">
+        <p className="text-sm text-gray-500">
+          {isFiltered ? `${candidates.length} of ${all.length} candidates shown` : `${all.length} candidate${all.length !== 1 ? "s" : ""}`}
+        </p>
+      </div>
 
       <ReviewFilters />
 
