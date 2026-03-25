@@ -76,11 +76,14 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between">
-        <p className="text-sm text-gray-500">
-          {isFiltered ? `${candidates.length} of ${all.length} candidates shown` : `${all.length} candidate${all.length !== 1 ? "s" : ""}`}
-        </p>
-      </div>
+      <p className="mt-3 text-sm text-gray-500">
+        {all.length === 0
+          ? null
+          : totalNeedsReview > 0
+          ? `You still have ${totalNeedsReview} item${totalNeedsReview !== 1 ? "s" : ""} to review.`
+          : "All candidates have been reviewed."}
+        {isFiltered && ` Showing ${candidates.length} of ${all.length}.`}
+      </p>
 
       <ReviewFilters />
 
