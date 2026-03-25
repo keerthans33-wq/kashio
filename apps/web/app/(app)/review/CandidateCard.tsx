@@ -39,6 +39,18 @@ const STATUS_BG: Record<Status, string> = {
   REJECTED:     "bg-red-50",
 };
 
+const STATUS_BADGE: Record<Status, { label: string; className: string } | null> = {
+  NEEDS_REVIEW: null,
+  CONFIRMED:    { label: "✓ Confirmed", className: "bg-green-100 text-green-700" },
+  REJECTED:     { label: "✗ Rejected",  className: "bg-red-100 text-red-600" },
+};
+
+const STATUS_FOOTER: Record<Status, string> = {
+  NEEDS_REVIEW: "text-gray-400",
+  CONFIRMED:    "text-green-600 font-medium",
+  REJECTED:     "text-red-500 font-medium",
+};
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
@@ -75,8 +87,19 @@ export function CandidateCard({
   const handleReject  = () => save(() => rejectCandidate(id),  "REJECTED");
   const handleReset   = () => save(() => resetCandidate(id),   "NEEDS_REVIEW");
 
+  const badge = STATUS_BADGE[status];
+
   return (
     <div className={`rounded-lg border p-5 transition-colors ${STATUS_BORDER[status]} ${STATUS_BG[status]}`}>
+
+      {/* Status badge — only shown when settled */}
+      {badge && (
+        <div className="mb-3">
+          <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${badge.className}`}>
+            {badge.label}
+          </span>
+        </div>
+      )}
 
       {/* Row 1: merchant + amount */}
       <div className="flex items-start justify-between gap-6">
@@ -122,11 +145,12 @@ export function CandidateCard({
 
       {/* Footer: status + actions */}
       <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-4">
-        <p className="text-xs">
-          {error                               && <span className="text-red-500">{error}</span>}
-          {!error && status === "CONFIRMED"    && <span className="text-gray-400">✓ Confirmed</span>}
-          {!error && status === "REJECTED"     && <span className="text-gray-400">✗ Rejected</span>}
-          {!error && status === "NEEDS_REVIEW" && <span className="text-gray-400">{isSaving ? "Saving…" : "Awaiting review"}</span>}
+        <p className={`text-xs ${STATUS_FOOTER[status]}`}>
+          {error        ? <span className="text-red-500 font-medium">{error}</span>
+            : isSaving  ? "Saving…"
+            : status === "CONFIRMED" ? "✓ Confirmed"
+            : status === "REJECTED"  ? "✗ Rejected"
+            : "Awaiting review"}
         </p>
         <div className="flex gap-2">
           {settled ? (
