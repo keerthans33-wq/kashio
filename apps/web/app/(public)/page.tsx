@@ -7,21 +7,21 @@ export default function Home() {
       <div className="w-full max-w-lg">
 
         {/* Wordmark */}
-        <div>
+        <div className="flex justify-center">
           <Image
             src="/kashio - 1.PNG"
             alt="Kashio"
-            height={56}
-            width={210}
-            className="h-14 w-auto dark:hidden"
+            height={200}
+            width={750}
+            className="w-full h-auto dark:hidden"
             priority
           />
           <Image
             src="/kashio - 2.PNG"
             alt="Kashio"
-            height={56}
-            width={210}
-            className="h-14 w-auto hidden dark:block"
+            height={200}
+            width={750}
+            className="w-full h-auto hidden dark:block"
             priority
           />
         </div>

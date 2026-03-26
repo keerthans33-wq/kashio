@@ -187,8 +187,8 @@ export default async function Export() {
             >
               Export CSV
             </a>
-            <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
-              {confirmed.length} confirmed deduction{confirmed.length !== 1 ? "s" : ""} · includes all confirmed items, ready or not · CSV format
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              The CSV includes all {confirmed.length} confirmed deduction{confirmed.length !== 1 ? "s" : ""} — whether or not evidence has been noted.
             </p>
           </div>
         </>

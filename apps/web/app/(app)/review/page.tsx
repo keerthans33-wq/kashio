@@ -62,9 +62,19 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
-      <div className="flex items-baseline gap-3">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Review</h1>
-        <span className="text-sm text-gray-400 dark:text-gray-500">Step 2 of 3</span>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-baseline gap-3">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Review</h1>
+          <span className="text-sm text-gray-400 dark:text-gray-500">Step 2 of 3</span>
+        </div>
+        {totalConfirmed > 0 && (
+          <a
+            href="/export"
+            className="shrink-0 rounded-md border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            Go to Export →
+          </a>
+        )}
       </div>
       <p className="mt-2 text-gray-500 dark:text-gray-400">
         These are the transactions Kashio flagged as possible deductions. Confirm the ones that were genuinely work-related and reject the rest.

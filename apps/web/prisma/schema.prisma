@@ -7,6 +7,14 @@ datasource db {
   provider = "postgresql"
 }
 
+model ImportBatch {
+  id           String        @id @default(cuid())
+  fileName     String
+  insertedCount Int
+  createdAt    DateTime      @default(now())
+  transactions Transaction[]
+}
+
 model Transaction {
   id                 String              @id @default(cuid())
   date               String              // always stored as YYYY-MM-DD — normalised by parseDate before insert
@@ -14,6 +22,8 @@ model Transaction {
   normalizedMerchant String              // cleaned merchant name
   amount             Float               // negative = debit, positive = credit
   createdAt          DateTime            @default(now())
+  importBatch        ImportBatch?        @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  importBatchId      String?
   deductionCandidate DeductionCandidate?
 
   @@unique([date, description, amount])

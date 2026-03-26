@@ -20,7 +20,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No transactions provided." }, { status: 400 });
   }
 
-  const raw = (body as { transactions: unknown[] }).transactions;
+  const raw = (body as { transactions: unknown[]; fileName?: unknown }).transactions;
+  const fileName =
+    typeof (body as { fileName?: unknown }).fileName === "string"
+      ? ((body as { fileName: string }).fileName.trim() || "unknown.csv")
+      : "unknown.csv";
+
   if (raw.length === 0) {
     return NextResponse.json({ error: "No transactions provided." }, { status: 400 });
   }
@@ -66,9 +71,25 @@ export async function POST(req: NextRequest) {
   }
 
   let inserted: number;
+  let batchId: string;
   try {
-    const result = await db.transaction.createMany({ data: rows, skipDuplicates: true });
+    // Create batch record first so we have an id to link transactions against.
+    const batch = await db.importBatch.create({
+      data: { fileName, insertedCount: 0 },
+    });
+    batchId = batch.id;
+
+    const result = await db.transaction.createMany({
+      data: rows.map((r) => ({ ...r, importBatchId: batchId })),
+      skipDuplicates: true,
+    });
     inserted = result.count;
+
+    // Update batch with the real inserted count.
+    await db.importBatch.update({
+      where: { id: batchId },
+      data: { insertedCount: inserted },
+    });
 
     // Fetch saved transactions so we have their DB ids for candidate creation.
     const savedTransactions = await db.transaction.findMany({
@@ -113,5 +134,6 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     inserted,
     duplicates: rows.length - inserted,
+    batchId,
   });
 }

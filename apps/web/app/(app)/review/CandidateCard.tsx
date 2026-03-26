@@ -174,7 +174,7 @@ export function CandidateCard({
         }`}>
           {!evidence && (
             <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
-              Add a receipt or invoice to complete this deduction
+              Do you have a receipt or invoice for this item? Tick below to note it.
             </p>
           )}
           <div className="flex items-center justify-between">
@@ -236,13 +236,23 @@ export function CandidateCard({
         </p>
         <div className="flex gap-2">
           {settled ? (
-            <button
-              onClick={handleReset}
-              disabled={isSaving}
-              className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 transition-opacity hover:bg-white disabled:opacity-40 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
-            >
-              {isSaving ? "Saving…" : "Undo"}
-            </button>
+            <>
+              {status === "CONFIRMED" && (
+                <a
+                  href="/export"
+                  className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-white dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+                >
+                  Go to Export →
+                </a>
+              )}
+              <button
+                onClick={handleReset}
+                disabled={isSaving}
+                className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 transition-opacity hover:bg-white disabled:opacity-40 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+              >
+                {isSaving ? "Saving…" : "Undo"}
+              </button>
+            </>
           ) : (
             <>
               <button

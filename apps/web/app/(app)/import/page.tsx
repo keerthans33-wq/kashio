@@ -1,4 +1,6 @@
 import CsvUploader from "../../components/import/CsvUploader";
+import { TesterHint } from "../../components/import/TesterHint";
+import ImportedBatches from "../../components/import/ImportedBatches";
 
 export default function Import() {
   return (
@@ -25,7 +27,9 @@ export default function Import() {
           If your column names are different, Kashio will ask you to map them after you preview the file.
         </p>
       </div>
+      <TesterHint />
       <CsvUploader />
+      <ImportedBatches />
     </main>
   );
 }

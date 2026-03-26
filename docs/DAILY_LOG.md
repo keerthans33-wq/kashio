@@ -161,3 +161,30 @@
 - Silent duplicate handling damages trust
 
 **Next step:** Start the first deduction detection rules on top of imported transactions
+
+---
+
+## Day 18 — 2026-03-26
+
+**Goal:** Prepare Kashio for first real user testing
+
+**What I did:**
+- Froze testing scope for MVP
+- Created realistic sample CSV files
+- Prepared demo/test states
+- Created a tester walkthrough
+- Created feedback questionnaire
+- Added lightweight tester guidance to the app
+- Improved recoverability for common mistakes
+- Added a simple issue-reporting path
+- Created a pre-test checklist
+- Defined the top learning goals for early tests
+- Reviewed test readiness with Codex
+- Prepared first tester outreach materials
+
+**What I learned:**
+- Testing readiness is different from feature readiness
+- Sample data and clear instructions matter a lot
+- I need to know what I want to learn before asking for feedback
+
+**Next step:** Run the first real tests and collect structured feedback

@@ -15,11 +15,12 @@ type ImportResult = {
 
 async function saveTransactions(
   transactions: ValidRow[],
+  fileName: string,
 ): Promise<{ inserted: number; duplicates: number }> {
   const res = await fetch("/api/transactions/import", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ transactions }),
+    body: JSON.stringify({ transactions, fileName }),
   });
   if (!res.ok) {
     let message = "Failed to save transactions.";
@@ -86,7 +87,7 @@ export default function CsvUploader() {
     setImporting(true);
     setImportError(null);
     try {
-      const { inserted, duplicates } = await saveTransactions(result.valid);
+      const { inserted, duplicates } = await saveTransactions(result.valid, file?.name ?? "unknown.csv");
       setImportResult({ inserted, duplicates, invalid: result.invalid.length });
     } catch (err) {
       setImportError(err instanceof Error ? err.message : "Something went wrong.");
@@ -286,6 +287,11 @@ export default function CsvUploader() {
               >
                 Go to Review →
               </a>
+            ) : importResult.duplicates > 0 ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                These transactions are already imported.{" "}
+                <a href="/review" className="underline hover:text-gray-700 dark:hover:text-gray-300">Go to Review →</a>
+              </p>
             ) : null}
 
             {importError && (

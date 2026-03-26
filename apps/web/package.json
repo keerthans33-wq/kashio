@@ -9,7 +9,12 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "echo \"No tests yet. Add a test runner when ready.\" && exit 0",
-    "verify": "npm run typecheck && npm run lint && npm run build"
+    "verify": "npm run typecheck && npm run lint && npm run build",
+    "seed:empty": "tsx prisma/seed.ts --state empty",
+    "seed:imported": "tsx prisma/seed.ts --state imported",
+    "seed:reviewed": "tsx prisma/seed.ts --state reviewed",
+    "seed:confirmed": "tsx prisma/seed.ts --state confirmed",
+    "seed:export-ready": "tsx prisma/seed.ts --state export-ready"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.5.0",
@@ -32,6 +37,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }
