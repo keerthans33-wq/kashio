@@ -62,9 +62,18 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
-      <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Review</h1>
+      <div className="flex items-baseline gap-3">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Review</h1>
+        <span className="text-sm text-gray-400 dark:text-gray-500">Step 2 of 3</span>
+      </div>
+      <p className="mt-2 text-gray-500 dark:text-gray-400">
+        These are the transactions Kashio flagged as possible deductions. Confirm the ones that were genuinely work-related and reject the rest.
+      </p>
+      <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+        Once you've reviewed everything, go to Export to download your confirmed deductions.
+      </p>
 
-      <div className="mt-4 grid grid-cols-3 gap-3">
+      <div className="mt-6 grid grid-cols-3 gap-3">
         <div className="rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
           <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">Needs Review</p>
           <p className="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">{totalNeedsReview}</p>
@@ -121,23 +130,27 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         );
         return (
           <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-            All candidates have been reviewed.
+            All items have been reviewed.
             {isFiltered && ` Showing ${candidates.length} of ${all.length}.`}
           </p>
         );
       })()}
 
+      <div className="mt-6 border-t border-gray-100 dark:border-gray-800" />
       <ReviewFilters />
 
       {all.length === 0 ? (
-        <p className="mt-10 text-center text-gray-400 dark:text-gray-500">
-          No candidates yet. Import a CSV to detect deductions.
-        </p>
+        <div className="mt-10 text-center space-y-1">
+          <p className="text-gray-500 dark:text-gray-400">Nothing to review yet.</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">
+            <a href="/import" className="underline hover:text-gray-600 dark:hover:text-gray-300">Import a bank CSV</a> and Kashio will scan it for possible deductions.
+          </p>
+        </div>
       ) : candidates.length === 0 ? (
-        <div className="mt-10 text-center text-gray-400 dark:text-gray-500 space-y-2">
-          <p>No candidates match these filters.</p>
-          <p className="text-sm">
-            Try changing the status or category filter, or{" "}
+        <div className="mt-10 text-center space-y-1">
+          <p className="text-gray-500 dark:text-gray-400">No candidates match your current filters.</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">
+            Try adjusting the filters above, or{" "}
             <a href="/review" className="underline hover:text-gray-600 dark:hover:text-gray-300">clear all filters</a>{" "}
             to see everything.
           </p>

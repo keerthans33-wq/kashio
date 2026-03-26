@@ -42,14 +42,14 @@ export default function ColumnMapper({ rows, onConfirm }: Props) {
   return (
     <div className="mt-6 max-w-2xl">
       <div className="rounded-md border border-yellow-200 bg-yellow-50 p-4">
-        <p className="text-sm font-medium text-yellow-800">Column headers not found</p>
+        <p className="text-sm font-medium text-yellow-800">We couldn't recognise your column names</p>
         <p className="mt-1 text-sm text-yellow-700">
-          Your file does not have the expected column names. Tell us which column contains each field.
+          No problem — use the preview below to identify which column contains the date, description, and amount, then tell us which is which.
         </p>
       </div>
 
       <div className="mt-6">
-        <p className="mb-3 text-sm font-medium text-gray-700">Preview of your file</p>
+        <p className="mb-3 text-sm font-medium text-gray-700">First few rows of your file</p>
         <div className="overflow-x-auto rounded-md border border-gray-200">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-left text-gray-500">
@@ -77,7 +77,7 @@ export default function ColumnMapper({ rows, onConfirm }: Props) {
       </div>
 
       <div className="mt-6 space-y-4">
-        <p className="text-sm font-medium text-gray-700">Map columns to fields</p>
+        <p className="text-sm font-medium text-gray-700">Which column is which?</p>
         {REQUIRED_FIELDS.map(({ key, label }) => (
           <div key={key} className="flex items-center gap-4">
             <label className="w-28 text-sm text-gray-600">{label}</label>
@@ -108,7 +108,7 @@ export default function ColumnMapper({ rows, onConfirm }: Props) {
           onChange={(e) => setSkipFirstRow(e.target.checked)}
           className="rounded border-gray-300"
         />
-        First row is a header — skip it
+        First row is a header row — skip it when importing
       </label>
 
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
@@ -118,7 +118,7 @@ export default function ColumnMapper({ rows, onConfirm }: Props) {
         onClick={handleConfirm}
         className="mt-6 rounded-md bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700"
       >
-        Confirm mapping
+        Continue
       </button>
     </div>
   );

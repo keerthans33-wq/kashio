@@ -26,7 +26,7 @@ function Section({
   if (candidates.length === 0) return null;
   return (
     <div>
-      <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+      <h2 className="mb-4 pb-2 border-b border-gray-100 dark:border-gray-700 text-sm font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
         {title} ({candidates.length})
       </h2>
       <div className="space-y-3">
@@ -90,7 +90,7 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
       await action(ids);
       setSelected(new Set());
       setLastIds(ids);
-      setSuccessMsg(`${count} candidate${count !== 1 ? "s" : ""} ${label}.`);
+      setSuccessMsg(`${count} item${count !== 1 ? "s" : ""} ${label}.`);
     } catch {
       setError("Could not save bulk changes. Please try again.");
     } finally {
@@ -106,7 +106,7 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
     try {
       await bulkResetCandidates(ids);
       setLastIds([]);
-      setSuccessMsg(`${count} candidate${count !== 1 ? "s" : ""} moved back to needs review.`);
+      setSuccessMsg(`${count} item${count !== 1 ? "s" : ""} moved back to Needs review.`);
     } catch {
       setError("Could not undo bulk changes. Please try again.");
     } finally {
@@ -159,7 +159,7 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
             disabled={isSaving}
             className="text-xs text-gray-400 hover:text-gray-600 underline disabled:opacity-40 dark:text-gray-500 dark:hover:text-gray-300"
           >
-            Clear
+            Clear selection
           </button>
           {error && <span className="text-xs text-red-500">{error}</span>}
         </div>
@@ -175,7 +175,7 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
             className="h-4 w-4 cursor-pointer rounded border-gray-300 accent-green-600 dark:border-gray-600"
           />
           <span className="text-xs text-gray-400 dark:text-gray-500">
-            {selected.size === needsReviewIds.length ? "Deselect all" : "Select all pending"}
+            {selected.size === needsReviewIds.length ? "Deselect all" : "Select all"}
           </span>
         </div>
       )}
@@ -192,7 +192,7 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
               {missingEvidence.length > 0 && (
                 <div>
                   <div className="mb-3 flex items-center gap-2">
-                    <h2 className="text-sm font-medium uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                    <h2 className="pb-2 border-b border-amber-100 dark:border-amber-900/40 text-sm font-medium uppercase tracking-wide text-amber-600 dark:text-amber-400">
                       Confirmed — needs evidence ({missingEvidence.length})
                     </h2>
                   </div>
@@ -208,7 +208,7 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
               )}
               {evidenceReady.length > 0 && (
                 <div>
-                  <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  <h2 className="mb-4 pb-2 border-b border-gray-100 dark:border-gray-700 text-sm font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
                     Confirmed — evidence ready ({evidenceReady.length})
                   </h2>
                   <div className="space-y-3">

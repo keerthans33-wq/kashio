@@ -56,7 +56,7 @@ const STATUS_FOOTER: Record<Status, string> = {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">{label}</p>
+      <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{label}</p>
       <div className="mt-0.5">{children}</div>
     </div>
   );
@@ -192,7 +192,7 @@ export function CandidateCard({
                 className="h-4 w-4 rounded border-gray-300 text-blue-600 dark:border-gray-600"
               />
               <span className={`text-sm ${evidence ? "text-gray-700 dark:text-gray-300" : "text-amber-800 dark:text-amber-300"}`}>
-                {evidence ? "Receipt or invoice on hand" : "Mark as ready — I have a receipt or invoice"}
+                {evidence ? "Receipt or invoice on hand" : "I have a receipt or invoice"}
               </span>
             </label>
             {evidenceSaving && evidenceSaved == null
@@ -250,7 +250,7 @@ export function CandidateCard({
                 disabled={isSaving}
                 className="rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:bg-green-700 disabled:opacity-40"
               >
-                {isSaving ? "Saving…" : "Confirm"}
+                {isSaving ? "Saving…" : "Confirm deduction"}
               </button>
               <button
                 onClick={handleReject}

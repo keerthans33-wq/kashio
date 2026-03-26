@@ -204,7 +204,7 @@ export default function CsvUploader() {
           onClick={handleUpload}
           className="mt-4 rounded-md bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300"
         >
-          Upload
+          Preview CSV
         </button>
 
         {parseError && (
@@ -270,7 +270,7 @@ export default function CsvUploader() {
               </div>
             )}
 
-            {importResult === null && (
+            {importResult === null ? (
               <button
                 type="button"
                 onClick={handleImport}
@@ -279,7 +279,14 @@ export default function CsvUploader() {
               >
                 {importing ? "Importing…" : `Import ${result.valid.length} transaction${result.valid.length !== 1 ? "s" : ""}`}
               </button>
-            )}
+            ) : importResult.inserted > 0 ? (
+              <a
+                href="/review"
+                className="inline-block rounded-md bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300"
+              >
+                Go to Review →
+              </a>
+            ) : null}
 
             {importError && (
               <p className="text-sm text-red-600 dark:text-red-400">{importError}</p>

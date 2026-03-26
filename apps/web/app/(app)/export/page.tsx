@@ -64,17 +64,21 @@ export default async function Export() {
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
-      <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Export</h1>
-      <p className="mt-1 text-gray-500 dark:text-gray-400">
-        Your confirmed deductions for EOFY. Each item needs a receipt or invoice before it's ready to export.
+      <div className="flex items-baseline gap-3">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Export</h1>
+        <span className="text-sm text-gray-400 dark:text-gray-500">Step 3 of 3</span>
+      </div>
+      <p className="mt-2 text-gray-500 dark:text-gray-400">
+        Your confirmed deductions, ready to prepare for tax time. Make sure each item has a receipt or invoice on hand, then download the CSV.
       </p>
 
       {confirmed.length === 0 ? (
-        <p className="mt-10 text-center text-gray-400 dark:text-gray-500">
-          No confirmed deductions yet.{" "}
-          <a href="/review" className="underline hover:text-gray-600 dark:hover:text-gray-300">Go to Review</a>{" "}
-          to confirm candidates.
-        </p>
+        <div className="mt-10 text-center space-y-1">
+          <p className="text-gray-500 dark:text-gray-400">Nothing to export yet.</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">
+            <a href="/review" className="underline hover:text-gray-600 dark:hover:text-gray-300">Go to Review</a> and confirm the deductions you want to include.
+          </p>
+        </div>
       ) : (
         <>
           {/* Summary */}
@@ -145,8 +149,8 @@ export default async function Export() {
 
           {/* Needs evidence — shown first so incomplete items are addressed before downloading */}
           {missing.length > 0 && (
-            <div className="mt-8">
-              <h2 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+            <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
                 Needs evidence
                 <span className="ml-2 text-xs font-normal text-amber-600 dark:text-amber-400">{missing.length} item{missing.length !== 1 ? "s" : ""} incomplete</span>
               </h2>
@@ -162,9 +166,9 @@ export default async function Export() {
 
           {/* Ready for export */}
           {ready.length > 0 && (
-            <div className="mt-8">
-              <h2 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-                Ready for export
+            <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                Evidence ready
                 <span className="ml-2 text-xs font-normal text-blue-600 dark:text-blue-400">{ready.length} item{ready.length !== 1 ? "s" : ""} · ${readyTotal.toFixed(2)}</span>
               </h2>
               <DeductionsTable items={ready} />
@@ -172,7 +176,7 @@ export default async function Export() {
           )}
 
           {/* Download */}
-          <div className="mt-8">
+          <div className="mt-10 pt-8 border-t border-gray-200 dark:border-gray-700">
             <a
               href="/api/export"
               className={`inline-block rounded-md px-5 py-2.5 text-sm font-medium text-white transition-colors ${
@@ -181,7 +185,7 @@ export default async function Export() {
                   : "bg-gray-900 hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300"
               }`}
             >
-              Download CSV
+              Export CSV
             </a>
             <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
               {confirmed.length} confirmed deduction{confirmed.length !== 1 ? "s" : ""} · includes all confirmed items, ready or not · CSV format
