@@ -83,17 +83,17 @@ export default async function Export() {
         <>
           {/* Summary */}
           <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
-            <div className="rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
+            <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 sm:px-4 sm:py-3 dark:border-gray-700 dark:bg-gray-800">
               <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">Confirmed</p>
-              <p className="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">{confirmed.length}</p>
+              <p className="mt-1 text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">{confirmed.length}</p>
             </div>
-            <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-800 dark:bg-blue-900/20">
+            <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 sm:px-4 sm:py-3 dark:border-blue-800 dark:bg-blue-900/20">
               <p className="text-xs font-medium uppercase tracking-wide text-blue-600 dark:text-blue-400">Evidence ready</p>
-              <p className="mt-1 text-2xl font-semibold text-blue-700 dark:text-blue-400">{ready.length}</p>
+              <p className="mt-1 text-xl sm:text-2xl font-semibold text-blue-700 dark:text-blue-400">{ready.length}</p>
             </div>
-            <div className={`rounded-lg border px-4 py-3 ${missing.length > 0 ? "border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20" : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"}`}>
+            <div className={`rounded-lg border px-3 py-2 sm:px-4 sm:py-3 ${missing.length > 0 ? "border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20" : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"}`}>
               <p className={`text-xs font-medium uppercase tracking-wide ${missing.length > 0 ? "text-amber-600 dark:text-amber-400" : "text-gray-400 dark:text-gray-500"}`}>Needs evidence</p>
-              <p className={`mt-1 text-2xl font-semibold ${missing.length > 0 ? "text-amber-700 dark:text-amber-400" : "text-gray-900 dark:text-gray-100"}`}>{missing.length}</p>
+              <p className={`mt-1 text-xl sm:text-2xl font-semibold ${missing.length > 0 ? "text-amber-700 dark:text-amber-400" : "text-gray-900 dark:text-gray-100"}`}>{missing.length}</p>
             </div>
           </div>
 

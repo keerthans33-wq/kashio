@@ -101,7 +101,7 @@ export function CandidateCard({
   const badge = STATUS_BADGE[status];
 
   return (
-    <div className={`rounded-lg border p-5 transition-colors ${STATUS_BORDER[status]} ${STATUS_BG[status]}`}>
+    <div className={`rounded-lg border p-4 sm:p-5 transition-colors ${STATUS_BORDER[status]} ${STATUS_BG[status]}`}>
 
       {/* Status badge — only shown when settled */}
       {badge && (

@@ -15,7 +15,7 @@ export default function Nav() {
   const pathname = usePathname();
 
   return (
-    <nav className="border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+    <nav className="sticky top-0 z-50 border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
       <div className="mx-auto max-w-5xl px-6">
         <div className="flex h-14 items-center gap-4 sm:gap-8">
           <Link href="/" className="flex shrink-0 items-center">

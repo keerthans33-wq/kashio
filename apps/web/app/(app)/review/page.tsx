@@ -84,17 +84,17 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
       </p>
 
       <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
-        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
+        <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 sm:px-4 sm:py-3 dark:border-gray-700 dark:bg-gray-800">
           <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">Needs Review</p>
-          <p className="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">{totalNeedsReview}</p>
+          <p className="mt-1 text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">{totalNeedsReview}</p>
         </div>
-        <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 dark:border-green-800 dark:bg-green-900/20">
+        <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 sm:px-4 sm:py-3 dark:border-green-800 dark:bg-green-900/20">
           <p className="text-xs font-medium uppercase tracking-wide text-green-600 dark:text-green-400">Confirmed</p>
-          <p className="mt-1 text-2xl font-semibold text-green-700 dark:text-green-400">{totalConfirmed}</p>
+          <p className="mt-1 text-xl sm:text-2xl font-semibold text-green-700 dark:text-green-400">{totalConfirmed}</p>
         </div>
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20">
+        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 sm:px-4 sm:py-3 dark:border-red-800 dark:bg-red-900/20">
           <p className="text-xs font-medium uppercase tracking-wide text-red-500 dark:text-red-400">Rejected</p>
-          <p className="mt-1 text-2xl font-semibold text-red-600 dark:text-red-400">{totalRejected}</p>
+          <p className="mt-1 text-xl sm:text-2xl font-semibold text-red-600 dark:text-red-400">{totalRejected}</p>
         </div>
       </div>
 
