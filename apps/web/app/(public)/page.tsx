@@ -13,7 +13,7 @@ export default function Home() {
             alt="Kashio"
             height={200}
             width={750}
-            className="h-14 w-auto dark:hidden"
+            className="h-16 w-auto dark:hidden"
             priority
           />
           <Image
@@ -21,7 +21,7 @@ export default function Home() {
             alt="Kashio"
             height={200}
             width={750}
-            className="h-14 w-auto hidden dark:block"
+            className="h-16 w-auto hidden dark:block"
             priority
           />
         </div>

@@ -26,11 +26,11 @@ export function ReviewFilters() {
   const hasFilters = status || category || confidence;
 
   return (
-    <div className="mt-4 flex flex-wrap items-center gap-3">
+    <div className="mt-4 flex flex-wrap items-center gap-2 sm:gap-3">
       <select
         value={status}
         onChange={(e) => update("status", e.target.value)}
-        className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:focus:ring-gray-600"
+        className="w-full sm:w-auto rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:focus:ring-gray-600"
       >
         <option value="">All statuses</option>
         <option value="NEEDS_REVIEW">Needs Review</option>
@@ -41,7 +41,7 @@ export function ReviewFilters() {
       <select
         value={category}
         onChange={(e) => update("category", e.target.value)}
-        className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:focus:ring-gray-600"
+        className="w-full sm:w-auto rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:focus:ring-gray-600"
       >
         <option value="">All categories</option>
         {ACTIVE_CATEGORIES.map((c) => (
@@ -52,7 +52,7 @@ export function ReviewFilters() {
       <select
         value={confidence}
         onChange={(e) => update("confidence", e.target.value)}
-        className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:focus:ring-gray-600"
+        className="w-full sm:w-auto rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:focus:ring-gray-600"
       >
         <option value="">All confidence levels</option>
         <option value="MEDIUM">Medium</option>
@@ -64,7 +64,7 @@ export function ReviewFilters() {
       <select
         value={sort}
         onChange={(e) => update("sort", e.target.value)}
-        className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:focus:ring-gray-600"
+        className="w-full sm:w-auto rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:focus:ring-gray-600"
       >
         <option value="">Sort: Date</option>
         <option value="amount">Sort: Amount</option>

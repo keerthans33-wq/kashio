@@ -4,7 +4,7 @@ import ImportedBatches from "../../components/import/ImportedBatches";
 
 export default function Import() {
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
+    <main className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
       <div className="flex items-baseline gap-3">
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Import</h1>
         <span className="text-sm text-gray-400 dark:text-gray-500">Step 1 of 3</span>

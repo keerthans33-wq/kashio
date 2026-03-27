@@ -63,7 +63,7 @@ export default async function Export() {
   const categoryEntries = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-10">
+    <main className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
       <div className="flex items-baseline gap-3">
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Export</h1>
         <span className="text-sm text-gray-400 dark:text-gray-500">Step 3 of 3</span>
@@ -82,7 +82,7 @@ export default async function Export() {
       ) : (
         <>
           {/* Summary */}
-          <div className="mt-6 grid grid-cols-3 gap-3">
+          <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
             <div className="rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
               <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">Confirmed</p>
               <p className="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">{confirmed.length}</p>

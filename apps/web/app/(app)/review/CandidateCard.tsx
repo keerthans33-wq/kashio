@@ -226,7 +226,7 @@ export function CandidateCard({
       )}
 
       {/* Footer: status + actions */}
-      <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-4 dark:border-gray-700">
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-4 dark:border-gray-700">
         <p className={`text-xs ${STATUS_FOOTER[status]}`}>
           {error        ? <span className="text-red-500 font-medium">{error}</span>
             : isSaving  ? "Saving…"
@@ -258,14 +258,14 @@ export function CandidateCard({
               <button
                 onClick={handleConfirm}
                 disabled={isSaving}
-                className="rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:bg-green-700 disabled:opacity-40"
+                className="rounded-md bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition-opacity hover:bg-green-700 disabled:opacity-40 sm:px-3 sm:py-1.5 sm:text-xs"
               >
                 {isSaving ? "Saving…" : "Confirm deduction"}
               </button>
               <button
                 onClick={handleReject}
                 disabled={isSaving}
-                className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition-opacity hover:bg-gray-50 disabled:opacity-40 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+                className="rounded-md border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition-opacity hover:bg-gray-50 disabled:opacity-40 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700 sm:px-3 sm:py-1.5 sm:text-xs"
               >
                 Reject
               </button>

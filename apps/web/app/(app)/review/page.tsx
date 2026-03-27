@@ -61,7 +61,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-10">
+    <main className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-baseline gap-3">
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Review</h1>
@@ -83,7 +83,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         Once you've reviewed everything, go to Export to download your confirmed deductions.
       </p>
 
-      <div className="mt-6 grid grid-cols-3 gap-3">
+      <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
         <div className="rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
           <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">Needs Review</p>
           <p className="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">{totalNeedsReview}</p>
