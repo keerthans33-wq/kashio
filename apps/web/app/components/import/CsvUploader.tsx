@@ -283,7 +283,7 @@ export default function CsvUploader() {
             ) : importResult.inserted > 0 ? (
               <a
                 href="/review"
-                className="inline-block rounded-md bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300"
+                className="inline-block rounded-md bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-700"
               >
                 Go to Review →
               </a>

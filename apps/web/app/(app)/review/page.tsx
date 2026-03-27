@@ -70,7 +70,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         {totalConfirmed > 0 && (
           <a
             href="/export"
-            className="shrink-0 rounded-md border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+            className="shrink-0 rounded-md bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700"
           >
             Go to Export →
           </a>
@@ -133,10 +133,17 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
           </p>
         );
         if (totalExportReady > 0) return (
-          <p className="mt-3 text-sm text-green-700 dark:text-green-400">
-            All done. <a href="/export" className="underline hover:text-green-900 dark:hover:text-green-200">Go to Export</a> to download your deductions.
-            {isFiltered && <span className="text-gray-500 dark:text-gray-400"> Showing {candidates.length} of {all.length}.</span>}
-          </p>
+          <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-lg bg-violet-50 border border-violet-200 px-4 py-3 dark:bg-violet-900/20 dark:border-violet-800">
+            <p className="text-sm font-medium text-violet-800 dark:text-violet-300">
+              You're all done reviewing — your deductions are ready to export.
+            </p>
+            <a
+              href="/export"
+              className="shrink-0 rounded-md bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700"
+            >
+              Go to Export →
+            </a>
+          </div>
         );
         return (
           <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
