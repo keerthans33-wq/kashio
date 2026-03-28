@@ -12,8 +12,8 @@ async function getToken(): Promise<string> {
   const res = await fetch(`${BASE_URL}/token`, {
     method: "POST",
     headers: {
-      // Basiq token endpoint: base64-encode the API key directly (no username:password format).
-      Authorization: `Basic ${Buffer.from(apiKey).toString("base64")}`,
+      // Basiq API keys are already base64-encoded — use directly as the Basic auth value.
+      Authorization: `Basic ${apiKey}`,
       "Content-Type": "application/x-www-form-urlencoded",
       "basiq-version": "3.0",
     },
