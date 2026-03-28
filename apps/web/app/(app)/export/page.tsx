@@ -177,18 +177,34 @@ export default async function Export() {
 
           {/* Download */}
           <div className="mt-10 pt-8 border-t border-gray-200 dark:border-gray-700">
-            <a
-              href="/api/export"
-              className={`inline-block rounded-md px-5 py-2.5 text-sm font-medium text-white transition-colors ${
-                missing.length === 0
-                  ? "bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
-                  : "bg-gray-900 hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300"
-              }`}
-            >
-              Export CSV
-            </a>
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-              The CSV includes all {confirmed.length} confirmed deduction{confirmed.length !== 1 ? "s" : ""} — whether or not evidence has been noted.
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-3">Download</p>
+            <div className="flex flex-wrap gap-3">
+              <a
+                href="/api/export/pdf"
+                className={`inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-semibold text-white transition-colors ${
+                  missing.length === 0
+                    ? "bg-violet-600 hover:bg-violet-700"
+                    : "bg-gray-800 hover:bg-gray-700 dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-gray-100"
+                }`}
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                Export PDF report
+              </a>
+              <a
+                href="/api/export"
+                className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M3 14h18M9 3v18M15 3v18" />
+                </svg>
+                Export Excel (.xlsx)
+              </a>
+            </div>
+            <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
+              Both formats include all {confirmed.length} confirmed deduction{confirmed.length !== 1 ? "s" : ""}.
+              Excel highlights rows missing evidence in amber. PDF is formatted as a printable report.
             </p>
           </div>
         </>
