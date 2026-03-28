@@ -193,37 +193,66 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
       {all.length > 0 && (() => {
         const missingEvidence = totalConfirmed - totalExportReady;
+
+        // State 1: still items to review
         if (totalNeedsReview > 0) return (
-          <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-            {totalNeedsReview} item{totalNeedsReview !== 1 ? "s" : ""} still need review.
-            {missingEvidence > 0 && <> Once reviewed, {missingEvidence} confirmed item{missingEvidence !== 1 ? "s" : ""} will still need evidence.</>}
-            {isFiltered && ` Showing ${candidates.length} of ${all.length}.`}
-          </p>
-        );
-        if (missingEvidence > 0) return (
-          <p className="mt-3 text-sm text-amber-700 dark:text-amber-400">
-            Review is complete. {missingEvidence} confirmed item{missingEvidence !== 1 ? "s" : ""} still {missingEvidence !== 1 ? "need" : "needs"} evidence before export.
-            {isFiltered && <span className="text-gray-500 dark:text-gray-400"> Showing {candidates.length} of {all.length}.</span>}
-          </p>
-        );
-        if (totalExportReady > 0) return (
-          <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-lg bg-violet-50 border border-violet-200 px-4 py-3 dark:bg-violet-900/20 dark:border-violet-800">
-            <p className="text-sm font-medium text-violet-800 dark:text-violet-300">
-              You're all done reviewing — your deductions are ready to export.
+          <div className="mt-4 rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              {totalNeedsReview} item{totalNeedsReview !== 1 ? "s" : ""} left to review
             </p>
-            <a
-              href="/export"
-              className="shrink-0 rounded-md bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700"
-            >
+            <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+              {missingEvidence > 0
+                ? `${totalConfirmed} confirmed — ${missingEvidence} still need evidence once you're done.`
+                : totalConfirmed > 0
+                ? `${totalConfirmed} confirmed so far. Keep going.`
+                : "Confirm the ones that were genuinely work-related, reject the rest."}
+            </p>
+          </div>
+        );
+
+        // State 2: review done but evidence missing
+        if (missingEvidence > 0) return (
+          <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-900/20">
+            <div>
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                Review complete — add evidence to {missingEvidence} item{missingEvidence !== 1 ? "s" : ""}
+              </p>
+              <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-400">
+                {totalExportReady > 0
+                  ? `${totalExportReady} already ready to export. Tick the receipt checkbox on the remaining items.`
+                  : "Open each confirmed item and tick the receipt checkbox to mark evidence."}
+              </p>
+            </div>
+            {totalExportReady > 0 && (
+              <a href="/export" className="shrink-0 rounded-md border border-amber-300 px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900/40">
+                Export {totalExportReady} ready →
+              </a>
+            )}
+          </div>
+        );
+
+        // State 3: all done and export ready
+        if (totalExportReady > 0) return (
+          <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 dark:border-green-800 dark:bg-green-900/20">
+            <div>
+              <p className="text-sm font-medium text-green-800 dark:text-green-300">
+                All done — {totalExportReady} item{totalExportReady !== 1 ? "s" : ""} ready to export
+              </p>
+              <p className="mt-0.5 text-xs text-green-700 dark:text-green-400">
+                Download your deductions as a spreadsheet for tax time.
+              </p>
+            </div>
+            <a href="/export" className="shrink-0 rounded-md bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700">
               Go to Export →
             </a>
           </div>
         );
+
+        // State 4: all reviewed, nothing confirmed
         return (
-          <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-            All items have been reviewed.
-            {isFiltered && ` Showing ${candidates.length} of ${all.length}.`}
-          </p>
+          <div className="mt-4 rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
+            <p className="text-sm text-gray-500 dark:text-gray-400">All items reviewed — nothing confirmed for export.</p>
+          </div>
         );
       })()}
 
