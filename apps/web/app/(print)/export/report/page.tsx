@@ -13,6 +13,7 @@ export default async function ExportReport() {
 
   const now       = new Date();
   const year      = now.getFullYear();
+  const fy        = `${year - 1}–${String(year).slice(2)}`;
   const generated = now.toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" });
 
   const rows = candidates.map((c) => ({
@@ -34,138 +35,171 @@ export default async function ExportReport() {
 
   return (
     <>
-      {/* Print styles injected into <head> via a style tag */}
       <style>{`
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
         @media print {
-          @page { size: A4; margin: 18mm 14mm; }
-          body   { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          @page { size: A4 portrait; margin: 16mm 14mm 14mm 14mm; }
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .no-print { display: none !important; }
+          .page-break-inside-avoid { break-inside: avoid; }
         }
+        @media screen {
+          .report-wrap { max-width: 860px; margin: 0 auto; padding: 32px 32px 48px; }
+        }
+        /* Table */
+        .ded-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 11px; }
+        .ded-table th, .ded-table td { padding: 7px 10px; text-align: left; vertical-align: top; overflow: hidden; }
+        .ded-table th { background: #1f2937; color: #fff; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+        .ded-table td { border-bottom: 1px solid #f3f4f6; color: #374151; }
+        .ded-table td.amount { text-align: right; font-weight: 600; color: #111827; white-space: nowrap; }
+        .ded-table td.merchant { font-weight: 600; color: #111827; }
+        .ded-table td.evidence-ready   { color: #065f46; font-weight: 600; white-space: nowrap; }
+        .ded-table td.evidence-missing { color: #b45309; font-weight: 600; white-space: nowrap; }
+        .ded-table tr.missing-row { background: #fffbeb; }
+        .ded-table tr:last-child.total-row td { background: #f9fafb; border-top: 2px solid #e5e7eb; font-weight: 700; color: #111827; }
+        .ded-table .col-date     { width: 11%; }
+        .ded-table .col-merchant { width: 24%; }
+        .ded-table .col-category { width: 22%; }
+        .ded-table .col-amount   { width: 13%; }
+        .ded-table .col-evidence { width: 13%; }
+        .ded-table .col-note     { width: 17%; }
+        .note-text { font-size: 10px; color: #9ca3af; margin-top: 2px; }
+        .truncate-cell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+        /* Category table */
+        .cat-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .cat-table td { padding: 6px 12px; border-bottom: 1px solid #f3f4f6; }
+        .cat-table td:last-child { text-align: right; font-weight: 600; color: #111827; }
+        .cat-table tr.total-row td { background: #f9fafb; font-weight: 700; color: #111827; border-top: 2px solid #e5e7eb; }
       `}</style>
 
-      <div className="min-h-screen bg-white text-gray-900 font-sans">
-
-        {/* ── Toolbar (hidden when printing) ───────────────────────── */}
-        <div className="print:hidden sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-gray-200 bg-white px-6 py-3">
-          <div className="flex items-center gap-3">
-            <a href="/export" className="text-sm text-gray-500 hover:text-gray-700 underline">
-              ← Back to Export
-            </a>
-            <span className="text-gray-300">|</span>
-            <span className="text-sm text-gray-400">Tax Deduction Report {year}</span>
-          </div>
-          <PrintButton />
+      {/* Toolbar — screen only */}
+      <div className="no-print" style={{ position: "sticky", top: 0, zIndex: 10, background: "#fff", borderBottom: "1px solid #e5e7eb", padding: "10px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <a href="/export" style={{ fontSize: 13, color: "#6b7280", textDecoration: "underline" }}>← Back</a>
+          <span style={{ color: "#d1d5db" }}>|</span>
+          <span style={{ fontSize: 13, color: "#9ca3af" }}>Tax Deduction Report {fy}</span>
         </div>
+        <PrintButton />
+      </div>
 
-        {/* ── Report body ──────────────────────────────────────────── */}
-        <div className="mx-auto max-w-4xl px-8 py-10 print:px-0 print:py-0">
+      <div className="report-wrap">
 
-          {/* Header */}
-          <div className="flex items-start justify-between border-b-2 border-violet-600 pb-4 mb-6">
-            <div>
-              <p className="text-2xl font-bold tracking-tight text-violet-700">Kashio</p>
-              <p className="text-sm text-gray-500 mt-0.5">Tax Deduction Report</p>
-            </div>
-            <div className="text-right">
-              <p className="text-lg font-semibold text-gray-900">Financial Year {year - 1}–{String(year).slice(2)}</p>
-              <p className="text-xs text-gray-400 mt-0.5">Generated: {generated}</p>
-            </div>
-          </div>
+        {/* ── Report header ──────────────────────────────────────── */}
+        <table style={{ width: "100%", borderBottom: "3px solid #7c3aed", paddingBottom: 12, marginBottom: 20 }}>
+          <tbody>
+            <tr>
+              <td style={{ verticalAlign: "bottom" }}>
+                <div style={{ fontSize: 22, fontWeight: 800, color: "#7c3aed", letterSpacing: -0.5 }}>Kashio</div>
+                <div style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>Tax Deduction Report</div>
+              </td>
+              <td style={{ textAlign: "right", verticalAlign: "bottom" }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>FY {fy}</div>
+                <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 2 }}>Generated {generated}</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-          {/* Summary */}
-          <div className="grid grid-cols-3 gap-4 mb-8">
-            <div className="rounded-lg border border-gray-200 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Confirmed</p>
-              <p className="mt-1 text-2xl font-bold text-gray-900">{rows.length}</p>
-              <p className="text-xs text-gray-400 mt-0.5">deductions</p>
-            </div>
-            <div className="rounded-lg border border-gray-200 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Evidence</p>
-              <p className="mt-1 text-2xl font-bold text-gray-900">{withEvidence}</p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                {missing > 0 ? `${missing} still missing` : "all attached"}
-              </p>
-            </div>
-            <div className="rounded-lg border border-violet-200 bg-violet-50 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-violet-500">Total Claimed</p>
-              <p className="mt-1 text-2xl font-bold text-violet-700">${total.toFixed(2)}</p>
-              <p className="text-xs text-violet-400 mt-0.5">AUD</p>
-            </div>
-          </div>
-
-          {/* Category breakdown */}
-          <div className="mb-8">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">By Category</h2>
-            <div className="rounded-lg border border-gray-200 divide-y divide-gray-100 text-sm">
-              {categoryTotals.map(([category, amount]) => (
-                <div key={category} className="flex justify-between px-4 py-2.5">
-                  <span className="text-gray-700">{category}</span>
-                  <span className="font-medium text-gray-900">${amount.toFixed(2)}</span>
-                </div>
+        {/* ── Summary ────────────────────────────────────────────── */}
+        <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: "0 0", marginBottom: 24 }}>
+          <tbody>
+            <tr>
+              {[
+                { label: "Confirmed deductions", value: String(rows.length), sub: "items" },
+                { label: "Evidence attached",    value: String(withEvidence), sub: missing > 0 ? `${missing} still missing` : "all ready" },
+                { label: "Total claimed",        value: `$${total.toFixed(2)}`, sub: "AUD" },
+              ].map((s, i) => (
+                <td key={i} style={{ width: "33%", padding: i === 1 ? "0 6px" : 0, verticalAlign: "top" }}>
+                  <div style={{ border: i === 2 ? "1px solid #ddd6fe" : "1px solid #e5e7eb", borderRadius: 6, padding: "10px 14px", background: i === 2 ? "#f5f3ff" : "#fff" }}>
+                    <div style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: i === 2 ? "#7c3aed" : "#9ca3af" }}>{s.label}</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: i === 2 ? "#6d28d9" : "#111827", margin: "4px 0 2px" }}>{s.value}</div>
+                    <div style={{ fontSize: 10, color: i === 2 ? "#a78bfa" : "#9ca3af" }}>{s.sub}</div>
+                  </div>
+                </td>
               ))}
-              <div className="flex justify-between px-4 py-2.5 bg-gray-50">
-                <span className="font-semibold text-gray-800">Total</span>
-                <span className="font-bold text-gray-900">${total.toFixed(2)}</span>
-              </div>
-            </div>
-          </div>
+            </tr>
+          </tbody>
+        </table>
 
-          {/* Deductions table */}
-          <div className="mb-8">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-              All Deductions
-              {missing > 0 && (
-                <span className="ml-2 normal-case font-normal text-amber-600">
-                  — rows highlighted in amber are missing evidence
-                </span>
-              )}
-            </h2>
-            <div className="rounded-lg border border-gray-200 overflow-hidden text-sm">
-              <table className="min-w-full divide-y divide-gray-100">
-                <thead className="bg-gray-800 text-white">
-                  <tr>
-                    <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide">Date</th>
-                    <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide">Merchant</th>
-                    <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide">Description</th>
-                    <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide">Category</th>
-                    <th className="px-3 py-2.5 text-right text-xs font-semibold uppercase tracking-wide">Amount</th>
-                    <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide">Evidence</th>
+        {/* ── Category breakdown ─────────────────────────────────── */}
+        <div style={{ marginBottom: 24 }} className="page-break-inside-avoid">
+          <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#9ca3af", marginBottom: 6 }}>By Category</div>
+          <div style={{ border: "1px solid #e5e7eb", borderRadius: 6, overflow: "hidden" }}>
+            <table className="cat-table">
+              <tbody>
+                {categoryTotals.map(([cat, amt]) => (
+                  <tr key={cat}>
+                    <td style={{ color: "#374151" }}>{cat}</td>
+                    <td>${amt.toFixed(2)}</td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {rows.map((r, i) => (
-                    <tr key={i} className={r.hasEvidence ? "bg-white" : "bg-amber-50"}>
-                      <td className="whitespace-nowrap px-3 py-2 text-gray-500">{r.date}</td>
-                      <td className="whitespace-nowrap px-3 py-2 font-medium text-gray-900">{r.merchant}</td>
-                      <td className="px-3 py-2 text-gray-500 max-w-[200px]">
-                        <p className="truncate">{r.description}</p>
-                        {r.note && <p className="text-xs text-gray-400 mt-0.5">{r.note}</p>}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-2 text-gray-500">{r.category}</td>
-                      <td className="whitespace-nowrap px-3 py-2 text-right font-medium text-gray-900">
-                        ${r.amount.toFixed(2)}
-                      </td>
-                      <td className={`whitespace-nowrap px-3 py-2 text-xs font-medium ${r.hasEvidence ? "text-green-700" : "text-amber-700"}`}>
-                        {r.hasEvidence ? "✓ Ready" : "⚠ Missing"}
-                      </td>
-                    </tr>
-                  ))}
-                  <tr className="bg-gray-50 border-t border-gray-200">
-                    <td colSpan={4} className="px-3 py-2.5 text-right font-semibold text-gray-700 text-sm">Total</td>
-                    <td className="px-3 py-2.5 text-right font-bold text-gray-900">${total.toFixed(2)}</td>
-                    <td />
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+                ))}
+                <tr className="total-row">
+                  <td>Total</td>
+                  <td>${total.toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-
-          {/* Footer */}
-          <div className="border-t border-gray-200 pt-4 text-xs text-gray-400">
-            <p>This report was generated by Kashio on {generated}.</p>
-            <p className="mt-0.5">Verify all deductions with your tax agent before lodging your return.</p>
-          </div>
-
         </div>
+
+        {/* ── Deductions table ───────────────────────────────────── */}
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#9ca3af" }}>All Deductions</div>
+            {missing > 0 && (
+              <div style={{ fontSize: 10, color: "#b45309" }}>— amber rows are missing evidence</div>
+            )}
+          </div>
+          <div style={{ border: "1px solid #e5e7eb", borderRadius: 6, overflow: "hidden" }}>
+            <table className="ded-table">
+              <colgroup>
+                <col className="col-date" />
+                <col className="col-merchant" />
+                <col className="col-category" />
+                <col className="col-amount" />
+                <col className="col-evidence" />
+                <col className="col-note" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Merchant</th>
+                  <th>Category</th>
+                  <th style={{ textAlign: "right" }}>Amount</th>
+                  <th>Evidence</th>
+                  <th>Note</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r, i) => (
+                  <tr key={i} className={r.hasEvidence ? "" : "missing-row"}>
+                    <td style={{ color: "#6b7280", whiteSpace: "nowrap" }}>{r.date}</td>
+                    <td className="merchant"><span className="truncate-cell">{r.merchant}</span></td>
+                    <td style={{ color: "#6b7280" }}><span className="truncate-cell">{r.category}</span></td>
+                    <td className="amount">${r.amount.toFixed(2)}</td>
+                    <td className={r.hasEvidence ? "evidence-ready" : "evidence-missing"}>
+                      {r.hasEvidence ? "✓ Ready" : "⚠ Missing"}
+                    </td>
+                    <td style={{ color: "#9ca3af", fontSize: 10 }}>{r.note ?? ""}</td>
+                  </tr>
+                ))}
+                <tr className="total-row">
+                  <td colSpan={3} style={{ textAlign: "right", color: "#374151" }}>Total</td>
+                  <td className="amount">${total.toFixed(2)}</td>
+                  <td colSpan={2} />
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* ── Footer ─────────────────────────────────────────────── */}
+        <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: 10, fontSize: 10, color: "#9ca3af" }}>
+          <p style={{ margin: 0 }}>This report was generated by Kashio on {generated}.</p>
+          <p style={{ margin: "3px 0 0" }}>Verify all deductions with your registered tax agent before lodging your return.</p>
+        </div>
+
       </div>
     </>
   );
