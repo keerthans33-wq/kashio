@@ -18,17 +18,10 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const redirectPath: string = typeof body.redirectPath === "string" ? body.redirectPath : "/connect";
   const redirectUrl = `${origin}${redirectPath}?connected=true`;
-  const rawMobile: string = typeof body.mobile === "string" ? body.mobile.trim() : "";
   const email: string = typeof body.email === "string" ? body.email.trim() : "user@kashio.app";
-
-  if (!rawMobile) {
-    return NextResponse.json({ error: "Mobile number is required to connect your bank." }, { status: 400 });
-  }
-
-  // Normalise to E.164 format required by Basiq.
-  // Strips spaces/dashes, converts leading 0 to +61 (Australian numbers).
-  const digits = rawMobile.replace(/[\s\-().]/g, "");
-  const mobile = digits.startsWith("+") ? digits : `+61${digits.replace(/^0/, "")}`;
+  // Basiq requires a mobile on the user record to generate an auth link.
+  // We use a placeholder — Basiq's consent page handles real identity verification.
+  const mobile = "+61400000000";
 
 
   try {

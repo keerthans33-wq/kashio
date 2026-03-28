@@ -16,7 +16,6 @@ export default function ConnectFlow() {
   // Basiq redirects back here with ?connected=true after the user links their bank.
   const justConnected = searchParams.get("connected") === "true";
 
-  const [mobile, setMobile]             = useState("");
   const [connecting, setConnecting]     = useState(false);
   const [importing, setImporting]       = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
@@ -30,7 +29,7 @@ export default function ConnectFlow() {
       const res = await fetch("/api/basiq/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ redirectPath: "/connect", mobile }),
+        body: JSON.stringify({ redirectPath: "/connect" }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Could not start bank connection.");
@@ -114,22 +113,13 @@ export default function ConnectFlow() {
   // ── Step 1: Connect your bank ───────────────────────────────────────────────
   return (
     <div className="mt-8 space-y-4">
-      <div className="flex flex-row items-center gap-2">
-        <input
-          type="tel"
-          placeholder="Mobile number (e.g. 0412 345 678)"
-          value={mobile}
-          onChange={(e) => setMobile(e.target.value)}
-          className="w-64 rounded-md border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
-        />
-        <button
-          onClick={handleConnect}
-          disabled={connecting || !mobile.trim()}
-          className="rounded-md bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
-        >
-          {connecting ? "Opening bank connection…" : "Connect your bank"}
-        </button>
-      </div>
+      <button
+        onClick={handleConnect}
+        disabled={connecting}
+        className="rounded-md bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
+      >
+        {connecting ? "Opening bank connection…" : "Connect your bank"}
+      </button>
 
       {connectError && (
         <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20">
