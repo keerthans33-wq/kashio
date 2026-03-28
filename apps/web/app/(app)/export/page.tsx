@@ -81,54 +81,76 @@ export default async function Export() {
         </div>
       ) : (
         <>
-          {/* Summary */}
-          <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
-            <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 sm:px-4 sm:py-3 dark:border-gray-700 dark:bg-gray-800">
-              <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">Confirmed</p>
-              <p className="mt-1 text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">{confirmed.length}</p>
+          {/* ── Summary ─────────────────────────────────────────────── */}
+          <div className="mt-6 rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 overflow-hidden">
+
+            {/* Hero — total confirmed value */}
+            <div className="px-5 py-5 border-b border-gray-100 dark:border-gray-700">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                Total confirmed deductions
+              </p>
+              <p className="mt-1 text-4xl font-bold tabular-nums text-gray-900 dark:text-gray-100">
+                {total.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 })}
+              </p>
+              <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+                {confirmed.length} item{confirmed.length !== 1 ? "s" : ""} confirmed
+              </p>
             </div>
-            <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 sm:px-4 sm:py-3 dark:border-blue-800 dark:bg-blue-900/20">
-              <p className="text-xs font-medium uppercase tracking-wide text-blue-600 dark:text-blue-400">Evidence ready</p>
-              <p className="mt-1 text-xl sm:text-2xl font-semibold text-blue-700 dark:text-blue-400">{ready.length}</p>
+
+            {/* Ready / Missing stats */}
+            <div className="grid grid-cols-2 divide-x divide-gray-100 dark:divide-gray-700">
+              <div className="px-5 py-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-green-600 dark:text-green-400">Ready to export</p>
+                <p className="mt-1 text-2xl font-semibold tabular-nums text-green-700 dark:text-green-400">{ready.length}</p>
+                <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+                  {readyTotal > 0
+                    ? readyTotal.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 })
+                    : "—"}
+                </p>
+              </div>
+              <div className="px-5 py-4">
+                <p className={`text-xs font-medium uppercase tracking-wide ${missing.length > 0 ? "text-amber-600 dark:text-amber-400" : "text-gray-400 dark:text-gray-500"}`}>
+                  Missing evidence
+                </p>
+                <p className={`mt-1 text-2xl font-semibold tabular-nums ${missing.length > 0 ? "text-amber-700 dark:text-amber-400" : "text-gray-400 dark:text-gray-500"}`}>
+                  {missing.length}
+                </p>
+                <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+                  {missing.length > 0 ? "need a receipt or invoice" : "all evidence attached"}
+                </p>
+              </div>
             </div>
-            <div className={`rounded-lg border px-3 py-2 sm:px-4 sm:py-3 ${missing.length > 0 ? "border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20" : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"}`}>
-              <p className={`text-xs font-medium uppercase tracking-wide ${missing.length > 0 ? "text-amber-600 dark:text-amber-400" : "text-gray-400 dark:text-gray-500"}`}>Needs evidence</p>
-              <p className={`mt-1 text-xl sm:text-2xl font-semibold ${missing.length > 0 ? "text-amber-700 dark:text-amber-400" : "text-gray-900 dark:text-gray-100"}`}>{missing.length}</p>
-            </div>
+
+            {/* Progress bar */}
+            {(() => {
+              const pct = confirmed.length > 0 ? Math.round((ready.length / confirmed.length) * 100) : 0;
+              return (
+                <div className="px-5 pb-4">
+                  <div className="h-1.5 w-full rounded-full bg-gray-100 dark:bg-gray-700">
+                    <div
+                      className={`h-1.5 rounded-full transition-all ${pct === 100 ? "bg-green-500" : "bg-green-400"}`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+                    {pct === 100 ? "All items have evidence — ready to export." : `${ready.length} of ${confirmed.length} items have evidence`}
+                  </p>
+                </div>
+              );
+            })()}
           </div>
 
-          {/* Evidence readiness progress */}
-          {(() => {
-            const pct = confirmed.length > 0 ? Math.round((ready.length / confirmed.length) * 100) : 0;
-            return (
-              <div className="mt-4">
-                <div className="flex justify-between text-xs text-gray-400 dark:text-gray-500 mb-1">
-                  <span>{ready.length} of {confirmed.length} with evidence</span>
-                  <span>{pct}%</span>
-                </div>
-                <div className="h-1.5 w-full rounded-full bg-gray-100 dark:bg-gray-700">
-                  <div
-                    className={`h-1.5 rounded-full transition-all ${pct === 100 ? "bg-green-500" : "bg-blue-400"}`}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* Next-step message */}
-          <p className="mt-3 text-sm">
-            {missing.length === 0 ? (
-              <span className="text-green-700 dark:text-green-400">
-                Everything has evidence — use the button below to download your CSV.
-              </span>
-            ) : (
-              <span className="text-amber-700 dark:text-amber-400">
-                {missing.length} item{missing.length !== 1 ? "s" : ""} still {missing.length !== 1 ? "need" : "needs"} evidence.{" "}
-                <a href="/review" className="underline hover:text-amber-900 dark:hover:text-amber-200">Go to Review</a> to add receipts or invoices, then come back to download.
-              </span>
-            )}
-          </p>
+          {/* Next-step guidance */}
+          {missing.length > 0 && (
+            <div className="mt-3 flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-900/20">
+              <p className="text-sm text-amber-800 dark:text-amber-300">
+                {missing.length} item{missing.length !== 1 ? "s" : ""} still need{missing.length === 1 ? "s" : ""} a receipt or invoice before they can be exported.
+              </p>
+              <a href="/review" className="shrink-0 text-sm font-medium text-amber-700 underline hover:text-amber-900 dark:text-amber-400 dark:hover:text-amber-200">
+                Add evidence →
+              </a>
+            </div>
+          )}
 
           {/* Category totals */}
           <div className="mt-6">
