@@ -127,12 +127,12 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
           <div className="grid grid-cols-2 divide-x divide-violet-500">
             {/* Potential */}
             <div className="pr-4">
-              <p className="text-[9px] sm:text-[10px] whitespace-nowrap font-medium uppercase tracking-wide text-violet-200">Potential deductions</p>
+              <p className="text-[10px] font-medium uppercase tracking-wide text-violet-200 leading-tight">Potential<br/>deductions</p>
               <p className="mt-1.5 text-3xl font-bold tabular-nums">{fmt(potentialValue)}</p>
             </div>
             {/* Confirmed */}
             <div className="pl-4">
-              <p className="text-[9px] sm:text-[10px] whitespace-nowrap font-medium uppercase tracking-wide text-violet-200">Confirmed so far</p>
+              <p className="text-[10px] font-medium uppercase tracking-wide text-violet-200 leading-tight">Confirmed<br/>so far</p>
               <p className="mt-1.5 text-3xl font-bold tabular-nums">{fmt(confirmedValue)}</p>
             </div>
           </div>
