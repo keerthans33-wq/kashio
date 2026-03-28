@@ -180,33 +180,22 @@ export default async function Export() {
             <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-3">Download</p>
             <div className="flex flex-wrap gap-3">
               <a
-                href="/export/report"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/api/export"
                 className={`inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-semibold text-white transition-colors ${
                   missing.length === 0
-                    ? "bg-violet-600 hover:bg-violet-700"
+                    ? "bg-green-600 hover:bg-green-700"
                     : "bg-gray-800 hover:bg-gray-700 dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-gray-100"
                 }`}
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                </svg>
-                View PDF report
-              </a>
-              <a
-                href="/api/export"
-                className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M3 14h18M9 3v18M15 3v18" />
                 </svg>
-                Export Excel (.xlsx)
+                Download Excel (.xlsx)
               </a>
             </div>
             <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
-              Both formats include all {confirmed.length} confirmed deduction{confirmed.length !== 1 ? "s" : ""}.
-              PDF opens a print-ready report — use your browser's Print → Save as PDF. Excel highlights rows missing evidence in amber.
+              Includes all {confirmed.length} confirmed deduction{confirmed.length !== 1 ? "s" : ""}.
+              Rows missing evidence are highlighted in amber.
             </p>
           </div>
         </>
