@@ -191,6 +191,30 @@
 
 ---
 
+## Day 25 — 2026-03-28
+
+**Goal:** Make the tax value of Kashio much more obvious after import and during review/export
+
+**What I did:**
+- Added tax value summaries to Review and Export
+- Added category totals
+- Added post-import and post-sync value summaries
+- Improved next-step guidance
+- Added a still-to-review value signal
+- Added a simple tax readiness indicator
+- Improved candidate reason text and confidence explanations
+- Added a what's-missing summary block
+- Reviewed tax value clarity with Codex
+
+**What I learned:**
+- Users need money value to be obvious
+- Totals and readiness make the product feel much more useful
+- Clear next actions are part of delivering value, not just UX polish
+
+**Next step:** Prepare Kashio for ongoing recurring value inside tax, including WFH logging in the next phase
+
+---
+
 ## Day 23 — 2026-03-28
 
 **Goal:** Prepare Kashio for future Open Banking by adding a reusable bank-like ingestion flow
