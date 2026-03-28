@@ -1,4 +1,4 @@
-// POST /api/basiq/import
+// POST /api/basiq/transactions
 //
 // Fetches the user's transactions from Basiq, maps them into our format,
 // and saves them to the database exactly like the CSV import does.

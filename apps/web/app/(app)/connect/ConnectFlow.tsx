@@ -41,7 +41,7 @@ export default function ConnectFlow() {
     setImporting(true);
     setImportError(null);
     try {
-      const res = await fetch("/api/basiq/import", { method: "POST" });
+      const res = await fetch("/api/basiq/transactions", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Could not import transactions.");
       setImportResult(data as ImportResult);
