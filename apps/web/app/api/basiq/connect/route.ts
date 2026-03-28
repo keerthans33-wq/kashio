@@ -35,15 +35,14 @@ export async function POST(req: NextRequest) {
     let connection = await db.basiqConnection.findFirst();
 
     if (!connection) {
-      // No connection yet — create a new Basiq user (mobile is passed via auth link, not user).
       const basiqUserId = await createBasiqUser(email, mobile);
-      connection = await db.basiqConnection.create({
-        data: { basiqUserId },
-      });
+      connection = await db.basiqConnection.create({ data: { basiqUserId } });
+    } else {
+      // Always update the stored mobile so Basiq pre-fills the correct number
+      // on their desktop consent page (which reads from the user record).
+      await updateBasiqUser(connection.basiqUserId, mobile);
     }
 
-    // Generate a fresh consent link, passing mobile directly so Basiq prompts
-    // the user to verify it during the connection flow each time.
     const authLink = await getAuthLink(connection.basiqUserId, redirectUrl, mobile);
 
     return NextResponse.json({ authLink });
