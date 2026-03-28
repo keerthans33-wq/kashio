@@ -62,6 +62,19 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
   const confirmedValue  = all.filter((c) => c.status === "CONFIRMED").reduce((s, c) => s + amt(c), 0);
   const fmt = (n: number) => n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 
+  // Category breakdown — potential (non-rejected) and confirmed per category
+  const categoryMap = new Map<string, { potential: number; confirmed: number }>();
+  for (const c of all) {
+    if (c.status === "REJECTED") continue;
+    const entry = categoryMap.get(c.category) ?? { potential: 0, confirmed: 0 };
+    entry.potential += amt(c);
+    if (c.status === "CONFIRMED") entry.confirmed += amt(c);
+    categoryMap.set(c.category, entry);
+  }
+  const categoryBreakdown = [...categoryMap.entries()]
+    .sort((a, b) => b[1].potential - a[1].potential)
+    .map(([category, totals]) => ({ category, ...totals }));
+
   const isFiltered = category || confidence;
 
 
@@ -112,6 +125,35 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
               </p>
             </div>
           </div>
+        </div>
+      )}
+
+      {categoryBreakdown.length > 0 && (
+        <div className="mt-3 rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700 overflow-hidden">
+          {categoryBreakdown.map(({ category, potential, confirmed: conf }) => {
+            const pct = potential > 0 ? Math.round((conf / potential) * 100) : 0;
+            return (
+              <div key={category} className="flex items-center gap-3 px-4 py-2.5">
+                <span className="flex-1 truncate text-sm text-gray-700 dark:text-gray-300">{category}</span>
+                <div className="flex items-center gap-3 shrink-0">
+                  {conf > 0 && (
+                    <span className="text-xs font-medium text-green-600 dark:text-green-400 tabular-nums">
+                      {fmt(conf)}
+                    </span>
+                  )}
+                  <span className={`text-sm font-semibold tabular-nums ${conf > 0 ? "text-gray-400 dark:text-gray-500" : "text-gray-900 dark:text-gray-100"}`}>
+                    {fmt(potential)}
+                  </span>
+                  <div className="w-16 h-1.5 rounded-full bg-gray-100 dark:bg-gray-700 shrink-0">
+                    <div
+                      className="h-1.5 rounded-full bg-green-500 transition-all"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
