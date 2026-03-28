@@ -32,7 +32,8 @@ async function getToken(): Promise<string> {
 // ─── Users ────────────────────────────────────────────────────────────────────
 
 // Creates a new Basiq user and returns their Basiq user ID.
-export async function createBasiqUser(email: string): Promise<string> {
+// mobile must be in E.164 format, e.g. "+61412345678".
+export async function createBasiqUser(email: string, mobile: string): Promise<string> {
   const token = await getToken();
 
   const res = await fetch(`${BASE_URL}/users`, {
@@ -42,7 +43,7 @@ export async function createBasiqUser(email: string): Promise<string> {
       "Content-Type": "application/json",
       "basiq-version": "3.0",
     },
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, mobile }),
   });
 
   if (!res.ok) {

@@ -18,15 +18,20 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const redirectPath: string = typeof body.redirectPath === "string" ? body.redirectPath : "/connect";
   const redirectUrl = `${origin}${redirectPath}?connected=true`;
+  const mobile: string = typeof body.mobile === "string" ? body.mobile.trim() : "";
+  const email: string = typeof body.email === "string" ? body.email.trim() : "user@kashio.app";
+
+  if (!mobile) {
+    return NextResponse.json({ error: "Mobile number is required to connect your bank." }, { status: 400 });
+  }
 
   try {
     // Check if we already have a Basiq user stored.
     let connection = await db.basiqConnection.findFirst();
 
     if (!connection) {
-      // No connection yet — create a new Basiq user.
-      // For MVP, we use a placeholder email. Replace with real user email if you add auth.
-      const basiqUserId = await createBasiqUser("user@kashio.app");
+      // No connection yet — create a new Basiq user with mobile (required by Basiq for auth links).
+      const basiqUserId = await createBasiqUser(email, mobile);
       connection = await db.basiqConnection.create({
         data: { basiqUserId },
       });
