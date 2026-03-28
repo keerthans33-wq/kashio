@@ -108,7 +108,7 @@ export async function getTransactions(userId: string): Promise<BasiqTransaction[
     `${BASE_URL}/users/${userId}/transactions?filter=postDate.gte:${fromStr}&limit=500`;
 
   while (url) {
-    const res = await fetch(url, {
+    const res: Response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${token}`,
         "basiq-version": "3.0",
