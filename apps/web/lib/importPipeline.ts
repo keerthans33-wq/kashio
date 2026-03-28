@@ -12,6 +12,8 @@
 import { db } from "./db";
 import { detectDeduction } from "./rules";
 
+export type TransactionSource = "CSV" | "DEMO_BANK" | "BASIQ";
+
 export type PipelineRow = {
   date: string;               // YYYY-MM-DD
   description: string;
@@ -29,6 +31,7 @@ export type PipelineResult = {
 export async function runImportPipeline(
   rows: PipelineRow[],
   fileName: string,
+  source: TransactionSource = "CSV",
 ): Promise<PipelineResult> {
   // Create the batch record first so every transaction carries its batch ID.
   const batch = await db.importBatch.create({
@@ -36,7 +39,7 @@ export async function runImportPipeline(
   });
 
   const result = await db.transaction.createMany({
-    data: rows.map((r) => ({ ...r, importBatchId: batch.id })),
+    data: rows.map((r) => ({ ...r, source, importBatchId: batch.id })),
     skipDuplicates: true,  // relies on @@unique([date, description, amount])
   });
   const inserted = result.count;

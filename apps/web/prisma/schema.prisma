@@ -29,12 +29,20 @@ model Transaction {
   description        String              // raw bank description
   normalizedMerchant String              // cleaned merchant name
   amount             Float               // negative = debit, positive = credit
+  source             TransactionSource   @default(CSV)
   createdAt          DateTime            @default(now())
   importBatch        ImportBatch?        @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
   importBatchId      String?
   deductionCandidate DeductionCandidate?
 
   @@unique([date, description, amount])
+}
+
+// Where the transaction came from.
+enum TransactionSource {
+  CSV
+  DEMO_BANK
+  BASIQ
 }
 
 // How confident the detection rule is that this transaction is a deduction.

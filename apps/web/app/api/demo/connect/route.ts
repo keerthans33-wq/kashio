@@ -59,7 +59,7 @@ export async function POST() {
   }));
 
   try {
-    const result = await runImportPipeline(rows, "Demo — simulated bank connection");
+    const result = await runImportPipeline(rows, "Demo — simulated bank connection", "DEMO_BANK");
     return NextResponse.json({
       inserted: result.inserted,
       duplicates: result.duplicates,

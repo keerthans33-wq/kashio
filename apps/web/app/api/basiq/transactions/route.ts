@@ -46,7 +46,7 @@ export async function POST() {
   });
 
   try {
-    const result = await runImportPipeline(rows, `Basiq — bank connection (${today})`);
+    const result = await runImportPipeline(rows, `Basiq — bank connection (${today})`, "BASIQ");
     return NextResponse.json({
       inserted: result.inserted,
       duplicates: result.duplicates,
