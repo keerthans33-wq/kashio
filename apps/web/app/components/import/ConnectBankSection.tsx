@@ -34,10 +34,26 @@ export default function ConnectBankSection() {
 
   const [mobile, setMobile]             = useState("");
   const [connecting, setConnecting]     = useState(false);
+  const [demoLoading, setDemoLoading]   = useState(false);
   const [importing, setImporting]       = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
   const [importError, setImportError]   = useState<string | null>(null);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
+
+  async function handleDemo() {
+    setDemoLoading(true);
+    setConnectError(null);
+    try {
+      const res = await fetch("/api/demo/connect", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Demo import failed.");
+      setImportResult(data as ImportResult);
+    } catch (err) {
+      setConnectError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setDemoLoading(false);
+    }
+  }
 
   // Auto-fetch transactions as soon as we land back from Basiq.
   useEffect(() => {
@@ -170,7 +186,7 @@ export default function ConnectBankSection() {
   // ── Default: Connect button ─────────────────────────────────────────────────
   return (
     <div className="space-y-3">
-      <div className="flex flex-row items-center gap-2">
+      <div className="flex flex-row flex-wrap items-center gap-2">
         <input
           type="tel"
           placeholder="Your mobile number"
@@ -180,15 +196,23 @@ export default function ConnectBankSection() {
         />
         <button
           onClick={handleConnect}
-          disabled={connecting || !mobile.trim()}
+          disabled={connecting || demoLoading || !mobile.trim()}
           className="flex items-center gap-2 rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
         >
           {connecting && <Spinner />}
           {connecting ? "Connecting…" : "Connect Bank"}
         </button>
+        <button
+          onClick={handleDemo}
+          disabled={demoLoading || connecting}
+          className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+        >
+          {demoLoading && <Spinner />}
+          {demoLoading ? "Loading demo…" : "Connect Bank (Demo)"}
+        </button>
       </div>
       <p className="text-xs text-gray-400 dark:text-gray-500">
-        Your mobile number is sent to Basiq to verify your identity · read-only access · your banking password is never shared with Kashio
+        Enter your mobile and click <span className="font-medium">Connect Bank</span> to link your real bank via Basiq, or use <span className="font-medium">Demo</span> to try with sample data.
       </p>
       {connectError && (
         <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20">
