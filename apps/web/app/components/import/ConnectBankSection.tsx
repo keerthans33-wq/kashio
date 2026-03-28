@@ -6,8 +6,9 @@ import { useSearchParams, useRouter } from "next/navigation";
 type ImportResult = {
   inserted: number;
   duplicates: number;
-  invalid: number;
+  invalid?: number;
   flagged: number;
+  isDemo?: boolean;
 };
 
 function Spinner() {
@@ -32,26 +33,38 @@ export default function ConnectBankSection() {
   // Basiq redirects back to /import?connected=true after the user links their bank.
   const justConnected = searchParams.get("connected") === "true";
 
+  // ── Demo bank sync state machine ────────────────────────────────────────────
+  // idle → connecting → syncing → (importResult set) or failed
+  type DemoPhase = "idle" | "connecting" | "syncing" | "failed";
+  const [demoPhase, setDemoPhase]       = useState<DemoPhase>("idle");
+  const [demoError, setDemoError]       = useState<string | null>(null);
+
   const [mobile, setMobile]             = useState("");
   const [connecting, setConnecting]     = useState(false);
-  const [demoLoading, setDemoLoading]   = useState(false);
   const [importing, setImporting]       = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
   const [importError, setImportError]   = useState<string | null>(null);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
 
   async function handleDemo() {
-    setDemoLoading(true);
-    setConnectError(null);
+    setDemoPhase("connecting");
+    setDemoError(null);
+
+    // Brief pause so "connecting" is visible — mirrors how real bank sync feels.
+    await new Promise((r) => setTimeout(r, 900));
+
+    setDemoPhase("syncing");
+
     try {
       const res = await fetch("/api/demo/connect", { method: "POST" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Demo import failed.");
-      setImportResult(data as ImportResult);
+      if (!res.ok) throw new Error(data.error ?? "Demo sync failed.");
+      // Success — the importResult state takes over rendering.
+      setImportResult({ ...(data as ImportResult), isDemo: true });
+      setDemoPhase("idle");
     } catch (err) {
-      setConnectError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
-      setDemoLoading(false);
+      setDemoError(err instanceof Error ? err.message : "Something went wrong.");
+      setDemoPhase("failed");
     }
   }
 
@@ -102,7 +115,7 @@ export default function ConnectBankSection() {
       <div className="space-y-3">
         <div className="rounded-md border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
           <p className="text-sm font-semibold text-green-800 dark:text-green-300">
-            Bank connected successfully
+            {importResult.isDemo ? "Demo sync complete" : "Bank connected successfully"}
           </p>
           <ul className="mt-2 space-y-1 text-sm">
             <li className="text-green-700 dark:text-green-400">
@@ -204,15 +217,43 @@ export default function ConnectBankSection() {
         </button>
         <button
           onClick={handleDemo}
-          disabled={demoLoading || connecting}
+          disabled={demoPhase !== "idle" || connecting}
           className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
         >
-          {demoLoading && <Spinner />}
-          {demoLoading ? "Loading demo…" : "Connect Bank (Demo)"}
+          Connect Bank (Demo)
         </button>
       </div>
+
+      {/* Demo sync status — shown while the demo is in progress or failed */}
+      {demoPhase === "connecting" && (
+        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+          <Spinner />
+          Connecting to demo bank…
+        </div>
+      )}
+      {demoPhase === "syncing" && (
+        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+          <Spinner />
+          Syncing transactions…
+        </div>
+      )}
+      {demoPhase === "failed" && (
+        <div className="space-y-2">
+          <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20">
+            <p className="text-sm font-medium text-red-800 dark:text-red-300">Sync failed</p>
+            <p className="mt-1 text-sm text-red-700 dark:text-red-400">{demoError}</p>
+          </div>
+          <button
+            onClick={handleDemo}
+            className="text-sm font-medium text-violet-600 hover:underline dark:text-violet-400"
+          >
+            Try again
+          </button>
+        </div>
+      )}
+
       <p className="text-xs text-gray-400 dark:text-gray-500">
-        Enter your mobile and click <span className="font-medium">Connect Bank</span> to link your real bank via Basiq, or use <span className="font-medium">Demo</span> to try with sample data.
+        Enter your mobile and click <span className="font-medium">Connect Bank</span> to link your real bank via Basiq, or use <span className="font-medium">Connect Bank (Demo)</span> to try with sample data.
       </p>
       {connectError && (
         <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20">
