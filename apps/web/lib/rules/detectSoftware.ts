@@ -67,7 +67,7 @@ export const detectSoftware: Rule = (transaction) => {
     category:   CATEGORIES.WORK_SOFTWARE,
     confidence: "LOW",
     reason: isSpecific
-      ? `Looks like a software tool — check if you use ${transaction.normalizedMerchant} for work`
-      : `Description includes "${matchedKeyword}" — check if this ${transaction.normalizedMerchant} charge is for work`,
+      ? `${transaction.normalizedMerchant} is commonly used as a work tool. Subscriptions are deductible if used for your job — personal plans or free tiers don't qualify.`
+      : `This ${transaction.normalizedMerchant} charge looks like a paid subscription. Deductible if the plan is used for work — personal accounts typically can't be claimed.`,
   };
 };

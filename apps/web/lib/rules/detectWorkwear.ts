@@ -52,7 +52,7 @@ export const detectWorkwear: Rule = (transaction) => {
     return {
       category:   CATEGORIES.WORK_CLOTHING,
       confidence: "MEDIUM",
-      reason:     `Looks like a dedicated workwear retailer — check if purchased for work use`,
+      reason:     `${transaction.normalizedMerchant} specialises in work and safety clothing. Occupation-specific clothing you can't wear outside work is generally deductible — conventional clothing isn't.`,
     };
   }
 
@@ -61,7 +61,7 @@ export const detectWorkwear: Rule = (transaction) => {
     return {
       category:   CATEGORIES.WORK_CLOTHING,
       confidence: "LOW",
-      reason:     `Description includes "${matchedKeyword}" — check if this is deductible work clothing`,
+      reason:     `${matchedKeyword} is typically deductible as protective or occupation-specific clothing. Everyday clothing — even if worn at work — generally can't be claimed.`,
     };
   }
 
