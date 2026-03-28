@@ -56,6 +56,12 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
   const totalRejected    = all.filter((c) => c.status === "REJECTED").length;
   const totalExportReady = all.filter((c) => c.status === "CONFIRMED" && c.hasEvidence).length;
 
+  // Dollar values — always from unfiltered set
+  const amt = (c: Candidate) => Math.abs(c.transaction.amount);
+  const potentialValue  = all.filter((c) => c.status !== "REJECTED").reduce((s, c) => s + amt(c), 0);
+  const confirmedValue  = all.filter((c) => c.status === "CONFIRMED").reduce((s, c) => s + amt(c), 0);
+  const fmt = (n: number) => n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
+
   const isFiltered = category || confidence;
 
 
@@ -82,7 +88,34 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         Once you've reviewed everything, go to Export to download your confirmed deductions.
       </p>
 
-      <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
+      {all.length > 0 && (
+        <div className="mt-6 rounded-xl bg-gradient-to-br from-violet-600 to-violet-700 px-5 py-5 text-white shadow-sm">
+          <div className="grid grid-cols-2 divide-x divide-violet-500">
+            {/* Potential */}
+            <div className="pr-5">
+              <p className="text-xs font-medium uppercase tracking-wide text-violet-200">Potential deductions</p>
+              <p className="mt-1.5 text-3xl font-bold tabular-nums">{fmt(potentialValue)}</p>
+              <p className="mt-1 text-xs text-violet-300">
+                {totalNeedsReview > 0
+                  ? `${totalNeedsReview} item${totalNeedsReview !== 1 ? "s" : ""} still to review`
+                  : "All items reviewed"}
+              </p>
+            </div>
+            {/* Confirmed */}
+            <div className="pl-5">
+              <p className="text-xs font-medium uppercase tracking-wide text-violet-200">Confirmed so far</p>
+              <p className="mt-1.5 text-3xl font-bold tabular-nums">{fmt(confirmedValue)}</p>
+              <p className="mt-1 text-xs text-violet-300">
+                {totalConfirmed > 0
+                  ? `${totalConfirmed} item${totalConfirmed !== 1 ? "s" : ""} confirmed`
+                  : "No items confirmed yet"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
         <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 sm:px-4 sm:py-3 dark:border-gray-700 dark:bg-gray-800">
           <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">Needs Review</p>
           <p className="mt-1 text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">{totalNeedsReview}</p>
