@@ -18,7 +18,7 @@ type ImportResult = {
 async function saveTransactions(
   transactions: ValidRow[],
   fileName: string,
-): Promise<{ inserted: number; duplicates: number }> {
+): Promise<{ inserted: number; duplicates: number; flagged: number; totalValue: number }> {
   const res = await fetch("/api/transactions/import", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
