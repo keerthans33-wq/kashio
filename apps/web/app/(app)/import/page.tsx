@@ -12,14 +12,15 @@ export default function Import() {
         <span className="text-sm text-gray-400 dark:text-gray-500">Step 1 of 3</span>
       </div>
       <p className="mt-2 text-gray-500 dark:text-gray-400">
-        Connect your bank directly or upload a CSV. Kashio will scan your transactions for anything that looks work-related and add them to Review.
+        Get your transactions into Kashio. Two ways to do it — pick whichever suits you.
       </p>
 
-      {/* Option A: Connect bank directly */}
+      {/* Option A: Bank connection (real or demo) */}
       <div className="mt-6">
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Connect your bank</p>
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Bank connection</p>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          No CSV export needed — Kashio fetches your transactions automatically.
+          <span className="font-medium text-gray-600 dark:text-gray-300">Connect Bank (Demo)</span> loads a realistic set of sample transactions so you can try the full flow without uploading anything.
+          Real bank sync via open banking is coming — the demo shows exactly how it will work.
         </p>
         <div className="mt-3">
           <Suspense>
@@ -36,19 +37,22 @@ export default function Import() {
       </div>
 
       {/* Option B: CSV upload */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
-        <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">CSV format</p>
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-          Your file needs three columns — the names must match exactly:
+      <div>
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">CSV upload</p>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Export a transaction history from your bank's website and upload it here. Kashio accepts any CSV with the three columns below.
         </p>
-        <ul className="mt-2 space-y-1 text-sm text-gray-600 dark:text-gray-400">
-          <li><span className="font-mono font-medium text-gray-800 dark:text-gray-200">date</span> — DD/MM/YYYY or YYYY-MM-DD</li>
-          <li><span className="font-mono font-medium text-gray-800 dark:text-gray-200">description</span> — the transaction description from your bank</li>
-          <li><span className="font-mono font-medium text-gray-800 dark:text-gray-200">amount</span> — e.g. <span className="font-mono">-42.50</span> for a debit, <span className="font-mono">120.00</span> for a credit</li>
-        </ul>
-        <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
-          If your column names are different, Kashio will ask you to map them after you preview the file.
-        </p>
+        <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">Required columns</p>
+          <ul className="mt-2 space-y-1 text-sm text-gray-600 dark:text-gray-400">
+            <li><span className="font-mono font-medium text-gray-800 dark:text-gray-200">date</span> — DD/MM/YYYY or YYYY-MM-DD</li>
+            <li><span className="font-mono font-medium text-gray-800 dark:text-gray-200">description</span> — the transaction description from your bank</li>
+            <li><span className="font-mono font-medium text-gray-800 dark:text-gray-200">amount</span> — e.g. <span className="font-mono">-42.50</span> for a debit, <span className="font-mono">120.00</span> for a credit</li>
+          </ul>
+          <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
+            Column names don't have to match exactly — Kashio will ask you to map them if needed.
+          </p>
+        </div>
       </div>
       <TesterHint />
       <CsvUploader />
