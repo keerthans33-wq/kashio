@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "../../../../lib/db";
-import { createBasiqUser, getAuthLink } from "../../../../lib/basiq/client";
+import { createBasiqUser, updateBasiqUser, getAuthLink } from "../../../../lib/basiq/client";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +35,9 @@ export async function POST(req: NextRequest) {
       connection = await db.basiqConnection.create({
         data: { basiqUserId },
       });
+    } else {
+      // User already exists — update their mobile in case it wasn't set on first creation.
+      await updateBasiqUser(connection.basiqUserId, mobile);
     }
 
     // Generate a fresh consent link (links expire, so always create a new one).

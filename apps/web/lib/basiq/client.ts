@@ -55,6 +55,26 @@ export async function createBasiqUser(email: string, mobile: string): Promise<st
   return data.id as string;
 }
 
+// Updates an existing Basiq user (e.g. to add a mobile number before auth link creation).
+export async function updateBasiqUser(userId: string, mobile: string): Promise<void> {
+  const token = await getToken();
+
+  const res = await fetch(`${BASE_URL}/users/${userId}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "basiq-version": "3.0",
+    },
+    body: JSON.stringify({ mobile }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Basiq update user failed (${res.status}): ${body}`);
+  }
+}
+
 // ─── Auth link ────────────────────────────────────────────────────────────────
 
 // Creates a Basiq consent link. The user opens this URL to connect their bank.
