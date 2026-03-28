@@ -13,6 +13,13 @@ export default function Import() {
         Upload a CSV exported from your bank. Kashio will scan it for transactions that look work-related, then add them to Review for you to confirm or reject.
       </p>
 
+      <div className="mt-3 flex items-center gap-2 text-sm">
+        <span className="text-gray-400 dark:text-gray-500">Prefer not to export a CSV?</span>
+        <a href="/connect" className="font-medium text-violet-600 hover:text-violet-700 underline underline-offset-2 dark:text-violet-400 dark:hover:text-violet-300">
+          Connect your bank directly →
+        </a>
+      </div>
+
       <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
         <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">CSV format</p>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">

@@ -7,6 +7,14 @@ datasource db {
   provider = "postgresql"
 }
 
+// Stores the Basiq user ID created when a user connects their bank.
+// Single-row for MVP — one user, one connection.
+model BasiqConnection {
+  id          String   @id @default(cuid())
+  basiqUserId String   @unique
+  createdAt   DateTime @default(now())
+}
+
 model ImportBatch {
   id           String        @id @default(cuid())
   fileName     String
