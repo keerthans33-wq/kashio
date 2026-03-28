@@ -11,15 +11,12 @@
 
 import { db } from "./db";
 import { detectDeduction } from "./rules";
+import type { IngestionRow } from "./ingestion/types";
 
 export type TransactionSource = "CSV" | "DEMO_BANK" | "BASIQ";
 
-export type PipelineRow = {
-  date: string;               // YYYY-MM-DD
-  description: string;
-  normalizedMerchant: string;
-  amount: number;             // negative = debit, positive = credit
-};
+// PipelineRow is the same shape as IngestionRow — aliased here for backwards compatibility.
+export type PipelineRow = IngestionRow;
 
 export type PipelineResult = {
   batchId: string | null;     // null when nothing was inserted (all duplicates)

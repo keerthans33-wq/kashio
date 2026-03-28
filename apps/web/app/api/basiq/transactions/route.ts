@@ -6,7 +6,7 @@
 import { NextResponse } from "next/server";
 import { db } from "../../../../lib/db";
 import { getTransactions } from "../../../../lib/basiq/client";
-import { mapBasiqTransaction } from "../../../../lib/basiq/mapTransaction";
+import { fromBasiq } from "../../../../lib/ingestion/fromBasiq";
 import { runImportPipeline } from "../../../../lib/importPipeline";
 
 export const dynamic = "force-dynamic";
@@ -34,7 +34,7 @@ export async function POST() {
 
   // Map Basiq transactions into our format, dropping any that can't be parsed.
   const rows = rawTransactions
-    .map(mapBasiqTransaction)
+    .map(fromBasiq)
     .filter((r): r is NonNullable<typeof r> => r !== null);
 
   if (rows.length === 0) {
