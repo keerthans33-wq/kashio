@@ -24,10 +24,10 @@ function toCardProps(c: Candidate): CandidateCardProps {
   };
 }
 
-type SearchParams = { status?: string; category?: string; confidence?: string; sort?: string };
+type SearchParams = { category?: string; confidence?: string; sort?: string };
 
 export default async function Review({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const { status, category, confidence, sort } = await searchParams;
+  const { category, confidence, sort } = await searchParams;
 
   const all = await db.deductionCandidate.findMany({
     include: { transaction: true },
@@ -35,7 +35,6 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
   });
 
   const filtered = all.filter((c) => {
-    if (status     && c.status     !== status)     return false;
     if (category   && c.category   !== category)   return false;
     if (confidence && c.confidence !== confidence) return false;
     return true;
@@ -57,7 +56,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
   const totalRejected    = all.filter((c) => c.status === "REJECTED").length;
   const totalExportReady = all.filter((c) => c.status === "CONFIRMED" && c.hasEvidence).length;
 
-  const isFiltered = status || category || confidence;
+  const isFiltered = category || confidence;
 
 
   return (

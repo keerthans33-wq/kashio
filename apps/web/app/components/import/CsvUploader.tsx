@@ -172,7 +172,7 @@ export default function CsvUploader() {
     <div className="mt-8">
       <div className="max-w-md">
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Bank CSV file
+          CSV file
         </label>
 
         <div className="mt-2 flex items-center gap-3">
@@ -230,7 +230,7 @@ export default function CsvUploader() {
             {/* Summary — updates after import to show final counts */}
             <div className="rounded-md border border-gray-200 bg-gray-50 p-4 text-sm dark:border-gray-700 dark:bg-gray-800">
               <p className="font-medium text-gray-800 dark:text-gray-200">
-                {importResult !== null ? "Import complete" : "Ready to import"}
+                {importResult !== null ? "CSV import complete" : "Ready to import from CSV"}
               </p>
               <ul className="mt-2 space-y-1">
                 <li className="text-gray-500 dark:text-gray-400">{result.raw.length} rows read from file</li>

@@ -2,19 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useSyncState } from "../../../lib/syncState";
+import type { SyncResult } from "../../../lib/syncState";
+import { demoBankProvider } from "../../../lib/providers";
+import type { BankProvider, StoredSyncStatus } from "../../../lib/providers";
 
-type ImportResult = {
-  inserted: number;
-  duplicates: number;
-  invalid?: number;
-  flagged: number;
-  isDemo?: boolean;
-};
+// ── Shared sub-components ─────────────────────────────────────────────────────
 
 function Spinner() {
   return (
     <svg
-      className="inline-block h-4 w-4 animate-spin"
+      className="inline-block h-4 w-4 shrink-0 animate-spin"
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
@@ -26,67 +24,199 @@ function Spinner() {
   );
 }
 
+// Shows source name, last synced time, and result stats.
+// Accepts generic props so it can be reused for any sync provider.
+function SyncStatusSection({
+  source,
+  connected,
+  lastSynced,
+  result,
+  onSync,
+}: {
+  source: string;
+  connected: boolean;
+  lastSynced: Date;
+  result: SyncResult;
+  onSync: () => void;
+}) {
+  const time = lastSynced.toLocaleString("en-AU", {
+    day: "numeric", month: "short", hour: "numeric", minute: "2-digit",
+  });
+
+  const stats = [
+    `${result.inserted} imported`,
+    result.duplicates > 0 && `${result.duplicates} skipped`,
+    result.flagged > 0 && `${result.flagged} deduction${result.flagged !== 1 ? "s" : ""}`,
+  ].filter(Boolean).join("  ·  ");
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/50">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{source}</p>
+          {connected && (
+            <span className="rounded px-1.5 py-0.5 text-xs font-medium bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400">
+              Connected
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          <p className="text-xs text-gray-400 dark:text-gray-500">Last synced {time}</p>
+          <button
+            onClick={onSync}
+            className="text-xs font-medium text-violet-600 hover:underline dark:text-violet-400"
+          >
+            Sync again
+          </button>
+        </div>
+      </div>
+      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{stats}</p>
+    </div>
+  );
+}
+
+function SyncInProgress({ label, detail }: { label: string; detail: string }) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white px-4 py-4 dark:border-gray-700 dark:bg-gray-900">
+      <div className="flex items-center gap-2.5">
+        <Spinner />
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</p>
+      </div>
+      <p className="mt-1.5 pl-[26px] text-sm text-gray-400 dark:text-gray-500">{detail}</p>
+    </div>
+  );
+}
+
+function SyncSuccess({ result, onSync }: { result: SyncResult; onSync: () => void }) {
+  return (
+    <div className="space-y-3">
+      <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-4 dark:border-green-800 dark:bg-green-900/20">
+        <p className="text-sm font-medium text-green-800 dark:text-green-300">Demo Bank — sync complete</p>
+
+        <div className="mt-3 grid grid-cols-3 gap-3">
+          <div>
+            <p className="text-xl font-semibold text-green-800 dark:text-green-200">{result.inserted}</p>
+            <p className="mt-0.5 text-xs text-green-600 dark:text-green-400">imported</p>
+          </div>
+          <div>
+            <p className="text-xl font-semibold text-gray-500 dark:text-gray-400">{result.duplicates}</p>
+            <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">skipped</p>
+          </div>
+          <div>
+            <p className="text-xl font-semibold text-violet-600 dark:text-violet-400">{result.flagged}</p>
+            <p className="mt-0.5 text-xs text-violet-500 dark:text-violet-400">deductions</p>
+          </div>
+        </div>
+
+        {(result.invalid ?? 0) > 0 && (
+          <p className="mt-2 text-xs text-yellow-600 dark:text-yellow-400">
+            {result.invalid} transaction{result.invalid !== 1 ? "s" : ""} could not be read
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        {result.flagged > 0 && (
+          <div>
+            <a
+              href="/review"
+              className="inline-block rounded-md bg-violet-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-violet-700"
+            >
+              Review {result.flagged} deduction{result.flagged !== 1 ? "s" : ""} →
+            </a>
+          </div>
+        )}
+        {result.inserted > 0 && (
+          <div className="flex items-center gap-4">
+            <a
+              href="/transactions"
+              className="text-sm font-medium text-violet-600 hover:underline dark:text-violet-400"
+            >
+              View imported transactions →
+            </a>
+            <button
+              onClick={onSync}
+              className="text-sm text-gray-400 hover:underline dark:text-gray-500"
+            >
+              Sync again
+            </button>
+          </div>
+        )}
+        {result.inserted === 0 && result.flagged === 0 && (
+          <div className="flex items-center gap-4">
+            <p className="text-sm text-gray-400 dark:text-gray-500">No new transactions — already up to date.</p>
+            <button
+              onClick={onSync}
+              className="text-sm text-gray-400 hover:underline dark:text-gray-500"
+            >
+              Sync again
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SyncFailed({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="space-y-3">
+      <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-4 dark:border-red-800 dark:bg-red-900/20">
+        <p className="text-sm font-medium text-red-800 dark:text-red-300">
+          Sync didn&apos;t complete
+        </p>
+        <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+          Your transactions weren&apos;t imported. Nothing was saved.
+        </p>
+      </div>
+      <button
+        onClick={onRetry}
+        className="rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700"
+      >
+        Try again
+      </button>
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
 export default function ConnectBankSection() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Basiq redirects back to /import?connected=true after the user links their bank.
   const justConnected = searchParams.get("connected") === "true";
 
-  // ── Demo last-synced timestamp ───────────────────────────────────────────────
-  // Stored in localStorage so it persists across page loads.
-  // To replace with a real provider later: fetch from /api/sync/status instead.
-  const LAST_SYNCED_KEY = "kashio:demo-last-synced";
-  const [demoLastSynced, setDemoLastSynced] = useState<Date | null>(null);
+  const [storedStatus, setStoredStatus] = useState<StoredSyncStatus | null>(null);
+  const [isConnected, setIsConnected]   = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem(LAST_SYNCED_KEY);
-    if (stored) setDemoLastSynced(new Date(stored));
+    setStoredStatus(demoBankProvider.loadStatus());
+    setIsConnected(demoBankProvider.isConnected());
   }, []);
 
-  function saveDemoLastSynced() {
-    const now = new Date();
-    localStorage.setItem(LAST_SYNCED_KEY, now.toISOString());
-    setDemoLastSynced(now);
-  }
-
-  // ── Demo bank sync state machine ────────────────────────────────────────────
-  // idle → connecting → syncing → (importResult set) or failed
-  type DemoPhase = "idle" | "connecting" | "syncing" | "failed";
-  const [demoPhase, setDemoPhase]       = useState<DemoPhase>("idle");
-  const [demoError, setDemoError]       = useState<string | null>(null);
+  const demo = useSyncState();
 
   const [mobile, setMobile]             = useState("");
   const [connecting, setConnecting]     = useState(false);
-  const [importing, setImporting]       = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
-  const [importError, setImportError]   = useState<string | null>(null);
-  const [importResult, setImportResult] = useState<ImportResult | null>(null);
 
-  async function handleDemo() {
-    setDemoPhase("connecting");
-    setDemoError(null);
-
-    // Brief pause so "connecting" is visible — mirrors how real bank sync feels.
+  async function handleSync(provider: BankProvider) {
+    demo.setConnecting();
     await new Promise((r) => setTimeout(r, 900));
-
-    setDemoPhase("syncing");
-
+    demo.setSyncing();
     try {
-      const res = await fetch("/api/demo/connect", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Demo sync failed.");
-      // Success — the importResult state takes over rendering.
-      setImportResult({ ...(data as ImportResult), isDemo: true });
-      saveDemoLastSynced();
-      setDemoPhase("idle");
+      const result = await provider.sync();
+      provider.saveStatus(result);
+      setStoredStatus(provider.loadStatus());
+      setIsConnected(provider.isConnected());
+      demo.setSuccess(result);
     } catch (err) {
-      setDemoError(err instanceof Error ? err.message : "Something went wrong.");
-      setDemoPhase("failed");
+      demo.setError(err instanceof Error ? err.message : "Something went wrong.");
     }
   }
 
-  // Auto-fetch transactions as soon as we land back from Basiq.
+  // Auto-fetch transactions when landing back from Basiq.
   useEffect(() => {
     if (justConnected) handleFetch();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -111,110 +241,42 @@ export default function ConnectBankSection() {
   }
 
   async function handleFetch() {
-    setImporting(true);
-    setImportError(null);
+    // Called after Basiq redirect — no connecting pause needed, already connected.
+    demo.setSyncing();
     try {
       const res = await fetch("/api/basiq/transactions", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Could not import transactions.");
-      setImportResult(data as ImportResult);
-      // Remove ?connected=true from the URL now that we've handled it.
+      demoBankProvider.saveStatus(data);
+      setStoredStatus(demoBankProvider.loadStatus());
+      setIsConnected(demoBankProvider.isConnected());
+      demo.setSuccess(data);
       router.replace("/import");
     } catch (err) {
-      setImportError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
-      setImporting(false);
+      demo.setError(err instanceof Error ? err.message : "Something went wrong.");
     }
   }
 
-  // ── After import ────────────────────────────────────────────────────────────
-  if (importResult) {
-    return (
-      <div className="space-y-3">
-        <div className="rounded-md border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
-          <p className="text-sm font-semibold text-green-800 dark:text-green-300">
-            {importResult.isDemo ? "Demo sync complete" : "Bank connected successfully"}
-          </p>
-          <ul className="mt-2 space-y-1 text-sm">
-            <li className="text-green-700 dark:text-green-400">
-              {importResult.inserted} transaction{importResult.inserted !== 1 ? "s" : ""} imported
-            </li>
-            {importResult.duplicates > 0 && (
-              <li className="text-gray-500 dark:text-gray-400">
-                {importResult.duplicates} duplicate{importResult.duplicates !== 1 ? "s" : ""} skipped
-              </li>
-            )}
-            {(importResult.invalid ?? 0) > 0 && (
-              <li className="text-yellow-700 dark:text-yellow-400">
-                {importResult.invalid ?? 0} transaction{(importResult.invalid ?? 0) !== 1 ? "s" : ""} could not be read
-              </li>
-            )}
-            {importResult.flagged > 0 && (
-              <li className="text-violet-700 dark:text-violet-400">
-                {importResult.flagged} possible deduction{importResult.flagged !== 1 ? "s" : ""} found
-              </li>
-            )}
-          </ul>
-        </div>
-        {importResult.inserted > 0 || importResult.flagged > 0 ? (
-          <a
-            href="/review"
-            className="inline-block rounded-md bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-700"
-          >
-            Go to Review →
-          </a>
-        ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            No new transactions to review.
-          </p>
-        )}
-      </div>
-    );
+  // ── Active sync states take over the section entirely ────────────────────────
+
+  if (demo.sync.status === "connecting") {
+    return <SyncInProgress label="Connecting to Demo Bank…" detail="Setting up the sample data connection." />;
   }
 
-  // ── Loading: fetching transactions after redirect back from Basiq ────────────
-  if (importing) {
-    return (
-      <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 dark:border-green-800 dark:bg-green-900/20">
-        <p className="flex items-center gap-2 text-sm font-medium text-green-800 dark:text-green-300">
-          <Spinner />
-          Fetching your transactions…
-        </p>
-      </div>
-    );
+  if (demo.sync.status === "syncing" || justConnected) {
+    return <SyncInProgress label="Syncing transactions…" detail="Fetching sample transactions from Demo Bank." />;
   }
 
-  // ── Import failed (shown after returning from Basiq if fetch errors) ─────────
-  if (importError) {
-    return (
-      <div className="space-y-3">
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20">
-          <p className="text-sm font-medium text-red-800 dark:text-red-300">Import failed</p>
-          <p className="mt-1 text-sm text-red-700 dark:text-red-400">{importError}</p>
-        </div>
-        <button
-          onClick={handleFetch}
-          className="rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700"
-        >
-          Try again
-        </button>
-      </div>
-    );
+  if (demo.sync.status === "success") {
+    return <SyncSuccess result={demo.sync.result} onSync={() => handleSync(demoBankProvider)} />;
   }
 
-  // ── Waiting for auto-fetch to start (brief window between redirect and useEffect) ──
-  if (justConnected) {
-    return (
-      <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 dark:border-green-800 dark:bg-green-900/20">
-        <p className="flex items-center gap-2 text-sm font-medium text-green-800 dark:text-green-300">
-          <Spinner />
-          Bank connected — fetching transactions…
-        </p>
-      </div>
-    );
+  if (demo.sync.status === "error") {
+    return <SyncFailed onRetry={() => handleSync(demoBankProvider)} />;
   }
 
-  // ── Default: Connect button ─────────────────────────────────────────────────
+  // ── Idle ──────────────────────────────────────────────────────────────────────
+
   return (
     <div className="space-y-3">
       <div className="flex flex-row flex-wrap items-center gap-2">
@@ -227,65 +289,39 @@ export default function ConnectBankSection() {
         />
         <button
           onClick={handleConnect}
-          disabled={connecting || demoPhase !== "idle" || !mobile.trim()}
+          disabled={connecting || !mobile.trim()}
           className="flex items-center gap-2 rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
         >
           {connecting && <Spinner />}
           {connecting ? "Connecting…" : "Connect Bank"}
         </button>
         <button
-          onClick={handleDemo}
-          disabled={demoPhase !== "idle" || connecting}
-          className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          onClick={() => handleSync(demoBankProvider)}
+          disabled={connecting}
+          className="rounded-md border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
         >
           Connect Bank (Demo)
         </button>
       </div>
 
-      {/* Demo sync status — shown while the demo is in progress or failed */}
-      {demoPhase === "connecting" && (
-        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-          <Spinner />
-          Connecting to demo bank…
-        </div>
-      )}
-      {demoPhase === "syncing" && (
-        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-          <Spinner />
-          Syncing transactions…
-        </div>
-      )}
-      {demoPhase === "failed" && (
-        <div className="space-y-2">
-          <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20">
-            <p className="text-sm font-medium text-red-800 dark:text-red-300">Sync failed</p>
-            <p className="mt-1 text-sm text-red-700 dark:text-red-400">{demoError}</p>
-          </div>
-          <button
-            onClick={handleDemo}
-            className="text-sm font-medium text-violet-600 hover:underline dark:text-violet-400"
-          >
-            Try again
-          </button>
-        </div>
-      )}
-
-      {demoLastSynced && demoPhase === "idle" && (
-        <p className="text-xs text-gray-400 dark:text-gray-500">
-          Demo last synced:{" "}
-          {demoLastSynced.toLocaleString("en-AU", {
-            day: "numeric", month: "short", hour: "numeric", minute: "2-digit",
-          })}
-        </p>
+      {storedStatus && (
+        <SyncStatusSection
+          source={demoBankProvider.name}
+          connected={isConnected}
+          lastSynced={new Date(storedStatus.lastSynced)}
+          result={storedStatus.result}
+          onSync={() => handleSync(demoBankProvider)}
+        />
       )}
 
       <p className="text-xs text-gray-400 dark:text-gray-500">
-        Enter your mobile and click <span className="font-medium">Connect Bank</span> to link your real bank via Basiq, or use <span className="font-medium">Connect Bank (Demo)</span> to try with sample data.
+        <span className="font-medium">Connect Bank (Demo)</span> loads sample transactions so you can try the full flow — no real bank account needed.
       </p>
+
       {connectError && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20">
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20">
           <p className="text-sm font-medium text-red-800 dark:text-red-300">Connection failed</p>
-          <p className="mt-1 text-sm text-red-700 dark:text-red-400">{connectError}</p>
+          <p className="mt-0.5 text-sm text-red-600 dark:text-red-400">{connectError}</p>
         </div>
       )}
     </div>

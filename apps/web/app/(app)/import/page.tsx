@@ -15,12 +15,11 @@ export default function Import() {
         Bring in your transactions so Kashio can find your tax deductions. Once imported, everything is reviewed in one place.
       </p>
 
-      {/* Option A: Bank connection (real or demo) */}
+      {/* Option A: Demo Bank */}
       <div className="mt-6">
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Bank connection</p>
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Demo Bank</p>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Use <span className="font-medium text-gray-600 dark:text-gray-300">Connect Bank (Demo)</span> to try the full deduction review flow with realistic sample data — no file needed.
-          Real open banking sync is coming soon.
+          Loads a realistic set of sample transactions so you can try the full deduction review flow without uploading anything.
         </p>
         <div className="mt-3">
           <Suspense>
@@ -32,13 +31,13 @@ export default function Import() {
       {/* Divider */}
       <div className="my-8 flex items-center gap-4">
         <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
-        <span className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">or upload a CSV</span>
+        <span className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">or</span>
         <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
       </div>
 
-      {/* Option B: CSV upload */}
+      {/* Option B: CSV */}
       <div>
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">CSV upload</p>
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">CSV file</p>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Export a transaction history from your bank's website and upload it here. Kashio accepts any CSV with the three columns below.
         </p>

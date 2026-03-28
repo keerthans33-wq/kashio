@@ -18,26 +18,14 @@ export function ReviewFilters() {
     router.push(`${pathname}?${next.toString()}`);
   }
 
-  const status     = params.get("status") ?? "";
   const category   = params.get("category") ?? "";
   const confidence = params.get("confidence") ?? "";
   const sort       = params.get("sort") ?? "";
 
-  const hasFilters = status || category || confidence;
+  const hasFilters = category || confidence;
 
   return (
     <div className="mt-4 flex flex-wrap items-center gap-2 sm:gap-3">
-      <select
-        value={status}
-        onChange={(e) => update("status", e.target.value)}
-        className="w-full sm:w-auto rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:focus:ring-gray-600"
-      >
-        <option value="">All statuses</option>
-        <option value="NEEDS_REVIEW">Needs Review</option>
-        <option value="CONFIRMED">Confirmed</option>
-        <option value="REJECTED">Rejected</option>
-      </select>
-
       <select
         value={category}
         onChange={(e) => update("category", e.target.value)}
@@ -73,7 +61,7 @@ export function ReviewFilters() {
 
       {hasFilters && (
         <button
-          onClick={() => router.push(`${pathname}${sort ? `?sort=${sort}` : ""}`)}
+          onClick={() => router.push(sort ? `${pathname}?sort=${sort}` : pathname)}
           className="text-sm text-gray-400 hover:text-gray-600 underline dark:text-gray-500 dark:hover:text-gray-300"
         >
           Clear filters

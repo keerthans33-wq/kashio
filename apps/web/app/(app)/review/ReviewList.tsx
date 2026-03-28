@@ -4,64 +4,39 @@ import { useState } from "react";
 import { CandidateCard, type CandidateCardProps } from "./CandidateCard";
 import { bulkConfirmCandidates, bulkRejectCandidates, bulkResetCandidates } from "./actions";
 
+type Tab = "needs_review" | "needs_evidence" | "evidence_ready" | "rejected";
+
 type Props = {
   needsReview: CandidateCardProps[];
   confirmed:   CandidateCardProps[];
   rejected:    CandidateCardProps[];
 };
 
-function Section({
-  title,
-  candidates,
-  selectable,
-  selected,
-  onToggle,
-}: {
-  title:      string;
-  candidates: CandidateCardProps[];
-  selectable: boolean;
-  selected:   Set<string>;
-  onToggle:   (id: string) => void;
-}) {
-  if (candidates.length === 0) return null;
-  return (
-    <div>
-      <h2 className="mb-4 pb-2 border-b border-gray-100 dark:border-gray-700 text-sm font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-        {title} ({candidates.length})
-      </h2>
-      <div className="space-y-3">
-        {candidates.map((c) => (
-          <div key={c.id} className="flex items-start gap-3">
-            {selectable ? (
-              <input
-                type="checkbox"
-                checked={selected.has(c.id)}
-                onChange={() => onToggle(c.id)}
-                className="mt-6 h-4 w-4 shrink-0 cursor-pointer rounded border-gray-300 accent-green-600 dark:border-gray-600"
-              />
-            ) : (
-              // Spacer keeps card alignment consistent across sections
-              <div className="mt-6 h-4 w-4 shrink-0" />
-            )}
-            <div className="min-w-0 flex-1">
-              <CandidateCard {...c} />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export function ReviewList({ needsReview, confirmed, rejected }: Props) {
-  const [selected, setSelected]     = useState<Set<string>>(new Set());
-  const [isSaving, setIsSaving]     = useState(false);
-  const [error, setError]           = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const [lastIds, setLastIds]       = useState<string[]>([]);
+  const needsEvidence = confirmed.filter((c) => !c.hasEvidence);
+  const evidenceReady = confirmed.filter((c) =>  c.hasEvidence);
 
-  // Bulk actions only apply to NEEDS_REVIEW — confirmed and rejected cards
-  // are intentionally excluded to keep the workflow conceptually clean.
+  const tabs: { id: Tab; label: string; count: number }[] = [
+    { id: "needs_review",   label: "Needs Review",   count: needsReview.length },
+    { id: "needs_evidence", label: "Needs Evidence", count: needsEvidence.length },
+    { id: "evidence_ready", label: "Evidence Ready", count: evidenceReady.length },
+    { id: "rejected",       label: "Rejected",       count: rejected.length },
+  ];
+
+  const [activeTab, setActiveTab] = useState<Tab>("needs_review");
+  const [selected, setSelected]   = useState<Set<string>>(new Set());
+  const [isSaving, setIsSaving]   = useState(false);
+  const [error, setError]         = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [lastIds, setLastIds]     = useState<string[]>([]);
+
+  const activeCandidates: CandidateCardProps[] = {
+    needs_review:   needsReview,
+    needs_evidence: needsEvidence,
+    evidence_ready: evidenceReady,
+    rejected:       rejected,
+  }[activeTab];
+
   const needsReviewIds = needsReview.map((c) => c.id);
 
   function toggle(id: string) {
@@ -74,15 +49,12 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
 
   function toggleAll() {
     setSelected(
-      selected.size === needsReviewIds.length
-        ? new Set()
-        : new Set(needsReviewIds),
+      selected.size === needsReviewIds.length ? new Set() : new Set(needsReviewIds),
     );
   }
 
   async function bulkAction(action: (ids: string[]) => Promise<void>, label: string) {
-    const ids   = [...selected];
-    const count = ids.length;
+    const ids = [...selected];
     setIsSaving(true);
     setError(null);
     setSuccessMsg(null);
@@ -90,7 +62,7 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
       await action(ids);
       setSelected(new Set());
       setLastIds(ids);
-      setSuccessMsg(`${count} item${count !== 1 ? "s" : ""} ${label}.`);
+      setSuccessMsg(`${ids.length} item${ids.length !== 1 ? "s" : ""} ${label}.`);
     } catch {
       setError("Could not save bulk changes. Please try again.");
     } finally {
@@ -99,14 +71,12 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
   }
 
   async function handleBulkUndo() {
-    const ids   = lastIds;
-    const count = ids.length;
     setIsSaving(true);
     setError(null);
     try {
-      await bulkResetCandidates(ids);
+      await bulkResetCandidates(lastIds);
+      setSuccessMsg(`${lastIds.length} item${lastIds.length !== 1 ? "s" : ""} moved back to Needs Review.`);
       setLastIds([]);
-      setSuccessMsg(`${count} item${count !== 1 ? "s" : ""} moved back to Needs review.`);
     } catch {
       setError("Could not undo bulk changes. Please try again.");
     } finally {
@@ -116,116 +86,124 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
 
   return (
     <div>
-      {/* Success message */}
-      {successMsg && !isSaving && (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 dark:border-green-800 dark:bg-green-900/20">
-          <p className="text-sm text-green-700 dark:text-green-400">{successMsg}</p>
-          <div className="flex items-center gap-3">
-            {lastIds.length > 0 && (
+      {/* ── Tab bar ───────────────────────────────────────────────────────── */}
+      <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => { setActiveTab(tab.id); setSelected(new Set()); }}
+            className={`flex shrink-0 items-center gap-1.5 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
+              activeTab === tab.id
+                ? "border-violet-500 text-violet-600 dark:text-violet-400"
+                : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            }`}
+          >
+            {tab.label}
+            <span className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${
+              activeTab === tab.id
+                ? "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300"
+                : "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+            }`}>
+              {tab.count}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-4">
+        {/* Success message */}
+        {successMsg && !isSaving && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 dark:border-green-800 dark:bg-green-900/20">
+            <p className="text-sm text-green-700 dark:text-green-400">{successMsg}</p>
+            <div className="flex items-center gap-3">
+              {lastIds.length > 0 && (
+                <button
+                  onClick={handleBulkUndo}
+                  className="text-xs font-medium text-green-700 underline hover:text-green-900 dark:text-green-400"
+                >
+                  Undo
+                </button>
+              )}
               <button
-                onClick={handleBulkUndo}
-                className="text-xs font-medium text-green-700 underline hover:text-green-900 dark:text-green-400 dark:hover:text-green-200"
+                onClick={() => { setSuccessMsg(null); setLastIds([]); }}
+                className="text-xs text-green-500 hover:text-green-700 dark:text-green-500"
               >
-                Undo
+                Dismiss
               </button>
-            )}
-            <button onClick={() => { setSuccessMsg(null); setLastIds([]); }} className="text-xs text-green-500 hover:text-green-700 dark:text-green-500 dark:hover:text-green-300">
-              Dismiss
-            </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Bulk action bar — only visible when needs-review candidates are selected */}
-      {selected.size > 0 && (
-        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <span className="text-sm text-gray-600 dark:text-gray-400">{selected.size} selected</span>
-          <button
-            onClick={() => bulkAction(bulkConfirmCandidates, "confirmed")}
-            disabled={isSaving}
-            className="rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-40"
-          >
-            {isSaving ? "Saving…" : "Confirm all"}
-          </button>
-          <button
-            onClick={() => bulkAction(bulkRejectCandidates, "rejected")}
-            disabled={isSaving}
-            className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
-          >
-            {isSaving ? "Saving…" : "Reject all"}
-          </button>
-          <button
-            onClick={() => setSelected(new Set())}
-            disabled={isSaving}
-            className="text-xs text-gray-400 hover:text-gray-600 underline disabled:opacity-40 dark:text-gray-500 dark:hover:text-gray-300"
-          >
-            Clear selection
-          </button>
-          {error && <span className="text-xs text-red-500">{error}</span>}
-        </div>
-      )}
+        {/* Bulk action bar — Needs Review tab only */}
+        {activeTab === "needs_review" && selected.size > 0 && (
+          <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <span className="text-sm text-gray-600 dark:text-gray-400">{selected.size} selected</span>
+            <button
+              onClick={() => bulkAction(bulkConfirmCandidates, "confirmed")}
+              disabled={isSaving}
+              className="rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-40"
+            >
+              {isSaving ? "Saving…" : "Confirm all"}
+            </button>
+            <button
+              onClick={() => bulkAction(bulkRejectCandidates, "rejected")}
+              disabled={isSaving}
+              className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-600 dark:text-gray:400"
+            >
+              {isSaving ? "Saving…" : "Reject all"}
+            </button>
+            <button
+              onClick={() => setSelected(new Set())}
+              disabled={isSaving}
+              className="text-xs text-gray-400 underline hover:text-gray-600 disabled:opacity-40"
+            >
+              Clear selection
+            </button>
+            {error && <span className="text-xs text-red-500">{error}</span>}
+          </div>
+        )}
 
-      {/* Select all — scoped to needs-review only */}
-      {needsReviewIds.length > 0 && (
-        <div className="mb-4 flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={needsReviewIds.length > 0 && selected.size === needsReviewIds.length}
-            onChange={toggleAll}
-            className="h-4 w-4 cursor-pointer rounded border-gray-300 accent-green-600 dark:border-gray-600"
-          />
-          <span className="text-xs text-gray-400 dark:text-gray-500">
-            {selected.size === needsReviewIds.length ? "Deselect all" : "Select all"}
-          </span>
-        </div>
-      )}
+        {/* Select all — Needs Review tab only */}
+        {activeTab === "needs_review" && needsReviewIds.length > 0 && (
+          <div className="mb-3 flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={selected.size === needsReviewIds.length}
+              onChange={toggleAll}
+              className="h-4 w-4 cursor-pointer rounded border-gray-300 accent-green-600 dark:border-gray-600"
+            />
+            <span className="text-xs text-gray-400 dark:text-gray-500">
+              {selected.size === needsReviewIds.length ? "Deselect all" : "Select all"}
+            </span>
+          </div>
+        )}
 
-      <div className="space-y-8">
-        <Section title="Needs Review" candidates={needsReview} selectable={true}  selected={selected} onToggle={toggle} />
-
-        {/* Confirmed — split by evidence readiness */}
-        {(() => {
-          const missingEvidence = confirmed.filter((c) => !c.hasEvidence);
-          const evidenceReady   = confirmed.filter((c) => c.hasEvidence);
-          return (
-            <>
-              {missingEvidence.length > 0 && (
-                <div>
-                  <div className="mb-3 flex items-center gap-2">
-                    <h2 className="pb-2 border-b border-amber-100 dark:border-amber-900/40 text-sm font-medium uppercase tracking-wide text-amber-600 dark:text-amber-400">
-                      Confirmed — needs evidence ({missingEvidence.length})
-                    </h2>
-                  </div>
-                  <div className="space-y-3">
-                    {missingEvidence.map((c) => (
-                      <div key={c.id} className="flex items-start gap-3">
-                        <div className="mt-6 h-4 w-4 shrink-0" />
-                        <div className="min-w-0 flex-1"><CandidateCard {...c} /></div>
-                      </div>
-                    ))}
-                  </div>
+        {/* Card list */}
+        {activeCandidates.length === 0 ? (
+          <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">
+            Nothing here yet.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {activeCandidates.map((c) => (
+              <div key={c.id} className="flex items-start gap-3">
+                {activeTab === "needs_review" ? (
+                  <input
+                    type="checkbox"
+                    checked={selected.has(c.id)}
+                    onChange={() => toggle(c.id)}
+                    className="mt-4 h-4 w-4 shrink-0 cursor-pointer rounded border-gray-300 accent-green-600 dark:border-gray-600"
+                  />
+                ) : (
+                  <div className="mt-4 h-4 w-4 shrink-0" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <CandidateCard {...c} />
                 </div>
-              )}
-              {evidenceReady.length > 0 && (
-                <div>
-                  <h2 className="mb-4 pb-2 border-b border-gray-100 dark:border-gray-700 text-sm font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                    Confirmed — evidence ready ({evidenceReady.length})
-                  </h2>
-                  <div className="space-y-3">
-                    {evidenceReady.map((c) => (
-                      <div key={c.id} className="flex items-start gap-3">
-                        <div className="mt-6 h-4 w-4 shrink-0" />
-                        <div className="min-w-0 flex-1"><CandidateCard {...c} /></div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
-          );
-        })()}
-
-        <Section title="Rejected" candidates={rejected} selectable={false} selected={selected} onToggle={toggle} />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
