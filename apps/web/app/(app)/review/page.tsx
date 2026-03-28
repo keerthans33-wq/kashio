@@ -63,6 +63,24 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
   const needsReviewValue   = all.filter((c) => c.status === "NEEDS_REVIEW").reduce((s, c) => s + amt(c), 0);
   const fmt = (n: number) => n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 
+  // Tax readiness score (0–100)
+  // Two equal components: review completion + evidence completion
+  const reviewPct   = all.length > 0 ? (totalConfirmed + totalRejected) / all.length : 0;
+  const evidencePct = totalConfirmed > 0
+    ? totalExportReady / totalConfirmed
+    : totalNeedsReview === 0 && all.length > 0 ? 1 : 0;
+  const readinessScore = Math.round((reviewPct * 0.5 + evidencePct * 0.5) * 100);
+  const readinessLabel =
+    readinessScore === 100 ? "Ready to export"  :
+    readinessScore >= 75  ? "Almost ready"      :
+    readinessScore >= 40  ? "In progress"       :
+    readinessScore >  0   ? "Getting started"   : "Not started";
+  const readinessColor =
+    readinessScore === 100 ? { bar: "bg-green-500",  badge: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" } :
+    readinessScore >= 75  ? { bar: "bg-violet-500", badge: "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400" } :
+    readinessScore >= 40  ? { bar: "bg-amber-400",  badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" } :
+                            { bar: "bg-gray-300",   badge: "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400" };
+
   // Category breakdown — potential (non-rejected) and confirmed per category
   const categoryMap = new Map<string, { potential: number; confirmed: number }>();
   for (const c of all) {
@@ -125,6 +143,27 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
                   : "No items confirmed yet"}
               </p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {all.length > 0 && (
+        <div className="mt-3 rounded-xl border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Tax readiness</span>
+            <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${readinessColor.badge}`}>
+              {readinessLabel}
+            </span>
+          </div>
+          <div className="mt-2.5 h-2 w-full rounded-full bg-gray-100 dark:bg-gray-700">
+            <div
+              className={`h-2 rounded-full transition-all ${readinessColor.bar}`}
+              style={{ width: `${readinessScore}%` }}
+            />
+          </div>
+          <div className="mt-2 flex gap-4 text-xs text-gray-400 dark:text-gray-500">
+            <span>Review <span className="font-medium text-gray-600 dark:text-gray-300">{Math.round(reviewPct * 100)}%</span></span>
+            <span>Evidence <span className="font-medium text-gray-600 dark:text-gray-300">{Math.round(evidencePct * 100)}%</span></span>
           </div>
         </div>
       )}
