@@ -170,18 +170,18 @@ export default function ConnectBankSection() {
   // ── Default: Connect button ─────────────────────────────────────────────────
   return (
     <div className="space-y-3">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-2">
         <input
           type="tel"
           placeholder="Mobile number (e.g. 0412 345 678)"
           value={mobile}
           onChange={(e) => setMobile(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500 sm:w-64"
+          className="w-full rounded-md border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
         />
         <button
           onClick={handleConnect}
           disabled={connecting || !mobile.trim()}
-          className="flex items-center gap-2 rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
+          className="flex items-center justify-center gap-2 rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
         >
           {connecting && <Spinner />}
           {connecting ? "Opening bank connection…" : "Connect Bank"}
