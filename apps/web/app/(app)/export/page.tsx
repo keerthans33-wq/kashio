@@ -180,7 +180,9 @@ export default async function Export() {
             <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-3">Download</p>
             <div className="flex flex-wrap gap-3">
               <a
-                href="/api/export/pdf"
+                href="/export/report"
+                target="_blank"
+                rel="noopener noreferrer"
                 className={`inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-semibold text-white transition-colors ${
                   missing.length === 0
                     ? "bg-violet-600 hover:bg-violet-700"
@@ -188,9 +190,9 @@ export default async function Export() {
                 }`}
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                 </svg>
-                Export PDF report
+                View PDF report
               </a>
               <a
                 href="/api/export"
@@ -204,7 +206,7 @@ export default async function Export() {
             </div>
             <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
               Both formats include all {confirmed.length} confirmed deduction{confirmed.length !== 1 ? "s" : ""}.
-              Excel highlights rows missing evidence in amber. PDF is formatted as a printable report.
+              PDF opens a print-ready report — use your browser's Print → Save as PDF. Excel highlights rows missing evidence in amber.
             </p>
           </div>
         </>
