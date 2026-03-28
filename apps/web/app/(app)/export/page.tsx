@@ -56,6 +56,8 @@ export default async function Export() {
   const total   = allItems.reduce((sum, c) => sum + c.row.amount, 0);
   const readyTotal = ready.reduce((sum, c) => sum + c.row.amount, 0);
 
+  const missingValue = missing.reduce((sum, c) => sum + c.row.amount, 0);
+
   const categoryTotals = allItems.reduce<Record<string, number>>((acc, c) => {
     acc[c.row.category] = (acc[c.row.category] ?? 0) + c.row.amount;
     return acc;
@@ -93,7 +95,7 @@ export default async function Export() {
                 {total.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 })}
               </p>
               <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">
-                {confirmed.length} item{confirmed.length !== 1 ? "s" : ""} confirmed
+                {confirmed.length} item{confirmed.length !== 1 ? "s" : ""} confirmed · amount you may be able to claim, not your refund
               </p>
             </div>
 
@@ -113,10 +115,14 @@ export default async function Export() {
                   Missing evidence
                 </p>
                 <p className={`mt-1 text-2xl font-semibold tabular-nums ${missing.length > 0 ? "text-amber-700 dark:text-amber-400" : "text-gray-400 dark:text-gray-500"}`}>
-                  {missing.length}
+                  {missing.length > 0
+                    ? missingValue.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 })
+                    : "—"}
                 </p>
                 <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
-                  {missing.length > 0 ? "need a receipt or invoice" : "all evidence attached"}
+                  {missing.length > 0
+                    ? `${missing.length} item${missing.length !== 1 ? "s" : ""} need a receipt or invoice`
+                    : "all evidence attached"}
                 </p>
               </div>
             </div>

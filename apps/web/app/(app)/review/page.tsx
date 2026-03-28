@@ -59,9 +59,10 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
   // Dollar values — always from unfiltered set
   const amt = (c: Candidate) => Math.abs(c.transaction.amount);
-  const potentialValue     = all.filter((c) => c.status !== "REJECTED").reduce((s, c) => s + amt(c), 0);
-  const confirmedValue     = all.filter((c) => c.status === "CONFIRMED").reduce((s, c) => s + amt(c), 0);
-  const needsReviewValue   = all.filter((c) => c.status === "NEEDS_REVIEW").reduce((s, c) => s + amt(c), 0);
+  const potentialValue       = all.filter((c) => c.status !== "REJECTED").reduce((s, c) => s + amt(c), 0);
+  const confirmedValue       = all.filter((c) => c.status === "CONFIRMED").reduce((s, c) => s + amt(c), 0);
+  const needsReviewValue     = all.filter((c) => c.status === "NEEDS_REVIEW").reduce((s, c) => s + amt(c), 0);
+  const missingEvidenceValue = all.filter((c) => c.status === "CONFIRMED" && !c.hasEvidence).reduce((s, c) => s + amt(c), 0);
   const fmt = (n: number) => n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 
   // Tax readiness score (0–100)
@@ -123,9 +124,9 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
       {all.length > 0 && (
         <div className="mt-6 rounded-xl bg-gradient-to-br from-violet-600 to-violet-700 px-5 py-5 text-white shadow-sm">
-          <div className="grid grid-cols-2 divide-x divide-violet-500">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-0 sm:divide-x sm:divide-violet-500">
             {/* Potential */}
-            <div className="pr-5">
+            <div className="sm:pr-5">
               <p className="text-xs font-medium uppercase tracking-wide text-violet-200">Potential deductions</p>
               <p className="mt-1.5 text-3xl font-bold tabular-nums">{fmt(potentialValue)}</p>
               <p className="mt-1 text-xs text-violet-300">
@@ -134,8 +135,10 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
                   : "All items reviewed"}
               </p>
             </div>
+            {/* Divider — mobile only */}
+            <div className="border-t border-violet-500 sm:hidden" />
             {/* Confirmed */}
-            <div className="pl-5">
+            <div className="sm:pl-5">
               <p className="text-xs font-medium uppercase tracking-wide text-violet-200">Confirmed so far</p>
               <p className="mt-1.5 text-3xl font-bold tabular-nums">{fmt(confirmedValue)}</p>
               <p className="mt-1 text-xs text-violet-300">
@@ -146,6 +149,11 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
             </div>
           </div>
         </div>
+      )}
+      {all.length > 0 && (
+        <p className="mt-1.5 text-xs text-center text-gray-400 dark:text-gray-500">
+          These are amounts you may be able to claim — not the tax refund you&apos;ll receive.
+        </p>
       )}
 
       {all.length > 0 && (
@@ -171,30 +179,17 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
       {categoryBreakdown.length > 0 && (
         <div className="mt-3 rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700 overflow-hidden">
-          {categoryBreakdown.map(({ category, potential, confirmed: conf }) => {
-            const pct = potential > 0 ? Math.round((conf / potential) * 100) : 0;
-            return (
-              <div key={category} className="flex items-center gap-3 px-4 py-2.5">
-                <span className="flex-1 truncate text-sm text-gray-700 dark:text-gray-300">{category}</span>
-                <div className="flex items-center gap-3 shrink-0">
-                  {conf > 0 && (
-                    <span className="text-xs font-medium text-green-600 dark:text-green-400 tabular-nums">
-                      {fmt(conf)}
-                    </span>
-                  )}
-                  <span className={`text-sm font-semibold tabular-nums ${conf > 0 ? "text-gray-400 dark:text-gray-500" : "text-gray-900 dark:text-gray-100"}`}>
-                    {fmt(potential)}
-                  </span>
-                  <div className="w-16 h-1.5 rounded-full bg-gray-100 dark:bg-gray-700 shrink-0">
-                    <div
-                      className="h-1.5 rounded-full bg-green-500 transition-all"
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                </div>
+          {categoryBreakdown.map(({ category, potential, confirmed: conf }) => (
+            <div key={category} className="flex items-center justify-between gap-3 px-4 py-2.5">
+              <span className="flex-1 truncate text-sm text-gray-700 dark:text-gray-300">{category}</span>
+              <div className="flex items-center gap-2 shrink-0 tabular-nums">
+                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{fmt(potential)}</span>
+                {conf > 0 && (
+                  <span className="text-xs text-green-600 dark:text-green-400">({fmt(conf)} confirmed)</span>
+                )}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       )}
 
@@ -269,6 +264,11 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
                   : <>{missingEvidence} confirmed item{missingEvidence !== 1 ? "s" : ""} missing evidence</>
                 }
               </span>
+              {missingEvidence > 0 && (
+                <span className="shrink-0 text-xs font-medium tabular-nums text-amber-600 dark:text-amber-400">
+                  {fmt(missingEvidenceValue)}
+                </span>
+              )}
             </div>
 
             {/* Row 3: ready for export */}
