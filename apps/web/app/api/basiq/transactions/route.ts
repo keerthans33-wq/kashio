@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 import { db } from "../../../../lib/db";
 import { getTransactions } from "../../../../lib/basiq/client";
 import { mapBasiqTransaction } from "../../../../lib/basiq/mapTransaction";
-import { detectDeduction } from "../../../../lib/rules";
+import { runImportPipeline } from "../../../../lib/importPipeline";
 
 export const dynamic = "force-dynamic";
 
@@ -38,67 +38,20 @@ export async function POST() {
     .filter((r): r is NonNullable<typeof r> => r !== null);
 
   if (rows.length === 0) {
-    return NextResponse.json({ inserted: 0, duplicates: 0, invalid: rawTransactions.length });
+    return NextResponse.json({ inserted: 0, duplicates: 0, invalid: rawTransactions.length, flagged: 0 });
   }
 
+  const today = new Date().toLocaleDateString("en-AU", {
+    day: "numeric", month: "short", year: "numeric",
+  });
+
   try {
-    // Create a batch record so this import appears in "Previously imported"
-    // and can be cleared like any CSV import.
-    const today = new Date().toLocaleDateString("en-AU", {
-      day: "numeric", month: "short", year: "numeric",
-    });
-    const batch = await db.importBatch.create({
-      data: { fileName: `Basiq — bank connection (${today})`, insertedCount: 0 },
-    });
-
-    const result = await db.transaction.createMany({
-      data: rows.map((r) => ({ ...r, importBatchId: batch.id })),
-      skipDuplicates: true,
-    });
-    const inserted = result.count;
-
-    await db.importBatch.update({
-      where: { id: batch.id },
-      data: { insertedCount: inserted },
-    });
-
-    // Run the saved transactions through the deduction rules engine.
-    const savedTransactions = await db.transaction.findMany({
-      where: {
-        OR: rows.map((r) => ({
-          date: r.date,
-          description: r.description,
-          amount: r.amount,
-        })),
-      },
-    });
-
-    const candidates = savedTransactions
-      .map((t) => {
-        const match = detectDeduction({
-          description: t.description,
-          normalizedMerchant: t.normalizedMerchant,
-          amount: t.amount,
-        });
-        if (!match) return null;
-        return {
-          transactionId: t.id,
-          category: match.category,
-          confidence: match.confidence,
-          reason: match.reason,
-        };
-      })
-      .filter((c): c is NonNullable<typeof c> => c !== null);
-
-    if (candidates.length > 0) {
-      await db.deductionCandidate.createMany({ data: candidates, skipDuplicates: true });
-    }
-
+    const result = await runImportPipeline(rows, `Basiq — bank connection (${today})`);
     return NextResponse.json({
-      inserted,
-      duplicates: rows.length - inserted,
+      inserted: result.inserted,
+      duplicates: result.duplicates,
       invalid: rawTransactions.length - rows.length,
-      flagged: candidates.length,
+      flagged: result.flagged,
     });
   } catch (err) {
     console.error("DB error during Basiq import:", err);

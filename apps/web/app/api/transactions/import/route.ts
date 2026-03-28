@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "../../../../lib/db";
 import { normalizeMerchant } from "../../../../lib/normalizeMerchant";
 import { parseDate } from "../../../../lib/importRules";
-import { detectDeduction } from "../../../../lib/rules";
+import { runImportPipeline } from "../../../../lib/importPipeline";
 
 export async function POST(req: NextRequest) {
   let body: unknown;
@@ -70,59 +69,13 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  let inserted: number;
-  let batchId: string;
   try {
-    // Create batch record first so we have an id to link transactions against.
-    const batch = await db.importBatch.create({
-      data: { fileName, insertedCount: 0 },
+    const result = await runImportPipeline(rows, fileName);
+    return NextResponse.json({
+      inserted: result.inserted,
+      duplicates: result.duplicates,
+      batchId: result.batchId,
     });
-    batchId = batch.id;
-
-    const result = await db.transaction.createMany({
-      data: rows.map((r) => ({ ...r, importBatchId: batchId })),
-      skipDuplicates: true,
-    });
-    inserted = result.count;
-
-    // Update batch with the real inserted count.
-    await db.importBatch.update({
-      where: { id: batchId },
-      data: { insertedCount: inserted },
-    });
-
-    // Fetch saved transactions so we have their DB ids for candidate creation.
-    const savedTransactions = await db.transaction.findMany({
-      where: {
-        OR: rows.map((r) => ({
-          date: r.date,
-          description: r.description,
-          amount: r.amount,
-        })),
-      },
-    });
-
-    // Run each transaction through the rules engine.
-    const candidates = savedTransactions
-      .map((t) => {
-        const match = detectDeduction({
-          description: t.description,
-          normalizedMerchant: t.normalizedMerchant,
-          amount: t.amount,
-        });
-        if (!match) return null;
-        return {
-          transactionId: t.id,
-          category: match.category,
-          confidence: match.confidence,
-          reason: match.reason,
-        };
-      })
-      .filter((c): c is NonNullable<typeof c> => c !== null);
-
-    if (candidates.length > 0) {
-      await db.deductionCandidate.createMany({ data: candidates, skipDuplicates: true });
-    }
   } catch (err) {
     console.error("DB error during import:", err);
     return NextResponse.json(
@@ -130,10 +83,4 @@ export async function POST(req: NextRequest) {
       { status: 500 },
     );
   }
-
-  return NextResponse.json({
-    inserted,
-    duplicates: rows.length - inserted,
-    batchId,
-  });
 }
