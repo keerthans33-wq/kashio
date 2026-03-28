@@ -87,27 +87,46 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
   return (
     <div>
       {/* ── Tab bar ───────────────────────────────────────────────────────── */}
-      <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => { setActiveTab(tab.id); setSelected(new Set()); }}
-            className={`flex shrink-0 items-center gap-1.5 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
-              activeTab === tab.id
-                ? "border-violet-500 text-violet-600 dark:text-violet-400"
-                : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            }`}
-          >
-            {tab.label}
-            <span className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${
-              activeTab === tab.id
-                ? "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300"
-                : "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
-            }`}>
-              {tab.count}
+      <div className="sticky top-14 z-40 -mx-4 sm:-mx-6 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+        <div className="mx-4 sm:mx-6 flex items-center justify-between gap-2">
+          <div className="flex gap-1 overflow-x-auto">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => { setActiveTab(tab.id); setSelected(new Set()); }}
+                className={`flex shrink-0 items-center gap-1.5 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? "border-violet-500 text-violet-600 dark:text-violet-400"
+                    : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                }`}
+              >
+                {tab.label}
+                <span className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${
+                  activeTab === tab.id
+                    ? "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300"
+                    : "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+                }`}>
+                  {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Tab-level action */}
+          {activeTab === "evidence_ready" && evidenceReady.length > 0 && (
+            <a
+              href="/export"
+              className="shrink-0 rounded-md bg-violet-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-violet-700"
+            >
+              Go to Export →
+            </a>
+          )}
+          {activeTab === "needs_evidence" && needsEvidence.length > 0 && (
+            <span className="shrink-0 text-xs text-amber-600 dark:text-amber-400">
+              {needsEvidence.length} item{needsEvidence.length !== 1 ? "s" : ""} need evidence
             </span>
-          </button>
-        ))}
+          )}
+        </div>
       </div>
 
       <div className="mt-4">

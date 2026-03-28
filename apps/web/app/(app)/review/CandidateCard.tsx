@@ -127,7 +127,36 @@ export function CandidateCard({
           )}
         </div>
 
-        {/* Row 3: show more toggle + action buttons */}
+        {/* Row 3: evidence checkbox — confirmed cards only */}
+        {status === "CONFIRMED" && (
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={evidence}
+                disabled={evidenceSaving}
+                onChange={async (e) => {
+                  const next = e.target.checked;
+                  setEvidence(next);
+                  setEvidenceSaving(true);
+                  try { await saveEvidence(id, next, note); flashSaved(next ? "Marked as ready for export" : "Removed"); } finally { setEvidenceSaving(false); }
+                }}
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 dark:border-gray-600 accent-blue-600"
+              />
+              <span className={`text-xs ${evidence ? "text-gray-600 dark:text-gray-400" : "text-amber-700 dark:text-amber-400"}`}>
+                {evidence ? "Receipt / invoice on hand" : "I have a receipt or invoice"}
+              </span>
+            </label>
+            {evidenceSaving
+              ? <span className="text-xs text-gray-400 dark:text-gray-500">Saving…</span>
+              : evidenceSaved && evidenceSaved !== "Note saved"
+              ? <span className="text-xs text-green-600 dark:text-green-400">{evidenceSaved}</span>
+              : null
+            }
+          </div>
+        )}
+
+        {/* Row 4: show more toggle + action buttons */}
         <div className="mt-2.5 flex items-center justify-between gap-2">
           <button
             onClick={() => setExpanded((v) => !v)}
@@ -140,23 +169,13 @@ export function CandidateCard({
 
           <div className="flex gap-2">
             {settled ? (
-              <>
-                {status === "CONFIRMED" && (
-                  <a
-                    href="/export"
-                    className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-white dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
-                  >
-                    Export →
-                  </a>
-                )}
-                <button
-                  onClick={handleReset}
-                  disabled={isSaving}
-                  className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-white disabled:opacity-40 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
-                >
-                  {isSaving ? "Saving…" : "Undo"}
-                </button>
-              </>
+              <button
+                onClick={handleReset}
+                disabled={isSaving}
+                className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-white disabled:opacity-40 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+              >
+                {isSaving ? "Saving…" : "Undo"}
+              </button>
             ) : (
               <>
                 <button
@@ -193,43 +212,10 @@ export function CandidateCard({
             <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{reason}</p>
           </div>
 
-          {/* Evidence — only shown for confirmed cards */}
-          {status === "CONFIRMED" && (
-            <div className={`rounded-md border px-4 py-3 space-y-2 transition-colors ${
-              evidence
-                ? "border-gray-100 bg-white dark:border-gray-700 dark:bg-gray-900"
-                : "border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20"
-            }`}>
-              {!evidence && (
-                <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
-                  Do you have a receipt or invoice for this item? Tick below to note it.
-                </p>
-              )}
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={evidence}
-                    disabled={evidenceSaving}
-                    onChange={async (e) => {
-                      const next = e.target.checked;
-                      setEvidence(next);
-                      setEvidenceSaving(true);
-                      try { await saveEvidence(id, next, note); flashSaved(next ? "Marked as ready for export" : "Removed"); } finally { setEvidenceSaving(false); }
-                    }}
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 dark:border-gray-600"
-                  />
-                  <span className={`text-sm ${evidence ? "text-gray-700 dark:text-gray-300" : "text-amber-800 dark:text-amber-300"}`}>
-                    {evidence ? "Receipt or invoice on hand" : "I have a receipt or invoice"}
-                  </span>
-                </label>
-                {evidenceSaving && evidenceSaved == null
-                  ? <span className="text-xs text-gray-400 dark:text-gray-500">Saving…</span>
-                  : evidenceSaved && evidenceSaved !== "Note saved"
-                  ? <span className="text-xs text-green-600 dark:text-green-400">{evidenceSaved}</span>
-                  : null
-                }
-              </div>
+          {/* Evidence note — only shown for confirmed cards that have evidence ticked */}
+          {status === "CONFIRMED" && evidence && (
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Evidence note</p>
               <input
                 type="text"
                 value={note}
@@ -238,12 +224,11 @@ export function CandidateCard({
                   setEvidenceSaving(true);
                   try { await saveEvidence(id, evidence, note); flashSaved("Note saved"); } finally { setEvidenceSaving(false); }
                 }}
-                placeholder={evidence ? "Add a note — e.g. Bunnings receipt Feb 2025" : "Tick above first, then add a note"}
-                disabled={!evidence}
-                className="w-full rounded border border-gray-200 px-3 py-1.5 text-sm text-gray-700 placeholder-gray-300 focus:border-gray-400 focus:outline-none disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:placeholder-gray-600 dark:focus:border-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-500"
+                placeholder="e.g. Bunnings receipt Feb 2025"
+                className="mt-1 w-full rounded border border-gray-200 px-3 py-1.5 text-sm text-gray-700 placeholder-gray-300 focus:border-gray-400 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:placeholder-gray-600 dark:focus:border-gray-500"
               />
-              <div className="h-4">
-                {evidenceSaving && evidence
+              <div className="h-4 mt-0.5">
+                {evidenceSaving
                   ? <span className="text-xs text-gray-400 dark:text-gray-500">Saving…</span>
                   : evidenceSaved === "Note saved"
                   ? <span className="text-xs text-green-600 dark:text-green-400">Note saved</span>
