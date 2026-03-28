@@ -13,9 +13,11 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   // The redirect URL is where Basiq sends the user after they connect their bank.
-  // We send them back to /connect so they can see the "connected" state.
+  // The caller passes a redirectPath (e.g. "/import") so any page can trigger the flow.
   const origin = req.headers.get("origin") ?? "";
-  const redirectUrl = `${origin}/connect?connected=true`;
+  const body = await req.json().catch(() => ({}));
+  const redirectPath: string = typeof body.redirectPath === "string" ? body.redirectPath : "/connect";
+  const redirectUrl = `${origin}${redirectPath}?connected=true`;
 
   try {
     // Check if we already have a Basiq user stored.

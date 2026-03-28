@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import CsvUploader from "../../components/import/CsvUploader";
 import { TesterHint } from "../../components/import/TesterHint";
 import ImportedBatches from "../../components/import/ImportedBatches";
+import ConnectBankSection from "../../components/import/ConnectBankSection";
 
 export default function Import() {
   return (
@@ -10,17 +12,31 @@ export default function Import() {
         <span className="text-sm text-gray-400 dark:text-gray-500">Step 1 of 3</span>
       </div>
       <p className="mt-2 text-gray-500 dark:text-gray-400">
-        Upload a CSV exported from your bank. Kashio will scan it for transactions that look work-related, then add them to Review for you to confirm or reject.
+        Connect your bank directly or upload a CSV. Kashio will scan your transactions for anything that looks work-related and add them to Review.
       </p>
 
-      <div className="mt-3 flex items-center gap-2 text-sm">
-        <span className="text-gray-400 dark:text-gray-500">Prefer not to export a CSV?</span>
-        <a href="/connect" className="font-medium text-violet-600 hover:text-violet-700 underline underline-offset-2 dark:text-violet-400 dark:hover:text-violet-300">
-          Connect your bank directly →
-        </a>
+      {/* Option A: Connect bank directly */}
+      <div className="mt-6">
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Connect your bank</p>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          No CSV export needed — Kashio fetches your transactions automatically.
+        </p>
+        <div className="mt-3">
+          <Suspense>
+            <ConnectBankSection />
+          </Suspense>
+        </div>
       </div>
 
-      <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
+      {/* Divider */}
+      <div className="my-8 flex items-center gap-4">
+        <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+        <span className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">or upload a CSV</span>
+        <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+      </div>
+
+      {/* Option B: CSV upload */}
+      <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
         <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">CSV format</p>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
           Your file needs three columns — the names must match exactly:
