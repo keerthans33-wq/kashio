@@ -58,8 +58,9 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
   // Dollar values — always from unfiltered set
   const amt = (c: Candidate) => Math.abs(c.transaction.amount);
-  const potentialValue  = all.filter((c) => c.status !== "REJECTED").reduce((s, c) => s + amt(c), 0);
-  const confirmedValue  = all.filter((c) => c.status === "CONFIRMED").reduce((s, c) => s + amt(c), 0);
+  const potentialValue     = all.filter((c) => c.status !== "REJECTED").reduce((s, c) => s + amt(c), 0);
+  const confirmedValue     = all.filter((c) => c.status === "CONFIRMED").reduce((s, c) => s + amt(c), 0);
+  const needsReviewValue   = all.filter((c) => c.status === "NEEDS_REVIEW").reduce((s, c) => s + amt(c), 0);
   const fmt = (n: number) => n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 
   // Category breakdown — potential (non-rejected) and confirmed per category
@@ -196,17 +197,23 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
         // State 1: still items to review
         if (totalNeedsReview > 0) return (
-          <div className="mt-4 rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-              {totalNeedsReview} item{totalNeedsReview !== 1 ? "s" : ""} left to review
-            </p>
-            <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
-              {missingEvidence > 0
-                ? `${totalConfirmed} confirmed — ${missingEvidence} still need evidence once you're done.`
-                : totalConfirmed > 0
-                ? `${totalConfirmed} confirmed so far. Keep going.`
-                : "Confirm the ones that were genuinely work-related, reject the rest."}
-            </p>
+          <div className="mt-4 flex items-center justify-between gap-4 rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
+            <div>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                {totalNeedsReview} item{totalNeedsReview !== 1 ? "s" : ""} left to review
+              </p>
+              <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+                {missingEvidence > 0
+                  ? `${totalConfirmed} confirmed — ${missingEvidence} still need evidence once you're done.`
+                  : totalConfirmed > 0
+                  ? `${totalConfirmed} confirmed so far. Keep going.`
+                  : "Confirm the ones that were genuinely work-related, reject the rest."}
+              </p>
+            </div>
+            <div className="shrink-0 text-right">
+              <p className="text-sm font-semibold tabular-nums text-violet-600 dark:text-violet-400">{fmt(needsReviewValue)}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">still to decide on</p>
+            </div>
           </div>
         );
 
