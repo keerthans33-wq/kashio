@@ -54,18 +54,15 @@ export async function runImportPipeline(
     data: { insertedCount: inserted },
   });
 
-  // Re-fetch saved rows to get their DB-assigned IDs for candidate creation.
+  // Re-fetch only the transactions that were just inserted in this batch.
+  // We scope by importBatchId rather than matching on (date, description, amount)
+  // across all rows, which would also return pre-existing duplicates from earlier
+  // syncs and produce an inflated flagged count.
   const savedTransactions = await db.transaction.findMany({
-    where: {
-      OR: rows.map((r) => ({
-        date: r.date,
-        description: r.description,
-        amount: r.amount,
-      })),
-    },
+    where: { importBatchId: batch.id },
   });
 
-  // Run each transaction through the deduction rules engine.
+  // Run each newly inserted transaction through the deduction rules engine.
   const candidates = savedTransactions
     .map((t) => {
       const match = detectDeduction({
