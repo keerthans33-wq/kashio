@@ -7,14 +7,15 @@ type Status     = "NEEDS_REVIEW" | "CONFIRMED" | "REJECTED";
 type Confidence = "LOW" | "MEDIUM" | "HIGH";
 
 export type CandidateCardProps = {
-  id:           string;
-  status:       Status;
-  confidence:   Confidence;
-  category:     string;
-  reason:       string;
-  hasEvidence:  boolean;
-  evidenceNote: string | null;
-  transaction:  { normalizedMerchant: string; amount: number; date: string; description: string };
+  id:                string;
+  status:            Status;
+  confidence:        Confidence;
+  category:          string;
+  reason:            string;
+  confidenceReason?: string;
+  hasEvidence:       boolean;
+  evidenceNote:      string | null;
+  transaction:       { normalizedMerchant: string; amount: number; date: string; description: string };
 };
 
 const CONFIDENCE_BADGE: Record<Confidence, string> = {
@@ -36,7 +37,7 @@ const STATUS_BG: Record<Status, string> = {
 };
 
 export function CandidateCard({
-  id, status: initialStatus, confidence, category, reason,
+  id, status: initialStatus, confidence, category, reason, confidenceReason,
   hasEvidence, evidenceNote, transaction,
 }: CandidateCardProps) {
   const [status, setStatus]                   = useState<Status>(initialStatus);
@@ -211,6 +212,15 @@ export function CandidateCard({
             <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Why flagged</p>
             <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{reason}</p>
           </div>
+
+          {confidenceReason && (
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Why {confidence.toLowerCase()} confidence
+              </p>
+              <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{confidenceReason}</p>
+            </div>
+          )}
 
           {/* Evidence note — only shown for confirmed cards that have evidence ticked */}
           {status === "CONFIRMED" && evidence && (

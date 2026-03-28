@@ -39,6 +39,7 @@ export const detectOfficeSupplies: Rule = (transaction) => {
       category:   CATEGORIES.OFFICE_SUPPLIES,
       confidence: "MEDIUM",
       reason:     `${transaction.normalizedMerchant} purchase that looks like ${matchedKeyword} — office consumables used for work are generally deductible. Personal use doesn't qualify.`,
+      confidenceReason: "Both the retailer and the item type matched — two independent signals pointing to a work purchase.",
     };
   }
 
@@ -49,5 +50,8 @@ export const detectOfficeSupplies: Rule = (transaction) => {
     reason:     merchantMatch
       ? `${transaction.normalizedMerchant} is an office supply retailer. If this was for work stationery or supplies, it's likely deductible — check the receipt to confirm.`
       : `${matchedKeyword} is typically a deductible office expense when used for work. Personal stationery or home printing generally doesn't qualify.`,
+    confidenceReason: merchantMatch
+      ? "Known office retailer matched, but no specific item type in the description to corroborate — could still be a personal purchase."
+      : "Item type matched in the description, but no known office retailer to back it up — one signal on its own isn't enough to be confident.",
   };
 };

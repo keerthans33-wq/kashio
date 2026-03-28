@@ -69,5 +69,8 @@ export const detectSoftware: Rule = (transaction) => {
     reason: isSpecific
       ? `${transaction.normalizedMerchant} is commonly used as a work tool. Subscriptions are deductible if used for your job — personal plans or free tiers don't qualify.`
       : `This ${transaction.normalizedMerchant} charge looks like a paid subscription. Deductible if the plan is used for work — personal accounts typically can't be claimed.`,
+    confidenceReason: isSpecific
+      ? "Matched a known work tool by merchant name — but personal plans exist on this platform, so we can't confirm it's a work subscription without more detail."
+      : "A subscription keyword in the description corroborates this, but this merchant also sells personal plans. Confidence stays low until you confirm it's a work account.",
   };
 };

@@ -174,6 +174,87 @@ export default function CsvUploader() {
   }
 
   const noUsableRows = result && result.valid.length === 0;
+  const fmt = (n: number) =>
+    n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
+
+  // ── Completion card — replaces the entire uploader once import is done ──────
+  if (importResult !== null) {
+    const noneAdded = importResult.inserted === 0 && importResult.duplicates > 0;
+    return (
+      <div className="mt-8 max-w-md rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 overflow-hidden">
+
+        {/* Header */}
+        <div className="flex items-start gap-3 px-5 py-4">
+          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600 text-xs dark:bg-green-900/40 dark:text-green-400">
+            ✓
+          </span>
+          <div>
+            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              {noneAdded ? "Already up to date" : "Import complete"}
+            </p>
+            <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+              {noneAdded
+                ? `${importResult.duplicates} transaction${importResult.duplicates !== 1 ? "s" : ""} already saved — nothing new to add.`
+                : <>
+                    {importResult.inserted} transaction{importResult.inserted !== 1 ? "s" : ""} added
+                    {importResult.duplicates > 0 && <> · {importResult.duplicates} skipped</>}
+                    {importResult.invalid > 0 && <> · {importResult.invalid} rejected</>}
+                  </>
+              }
+            </p>
+          </div>
+        </div>
+
+        {/* Deduction summary — only shown when candidates were found */}
+        {importResult.flagged > 0 && (
+          <div className="border-t border-gray-100 dark:border-gray-700 px-5 py-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
+              Potential deductions found
+            </p>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-gray-900 dark:text-gray-100">
+              {importResult.totalValue > 0 ? fmt(importResult.totalValue) : `${importResult.flagged} items`}
+            </p>
+            <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+              {importResult.flagged} candidate{importResult.flagged !== 1 ? "s" : ""} flagged — review them to confirm which ones apply to you.
+            </p>
+          </div>
+        )}
+
+        {/* CTA */}
+        <div className="border-t border-gray-100 dark:border-gray-700 px-5 py-4 flex flex-wrap items-center gap-3">
+          {importResult.flagged > 0 ? (
+            <a
+              href="/review"
+              className="rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700"
+            >
+              Review deductions →
+            </a>
+          ) : importResult.inserted > 0 ? (
+            <a
+              href="/transactions"
+              className="rounded-md bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900"
+            >
+              View transactions →
+            </a>
+          ) : (
+            <a
+              href="/review"
+              className="rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700"
+            >
+              Go to Review →
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={reset}
+            className="text-sm text-gray-400 hover:underline dark:text-gray-500"
+          >
+            Import another file
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-8">
@@ -234,30 +315,14 @@ export default function CsvUploader() {
         {result && !noUsableRows && (
           <div className="mt-4 space-y-3">
 
-            {/* Summary — updates after import to show final counts */}
+            {/* Pre-import summary */}
             <div className="rounded-md border border-gray-200 bg-gray-50 p-4 text-sm dark:border-gray-700 dark:bg-gray-800">
-              <p className="font-medium text-gray-800 dark:text-gray-200">
-                {importResult !== null ? "CSV import complete" : "Ready to import from CSV"}
-              </p>
+              <p className="font-medium text-gray-800 dark:text-gray-200">Ready to import from CSV</p>
               <ul className="mt-2 space-y-1">
                 <li className="text-gray-500 dark:text-gray-400">{result.raw.length} rows read from file</li>
-                {importResult !== null ? (
-                  <>
-                    <li className="text-green-700 dark:text-green-400">{importResult.inserted} inserted</li>
-                    {importResult.duplicates > 0 && (
-                      <li className="text-yellow-700 dark:text-yellow-400">{importResult.duplicates} duplicates — already saved, skipped</li>
-                    )}
-                    {importResult.invalid > 0 && (
-                      <li className="text-red-600 dark:text-red-400">{importResult.invalid} invalid — rejected before upload</li>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <li className="text-green-700 dark:text-green-400">{result.valid.length} valid — ready to import</li>
-                    {result.invalid.length > 0 && (
-                      <li className="text-yellow-700 dark:text-yellow-400">{result.invalid.length} invalid — see details below</li>
-                    )}
-                  </>
+                <li className="text-green-700 dark:text-green-400">{result.valid.length} valid — ready to import</li>
+                {result.invalid.length > 0 && (
+                  <li className="text-yellow-700 dark:text-yellow-400">{result.invalid.length} invalid — see details below</li>
                 )}
               </ul>
             </div>
@@ -278,48 +343,14 @@ export default function CsvUploader() {
               </div>
             )}
 
-            {importResult === null ? (
-              <button
-                type="button"
-                onClick={handleImport}
-                disabled={importing}
-                className="rounded-md bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300"
-              >
-                {importing ? "Importing…" : `Import ${result.valid.length} transaction${result.valid.length !== 1 ? "s" : ""}`}
-              </button>
-            ) : importResult.flagged > 0 ? (
-              <div className="space-y-3">
-                <div className="rounded-lg bg-violet-600 px-5 py-4 text-white">
-                  <p className="text-xs font-medium uppercase tracking-wide text-violet-200">Potential deductions found</p>
-                  <p className="mt-1 text-3xl font-bold tabular-nums">
-                    {importResult.totalValue > 0
-                      ? importResult.totalValue.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 })
-                      : `${importResult.flagged} item${importResult.flagged !== 1 ? "s" : ""}`}
-                  </p>
-                  <p className="mt-0.5 text-sm text-violet-200">
-                    {importResult.flagged} candidate{importResult.flagged !== 1 ? "s" : ""} across {importResult.inserted} imported transaction{importResult.inserted !== 1 ? "s" : ""}
-                  </p>
-                </div>
-                <a
-                  href="/review"
-                  className="inline-block rounded-md bg-violet-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-violet-700"
-                >
-                  Review deductions →
-                </a>
-              </div>
-            ) : importResult.inserted > 0 ? (
-              <div className="space-y-2">
-                <p className="text-sm text-gray-500 dark:text-gray-400">No deduction candidates found in this batch.</p>
-                <a href="/transactions" className="text-sm font-medium text-violet-600 hover:underline dark:text-violet-400">
-                  View imported transactions →
-                </a>
-              </div>
-            ) : importResult.duplicates > 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                These transactions are already imported.{" "}
-                <a href="/review" className="underline hover:text-gray-700 dark:hover:text-gray-300">Go to Review →</a>
-              </p>
-            ) : null}
+            <button
+              type="button"
+              onClick={handleImport}
+              disabled={importing}
+              className="rounded-md bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300"
+            >
+              {importing ? "Importing…" : `Import ${result.valid.length} transaction${result.valid.length !== 1 ? "s" : ""}`}
+            </button>
 
             {importError && (
               <p className="text-sm text-red-600 dark:text-red-400">{importError}</p>

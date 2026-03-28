@@ -13,14 +13,15 @@ type Candidate = Awaited<ReturnType<typeof db.deductionCandidate.findMany>>[numb
 
 function toCardProps(c: Candidate): CandidateCardProps {
   return {
-    id:           c.id,
-    status:       c.status,
-    confidence:   c.confidence,
-    category:     c.category,
-    reason:       c.reason,
-    hasEvidence:  c.hasEvidence,
-    evidenceNote: c.evidenceNote ?? null,
-    transaction:  c.transaction,
+    id:               c.id,
+    status:           c.status,
+    confidence:       c.confidence,
+    category:         c.category,
+    reason:           c.reason,
+    confidenceReason: c.confidenceReason ?? undefined,
+    hasEvidence:      c.hasEvidence,
+    evidenceNote:     c.evidenceNote ?? null,
+    transaction:      c.transaction,
   };
 }
 
@@ -233,71 +234,61 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
       {all.length > 0 && (() => {
         const missingEvidence = totalConfirmed - totalExportReady;
-
-        // State 1: still items to review
-        if (totalNeedsReview > 0) return (
-          <div className="mt-4 flex items-center justify-between gap-4 rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
-            <div>
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                {totalNeedsReview} item{totalNeedsReview !== 1 ? "s" : ""} left to review
-              </p>
-              <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
-                {missingEvidence > 0
-                  ? `${totalConfirmed} confirmed — ${missingEvidence} still need evidence once you're done.`
-                  : totalConfirmed > 0
-                  ? `${totalConfirmed} confirmed so far. Keep going.`
-                  : "Confirm the ones that were genuinely work-related, reject the rest."}
-              </p>
-            </div>
-            <div className="shrink-0 text-right">
-              <p className="text-sm font-semibold tabular-nums text-violet-600 dark:text-violet-400">{fmt(needsReviewValue)}</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500">still to decide on</p>
-            </div>
-          </div>
-        );
-
-        // State 2: review done but evidence missing
-        if (missingEvidence > 0) return (
-          <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-900/20">
-            <div>
-              <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
-                Review complete — add evidence to {missingEvidence} item{missingEvidence !== 1 ? "s" : ""}
-              </p>
-              <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-400">
-                {totalExportReady > 0
-                  ? `${totalExportReady} already ready to export. Tick the receipt checkbox on the remaining items.`
-                  : "Open each confirmed item and tick the receipt checkbox to mark evidence."}
-              </p>
-            </div>
-            {totalExportReady > 0 && (
-              <a href="/export" className="shrink-0 rounded-md border border-amber-300 px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900/40">
-                Export {totalExportReady} ready →
-              </a>
-            )}
-          </div>
-        );
-
-        // State 3: all done and export ready
-        if (totalExportReady > 0) return (
-          <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 dark:border-green-800 dark:bg-green-900/20">
-            <div>
-              <p className="text-sm font-medium text-green-800 dark:text-green-300">
-                All done — {totalExportReady} item{totalExportReady !== 1 ? "s" : ""} ready to export
-              </p>
-              <p className="mt-0.5 text-xs text-green-700 dark:text-green-400">
-                Download your deductions as a spreadsheet for tax time.
-              </p>
-            </div>
-            <a href="/export" className="shrink-0 rounded-md bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700">
-              Go to Export →
-            </a>
-          </div>
-        );
-
-        // State 4: all reviewed, nothing confirmed
         return (
-          <div className="mt-4 rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
-            <p className="text-sm text-gray-500 dark:text-gray-400">All items reviewed — nothing confirmed for export.</p>
+          <div className="mt-4 rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700 overflow-hidden">
+            {/* Row 1: needs review */}
+            <div className="flex items-center gap-3 px-4 py-3">
+              {totalNeedsReview === 0
+                ? <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600 text-xs dark:bg-green-900/40 dark:text-green-400">✓</span>
+                : <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 text-xs font-bold dark:bg-amber-900/40 dark:text-amber-400">!</span>
+              }
+              <span className={`flex-1 text-sm ${totalNeedsReview === 0 ? "text-gray-400 dark:text-gray-500" : "text-gray-700 dark:text-gray-300"}`}>
+                {totalNeedsReview === 0
+                  ? "All items reviewed"
+                  : <>{totalNeedsReview} item{totalNeedsReview !== 1 ? "s" : ""} still to review</>
+                }
+              </span>
+              {totalNeedsReview > 0 && (
+                <span className="shrink-0 text-xs font-medium tabular-nums text-violet-600 dark:text-violet-400">
+                  {fmt(needsReviewValue)}
+                </span>
+              )}
+            </div>
+
+            {/* Row 2: missing evidence */}
+            <div className="flex items-center gap-3 px-4 py-3">
+              {missingEvidence === 0
+                ? <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600 text-xs dark:bg-green-900/40 dark:text-green-400">✓</span>
+                : <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 text-xs font-bold dark:bg-amber-900/40 dark:text-amber-400">!</span>
+              }
+              <span className={`flex-1 text-sm ${missingEvidence === 0 ? "text-gray-400 dark:text-gray-500" : "text-gray-700 dark:text-gray-300"}`}>
+                {totalConfirmed === 0
+                  ? "No confirmed items yet"
+                  : missingEvidence === 0
+                  ? "Evidence collected for all confirmed items"
+                  : <>{missingEvidence} confirmed item{missingEvidence !== 1 ? "s" : ""} missing evidence</>
+                }
+              </span>
+            </div>
+
+            {/* Row 3: ready for export */}
+            <div className="flex items-center gap-3 px-4 py-3">
+              {totalExportReady > 0
+                ? <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600 text-xs dark:bg-green-900/40 dark:text-green-400">✓</span>
+                : <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-400 text-xs dark:bg-gray-700 dark:text-gray-500">–</span>
+              }
+              <span className={`flex-1 text-sm ${totalExportReady === 0 ? "text-gray-400 dark:text-gray-500" : "text-gray-700 dark:text-gray-300"}`}>
+                {totalExportReady === 0
+                  ? "No items ready to export yet"
+                  : <>{totalExportReady} item{totalExportReady !== 1 ? "s" : ""} ready for export</>
+                }
+              </span>
+              {totalExportReady > 0 && (
+                <a href="/export" className="shrink-0 text-xs font-medium text-violet-600 hover:underline dark:text-violet-400">
+                  Export →
+                </a>
+              )}
+            </div>
           </div>
         );
       })()}

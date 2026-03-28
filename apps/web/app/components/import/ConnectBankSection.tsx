@@ -88,50 +88,64 @@ function SyncInProgress({ label, detail }: { label: string; detail: string }) {
 }
 
 function SyncSuccess({ result, onSync }: { result: SyncResult; onSync: () => void }) {
-  const fmtVal = (n: number) =>
+  const fmt = (n: number) =>
     n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 
+  const noneAdded = result.inserted === 0 && result.duplicates > 0;
+
   return (
-    <div className="space-y-3">
-      {/* Stats row */}
-      <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-4 dark:border-green-800 dark:bg-green-900/20">
-        <p className="text-sm font-medium text-green-800 dark:text-green-300">Demo Bank — sync complete</p>
-        <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-green-700 dark:text-green-400">
-          <span><strong>{result.inserted}</strong> imported</span>
-          {result.duplicates > 0 && <span className="text-gray-400 dark:text-gray-500"><strong>{result.duplicates}</strong> skipped</span>}
-          {(result.invalid ?? 0) > 0 && <span className="text-yellow-600 dark:text-yellow-400"><strong>{result.invalid}</strong> unreadable</span>}
+    <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 overflow-hidden">
+
+      {/* Header */}
+      <div className="flex items-start gap-3 px-5 py-4">
+        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600 text-xs dark:bg-green-900/40 dark:text-green-400">
+          ✓
+        </span>
+        <div>
+          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            {noneAdded ? "Already up to date" : "Sync complete"}
+          </p>
+          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+            {noneAdded
+              ? `${result.duplicates} transaction${result.duplicates !== 1 ? "s" : ""} already saved — nothing new to add.`
+              : <>
+                  {result.inserted} transaction{result.inserted !== 1 ? "s" : ""} imported
+                  {result.duplicates > 0 && <> · {result.duplicates} skipped</>}
+                  {(result.invalid ?? 0) > 0 && <> · {result.invalid} unreadable</>}
+                </>
+            }
+          </p>
         </div>
       </div>
 
-      {/* Value highlight */}
+      {/* Deduction summary */}
       {result.flagged > 0 && (
-        <div className="rounded-lg bg-violet-600 px-5 py-4 text-white">
-          <p className="text-xs font-medium uppercase tracking-wide text-violet-200">Potential deductions found</p>
-          <p className="mt-1 text-3xl font-bold tabular-nums">
-            {result.totalValue ? fmtVal(result.totalValue) : `${result.flagged} item${result.flagged !== 1 ? "s" : ""}`}
+        <div className="border-t border-gray-100 dark:border-gray-700 px-5 py-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
+            Potential deductions found
           </p>
-          {result.totalValue && (
-            <p className="mt-0.5 text-sm text-violet-200">{result.flagged} candidate{result.flagged !== 1 ? "s" : ""} to review</p>
-          )}
+          <p className="mt-1 text-2xl font-bold tabular-nums text-gray-900 dark:text-gray-100">
+            {result.totalValue ? fmt(result.totalValue) : `${result.flagged} items`}
+          </p>
+          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+            {result.flagged} candidate{result.flagged !== 1 ? "s" : ""} flagged — review them to confirm which ones apply to you.
+          </p>
         </div>
       )}
 
-      {/* CTAs */}
-      <div className="flex flex-wrap items-center gap-3">
+      {/* CTA */}
+      <div className="border-t border-gray-100 dark:border-gray-700 px-5 py-4 flex flex-wrap items-center gap-3">
         {result.flagged > 0 ? (
           <a href="/review" className="rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700">
             Review deductions →
           </a>
         ) : result.inserted > 0 ? (
-          <a href="/transactions" className="rounded-md bg-gray-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-700 dark:bg-gray-200 dark:text-gray-900">
+          <a href="/transactions" className="rounded-md bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900">
             View transactions →
           </a>
         ) : (
-          <p className="text-sm text-gray-400 dark:text-gray-500">Already up to date — no new transactions.</p>
-        )}
-        {result.inserted > 0 && result.flagged > 0 && (
-          <a href="/transactions" className="text-sm text-gray-400 hover:underline dark:text-gray-500">
-            View all transactions
+          <a href="/review" className="rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700">
+            Go to Review →
           </a>
         )}
         <button onClick={onSync} className="text-sm text-gray-400 hover:underline dark:text-gray-500">

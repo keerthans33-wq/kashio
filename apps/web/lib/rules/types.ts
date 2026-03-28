@@ -11,6 +11,7 @@ export type DeductionMatch = {
   category: string;
   confidence: "LOW" | "MEDIUM" | "HIGH";
   reason: string;
+  confidenceReason?: string; // explains why confidence is LOW/MEDIUM/HIGH
 };
 
 // A rule is a pure function: given a transaction, return a match or null.

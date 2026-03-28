@@ -77,6 +77,7 @@ export async function runImportPipeline(
         category: match.category,
         confidence: match.confidence,
         reason: match.reason,
+        confidenceReason: match.confidenceReason,
       };
     })
     .filter((c): c is NonNullable<typeof c> => c !== null);
