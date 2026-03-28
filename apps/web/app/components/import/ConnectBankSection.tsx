@@ -144,9 +144,9 @@ export default function ConnectBankSection() {
                 {importResult.duplicates} duplicate{importResult.duplicates !== 1 ? "s" : ""} skipped
               </li>
             )}
-            {importResult.invalid > 0 && (
+            {(importResult.invalid ?? 0) > 0 && (
               <li className="text-yellow-700 dark:text-yellow-400">
-                {importResult.invalid} transaction{importResult.invalid !== 1 ? "s" : ""} could not be read
+                {importResult.invalid ?? 0} transaction{(importResult.invalid ?? 0) !== 1 ? "s" : ""} could not be read
               </li>
             )}
             {importResult.flagged > 0 && (
