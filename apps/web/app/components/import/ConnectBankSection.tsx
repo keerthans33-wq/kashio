@@ -32,6 +32,7 @@ export default function ConnectBankSection() {
   // Basiq redirects back to /import?connected=true after the user links their bank.
   const justConnected = searchParams.get("connected") === "true";
 
+  const [mobile, setMobile]             = useState("");
   const [connecting, setConnecting]     = useState(false);
   const [importing, setImporting]       = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
@@ -51,7 +52,7 @@ export default function ConnectBankSection() {
       const res = await fetch("/api/basiq/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ redirectPath: "/import" }),
+        body: JSON.stringify({ redirectPath: "/import", mobile }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Could not start bank connection.");
@@ -169,14 +170,23 @@ export default function ConnectBankSection() {
   // ── Default: Connect button ─────────────────────────────────────────────────
   return (
     <div className="space-y-3">
-      <button
-        onClick={handleConnect}
-        disabled={connecting}
-        className="flex items-center gap-2 rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
-      >
-        {connecting && <Spinner />}
-        {connecting ? "Opening bank connection…" : "Connect Bank"}
-      </button>
+      <div className="flex flex-row items-center gap-2">
+        <input
+          type="tel"
+          placeholder="Your mobile number"
+          value={mobile}
+          onChange={(e) => setMobile(e.target.value)}
+          className="w-52 rounded-md border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
+        />
+        <button
+          onClick={handleConnect}
+          disabled={connecting || !mobile.trim()}
+          className="flex items-center gap-2 rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
+        >
+          {connecting && <Spinner />}
+          {connecting ? "Connecting…" : "Connect Bank"}
+        </button>
+      </div>
       <p className="text-xs text-gray-400 dark:text-gray-500">
         Your mobile number is sent to Basiq to verify your identity · read-only access · your banking password is never shared with Kashio
       </p>

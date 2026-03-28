@@ -79,9 +79,12 @@ export async function updateBasiqUser(userId: string, mobile: string): Promise<v
 
 // Creates a Basiq consent link. The user opens this URL to connect their bank.
 // After connecting, Basiq redirects them to `redirectUrl`.
+// mobile (E.164 format) is passed directly in the auth link request so it
+// doesn't need to be persisted on the Basiq user record.
 export async function getAuthLink(
   userId: string,
   redirectUrl: string,
+  mobile: string,
 ): Promise<string> {
   const token = await getToken();
 
@@ -92,7 +95,7 @@ export async function getAuthLink(
       "Content-Type": "application/json",
       "basiq-version": "3.0",
     },
-    body: JSON.stringify({ redirectUrl }),
+    body: JSON.stringify({ redirectUrl, mobile }),
   });
 
   if (!res.ok) {

@@ -19,9 +19,15 @@ export async function POST(req: NextRequest) {
   const redirectPath: string = typeof body.redirectPath === "string" ? body.redirectPath : "/connect";
   const redirectUrl = `${origin}${redirectPath}?connected=true`;
   const email: string = typeof body.email === "string" ? body.email.trim() : "user@kashio.app";
-  // Basiq requires a mobile on the user record to generate an auth link.
-  // We use a placeholder — Basiq's consent page handles real identity verification.
-  const mobile = "+61400000000";
+  const rawMobile: string = typeof body.mobile === "string" ? body.mobile.trim() : "";
+
+  if (!rawMobile) {
+    return NextResponse.json({ error: "Mobile number is required to connect your bank." }, { status: 400 });
+  }
+
+  // Normalise to E.164 — strips spaces, converts leading 0 to +61.
+  const digits = rawMobile.replace(/[\s\-().]/g, "");
+  const mobile = digits.startsWith("+") ? digits : `+61${digits.replace(/^0/, "")}`;
 
 
   try {
@@ -29,18 +35,16 @@ export async function POST(req: NextRequest) {
     let connection = await db.basiqConnection.findFirst();
 
     if (!connection) {
-      // No connection yet — create a new Basiq user with mobile (required by Basiq for auth links).
+      // No connection yet — create a new Basiq user (mobile is passed via auth link, not user).
       const basiqUserId = await createBasiqUser(email, mobile);
       connection = await db.basiqConnection.create({
         data: { basiqUserId },
       });
-    } else {
-      // User already exists — update their mobile in case it wasn't set on first creation.
-      await updateBasiqUser(connection.basiqUserId, mobile);
     }
 
-    // Generate a fresh consent link (links expire, so always create a new one).
-    const authLink = await getAuthLink(connection.basiqUserId, redirectUrl);
+    // Generate a fresh consent link, passing mobile directly so Basiq prompts
+    // the user to verify it during the connection flow each time.
+    const authLink = await getAuthLink(connection.basiqUserId, redirectUrl, mobile);
 
     return NextResponse.json({ authLink });
   } catch (err) {
