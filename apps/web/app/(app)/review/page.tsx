@@ -127,23 +127,13 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
           <div className="grid grid-cols-2 divide-x divide-violet-500">
             {/* Potential */}
             <div className="pr-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-violet-200">Potential</p>
+              <p className="text-[10px] font-medium uppercase tracking-wide text-violet-200">Potential deductions</p>
               <p className="mt-1.5 text-3xl font-bold tabular-nums">{fmt(potentialValue)}</p>
-              <p className="mt-1 text-xs text-violet-300">
-                {totalNeedsReview > 0
-                  ? `${totalNeedsReview} to review`
-                  : "All reviewed"}
-              </p>
             </div>
             {/* Confirmed */}
             <div className="pl-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-violet-200">Confirmed</p>
+              <p className="text-[10px] font-medium uppercase tracking-wide text-violet-200">Confirmed so far</p>
               <p className="mt-1.5 text-3xl font-bold tabular-nums">{fmt(confirmedValue)}</p>
-              <p className="mt-1 text-xs text-violet-300">
-                {totalConfirmed > 0
-                  ? `${totalConfirmed} item${totalConfirmed !== 1 ? "s" : ""} confirmed`
-                  : "None yet"}
-              </p>
             </div>
           </div>
         </div>
