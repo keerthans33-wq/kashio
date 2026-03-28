@@ -16,11 +16,12 @@ model BasiqConnection {
 }
 
 model ImportBatch {
-  id           String        @id @default(cuid())
-  fileName     String
+  id            String            @id @default(cuid())
+  fileName      String
   insertedCount Int
-  createdAt    DateTime      @default(now())
-  transactions Transaction[]
+  source        TransactionSource @default(CSV)
+  createdAt     DateTime          @default(now())
+  transactions  Transaction[]
 }
 
 model Transaction {

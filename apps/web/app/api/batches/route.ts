@@ -10,6 +10,7 @@ export async function GET() {
       id: true,
       fileName: true,
       insertedCount: true,
+      source: true,
       createdAt: true,
     },
   });

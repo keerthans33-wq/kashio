@@ -1,6 +1,9 @@
 // Maps a single raw CSV row (unknown shape from the client) into an IngestionRow.
-// Returns null if any required field is missing or invalid.
-// The CSV route calls this once per row and filters out nulls before importing.
+//
+// Error contract: FAIL FAST — returns a typed error for any invalid row.
+// The CSV route surfaces these errors to the user so they can fix their file.
+// This differs from the Basiq adapter, which silently drops unmappable rows
+// (the user can't edit Basiq data, so errors there are not actionable).
 
 import { parseDate } from "../importRules";
 import { normalizeMerchant } from "../normalizeMerchant";

@@ -188,3 +188,27 @@
 - I need to know what I want to learn before asking for feedback
 
 **Next step:** Run the first real tests and collect structured feedback
+
+---
+
+## Day 23 — 2026-03-28
+
+**Goal:** Prepare Kashio for future Open Banking by adding a reusable bank-like ingestion flow
+
+**What I did:**
+- Added transaction source tracking (`CSV | DEMO_BANK | BASIQ`)
+- Created a shared transaction ingestion adapter (`lib/ingestion/`)
+- Added a `DEMO_BANK` source with 33 realistic Australian transactions
+- Added a Connect Bank (Demo) flow on the Import page
+- Added sync states (connecting → syncing → complete → failed)
+- Reused the existing validation, storage, and deduction pipeline
+- Added last-synced tracking for the demo bank
+- Improved source visibility in the imported batches list
+- Reviewed the architecture with Codex
+
+**What I learned:**
+- Open Banking is just another transaction input source
+- Shared ingestion architecture makes future integration easier
+- I can keep moving without waiting for Basiq approval
+
+**Next step:** Polish the sync experience and prepare the system for real provider integration

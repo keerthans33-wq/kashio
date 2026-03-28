@@ -12,15 +12,15 @@ export default function Import() {
         <span className="text-sm text-gray-400 dark:text-gray-500">Step 1 of 3</span>
       </div>
       <p className="mt-2 text-gray-500 dark:text-gray-400">
-        Get your transactions into Kashio. Two ways to do it — pick whichever suits you.
+        Bring in your transactions so Kashio can find your tax deductions. Once imported, everything is reviewed in one place.
       </p>
 
       {/* Option A: Bank connection (real or demo) */}
       <div className="mt-6">
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Bank connection</p>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          <span className="font-medium text-gray-600 dark:text-gray-300">Connect Bank (Demo)</span> loads a realistic set of sample transactions so you can try the full flow without uploading anything.
-          Real bank sync via open banking is coming — the demo shows exactly how it will work.
+          Use <span className="font-medium text-gray-600 dark:text-gray-300">Connect Bank (Demo)</span> to try the full deduction review flow with realistic sample data — no file needed.
+          Real open banking sync is coming soon.
         </p>
         <div className="mt-3">
           <Suspense>

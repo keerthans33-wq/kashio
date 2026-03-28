@@ -23,9 +23,7 @@ All of these run together as a single Next.js application.
 The frontend is what users see and click on. It is built with Next.js, which handles both the pages and the API.
 
 Key pages:
-- Sign up / log in
-- Upload transactions (CSV)
-- Transaction list
+- Import transactions (CSV upload or bank connection)
 - Deduction review
 - Evidence tracker
 - EOFY export
@@ -38,10 +36,34 @@ Key pages:
 
 The backend lives inside the same Next.js project, under `/api`. There is no separate server.
 
-Each API route handles one job, for example:
-- `/api/transactions` — save and retrieve transactions
-- `/api/deductions` — detect and update deduction candidates
+Key API routes:
+- `/api/demo/connect` — load sample transactions and run the import pipeline
+- `/api/basiq/connect` — start the Basiq Open Banking consent flow
+- `/api/basiq/transactions` — fetch and import transactions from a connected Basiq account
+- `/api/batches` — list and delete import batches
+- `/api/transactions` — retrieve stored transactions
+- `/api/deductions` — update deduction candidate status
 - `/api/export` — generate the EOFY summary
+
+---
+
+## Transaction Ingestion
+
+All transaction imports — whether from CSV, Demo Bank, or Basiq — go through a shared pipeline in `lib/importPipeline.ts`.
+
+Each source has an **ingestion adapter** (`lib/ingestion/`) that maps raw data into a common `IngestionRow` shape before handing off to the pipeline:
+
+```
+CSV file       → fromCsvRow()   ┐
+Demo dataset   → fromDemo()     ├── IngestionRow[] → runImportPipeline()
+Basiq API      → fromBasiq()    ┘
+```
+
+The pipeline handles batch creation, deduplication, and deduction detection in one place regardless of source.
+
+**Deduplication key:** `@@unique([date, description, amount])` — the same real-world transaction always produces the same key, so re-importing the same data is safe.
+
+**Transaction sources** are tracked via the `TransactionSource` enum (`CSV | DEMO_BANK | BASIQ`) on both `Transaction` and `ImportBatch`.
 
 ---
 
@@ -51,11 +73,17 @@ Each API route handles one job, for example:
 
 All data is stored in a PostgreSQL database. Prisma is used to read and write data in a safe, structured way.
 
-Key tables:
-- `users` — accounts and login info
-- `transactions` — imported bank transactions
-- `deductions` — flagged deduction candidates and their status
-- `evidence` — links between deductions and uploaded files
+Key models:
+- `ImportBatch` — one record per import run, with source and inserted count
+- `Transaction` — normalised bank transaction (date as YYYY-MM-DD, amount as float)
+- `DeductionCandidate` — a transaction the rules engine flagged as a possible deduction
+- `BasiqConnection` — stores the Basiq user ID for the connected bank account
+
+---
+
+## Deduction Detection
+
+After each import, newly inserted transactions are run through a rules engine (`lib/rules.ts`). Rules match on merchant name, description keywords, and amount ranges to produce a `DeductionCandidate` with a category, confidence level, and short reason.
 
 ---
 
@@ -63,11 +91,7 @@ Key tables:
 
 **Technology: S3-compatible object storage (e.g. Cloudflare R2 or AWS S3)**
 
-When a user uploads a receipt or invoice, the file is stored in object storage — not in the database.
-
-The database stores a link (URL) to the file. The file itself lives in storage.
-
-This keeps the database small and file uploads fast.
+When a user uploads a receipt or invoice, the file is stored in object storage — not in the database. The database stores a link (URL) to the file.
 
 ---
 
@@ -77,6 +101,9 @@ This keeps the database small and file uploads fast.
 Browser
   └── Next.js Frontend (pages + components)
         └── Next.js API Routes (backend logic)
+              ├── lib/ingestion/   (source adapters)
+              ├── lib/importPipeline.ts  (shared import + dedup + rules)
+              ├── lib/rules.ts     (deduction detection)
               ├── PostgreSQL via Prisma (data)
               └── Object Storage (receipts)
 ```
@@ -88,5 +115,4 @@ Browser
 - No separate backend server or microservices
 - No mobile app
 - No real-time features or websockets
-- No bank API integrations (CSV only for MVP)
 - No AI or external language model integration (deferred post-MVP)

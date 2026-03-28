@@ -2,29 +2,23 @@
 
 import { useState, useEffect, useCallback } from "react";
 
+type TransactionSource = "CSV" | "DEMO_BANK" | "BASIQ";
+
 type Batch = {
   id: string;
   fileName: string;
   insertedCount: number;
+  source: TransactionSource;
   createdAt: string;
 };
 
-// Infers the source label from the batch file name set by each import route.
-function SourceBadge({ fileName }: { fileName: string }) {
-  let label: string;
-  let classes: string;
-
-  if (fileName.startsWith("Demo —")) {
-    label = "Demo Bank";
-    classes = "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400";
-  } else if (fileName.startsWith("Basiq —")) {
-    label = "Bank";
-    classes = "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400";
-  } else {
-    label = "CSV";
-    classes = "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400";
-  }
-
+function SourceBadge({ source }: { source: TransactionSource }) {
+  const config: Record<TransactionSource, { label: string; classes: string }> = {
+    DEMO_BANK: { label: "Demo Bank", classes: "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400" },
+    BASIQ:     { label: "Bank",      classes: "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400" },
+    CSV:       { label: "CSV",       classes: "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400" },
+  };
+  const { label, classes } = config[source];
   return (
     <span className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${classes}`}>
       {label}
@@ -107,7 +101,7 @@ export default function ImportedBatches() {
                 <p className="truncate text-sm font-medium text-gray-800 dark:text-gray-200">
                   {batch.fileName}
                 </p>
-                <SourceBadge fileName={batch.fileName} />
+                <SourceBadge source={batch.source} />
               </div>
               <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
                 {batch.insertedCount} transaction{batch.insertedCount !== 1 ? "s" : ""} ·{" "}

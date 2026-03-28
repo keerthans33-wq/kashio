@@ -32,7 +32,7 @@ export async function runImportPipeline(
 ): Promise<PipelineResult> {
   // Create the batch record first so every transaction carries its batch ID.
   const batch = await db.importBatch.create({
-    data: { fileName, insertedCount: 0 },
+    data: { fileName, insertedCount: 0, source },
   });
 
   const result = await db.transaction.createMany({
