@@ -31,7 +31,7 @@ export default function Home() {
           Kashio helps Australian employees spot possible work-related deductions in their bank transactions.
         </p>
         <p className="mt-2 text-gray-500 dark:text-gray-400">
-          Upload a bank CSV, review what might be deductible, note which receipts you have on hand, and download a tidy summary at tax time.
+          Connect your bank directly or upload a CSV. Kashio scans your transactions, flags what looks work-related, and gives you a tidy summary at tax time.
         </p>
 
         {/* How it works */}
@@ -42,7 +42,7 @@ export default function Home() {
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-semibold text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">1</span>
               <div>
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Import your bank transactions</p>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Upload a CSV exported from your bank. Kashio scans every transaction and flags the ones that look work-related.</p>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Connect your bank directly via open banking — no CSV export needed. Or upload a CSV manually if you prefer.</p>
               </div>
             </div>
             <div className="flex items-start gap-4">
@@ -62,15 +62,28 @@ export default function Home() {
           </div>
         </div>
 
-        {/* CTA */}
-        <div className="mt-10">
+        {/* CTAs */}
+        <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
           <Link
             href="/import"
-            className="inline-block rounded-md bg-gray-900 px-6 py-3 text-sm font-medium text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300"
+            className="inline-block rounded-md bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-700"
           >
-            Import your bank CSV
+            Connect your bank
+          </Link>
+          <Link
+            href="/import"
+            className="inline-block rounded-md border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          >
+            Upload a CSV
           </Link>
         </div>
+
+        {/* Open banking badge */}
+        <p className="mt-4 text-xs text-gray-400 dark:text-gray-500">
+          Bank connection powered by{" "}
+          <span className="font-medium text-gray-500 dark:text-gray-400">Basiq</span>
+          {" "}· read-only access · your banking password is never shared with Kashio
+        </p>
 
         {/* Footer note */}
         <p className="mt-6 text-xs text-gray-400 dark:text-gray-500">
