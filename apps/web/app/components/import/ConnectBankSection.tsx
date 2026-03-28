@@ -88,71 +88,55 @@ function SyncInProgress({ label, detail }: { label: string; detail: string }) {
 }
 
 function SyncSuccess({ result, onSync }: { result: SyncResult; onSync: () => void }) {
+  const fmtVal = (n: number) =>
+    n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
+
   return (
     <div className="space-y-3">
+      {/* Stats row */}
       <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-4 dark:border-green-800 dark:bg-green-900/20">
         <p className="text-sm font-medium text-green-800 dark:text-green-300">Demo Bank — sync complete</p>
-
-        <div className="mt-3 grid grid-cols-3 gap-3">
-          <div>
-            <p className="text-xl font-semibold text-green-800 dark:text-green-200">{result.inserted}</p>
-            <p className="mt-0.5 text-xs text-green-600 dark:text-green-400">imported</p>
-          </div>
-          <div>
-            <p className="text-xl font-semibold text-gray-500 dark:text-gray-400">{result.duplicates}</p>
-            <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">skipped</p>
-          </div>
-          <div>
-            <p className="text-xl font-semibold text-violet-600 dark:text-violet-400">{result.flagged}</p>
-            <p className="mt-0.5 text-xs text-violet-500 dark:text-violet-400">deductions</p>
-          </div>
+        <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-green-700 dark:text-green-400">
+          <span><strong>{result.inserted}</strong> imported</span>
+          {result.duplicates > 0 && <span className="text-gray-400 dark:text-gray-500"><strong>{result.duplicates}</strong> skipped</span>}
+          {(result.invalid ?? 0) > 0 && <span className="text-yellow-600 dark:text-yellow-400"><strong>{result.invalid}</strong> unreadable</span>}
         </div>
-
-        {(result.invalid ?? 0) > 0 && (
-          <p className="mt-2 text-xs text-yellow-600 dark:text-yellow-400">
-            {result.invalid} transaction{result.invalid !== 1 ? "s" : ""} could not be read
-          </p>
-        )}
       </div>
 
-      <div className="space-y-2">
-        {result.flagged > 0 && (
-          <div>
-            <a
-              href="/review"
-              className="inline-block rounded-md bg-violet-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-violet-700"
-            >
-              Review {result.flagged} deduction{result.flagged !== 1 ? "s" : ""} →
-            </a>
-          </div>
+      {/* Value highlight */}
+      {result.flagged > 0 && (
+        <div className="rounded-lg bg-violet-600 px-5 py-4 text-white">
+          <p className="text-xs font-medium uppercase tracking-wide text-violet-200">Potential deductions found</p>
+          <p className="mt-1 text-3xl font-bold tabular-nums">
+            {result.totalValue ? fmtVal(result.totalValue) : `${result.flagged} item${result.flagged !== 1 ? "s" : ""}`}
+          </p>
+          {result.totalValue && (
+            <p className="mt-0.5 text-sm text-violet-200">{result.flagged} candidate{result.flagged !== 1 ? "s" : ""} to review</p>
+          )}
+        </div>
+      )}
+
+      {/* CTAs */}
+      <div className="flex flex-wrap items-center gap-3">
+        {result.flagged > 0 ? (
+          <a href="/review" className="rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700">
+            Review deductions →
+          </a>
+        ) : result.inserted > 0 ? (
+          <a href="/transactions" className="rounded-md bg-gray-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-700 dark:bg-gray-200 dark:text-gray-900">
+            View transactions →
+          </a>
+        ) : (
+          <p className="text-sm text-gray-400 dark:text-gray-500">Already up to date — no new transactions.</p>
         )}
-        {result.inserted > 0 && (
-          <div className="flex items-center gap-4">
-            <a
-              href="/transactions"
-              className="text-sm font-medium text-violet-600 hover:underline dark:text-violet-400"
-            >
-              View imported transactions →
-            </a>
-            <button
-              onClick={onSync}
-              className="text-sm text-gray-400 hover:underline dark:text-gray-500"
-            >
-              Sync again
-            </button>
-          </div>
+        {result.inserted > 0 && result.flagged > 0 && (
+          <a href="/transactions" className="text-sm text-gray-400 hover:underline dark:text-gray-500">
+            View all transactions
+          </a>
         )}
-        {result.inserted === 0 && result.flagged === 0 && (
-          <div className="flex items-center gap-4">
-            <p className="text-sm text-gray-400 dark:text-gray-500">No new transactions — already up to date.</p>
-            <button
-              onClick={onSync}
-              className="text-sm text-gray-400 hover:underline dark:text-gray-500"
-            >
-              Sync again
-            </button>
-          </div>
-        )}
+        <button onClick={onSync} className="text-sm text-gray-400 hover:underline dark:text-gray-500">
+          Sync again
+        </button>
       </div>
     </div>
   );

@@ -15,10 +15,11 @@ export async function POST() {
   try {
     const result = await runImportPipeline(rows, "Demo — simulated bank connection", "DEMO_BANK");
     return NextResponse.json({
-      inserted: result.inserted,
+      inserted:   result.inserted,
       duplicates: result.duplicates,
-      flagged: result.flagged,
-      batchId: result.batchId,
+      flagged:    result.flagged,
+      totalValue: result.totalValue,
+      batchId:    result.batchId,
     });
   } catch (err) {
     console.error("Demo import error:", err);

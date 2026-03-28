@@ -41,9 +41,11 @@ export async function POST(req: NextRequest) {
   try {
     const result = await runImportPipeline(rows, fileName, "CSV");
     return NextResponse.json({
-      inserted: result.inserted,
+      inserted:   result.inserted,
       duplicates: result.duplicates,
-      batchId: result.batchId,
+      flagged:    result.flagged,
+      totalValue: result.totalValue,
+      batchId:    result.batchId,
     });
   } catch (err) {
     console.error("DB error during import:", err);

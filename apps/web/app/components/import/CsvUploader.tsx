@@ -11,6 +11,8 @@ type ImportResult = {
   inserted: number;   // new rows written to the database
   duplicates: number; // rows skipped because they already existed
   invalid: number;    // rows rejected before upload due to validation errors
+  flagged: number;    // deduction candidates detected
+  totalValue: number; // sum of flagged candidate amounts
 };
 
 async function saveTransactions(
@@ -33,7 +35,12 @@ async function saveTransactions(
     throw new Error(message);
   }
   const data = await res.json();
-  return { inserted: data.inserted as number, duplicates: data.duplicates as number };
+  return {
+    inserted:   data.inserted   as number,
+    duplicates: data.duplicates as number,
+    flagged:    (data.flagged    as number) ?? 0,
+    totalValue: (data.totalValue as number) ?? 0,
+  };
 }
 
 const REQUIRED_COLUMNS = ["date", "description", "amount"];
@@ -87,8 +94,8 @@ export default function CsvUploader() {
     setImporting(true);
     setImportError(null);
     try {
-      const { inserted, duplicates } = await saveTransactions(result.valid, file?.name ?? "unknown.csv");
-      setImportResult({ inserted, duplicates, invalid: result.invalid.length });
+      const { inserted, duplicates, flagged, totalValue } = await saveTransactions(result.valid, file?.name ?? "unknown.csv");
+      setImportResult({ inserted, duplicates, invalid: result.invalid.length, flagged, totalValue });
     } catch (err) {
       setImportError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -280,13 +287,33 @@ export default function CsvUploader() {
               >
                 {importing ? "Importing…" : `Import ${result.valid.length} transaction${result.valid.length !== 1 ? "s" : ""}`}
               </button>
+            ) : importResult.flagged > 0 ? (
+              <div className="space-y-3">
+                <div className="rounded-lg bg-violet-600 px-5 py-4 text-white">
+                  <p className="text-xs font-medium uppercase tracking-wide text-violet-200">Potential deductions found</p>
+                  <p className="mt-1 text-3xl font-bold tabular-nums">
+                    {importResult.totalValue > 0
+                      ? importResult.totalValue.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 })
+                      : `${importResult.flagged} item${importResult.flagged !== 1 ? "s" : ""}`}
+                  </p>
+                  <p className="mt-0.5 text-sm text-violet-200">
+                    {importResult.flagged} candidate{importResult.flagged !== 1 ? "s" : ""} across {importResult.inserted} imported transaction{importResult.inserted !== 1 ? "s" : ""}
+                  </p>
+                </div>
+                <a
+                  href="/review"
+                  className="inline-block rounded-md bg-violet-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-violet-700"
+                >
+                  Review deductions →
+                </a>
+              </div>
             ) : importResult.inserted > 0 ? (
-              <a
-                href="/review"
-                className="inline-block rounded-md bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-700"
-              >
-                Go to Review →
-              </a>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500 dark:text-gray-400">No deduction candidates found in this batch.</p>
+                <a href="/transactions" className="text-sm font-medium text-violet-600 hover:underline dark:text-violet-400">
+                  View imported transactions →
+                </a>
+              </div>
             ) : importResult.duplicates > 0 ? (
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 These transactions are already imported.{" "}

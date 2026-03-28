@@ -23,6 +23,7 @@ export type PipelineResult = {
   inserted: number;
   duplicates: number;
   flagged: number;
+  totalValue: number;         // sum of absolute amounts for flagged candidates
 };
 
 export async function runImportPipeline(
@@ -45,7 +46,7 @@ export async function runImportPipeline(
     // Every row was a duplicate — delete the empty batch so it doesn't appear
     // in "Previously imported" with a zero count.
     await db.importBatch.delete({ where: { id: batch.id } });
-    return { batchId: null, inserted: 0, duplicates: rows.length, flagged: 0 };
+    return { batchId: null, inserted: 0, duplicates: rows.length, flagged: 0, totalValue: 0 };
   }
 
   // Update the batch with the real inserted count.
@@ -86,10 +87,17 @@ export async function runImportPipeline(
     await db.deductionCandidate.createMany({ data: candidates, skipDuplicates: true });
   }
 
+  const txById = new Map(savedTransactions.map((t) => [t.id, t]));
+  const totalValue = candidates.reduce(
+    (sum, c) => sum + Math.abs(txById.get(c.transactionId)?.amount ?? 0),
+    0,
+  );
+
   return {
     batchId: batch.id,
     inserted,
     duplicates: rows.length - inserted,
     flagged: candidates.length,
+    totalValue,
   };
 }

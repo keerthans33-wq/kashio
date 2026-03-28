@@ -14,6 +14,7 @@ export type SyncResult = {
   inserted: number;
   duplicates: number;
   flagged: number;
+  totalValue?: number;
   invalid?: number;
 };
 
