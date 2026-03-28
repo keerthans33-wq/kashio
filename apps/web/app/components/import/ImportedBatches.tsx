@@ -9,6 +9,29 @@ type Batch = {
   createdAt: string;
 };
 
+// Infers the source label from the batch file name set by each import route.
+function SourceBadge({ fileName }: { fileName: string }) {
+  let label: string;
+  let classes: string;
+
+  if (fileName.startsWith("Demo —")) {
+    label = "Demo Bank";
+    classes = "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400";
+  } else if (fileName.startsWith("Basiq —")) {
+    label = "Bank";
+    classes = "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400";
+  } else {
+    label = "CSV";
+    classes = "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400";
+  }
+
+  return (
+    <span className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${classes}`}>
+      {label}
+    </span>
+  );
+}
+
 export default function ImportedBatches() {
   const [batches, setBatches] = useState<Batch[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,9 +103,12 @@ export default function ImportedBatches() {
         {batches.map((batch) => (
           <li key={batch.id} className="flex items-center justify-between gap-4 px-4 py-3">
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-gray-800 dark:text-gray-200">
-                {batch.fileName}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="truncate text-sm font-medium text-gray-800 dark:text-gray-200">
+                  {batch.fileName}
+                </p>
+                <SourceBadge fileName={batch.fileName} />
+              </div>
               <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
                 {batch.insertedCount} transaction{batch.insertedCount !== 1 ? "s" : ""} ·{" "}
                 {new Date(batch.createdAt).toLocaleDateString("en-AU", {
