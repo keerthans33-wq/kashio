@@ -124,27 +124,25 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
       {all.length > 0 && (
         <div className="mt-6 rounded-xl bg-gradient-to-br from-violet-600 to-violet-700 px-5 py-5 text-white shadow-sm">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-0 sm:divide-x sm:divide-violet-500">
+          <div className="grid grid-cols-2 divide-x divide-violet-500">
             {/* Potential */}
-            <div className="sm:pr-5">
-              <p className="text-xs font-medium uppercase tracking-wide text-violet-200">Potential deductions</p>
+            <div className="pr-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-violet-200">Potential</p>
               <p className="mt-1.5 text-3xl font-bold tabular-nums">{fmt(potentialValue)}</p>
               <p className="mt-1 text-xs text-violet-300">
                 {totalNeedsReview > 0
-                  ? `${totalNeedsReview} item${totalNeedsReview !== 1 ? "s" : ""} still to review`
-                  : "All items reviewed"}
+                  ? `${totalNeedsReview} to review`
+                  : "All reviewed"}
               </p>
             </div>
-            {/* Divider — mobile only */}
-            <div className="border-t border-violet-500 sm:hidden" />
             {/* Confirmed */}
-            <div className="sm:pl-5">
-              <p className="text-xs font-medium uppercase tracking-wide text-violet-200">Confirmed so far</p>
+            <div className="pl-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-violet-200">Confirmed</p>
               <p className="mt-1.5 text-3xl font-bold tabular-nums">{fmt(confirmedValue)}</p>
               <p className="mt-1 text-xs text-violet-300">
                 {totalConfirmed > 0
                   ? `${totalConfirmed} item${totalConfirmed !== 1 ? "s" : ""} confirmed`
-                  : "No items confirmed yet"}
+                  : "None yet"}
               </p>
             </div>
           </div>
