@@ -10,6 +10,21 @@ type ImportResult = {
   flagged: number;
 };
 
+function Spinner() {
+  return (
+    <svg
+      className="inline-block h-4 w-4 animate-spin"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+    </svg>
+  );
+}
+
 export default function ConnectBankSection() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -68,49 +83,85 @@ export default function ConnectBankSection() {
   if (importResult) {
     return (
       <div className="space-y-3">
-        <div className="rounded-md border border-gray-200 bg-gray-50 p-4 text-sm dark:border-gray-700 dark:bg-gray-800">
-          <p className="font-medium text-gray-800 dark:text-gray-200">Bank import complete</p>
-          <ul className="mt-2 space-y-1">
-            <li className="text-green-700 dark:text-green-400">{importResult.inserted} transactions imported</li>
+        <div className="rounded-md border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
+          <p className="text-sm font-semibold text-green-800 dark:text-green-300">
+            Bank connected successfully
+          </p>
+          <ul className="mt-2 space-y-1 text-sm">
+            <li className="text-green-700 dark:text-green-400">
+              {importResult.inserted} transaction{importResult.inserted !== 1 ? "s" : ""} imported
+            </li>
             {importResult.duplicates > 0 && (
-              <li className="text-gray-500 dark:text-gray-400">{importResult.duplicates} duplicates skipped</li>
+              <li className="text-gray-500 dark:text-gray-400">
+                {importResult.duplicates} duplicate{importResult.duplicates !== 1 ? "s" : ""} skipped
+              </li>
             )}
             {importResult.invalid > 0 && (
-              <li className="text-yellow-700 dark:text-yellow-400">{importResult.invalid} rows could not be mapped</li>
+              <li className="text-yellow-700 dark:text-yellow-400">
+                {importResult.invalid} transaction{importResult.invalid !== 1 ? "s" : ""} could not be read
+              </li>
             )}
-            <li className="text-violet-700 dark:text-violet-400">{importResult.flagged} possible deductions found</li>
+            {importResult.flagged > 0 && (
+              <li className="text-violet-700 dark:text-violet-400">
+                {importResult.flagged} possible deduction{importResult.flagged !== 1 ? "s" : ""} found
+              </li>
+            )}
           </ul>
         </div>
-        <a
-          href="/review"
-          className="inline-block rounded-md bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-700"
-        >
-          Go to Review →
-        </a>
+        {importResult.inserted > 0 || importResult.flagged > 0 ? (
+          <a
+            href="/review"
+            className="inline-block rounded-md bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-700"
+          >
+            Go to Review →
+          </a>
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No new transactions to review.
+          </p>
+        )}
       </div>
     );
   }
 
-  // ── Fetching after redirect back from Basiq ─────────────────────────────────
-  if (justConnected || importing) {
+  // ── Loading: fetching transactions after redirect back from Basiq ────────────
+  if (importing) {
+    return (
+      <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 dark:border-green-800 dark:bg-green-900/20">
+        <p className="flex items-center gap-2 text-sm font-medium text-green-800 dark:text-green-300">
+          <Spinner />
+          Fetching your transactions…
+        </p>
+      </div>
+    );
+  }
+
+  // ── Import failed (shown after returning from Basiq if fetch errors) ─────────
+  if (importError) {
     return (
       <div className="space-y-3">
-        <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 dark:border-green-800 dark:bg-green-900/20">
-          <p className="text-sm font-medium text-green-800 dark:text-green-300">
-            {importing ? "Fetching your transactions…" : "Bank connected — fetching transactions…"}
-          </p>
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20">
+          <p className="text-sm font-medium text-red-800 dark:text-red-300">Import failed</p>
+          <p className="mt-1 text-sm text-red-700 dark:text-red-400">{importError}</p>
         </div>
-        {importError && (
-          <div className="space-y-2">
-            <p className="text-sm text-red-600 dark:text-red-400">{importError}</p>
-            <button
-              onClick={handleFetch}
-              className="rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700"
-            >
-              Try again
-            </button>
-          </div>
-        )}
+        <button
+          onClick={handleFetch}
+          className="rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  // ── Waiting for auto-fetch to start (brief window between redirect and useEffect) ──
+  if (justConnected) {
+    return (
+      <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 dark:border-green-800 dark:bg-green-900/20">
+        <p className="flex items-center gap-2 text-sm font-medium text-green-800 dark:text-green-300">
+          <Spinner />
+          Bank connected — fetching transactions…
+        </p>
       </div>
     );
   }
@@ -121,15 +172,19 @@ export default function ConnectBankSection() {
       <button
         onClick={handleConnect}
         disabled={connecting}
-        className="rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
+        className="flex items-center gap-2 rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
       >
+        {connecting && <Spinner />}
         {connecting ? "Opening bank connection…" : "Connect Bank"}
       </button>
       <p className="text-xs text-gray-400 dark:text-gray-500">
         Powered by Basiq · read-only access · your banking password is never shared with Kashio
       </p>
       {connectError && (
-        <p className="text-sm text-red-600 dark:text-red-400">{connectError}</p>
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20">
+          <p className="text-sm font-medium text-red-800 dark:text-red-300">Connection failed</p>
+          <p className="mt-1 text-sm text-red-700 dark:text-red-400">{connectError}</p>
+        </div>
       )}
     </div>
   );

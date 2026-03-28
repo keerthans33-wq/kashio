@@ -2,6 +2,12 @@
 //
 // Accepts rows that have already been validated and normalised by the caller,
 // then handles everything from batch creation to deduction detection.
+//
+// Deduplication key: Transaction.@@unique([date, description, amount])
+// Both the CSV mapper and the Basiq mapper normalise to the same formats
+// (parseDate → YYYY-MM-DD, parseAmount → float, description.trim()), so the
+// same real-world transaction will always produce the same key regardless of
+// which import path was used.
 
 import { db } from "./db";
 import { detectDeduction } from "./rules";
@@ -14,7 +20,7 @@ export type PipelineRow = {
 };
 
 export type PipelineResult = {
-  batchId: string;
+  batchId: string | null;     // null when nothing was inserted (all duplicates)
   inserted: number;
   duplicates: number;
   flagged: number;
@@ -31,11 +37,18 @@ export async function runImportPipeline(
 
   const result = await db.transaction.createMany({
     data: rows.map((r) => ({ ...r, importBatchId: batch.id })),
-    skipDuplicates: true,
+    skipDuplicates: true,  // relies on @@unique([date, description, amount])
   });
   const inserted = result.count;
 
-  // Update the batch with the real inserted count (skipDuplicates means it may be less than rows.length).
+  if (inserted === 0) {
+    // Every row was a duplicate — delete the empty batch so it doesn't appear
+    // in "Previously imported" with a zero count.
+    await db.importBatch.delete({ where: { id: batch.id } });
+    return { batchId: null, inserted: 0, duplicates: rows.length, flagged: 0 };
+  }
+
+  // Update the batch with the real inserted count.
   await db.importBatch.update({
     where: { id: batch.id },
     data: { insertedCount: inserted },
@@ -71,6 +84,8 @@ export async function runImportPipeline(
     .filter((c): c is NonNullable<typeof c> => c !== null);
 
   if (candidates.length > 0) {
+    // skipDuplicates ensures existing candidates are not overwritten if the
+    // same transaction was already flagged in a previous import.
     await db.deductionCandidate.createMany({ data: candidates, skipDuplicates: true });
   }
 
