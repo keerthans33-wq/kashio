@@ -33,6 +33,23 @@ export default function ConnectBankSection() {
   // Basiq redirects back to /import?connected=true after the user links their bank.
   const justConnected = searchParams.get("connected") === "true";
 
+  // ── Demo last-synced timestamp ───────────────────────────────────────────────
+  // Stored in localStorage so it persists across page loads.
+  // To replace with a real provider later: fetch from /api/sync/status instead.
+  const LAST_SYNCED_KEY = "kashio:demo-last-synced";
+  const [demoLastSynced, setDemoLastSynced] = useState<Date | null>(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(LAST_SYNCED_KEY);
+    if (stored) setDemoLastSynced(new Date(stored));
+  }, []);
+
+  function saveDemoLastSynced() {
+    const now = new Date();
+    localStorage.setItem(LAST_SYNCED_KEY, now.toISOString());
+    setDemoLastSynced(now);
+  }
+
   // ── Demo bank sync state machine ────────────────────────────────────────────
   // idle → connecting → syncing → (importResult set) or failed
   type DemoPhase = "idle" | "connecting" | "syncing" | "failed";
@@ -61,6 +78,7 @@ export default function ConnectBankSection() {
       if (!res.ok) throw new Error(data.error ?? "Demo sync failed.");
       // Success — the importResult state takes over rendering.
       setImportResult({ ...(data as ImportResult), isDemo: true });
+      saveDemoLastSynced();
       setDemoPhase("idle");
     } catch (err) {
       setDemoError(err instanceof Error ? err.message : "Something went wrong.");
@@ -250,6 +268,15 @@ export default function ConnectBankSection() {
             Try again
           </button>
         </div>
+      )}
+
+      {demoLastSynced && demoPhase === "idle" && (
+        <p className="text-xs text-gray-400 dark:text-gray-500">
+          Demo last synced:{" "}
+          {demoLastSynced.toLocaleString("en-AU", {
+            day: "numeric", month: "short", hour: "numeric", minute: "2-digit",
+          })}
+        </p>
       )}
 
       <p className="text-xs text-gray-400 dark:text-gray-500">
