@@ -52,20 +52,14 @@ export default async function Export() {
             <p className="mt-2 text-6xl font-bold tabular-nums text-gray-900 dark:text-gray-100">
               {fmt(total)}
             </p>
-            <p className="mt-2 text-sm text-gray-400 dark:text-gray-500">
-              {confirmed.length} confirmed deduction{confirmed.length !== 1 ? "s" : ""}
-            </p>
+            <div className="mt-3 flex justify-center gap-6 text-sm text-gray-400 dark:text-gray-500">
+              <span>{confirmed.length} confirmed</span>
+              {missing.length > 0
+                ? <span className="text-amber-500 dark:text-amber-400">{missing.length} without receipt</span>
+                : <span className="text-green-600 dark:text-green-400">all receipts attached</span>
+              }
+            </div>
           </div>
-
-          {/* Missing evidence nudge */}
-          {missing.length > 0 && (
-            <p className="mt-3 text-sm text-amber-600 dark:text-amber-400">
-              {missing.length} item{missing.length !== 1 ? "s" : ""} still need{missing.length === 1 ? "s" : ""} a receipt.{" "}
-              <a href="/review" className="underline hover:text-amber-800 dark:hover:text-amber-200">
-                Add in Review →
-              </a>
-            </p>
-          )}
 
           {/* Category breakdown */}
           <div className="mt-8 divide-y divide-gray-100 dark:divide-gray-800">
