@@ -160,7 +160,9 @@ export function CandidateCard({
 
           {confidenceReason && (
             <div>
-              <p className="text-xs text-gray-400 dark:text-gray-500">Confidence ({confidence.toLowerCase()})</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">
+                How sure Kashio is ({ confidence === "HIGH" ? "very sure" : confidence === "MEDIUM" ? "somewhat sure" : "less sure" })
+              </p>
               <p className="mt-0.5 text-sm text-gray-600 dark:text-gray-400">{confidenceReason}</p>
             </div>
           )}

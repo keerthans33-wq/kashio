@@ -128,7 +128,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         </div>
       ) : candidates.length === 0 ? (
         <div className="mt-10 text-center space-y-1">
-          <p className="text-gray-500 dark:text-gray-400">No candidates match your current filters.</p>
+          <p className="text-gray-500 dark:text-gray-400">No possible deductions match your filters.</p>
           <p className="text-sm text-gray-400 dark:text-gray-500">
             Try adjusting the filters above, or{" "}
             <a href="/review" className="underline hover:text-gray-600 dark:hover:text-gray-300">clear all filters</a>{" "}
