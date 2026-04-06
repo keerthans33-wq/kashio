@@ -1,5 +1,6 @@
 import { db } from "../../../lib/db";
 import { mapExportRow } from "../../../lib/export/mapExportRow";
+import { ExportDetails } from "./ExportDetails";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,15 @@ export default async function Export() {
   const allItems = confirmed.map((c) => ({
     id:          c.id,
     row:         mapExportRow(c),
+    hasEvidence: c.hasEvidence,
+  }));
+
+  const detailItems = allItems.map((c) => ({
+    id:          c.id,
+    date:        c.row.date,
+    merchant:    c.row.merchant,
+    category:    c.row.category,
+    amount:      c.row.amount,
     hasEvidence: c.hasEvidence,
   }));
 
@@ -70,6 +80,8 @@ export default async function Export() {
               </div>
             ))}
           </div>
+
+          <ExportDetails items={detailItems} />
 
           {/* Export button */}
           <div className="mt-8">
