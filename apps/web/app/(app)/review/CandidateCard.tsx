@@ -86,9 +86,14 @@ export function CandidateCard({
           </p>
         </div>
 
-        {/* Date + description */}
-        <p className="mt-1 truncate text-sm text-gray-400 dark:text-gray-500">
-          {transaction.date} · {transaction.description}
+        {/* Date */}
+        <p className="mt-1 text-xs font-medium text-gray-400 dark:text-gray-500">
+          {transaction.date}
+        </p>
+
+        {/* Bank description */}
+        <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400 break-words">
+          {transaction.description}
         </p>
 
         {/* Why flagged */}
@@ -151,11 +156,6 @@ export function CandidateCard({
           <div>
             <p className="text-xs text-gray-400 dark:text-gray-500">Category</p>
             <p className="mt-0.5 text-sm text-gray-600 dark:text-gray-400">{category}</p>
-          </div>
-
-          <div>
-            <p className="text-xs text-gray-400 dark:text-gray-500">Bank description</p>
-            <p className="mt-0.5 text-sm text-gray-600 dark:text-gray-400 break-words">{transaction.description}</p>
           </div>
 
           {confidenceReason && (
