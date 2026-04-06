@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "./ThemeToggle";
+import { supabase } from "../../../lib/supabase";
 
 const links = [
   { href: "/import", label: "1. Import" },
@@ -53,6 +54,15 @@ export default function Nav() {
             })}
           </div>
           <ThemeToggle />
+          <button
+            onClick={async () => {
+              await supabase.auth.signOut();
+              window.location.href = "/auth";
+            }}
+            className="text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+          >
+            Sign out
+          </button>
         </div>
       </div>
     </nav>

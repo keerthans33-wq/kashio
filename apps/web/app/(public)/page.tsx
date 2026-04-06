@@ -1,7 +1,16 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 
-export default function Home() {
+// Supabase sometimes sends the ?code= to the Site URL (root) instead of
+// /auth/callback. Forward it so the callback handler can exchange it.
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ code?: string }>;
+}) {
+  const { code } = await searchParams;
+  if (code) redirect(`/auth/callback?code=${code}`);
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-white px-6 dark:bg-gray-900">
       <div className="w-full max-w-lg">
