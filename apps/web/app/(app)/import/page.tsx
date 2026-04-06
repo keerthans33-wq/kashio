@@ -11,6 +11,22 @@ export default function Import() {
         Add your bank transactions and Kashio will find your possible deductions.
       </p>
 
+      {/* How it works */}
+      <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:gap-6">
+        {[
+          { step: "1", text: "We analyse your transactions" },
+          { step: "2", text: "We highlight possible deductions" },
+          { step: "3", text: "You review and confirm" },
+        ].map(({ step, text }) => (
+          <div key={step} className="flex items-center gap-2">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-semibold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
+              {step}
+            </span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">{text}</span>
+          </div>
+        ))}
+      </div>
+
       {/* Option A: Demo Bank */}
       <div className="mt-8">
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Try with sample data</p>
