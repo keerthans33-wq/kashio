@@ -123,7 +123,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         <div className="mt-10 text-center space-y-1">
           <p className="text-gray-500 dark:text-gray-400">Nothing to review yet.</p>
           <p className="text-sm text-gray-400 dark:text-gray-500">
-            <a href="/import" className="underline hover:text-gray-600 dark:hover:text-gray-300">Import a bank CSV</a> and Kashio will scan it for possible deductions.
+            <a href="/import" className="underline hover:text-gray-600 dark:hover:text-gray-300">Upload a CSV from your bank</a> and Kashio will find your possible deductions.
           </p>
         </div>
       ) : candidates.length === 0 ? (
