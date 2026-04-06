@@ -1,50 +1,47 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "../../../lib/supabase";
+import { supabase } from "../../../../lib/supabase";
 
-// Maps Supabase error messages to plain, friendly language.
 function friendlyError(message: string): string {
-  if (message.includes("Invalid login credentials"))
-    return "Wrong email or password. Please try again.";
   if (message.includes("User already registered"))
     return "An account with this email already exists. Try signing in instead.";
-  if (message.includes("Email not confirmed"))
-    return "Please check your email and click the confirmation link first.";
   if (message.includes("Password should be at least"))
     return "Password must be at least 6 characters.";
   if (message.includes("invalid format") || message.includes("valid email"))
     return "Please enter a valid email address.";
   if (message.includes("rate limit") || message.includes("too many"))
     return "Too many attempts. Please wait a moment and try again.";
-  // Fall back to the original message if we don't have a mapping
   return message;
 }
 
-export default function AuthPage() {
+export default function SignUpPage() {
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading]   = useState(false);
   const [message, setMessage]   = useState<{ text: string; error: boolean } | null>(null);
 
-  // Basic checks before hitting Supabase
   function validate(): string | null {
     if (!email)    return "Please enter your email.";
     if (!password) return "Please enter your password.";
     return null;
   }
 
-  async function handleSignIn() {
+  async function handleSignUp() {
     const validationError = validate();
     if (validationError) { setMessage({ text: validationError, error: true }); return; }
 
     setLoading(true);
     setMessage(null);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    });
     if (error) {
       setMessage({ text: friendlyError(error.message), error: true });
     } else {
-      window.location.href = "/import";
+      setMessage({ text: "Account created! Check your email to confirm before signing in.", error: false });
     }
     setLoading(false);
   }
@@ -66,12 +63,11 @@ export default function AuthPage() {
     <main className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
 
-        {/* Logo / heading */}
+        {/* Heading */}
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Kashio</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Sign in to your account</p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Create your account</p>
         </div>
-
 
         {/* Google */}
         <button
@@ -109,7 +105,7 @@ export default function AuthPage() {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSignIn()}
+            onKeyDown={(e) => e.key === "Enter" && handleSignUp()}
             className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-violet-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
           />
         </div>
@@ -121,19 +117,19 @@ export default function AuthPage() {
           </p>
         )}
 
-        {/* Actions */}
+        {/* Action */}
         <button
-          onClick={handleSignIn}
+          onClick={handleSignUp}
           disabled={loading}
           className="mt-4 w-full rounded-lg bg-violet-600 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
         >
-          {loading ? "Please wait…" : "Sign in"}
+          {loading ? "Please wait…" : "Create account"}
         </button>
 
         <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
-          Don't have an account?{" "}
-          <a href="/auth/signup" className="font-medium text-violet-600 hover:text-violet-700 dark:text-violet-400">
-            Create one
+          Already have an account?{" "}
+          <a href="/auth" className="font-medium text-violet-600 hover:text-violet-700 dark:text-violet-400">
+            Sign in
           </a>
         </p>
 
