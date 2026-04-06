@@ -67,23 +67,22 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
   return (
     <main className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-baseline gap-3">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Review</h1>
-          <span className="text-sm text-gray-400 dark:text-gray-500">Step 2 of 3</span>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Your possible deductions</h1>
+          <p className="mt-1 text-gray-500 dark:text-gray-400">
+            Go through each one. Keep what was for work, skip the rest.
+          </p>
         </div>
         {totalConfirmed > 0 && (
           <a
             href="/export"
             className="shrink-0 rounded-md bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700"
           >
-            Go to Export →
+            Export →
           </a>
         )}
       </div>
-      <p className="mt-2 text-gray-500 dark:text-gray-400">
-        Check each item and confirm what was genuinely work-related. Reject anything personal.
-      </p>
 
       {all.length > 0 && (
         <div className="mt-6 rounded-xl bg-gradient-to-br from-violet-600 to-violet-700 px-5 py-5 text-white shadow-sm">
