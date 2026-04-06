@@ -75,14 +75,14 @@ export default async function Export() {
           <div className="mt-8">
             <a
               href="/api/export"
-              className="inline-flex items-center gap-2 rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-6 py-3.5 text-base font-semibold text-white hover:bg-violet-700 active:bg-violet-800"
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
               Download spreadsheet (.xlsx)
             </a>
-            <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
+            <p className="mt-3 text-center text-xs text-gray-400 dark:text-gray-500">
               This is the amount you may be able to claim — not your refund.
             </p>
           </div>
