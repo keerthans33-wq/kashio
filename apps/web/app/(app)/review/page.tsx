@@ -55,6 +55,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
   // Summary counts always reflect the full unfiltered set
   const totalNeedsReview = all.filter((c) => c.status === "NEEDS_REVIEW").length;
   const totalConfirmed   = all.filter((c) => c.status === "CONFIRMED").length;
+  const totalReviewed    = all.filter((c) => c.status !== "NEEDS_REVIEW").length;
 
   // Dollar values — always from unfiltered set
   const amt = (c: Candidate) => Math.abs(c.transaction.amount);
@@ -84,13 +85,24 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
       </div>
 
 
-      {totalNeedsReview > 0 && (
-        <p className="mt-4 text-sm text-gray-400 dark:text-gray-500">
-          {totalNeedsReview} item{totalNeedsReview !== 1 ? "s" : ""} to review
-          {potentialValue > 0 && (
-            <span className="ml-1 text-gray-400 dark:text-gray-500">· {fmt(potentialValue)} potential</span>
-          )}
-        </p>
+      {all.length > 0 && (
+        <div className="mt-5">
+          <div className="flex justify-between text-sm text-gray-400 dark:text-gray-500 mb-1.5">
+            {totalNeedsReview > 0
+              ? <span>{totalReviewed} of {all.length} reviewed</span>
+              : <span className="text-green-600 dark:text-green-400">All done — {all.length} reviewed</span>
+            }
+            {totalNeedsReview > 0 && potentialValue > 0 && (
+              <span>{fmt(potentialValue)} potential</span>
+            )}
+          </div>
+          <div className="h-1.5 w-full rounded-full bg-gray-100 dark:bg-gray-700">
+            <div
+              className={`h-1.5 rounded-full transition-all ${totalNeedsReview === 0 ? "bg-green-500" : "bg-violet-400"}`}
+              style={{ width: all.length > 0 ? `${Math.round((totalReviewed / all.length) * 100)}%` : "0%" }}
+            />
+          </div>
+        </div>
       )}
 
 
