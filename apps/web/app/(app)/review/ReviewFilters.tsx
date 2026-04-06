@@ -65,9 +65,9 @@ export function ReviewFilters() {
             onChange={(e) => update("confidence", e.target.value)}
             className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
           >
-            <option value="">Any certainty</option>
-            <option value="MEDIUM">Somewhat sure</option>
-            <option value="LOW">Less sure</option>
+            <option value="">Any confidence</option>
+            <option value="MEDIUM">Looks likely</option>
+            <option value="LOW">Worth checking</option>
           </select>
 
           <select
