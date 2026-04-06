@@ -45,11 +45,14 @@ export default async function Export() {
       ) : (
         <>
           {/* Total */}
-          <div className="mt-8">
-            <p className="text-4xl font-bold tabular-nums text-gray-900 dark:text-gray-100">
+          <div className="mt-10 py-8 border-y border-gray-100 dark:border-gray-800 text-center">
+            <p className="text-xs font-medium uppercase tracking-widest text-gray-400 dark:text-gray-500">
+              Total deductions
+            </p>
+            <p className="mt-2 text-6xl font-bold tabular-nums text-gray-900 dark:text-gray-100">
               {fmt(total)}
             </p>
-            <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+            <p className="mt-2 text-sm text-gray-400 dark:text-gray-500">
               {confirmed.length} confirmed deduction{confirmed.length !== 1 ? "s" : ""}
             </p>
           </div>
