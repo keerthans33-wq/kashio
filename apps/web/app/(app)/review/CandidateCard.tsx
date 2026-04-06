@@ -99,6 +99,13 @@ export function CandidateCard({
         {/* Why flagged */}
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{reason}</p>
 
+        {/* Confidence label — surface uncertainty before the user decides */}
+        {confidence !== "HIGH" && !settled && (
+          <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+            {confidence === "MEDIUM" ? "Looks likely — worth confirming" : "Possible — worth a closer look"}
+          </p>
+        )}
+
         {/* Actions */}
         <div className="mt-3">
           {error && <p className="mb-2 text-xs text-red-500">{error}</p>}
@@ -110,7 +117,7 @@ export function CandidateCard({
                   ? "text-green-600 dark:text-green-400"
                   : "text-gray-400 dark:text-gray-500"
               }`}>
-                {status === "CONFIRMED" ? "✓ Looks deductible" : "Not deductible"}
+                {status === "CONFIRMED" ? "✓ Marked as deductible" : "✗ Not deductible"}
               </span>
               <button
                 onClick={handleReset}
@@ -127,7 +134,7 @@ export function CandidateCard({
                 disabled={isSaving}
                 className="rounded-md bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-40"
               >
-                {isSaving ? "Saving…" : "Looks deductible"}
+                {isSaving ? "Saving…" : "Yes, claim it"}
               </button>
               <button
                 onClick={handleReject}

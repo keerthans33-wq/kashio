@@ -98,18 +98,18 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
         <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
           <span className="text-sm text-gray-600 dark:text-gray-400">{selected.size} selected</span>
           <button
-            onClick={() => bulkAction(bulkConfirmCandidates, "marked as deductible")}
+            onClick={() => bulkAction(bulkConfirmCandidates, "claimed")}
             disabled={isSaving}
             className="rounded-md bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-40"
           >
-            {isSaving ? "Saving…" : "Mark all deductible"}
+            {isSaving ? "Saving…" : "Yes, claim all"}
           </button>
           <button
-            onClick={() => bulkAction(bulkRejectCandidates, "marked as not deductible")}
+            onClick={() => bulkAction(bulkRejectCandidates, "skipped")}
             disabled={isSaving}
             className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-600 dark:text-gray-400"
           >
-            {isSaving ? "Saving…" : "Mark all not deductible"}
+            {isSaving ? "Saving…" : "Skip all"}
           </button>
           <button
             onClick={() => setSelected(new Set())}
