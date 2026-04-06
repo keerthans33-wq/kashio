@@ -105,7 +105,7 @@ export function CandidateCard({
                   ? "text-green-600 dark:text-green-400"
                   : "text-gray-400 dark:text-gray-500"
               }`}>
-                {status === "CONFIRMED" ? "✓ Confirmed" : "Not deductible"}
+                {status === "CONFIRMED" ? "✓ Looks deductible" : "Not deductible"}
               </span>
               <button
                 onClick={handleReset}
@@ -122,7 +122,7 @@ export function CandidateCard({
                 disabled={isSaving}
                 className="rounded-md bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-40"
               >
-                {isSaving ? "Saving…" : "Confirm"}
+                {isSaving ? "Saving…" : "Looks deductible"}
               </button>
               <button
                 onClick={handleReject}
