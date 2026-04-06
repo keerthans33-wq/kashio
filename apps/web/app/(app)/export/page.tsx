@@ -34,7 +34,7 @@ export default async function Export() {
   const categoryEntries = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
 
   const fmt = (n: number) =>
-    n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
+    n.toLocaleString("en-AU", { style: "currency", currency: "AUD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
     <main className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
