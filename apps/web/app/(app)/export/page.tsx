@@ -66,12 +66,9 @@ export default async function Export() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
-      <div className="flex items-baseline gap-3">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Export</h1>
-        <span className="text-sm text-gray-400 dark:text-gray-500">Step 3 of 3</span>
-      </div>
+      <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Export</h1>
       <p className="mt-2 text-gray-500 dark:text-gray-400">
-        Your confirmed deductions, ready to prepare for tax time. Make sure each item has a receipt or invoice on hand, then download the CSV.
+        Download your confirmed deductions as a spreadsheet for tax time.
       </p>
 
       {confirmed.length === 0 ? (
