@@ -68,9 +68,9 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
   // Single priority-based nudge
   const nudge =
     all.length === 0        ? null :
-    totalNeedsReview > 0   ? "Go through each one. Keep what was for work, skip the rest." :
+    totalNeedsReview > 0   ? "Kashio flagged these as possible deductions — you make the final call." :
     missingEvidence > 0    ? `Add receipts for ${missingEvidence} confirmed deduction${missingEvidence !== 1 ? "s" : ""} before exporting.` :
-    totalConfirmed > 0     ? "All reviewed — ready to export." :
+    totalConfirmed > 0     ? "All done — nice work. Ready to export whenever you are." :
                               null;
 
 
