@@ -53,9 +53,10 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
   const rejected      = candidates.filter((c) => c.status === "REJECTED");
 
   // Summary counts always reflect the full unfiltered set
-  const totalNeedsReview = all.filter((c) => c.status === "NEEDS_REVIEW").length;
-  const totalConfirmed   = all.filter((c) => c.status === "CONFIRMED").length;
-  const totalReviewed    = all.filter((c) => c.status !== "NEEDS_REVIEW").length;
+  const totalNeedsReview  = all.filter((c) => c.status === "NEEDS_REVIEW").length;
+  const totalConfirmed    = all.filter((c) => c.status === "CONFIRMED").length;
+  const totalReviewed     = all.filter((c) => c.status !== "NEEDS_REVIEW").length;
+  const missingEvidence   = all.filter((c) => c.status === "CONFIRMED" && !c.hasEvidence).length;
 
   // Dollar values — always from unfiltered set
   const amt = (c: Candidate) => Math.abs(c.transaction.amount);
@@ -64,15 +65,23 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
   const isFiltered = category || confidence;
 
+  // Single priority-based nudge
+  const nudge =
+    all.length === 0        ? null :
+    totalNeedsReview > 0   ? "Go through each one. Keep what was for work, skip the rest." :
+    missingEvidence > 0    ? `Add receipts for ${missingEvidence} confirmed deduction${missingEvidence !== 1 ? "s" : ""} before exporting.` :
+    totalConfirmed > 0     ? "All reviewed — ready to export." :
+                              null;
+
 
   return (
     <main className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Your possible deductions</h1>
-          <p className="mt-1 text-gray-500 dark:text-gray-400">
-            Go through each one. Keep what was for work, skip the rest.
-          </p>
+          {nudge && (
+            <p className="mt-1 text-gray-500 dark:text-gray-400">{nudge}</p>
+          )}
         </div>
         {totalConfirmed > 0 && (
           <a
