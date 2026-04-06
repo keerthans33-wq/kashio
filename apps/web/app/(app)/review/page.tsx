@@ -59,7 +59,6 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
   // Dollar values — always from unfiltered set
   const amt = (c: Candidate) => Math.abs(c.transaction.amount);
   const potentialValue = all.filter((c) => c.status !== "REJECTED").reduce((s, c) => s + amt(c), 0);
-  const confirmedValue = all.filter((c) => c.status === "CONFIRMED").reduce((s, c) => s + amt(c), 0);
   const fmt = (n: number) => n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 
   const isFiltered = category || confidence;
@@ -84,40 +83,15 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         )}
       </div>
 
-      {all.length > 0 && (
-        <div className="mt-6 rounded-xl bg-gradient-to-br from-violet-600 to-violet-700 px-5 py-5 text-white shadow-sm">
-          <div className="grid grid-cols-2 divide-x divide-violet-500">
-            {/* Potential */}
-            <div className="pr-4">
-              <p className="text-[10px] font-medium uppercase tracking-wide text-violet-200 leading-tight">Potential<br/>deductions</p>
-              <p className="mt-1.5 text-3xl font-bold tabular-nums">{fmt(potentialValue)}</p>
-              <p className="mt-1 text-xs text-violet-300">
-                {totalNeedsReview > 0
-                  ? `${totalNeedsReview} item${totalNeedsReview !== 1 ? "s" : ""} still to review`
-                  : "All items reviewed"}
-              </p>
-            </div>
-            {/* Confirmed */}
-            <div className="pl-4">
-              <p className="text-[10px] font-medium uppercase tracking-wide text-violet-200 leading-tight">Confirmed<br/>so far</p>
-              <p className="mt-1.5 text-3xl font-bold tabular-nums">{fmt(confirmedValue)}</p>
-              <p className="mt-1 text-xs text-violet-300">
-                {totalConfirmed > 0
-                  ? `${totalConfirmed} item${totalConfirmed !== 1 ? "s" : ""} confirmed`
-                  : "None yet"}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-      {all.length > 0 && (
-        <p className="mt-1.5 text-xs text-center text-gray-400 dark:text-gray-500">
-          These are amounts you may be able to claim — not the tax refund you&apos;ll receive.
+
+      {totalNeedsReview > 0 && (
+        <p className="mt-4 text-sm text-gray-400 dark:text-gray-500">
+          {totalNeedsReview} item{totalNeedsReview !== 1 ? "s" : ""} to review
+          {potentialValue > 0 && (
+            <span className="ml-1 text-gray-400 dark:text-gray-500">· {fmt(potentialValue)} potential</span>
+          )}
         </p>
       )}
-
-
-
 
 
 
