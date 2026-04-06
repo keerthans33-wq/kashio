@@ -38,8 +38,8 @@ export const detectOfficeSupplies: Rule = (transaction) => {
     return {
       category:   CATEGORIES.OFFICE_SUPPLIES,
       confidence: "MEDIUM",
-      reason:     `${transaction.normalizedMerchant} purchase that looks like ${matchedKeyword} — office consumables used for work are generally deductible. Personal use doesn't qualify.`,
-      confidenceReason: "Both the retailer and the item type matched — two independent signals pointing to a work purchase.",
+      reason:     `This looks like a ${matchedKeyword} purchase from ${transaction.normalizedMerchant}. Office supplies you buy for work are deductible — home or personal use doesn't qualify.`,
+      confidenceReason: "Both the store and the item type matched — two signals pointing to a work purchase.",
     };
   }
 
@@ -48,10 +48,10 @@ export const detectOfficeSupplies: Rule = (transaction) => {
     category:   CATEGORIES.OFFICE_SUPPLIES,
     confidence: "LOW",
     reason:     merchantMatch
-      ? `${transaction.normalizedMerchant} is an office supply retailer. If this was for work stationery or supplies, it's likely deductible — check the receipt to confirm.`
-      : `${matchedKeyword} is typically a deductible office expense when used for work. Personal stationery or home printing generally doesn't qualify.`,
+      ? `${transaction.normalizedMerchant} is an office supply store. If this was for work — stationery, printer supplies, or similar — you can claim it. Home purchases from the same store don't count.`
+      : `The description mentions "${matchedKeyword}". Office supplies bought for work are deductible — if it was for home use, it won't qualify.`,
     confidenceReason: merchantMatch
-      ? "Known office retailer matched, but no specific item type in the description to corroborate — could still be a personal purchase."
-      : "Item type matched in the description, but no known office retailer to back it up — one signal on its own isn't enough to be confident.",
+      ? "Known office store matched, but no specific item in the description — could still be a personal purchase."
+      : "Item type matched in the description, but without a recognised office store it's harder to be sure.",
   };
 };

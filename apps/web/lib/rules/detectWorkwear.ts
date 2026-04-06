@@ -52,8 +52,8 @@ export const detectWorkwear: Rule = (transaction) => {
     return {
       category:   CATEGORIES.WORK_CLOTHING,
       confidence: "MEDIUM",
-      reason:     `${transaction.normalizedMerchant} specialises in work and safety clothing. Occupation-specific clothing you can't wear outside work is generally deductible — conventional clothing isn't.`,
-      confidenceReason: "Specialist workwear retailer matched — these stores primarily sell occupation-specific clothing, which is a strong signal. Confidence isn't HIGH because a receipt confirming the exact item helps at tax time.",
+      reason:     `${transaction.normalizedMerchant} sells work and safety clothing. If you bought something required for your job that you can't wear outside of work, you can claim it.`,
+      confidenceReason: "This is a specialist workwear store — a strong sign the purchase is work clothing. Not fully certain because the same stores sometimes carry casual items too.",
     };
   }
 
@@ -62,8 +62,8 @@ export const detectWorkwear: Rule = (transaction) => {
     return {
       category:   CATEGORIES.WORK_CLOTHING,
       confidence: "LOW",
-      reason:     `${matchedKeyword} is typically deductible as protective or occupation-specific clothing. Everyday clothing — even if worn at work — generally can't be claimed.`,
-      confidenceReason: "Item type matched in the description, but no specialist workwear retailer to back it up — the signal is weaker without both matching.",
+      reason:     `The description mentions "${matchedKeyword}", which is the kind of item you can claim if it's required for your job. Everyday clothing worn at work doesn't qualify — only gear you couldn't reasonably wear outside of work.`,
+      confidenceReason: "The item type suggests work gear, but the store isn't a specialist workwear retailer — harder to be confident without both.",
     };
   }
 

@@ -38,10 +38,10 @@ export const detectWorkEquipment: Rule = (transaction) => {
     category:   CATEGORIES.OFFICE_SUPPLIES,
     confidence: "LOW",
     reason: matchedInDesc
-      ? `A ${matchedInDesc} can be deductible if it's used primarily for work. If it's also used personally, you can only claim the work-use portion.`
-      : `This looks like it may include a ${matchedInMerchant} purchase. Work equipment is deductible — personal or recreational use means only the work proportion applies.`,
+      ? `The description mentions a ${matchedInDesc}. If you use it mainly for work, you can claim it. If it's also used personally, only the work-use portion qualifies.`
+      : `This purchase may include a ${matchedInMerchant}. Work equipment is deductible — if you also use it personally, only the work proportion can be claimed.`,
     confidenceReason: matchedInDesc
-      ? "Item type detected in the bank description — but these items are commonly bought for personal or gaming use too. Confirm it's used primarily for work."
-      : "Merchant name suggests work equipment — but without item detail in the description, we can't confirm what was purchased.",
+      ? "The item matches a work keyword, but these are also commonly bought for personal or gaming use — confirm it's primarily for work."
+      : "The store name suggests work equipment, but without more detail in the description we can't confirm what was bought.",
   };
 };
