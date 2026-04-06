@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "../../../../lib/db";
+import { getUser } from "../../../../lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -7,9 +8,12 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const userId = await getUser();
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { id } = await params;
 
-  const batch = await db.importBatch.findUnique({ where: { id } });
+  const batch = await db.importBatch.findUnique({ where: { id, userId } });
   if (!batch) {
     return NextResponse.json({ error: "Batch not found." }, { status: 404 });
   }

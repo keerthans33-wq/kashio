@@ -1,12 +1,14 @@
 import { db } from "../../../lib/db";
+import { requireUser } from "../../../lib/auth";
 import { mapExportRow } from "../../../lib/export/mapExportRow";
 import { ExportDetails } from "./ExportDetails";
 
 export const dynamic = "force-dynamic";
 
 export default async function Export() {
+  const userId = await requireUser();
   const confirmed = await db.deductionCandidate.findMany({
-    where:   { status: "CONFIRMED" },
+    where:   { status: "CONFIRMED", userId },
     include: { transaction: true },
     orderBy: { transaction: { date: "asc" } },
   });

@@ -85,6 +85,12 @@ async function main() {
     process.exit(1);
   }
 
+  // Optional --user= flag to scope seed data to a specific Supabase user ID.
+  // Defaults to a fixed dev placeholder so the seed still works without auth.
+  const userId =
+    process.argv.find((a) => a.startsWith("--user="))?.split("=")[1] ??
+    "seed-dev-user";
+
   const rawUrl = process.env.DATABASE_URL ?? "";
   if (!rawUrl) {
     console.error("DATABASE_URL is not set. Source .env.local before running.");
@@ -118,6 +124,7 @@ async function main() {
       allTxData.map((t) =>
         prisma.transaction.create({
           data: {
+            userId,
             date:               t.date,
             description:        t.description,
             normalizedMerchant: normalizeMerchant(t.description),
@@ -157,6 +164,7 @@ async function main() {
 
       return prisma.deductionCandidate.create({
         data: {
+          userId,
           transactionId: tx.id,
           category:      meta.category,
           confidence:    meta.confidence,

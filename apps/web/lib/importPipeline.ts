@@ -30,15 +30,16 @@ export async function runImportPipeline(
   rows: PipelineRow[],
   fileName: string,
   source: TransactionSource = "CSV",
+  userId: string,
 ): Promise<PipelineResult> {
   // Create the batch record first so every transaction carries its batch ID.
   const batch = await db.importBatch.create({
-    data: { fileName, insertedCount: 0, source },
+    data: { fileName, insertedCount: 0, source, userId },
   });
 
   const result = await db.transaction.createMany({
-    data: rows.map((r) => ({ ...r, source, importBatchId: batch.id })),
-    skipDuplicates: true,  // relies on @@unique([date, description, amount])
+    data: rows.map((r) => ({ ...r, source, importBatchId: batch.id, userId })),
+    skipDuplicates: true,  // relies on @@unique([userId, date, description, amount])
   });
   const inserted = result.count;
 
@@ -85,7 +86,10 @@ export async function runImportPipeline(
   if (candidates.length > 0) {
     // skipDuplicates ensures existing candidates are not overwritten if the
     // same transaction was already flagged in a previous import.
-    await db.deductionCandidate.createMany({ data: candidates, skipDuplicates: true });
+    await db.deductionCandidate.createMany({
+      data: candidates.map((c) => ({ ...c, userId })),
+      skipDuplicates: true,
+    });
   }
 
   const txById = new Map(savedTransactions.map((t) => [t.id, t]));

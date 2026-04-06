@@ -1,4 +1,5 @@
 import { db } from "../../../lib/db";
+import { requireUser } from "../../../lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,9 @@ function formatAmount(amount: number) {
 }
 
 export default async function Transactions() {
+  const userId = await requireUser();
   const transactions = await db.transaction.findMany({
+    where:   { userId },
     orderBy: [{ date: "desc" }, { createdAt: "desc" }],
     take: 200,
   });

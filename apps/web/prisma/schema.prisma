@@ -8,15 +8,16 @@ datasource db {
 }
 
 // Stores the Basiq user ID created when a user connects their bank.
-// Single-row for MVP — one user, one connection.
 model BasiqConnection {
   id          String   @id @default(cuid())
+  userId      String   @unique   // one connection per Supabase user
   basiqUserId String   @unique
   createdAt   DateTime @default(now())
 }
 
 model ImportBatch {
   id            String            @id @default(cuid())
+  userId        String                           // Supabase user ID — scopes this batch to one user
   fileName      String
   insertedCount Int
   source        TransactionSource @default(CSV)
@@ -26,6 +27,7 @@ model ImportBatch {
 
 model Transaction {
   id                 String              @id @default(cuid())
+  userId             String                           // Supabase user ID — scopes this transaction to one user
   date               String              // always stored as YYYY-MM-DD — normalised by parseDate before insert
   description        String              // raw bank description
   normalizedMerchant String              // cleaned merchant name
@@ -36,7 +38,7 @@ model Transaction {
   importBatchId      String?
   deductionCandidate DeductionCandidate?
 
-  @@unique([date, description, amount])
+  @@unique([userId, date, description, amount])
 }
 
 // Where the transaction came from.
@@ -62,6 +64,7 @@ enum DeductionStatus {
 
 model DeductionCandidate {
   id            String          @id @default(cuid())
+  userId        String                           // Supabase user ID — scopes this candidate to one user
   transaction   Transaction     @relation(fields: [transactionId], references: [id])
   transactionId String          @unique  // one candidate per transaction for MVP
   category      String          // e.g. "Work Software & Tools"

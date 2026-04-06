@@ -1,10 +1,14 @@
 import ExcelJS from "exceljs";
 import { db } from "../../../lib/db";
 import { mapExportRow } from "../../../lib/export/mapExportRow";
+import { getUser } from "../../../lib/auth";
 
 export async function GET() {
+  const userId = await getUser();
+  if (!userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
   const candidates = await db.deductionCandidate.findMany({
-    where:   { status: "CONFIRMED" },
+    where:   { status: "CONFIRMED", userId },
     include: { transaction: true },
     orderBy: { transaction: { date: "asc" } },
   });

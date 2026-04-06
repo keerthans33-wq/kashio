@@ -8,10 +8,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "../../../../lib/db";
 import { createBasiqUser, updateBasiqUser, getAuthLink } from "../../../../lib/basiq/client";
+import { getUser } from "../../../../lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  const userId = await getUser();
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   // The redirect URL is where Basiq sends the user after they connect their bank.
   // The caller passes a redirectPath (e.g. "/import") so any page can trigger the flow.
   const origin = req.headers.get("origin") ?? "";
@@ -31,12 +35,12 @@ export async function POST(req: NextRequest) {
 
 
   try {
-    // Check if we already have a Basiq user stored.
-    let connection = await db.basiqConnection.findFirst();
+    // Check if this user already has a Basiq connection.
+    let connection = await db.basiqConnection.findUnique({ where: { userId } });
 
     if (!connection) {
       const basiqUserId = await createBasiqUser(email, mobile);
-      connection = await db.basiqConnection.create({ data: { basiqUserId } });
+      connection = await db.basiqConnection.create({ data: { basiqUserId, userId } });
     } else {
       // Always update the stored mobile so Basiq pre-fills the correct number
       // on their desktop consent page (which reads from the user record).

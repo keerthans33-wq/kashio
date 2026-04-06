@@ -1,4 +1,5 @@
 import { db } from "../../../lib/db";
+import { requireUser } from "../../../lib/auth";
 import { ReviewFilters } from "./ReviewFilters";
 import { ReviewList } from "./ReviewList";
 import type { CandidateCardProps } from "./CandidateCard";
@@ -29,9 +30,13 @@ function toCardProps(c: Candidate): CandidateCardProps {
 type SearchParams = { category?: string; confidence?: string; sort?: string };
 
 export default async function Review({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const { category, confidence, sort } = await searchParams;
+  const [userId, { category, confidence, sort }] = await Promise.all([
+    requireUser(),
+    searchParams,
+  ]);
 
   const all = await db.deductionCandidate.findMany({
+    where:   { userId },
     include: { transaction: true },
     orderBy: { transaction: { date: "desc" } },
   });

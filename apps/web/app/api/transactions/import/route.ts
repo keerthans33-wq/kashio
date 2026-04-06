@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fromCsvRow } from "../../../../lib/ingestion/fromCsvRow";
 import { runImportPipeline } from "../../../../lib/importPipeline";
+import { getUser } from "../../../../lib/auth";
 
 export async function POST(req: NextRequest) {
+  const userId = await getUser();
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   let body: unknown;
   try {
     body = await req.json();
@@ -39,7 +43,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const result = await runImportPipeline(rows, fileName, "CSV");
+    const result = await runImportPipeline(rows, fileName, "CSV", userId);
     return NextResponse.json({
       inserted:   result.inserted,
       duplicates: result.duplicates,
