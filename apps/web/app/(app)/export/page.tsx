@@ -18,16 +18,14 @@ export default async function Export() {
   }));
 
   const detailItems = allItems.map((c) => ({
-    id:          c.id,
-    date:        c.row.date,
-    merchant:    c.row.merchant,
-    category:    c.row.category,
-    amount:      c.row.amount,
-    hasEvidence: c.hasEvidence,
+    id:       c.id,
+    date:     c.row.date,
+    merchant: c.row.merchant,
+    category: c.row.category,
+    amount:   c.row.amount,
   }));
 
-  const missing = allItems.filter((c) => !c.hasEvidence);
-  const total   = allItems.reduce((sum, c) => sum + c.row.amount, 0);
+  const total = allItems.reduce((sum, c) => sum + c.row.amount, 0);
 
   const categoryTotals = allItems.reduce<Record<string, number>>((acc, c) => {
     acc[c.row.category] = (acc[c.row.category] ?? 0) + c.row.amount;
@@ -62,13 +60,9 @@ export default async function Export() {
             <p className="mt-2 text-6xl font-bold tabular-nums text-gray-900 dark:text-gray-100">
               {fmt(total)}
             </p>
-            <div className="mt-3 flex justify-center gap-6 text-sm text-gray-400 dark:text-gray-500">
-              <span>{confirmed.length} confirmed</span>
-              {missing.length > 0
-                ? <span className="text-amber-500 dark:text-amber-400">{missing.length} without receipt</span>
-                : <span className="text-green-600 dark:text-green-400">all receipts attached</span>
-              }
-            </div>
+            <p className="mt-3 text-sm text-gray-400 dark:text-gray-500">
+              {confirmed.length} confirmed deduction{confirmed.length !== 1 ? "s" : ""}
+            </p>
           </div>
 
           {/* Category breakdown */}

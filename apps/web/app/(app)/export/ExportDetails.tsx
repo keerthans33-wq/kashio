@@ -3,12 +3,11 @@
 import { useState } from "react";
 
 type Item = {
-  id:          string;
-  date:        string;
-  merchant:    string;
-  category:    string;
-  amount:      number;
-  hasEvidence: boolean;
+  id:       string;
+  date:     string;
+  merchant: string;
+  category: string;
+  amount:   number;
 };
 
 export function ExportDetails({ items }: { items: Item[] }) {
@@ -33,9 +32,6 @@ export function ExportDetails({ items }: { items: Item[] }) {
                 </p>
                 <p className="text-xs text-gray-400 dark:text-gray-500">
                   {item.date} · {item.category}
-                  {!item.hasEvidence && (
-                    <span className="ml-2 text-amber-500 dark:text-amber-400">no receipt</span>
-                  )}
                 </p>
               </div>
               <span className="shrink-0 text-sm font-medium tabular-nums text-gray-900 dark:text-gray-100">

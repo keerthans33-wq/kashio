@@ -17,9 +17,8 @@ export async function GET() {
   const year      = now.getFullYear();
   const generated = now.toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" });
 
-  const confirmed    = candidates.length;
-  const withEvidence = candidates.filter((c) => c.hasEvidence).length;
-  const total        = candidates.reduce((sum, c) => sum + Math.abs(c.transaction.amount), 0);
+  const confirmed = candidates.length;
+  const total     = candidates.reduce((sum, c) => sum + Math.abs(c.transaction.amount), 0);
 
   const wb = new ExcelJS.Workbook();
   wb.creator = "Kashio";
@@ -33,10 +32,9 @@ export async function GET() {
     { key: "description", width: 42 },
     { key: "category",    width: 24 },
     { key: "amount",      width: 16 },
-    { key: "evidence",    width: 16 },
   ];
 
-  const NCOLS = 6;
+  const NCOLS = 5;
 
   // ── Title ────────────────────────────────────────────────────────────────────
   ws.mergeCells(1, 1, 1, NCOLS);
@@ -59,7 +57,7 @@ export async function GET() {
   // ── Summary line ──────────────────────────────────────────────────────────────
   ws.mergeCells(3, 1, 3, NCOLS);
   const summCell = ws.getCell("A3");
-  summCell.value = `Confirmed: ${confirmed}   ·   Evidence attached: ${withEvidence} of ${confirmed}   ·   Total: $${total.toFixed(2)} AUD`;
+  summCell.value = `Confirmed: ${confirmed}   ·   Total: $${total.toFixed(2)} AUD`;
   summCell.font  = { size: 10, color: { argb: "FF374151" } };
   summCell.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF5F3FF" } };
   summCell.alignment = { horizontal: "left", vertical: "middle", indent: 1 };
@@ -69,7 +67,7 @@ export async function GET() {
   ws.addRow([]);
 
   // ── Column headers ────────────────────────────────────────────────────────────
-  const headerRow = ws.addRow(["Date", "Merchant", "Description", "Category", "Amount (AUD)", "Evidence"]);
+  const headerRow = ws.addRow(["Date", "Merchant", "Description", "Category", "Amount (AUD)"]);
   headerRow.height = 22;
   headerRow.eachCell((cell) => {
     cell.font      = { bold: true, color: { argb: "FFFFFFFF" }, size: 10 };
@@ -80,8 +78,7 @@ export async function GET() {
 
   // ── Data rows ─────────────────────────────────────────────────────────────────
   for (const c of candidates) {
-    const row     = mapExportRow(c);
-    const missing = !c.hasEvidence;
+    const row = mapExportRow(c);
 
     const dataRow = ws.addRow([
       row.date,
@@ -89,24 +86,10 @@ export async function GET() {
       row.description,
       row.category,
       row.amount,
-      missing ? "⚠ Missing" : "✓ Ready",
     ]);
     dataRow.height = 18;
 
-    // Amount: currency format
     dataRow.getCell(5).numFmt = '"$"#,##0.00';
-
-    // Evidence cell colour
-    dataRow.getCell(6).font = missing
-      ? { color: { argb: "FFB45309" }, size: 10 }
-      : { color: { argb: "FF065F46" }, size: 10 };
-
-    // Amber row background for missing evidence
-    if (missing) {
-      dataRow.eachCell((cell) => {
-        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF9C3" } };
-      });
-    }
 
     dataRow.eachCell((cell, colNum) => {
       cell.alignment = { vertical: "middle", wrapText: colNum === 3 };
@@ -117,7 +100,7 @@ export async function GET() {
   // ── Total row ─────────────────────────────────────────────────────────────────
   ws.addRow([]);
   const totalRowNum = ws.rowCount + 1;
-  const totalRow    = ws.addRow(["", "", "", "Total", total, ""]);
+  const totalRow    = ws.addRow(["", "", "", "Total", total]);
   totalRow.height   = 22;
   totalRow.getCell(4).font  = { bold: true, size: 10 };
   totalRow.getCell(5).font  = { bold: true, size: 10 };
