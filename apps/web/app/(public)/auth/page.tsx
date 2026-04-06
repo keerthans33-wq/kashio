@@ -3,18 +3,46 @@
 import { useState } from "react";
 import { supabase } from "../../../lib/supabase";
 
+// Maps Supabase error messages to plain, friendly language.
+function friendlyError(message: string): string {
+  if (message.includes("Invalid login credentials"))
+    return "Wrong email or password. Please try again.";
+  if (message.includes("User already registered"))
+    return "An account with this email already exists. Try signing in instead.";
+  if (message.includes("Email not confirmed"))
+    return "Please check your email and click the confirmation link first.";
+  if (message.includes("Password should be at least"))
+    return "Password must be at least 6 characters.";
+  if (message.includes("invalid format") || message.includes("valid email"))
+    return "Please enter a valid email address.";
+  if (message.includes("rate limit") || message.includes("too many"))
+    return "Too many attempts. Please wait a moment and try again.";
+  // Fall back to the original message if we don't have a mapping
+  return message;
+}
+
 export default function AuthPage() {
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading]   = useState(false);
   const [message, setMessage]   = useState<{ text: string; error: boolean } | null>(null);
 
+  // Basic checks before hitting Supabase
+  function validate(): string | null {
+    if (!email)    return "Please enter your email.";
+    if (!password) return "Please enter your password.";
+    return null;
+  }
+
   async function handleSignIn() {
+    const validationError = validate();
+    if (validationError) { setMessage({ text: validationError, error: true }); return; }
+
     setLoading(true);
     setMessage(null);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      setMessage({ text: error.message, error: true });
+      setMessage({ text: friendlyError(error.message), error: true });
     } else {
       window.location.href = "/import";
     }
@@ -22,13 +50,16 @@ export default function AuthPage() {
   }
 
   async function handleSignUp() {
+    const validationError = validate();
+    if (validationError) { setMessage({ text: validationError, error: true }); return; }
+
     setLoading(true);
     setMessage(null);
     const { error } = await supabase.auth.signUp({ email, password });
     if (error) {
-      setMessage({ text: error.message, error: true });
+      setMessage({ text: friendlyError(error.message), error: true });
     } else {
-      setMessage({ text: "Check your email to confirm your account.", error: false });
+      setMessage({ text: "Account created! Check your email to confirm before signing in.", error: false });
     }
     setLoading(false);
   }
