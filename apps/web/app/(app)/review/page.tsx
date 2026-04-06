@@ -144,6 +144,12 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
           />
         </div>
       )}
+
+      {all.length > 0 && (
+        <p className="mt-10 text-xs text-gray-400 dark:text-gray-500">
+          Kashio helps you spot possible deductions — it's not a tax adviser. When in doubt, check with your accountant.
+        </p>
+      )}
     </main>
   );
 }
