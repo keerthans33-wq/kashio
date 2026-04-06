@@ -85,6 +85,9 @@ export default async function Export() {
             <p className="mt-3 text-center text-xs text-gray-400 dark:text-gray-500">
               This is the amount you may be able to claim — not your refund.
             </p>
+            <p className="mt-4 text-xs text-gray-400 dark:text-gray-500">
+              <span className="font-medium">ATO note:</span> Receipts or other records may be needed to support some claims. Exporting from Kashio does not replace your record-keeping obligations.
+            </p>
           </div>
         </>
       )}
