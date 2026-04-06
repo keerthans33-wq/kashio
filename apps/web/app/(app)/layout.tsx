@@ -1,4 +1,5 @@
 import Nav from "../components/shell/Nav";
+import { AuthGuard } from "../components/shell/AuthGuard";
 
 export default function AppLayout({
   children,
@@ -6,9 +7,10 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <Nav />
-      <div className="flex-1">{children}</div>
+    <AuthGuard>
+      <div className="flex min-h-screen flex-col">
+        <Nav />
+        <div className="flex-1">{children}</div>
       <footer className="border-t border-gray-100 dark:border-gray-800">
         <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between">
           <p className="text-xs text-gray-400 dark:text-gray-500">Early access</p>
@@ -29,5 +31,6 @@ export default function AppLayout({
         </div>
       </footer>
     </div>
+    </AuthGuard>
   );
 }
