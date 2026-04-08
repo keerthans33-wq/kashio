@@ -24,6 +24,7 @@ export async function POST() {
       flagged:    result.flagged,
       totalValue: result.totalValue,
       batchId:    result.batchId,
+      _debug_userId: userId,
     });
   } catch (err) {
     console.error("Demo import error:", err);
