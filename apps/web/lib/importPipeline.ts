@@ -1,29 +1,16 @@
-// Shared import pipeline used by both the CSV route and the Basiq route.
-//
-// Accepts rows that have already been validated and normalised by the caller,
-// then handles everything from batch creation to deduction detection.
-//
-// Deduplication key: Transaction.@@unique([date, description, amount])
-// Both the CSV mapper and the Basiq mapper normalise to the same formats
-// (parseDate → YYYY-MM-DD, parseAmount → float, description.trim()), so the
-// same real-world transaction will always produce the same key regardless of
-// which import path was used.
-
 import { db } from "./db";
 import { detectDeduction } from "./rules";
 import type { IngestionRow } from "./ingestion/types";
 
 export type TransactionSource = "CSV" | "DEMO_BANK" | "BASIQ";
-
-// PipelineRow is the same shape as IngestionRow — aliased here for backwards compatibility.
 export type PipelineRow = IngestionRow;
 
 export type PipelineResult = {
-  batchId: string | null;     // null when nothing was inserted (all duplicates)
+  batchId: string | null;
   inserted: number;
   duplicates: number;
   flagged: number;
-  totalValue: number;         // sum of absolute amounts for flagged candidates
+  totalValue: number;
 };
 
 export async function runImportPipeline(
@@ -32,39 +19,44 @@ export async function runImportPipeline(
   source: TransactionSource = "CSV",
   userId: string,
 ): Promise<PipelineResult> {
-  // Create the batch record first so every transaction carries its batch ID.
+  // Manually filter duplicates instead of relying on skipDuplicates: true,
+  // which has known issues with Prisma's driverAdapters preview feature.
+  const existing = await db.transaction.findMany({
+    where: { userId },
+    select: { date: true, description: true, amount: true },
+  });
+
+  const existingKeys = new Set(
+    existing.map((t) => `${t.date}|${t.description}|${t.amount}`)
+  );
+
+  const newRows = rows.filter(
+    (r) => !existingKeys.has(`${r.date}|${r.description}|${r.amount}`)
+  );
+
+  const duplicates = rows.length - newRows.length;
+
+  if (newRows.length === 0) {
+    return { batchId: null, inserted: 0, duplicates, flagged: 0, totalValue: 0 };
+  }
+
   const batch = await db.importBatch.create({
     data: { fileName, insertedCount: 0, source, userId },
   });
 
-  const result = await db.transaction.createMany({
-    data: rows.map((r) => ({ ...r, source, importBatchId: batch.id, userId })),
-    skipDuplicates: true,  // relies on @@unique([userId, date, description, amount])
+  await db.transaction.createMany({
+    data: newRows.map((r) => ({ ...r, source, importBatchId: batch.id, userId })),
   });
-  const inserted = result.count;
 
-  if (inserted === 0) {
-    // Every row was a duplicate — delete the empty batch so it doesn't appear
-    // in "Previously imported" with a zero count.
-    await db.importBatch.delete({ where: { id: batch.id } });
-    return { batchId: null, inserted: 0, duplicates: rows.length, flagged: 0, totalValue: 0 };
-  }
-
-  // Update the batch with the real inserted count.
   await db.importBatch.update({
     where: { id: batch.id },
-    data: { insertedCount: inserted },
+    data: { insertedCount: newRows.length },
   });
 
-  // Re-fetch only the transactions that were just inserted in this batch.
-  // We scope by importBatchId rather than matching on (date, description, amount)
-  // across all rows, which would also return pre-existing duplicates from earlier
-  // syncs and produce an inflated flagged count.
   const savedTransactions = await db.transaction.findMany({
     where: { importBatchId: batch.id },
   });
 
-  // Run each newly inserted transaction through the deduction rules engine.
   const candidates = savedTransactions
     .map((t) => {
       const match = detectDeduction({
@@ -83,12 +75,21 @@ export async function runImportPipeline(
     })
     .filter((c): c is NonNullable<typeof c> => c !== null);
 
-  if (candidates.length > 0) {
-    // skipDuplicates ensures existing candidates are not overwritten if the
-    // same transaction was already flagged in a previous import.
+  // Check which transactions already have a candidate to avoid duplicates
+  const existingCandidateTxIds = new Set(
+    (await db.deductionCandidate.findMany({
+      where: { userId },
+      select: { transactionId: true },
+    })).map((c) => c.transactionId)
+  );
+
+  const newCandidates = candidates.filter(
+    (c) => !existingCandidateTxIds.has(c.transactionId)
+  );
+
+  if (newCandidates.length > 0) {
     await db.deductionCandidate.createMany({
-      data: candidates.map((c) => ({ ...c, userId })),
-      skipDuplicates: true,
+      data: newCandidates.map((c) => ({ ...c, userId })),
     });
   }
 
@@ -100,8 +101,8 @@ export async function runImportPipeline(
 
   return {
     batchId: batch.id,
-    inserted,
-    duplicates: rows.length - inserted,
+    inserted: newRows.length,
+    duplicates,
     flagged: candidates.length,
     totalValue,
   };
