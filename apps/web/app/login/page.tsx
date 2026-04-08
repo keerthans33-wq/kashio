@@ -29,9 +29,11 @@ export default function LoginPage() {
   async function handleSignUp() {
     setError(null); setMessage(null); setLoading(true);
     const { error } = await supabase.auth.signUp({ email, password });
-    setLoading(false);
-    if (error) { setError(friendlyError(error.message)); return; }
-    setMessage("Account created! Check your email to confirm, then sign in.");
+    if (error) { setError(friendlyError(error.message)); setLoading(false); return; }
+    // Sign in immediately after creating the account
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    if (signInError) { setError(friendlyError(signInError.message)); setLoading(false); return; }
+    window.location.href = "/import";
   }
 
   async function handleGoogle() {
