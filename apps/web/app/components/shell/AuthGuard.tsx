@@ -7,7 +7,6 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Check for an existing session first (reads from localStorage).
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
         window.location.replace("/login");
@@ -16,15 +15,12 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       }
     });
 
-    // Also listen for sign-out so the user gets redirected if they log out
-    // in another tab.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === "SIGNED_OUT" || !session) {
-          window.location.replace("/login");
-        }
+    // Redirect on explicit sign-out (e.g. from another tab)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        window.location.replace("/login");
       }
-    );
+    });
 
     return () => subscription.unsubscribe();
   }, []);
