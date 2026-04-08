@@ -13,7 +13,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         if (!session) {
-          window.location.replace("/auth");
+          window.location.replace("/login");
         } else {
           setReady(true);
         }
