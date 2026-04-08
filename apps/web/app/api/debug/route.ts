@@ -8,18 +8,32 @@ export async function GET() {
   const userId = await getUser();
   if (!userId) return NextResponse.json({ userId: null, message: "No session on server" });
 
-  const candidates  = await db.deductionCandidate.count({ where: { userId } });
+  const candidates   = await db.deductionCandidate.count({ where: { userId } });
   const transactions = await db.transaction.count({ where: { userId } });
   const allTransactions = await db.transaction.count();
-  const allCandidates   = await db.deductionCandidate.count();
 
-  // Show distinct userIds to spot orphaned empty-string userId data
   const distinctUserIds = await db.transaction.groupBy({
     by: ["userId"],
     _count: { userId: true },
   });
 
-  return NextResponse.json({ userId, candidates, transactions, allTransactions, allCandidates, distinctUserIds });
+  // Check the actual unique constraints on the Transaction table in production
+  const constraints = await db.$queryRaw<{ conname: string; def: string }[]>`
+    SELECT conname, pg_get_constraintdef(oid) as def
+    FROM pg_constraint
+    WHERE conrelid = '"Transaction"'::regclass
+    AND contype = 'u'
+  `;
+
+  // Check pending migrations
+  const migrations = await db.$queryRaw<{ migration_name: string; finished_at: Date | null }[]>`
+    SELECT migration_name, finished_at
+    FROM "_prisma_migrations"
+    ORDER BY finished_at DESC
+    LIMIT 10
+  `;
+
+  return NextResponse.json({ userId, candidates, transactions, allTransactions, distinctUserIds, constraints, migrations });
 }
 
 export async function DELETE() {
