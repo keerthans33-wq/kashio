@@ -24,9 +24,9 @@ export async function DELETE() {
   const userId = await getUser();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  await db.deductionCandidate.deleteMany({});
-  await db.transaction.deleteMany({});
-  await db.importBatch.deleteMany({});
+  await db.deductionCandidate.deleteMany({ where: { userId } });
+  await db.transaction.deleteMany({ where: { userId } });
+  await db.importBatch.deleteMany({ where: { userId } });
 
   return NextResponse.json({ ok: true, message: "All data cleared" });
 }
