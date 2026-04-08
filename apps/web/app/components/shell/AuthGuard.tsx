@@ -10,13 +10,16 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) {
-        window.location.replace("/auth");
-      } else {
-        setReady(true);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (!session) {
+          window.location.replace("/auth");
+        } else {
+          setReady(true);
+        }
       }
-    });
+    );
+    return () => subscription.unsubscribe();
   }, []);
 
   // Render nothing while the session check is in flight
