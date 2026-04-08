@@ -1,9 +1,5 @@
 "use client";
 
-// This page handles the redirect back from Google after OAuth login.
-// Supabase sends the user here with a ?code= in the URL.
-// We exchange that code for a real session, then send the user into the app.
-
 import { useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
@@ -15,18 +11,32 @@ function CallbackHandler() {
     const code = searchParams.get("code");
 
     if (!code) {
-      // No code means something went wrong — send back to sign-in
       window.location.href = "/login";
       return;
     }
 
-    // Exchange the one-time code for a Supabase session
-    supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-      if (error) {
-        window.location.href = "/login";
-      } else {
+    // Try to exchange the code. If PKCE verifier is missing, fall back to
+    // listening for the SIGNED_IN event which fires when createBrowserClient
+    // detects and exchanges the code automatically.
+    supabase.auth.exchangeCodeForSession(code).then(({ data, error }) => {
+      if (!error && data.session) {
         window.location.href = "/import";
+        return;
       }
+
+      // Fallback: listen for auth state change
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        if (event === "SIGNED_IN" && session) {
+          subscription.unsubscribe();
+          window.location.href = "/import";
+        }
+      });
+
+      // If nothing fires in 5s, give up and go back to login
+      setTimeout(() => {
+        subscription.unsubscribe();
+        window.location.href = "/login";
+      }, 5000);
     });
   }, [searchParams]);
 
@@ -37,7 +47,6 @@ function CallbackHandler() {
   );
 }
 
-// Suspense is required by Next.js when using useSearchParams
 export default function AuthCallback() {
   return (
     <Suspense>
