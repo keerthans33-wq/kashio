@@ -12,28 +12,20 @@ export async function GET() {
   const transactions = await db.transaction.count({ where: { userId } });
   const allTransactions = await db.transaction.count();
 
-  const distinctUserIds = await db.transaction.groupBy({
-    by: ["userId"],
-    _count: { userId: true },
-  });
-
-  // Check the actual unique constraints on the Transaction table in production
-  const constraints = await db.$queryRaw<{ conname: string; def: string }[]>`
-    SELECT conname, pg_get_constraintdef(oid) as def
+  // Get ALL constraints AND indexes on Transaction table
+  const allConstraints = await db.$queryRaw<{ conname: string; contype: string; def: string }[]>`
+    SELECT conname, contype, pg_get_constraintdef(oid) as def
     FROM pg_constraint
     WHERE conrelid = '"Transaction"'::regclass
-    AND contype = 'u'
   `;
 
-  // Check pending migrations
-  const migrations = await db.$queryRaw<{ migration_name: string; finished_at: Date | null }[]>`
-    SELECT migration_name, finished_at
-    FROM "_prisma_migrations"
-    ORDER BY finished_at DESC
-    LIMIT 10
+  const allIndexes = await db.$queryRaw<{ indexname: string; indexdef: string }[]>`
+    SELECT indexname, indexdef
+    FROM pg_indexes
+    WHERE tablename = 'Transaction'
   `;
 
-  return NextResponse.json({ userId, candidates, transactions, allTransactions, distinctUserIds, constraints, migrations });
+  return NextResponse.json({ userId, candidates, transactions, allTransactions, allConstraints, allIndexes });
 }
 
 export async function DELETE() {
