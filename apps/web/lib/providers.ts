@@ -49,7 +49,18 @@ export interface BankProvider {
 
 // ── Demo Bank ─────────────────────────────────────────────────────────────────
 
-const DEMO_SYNC_STATUS_KEY = "kashio:demo-sync-status";
+function demoSyncKey() {
+  // Scope the key by userId so different users on the same browser
+  // don't see each other's sync status.
+  try {
+    const raw = localStorage.getItem("sb-bsesatofpepifsgrkcny-auth-token");
+    const session = raw ? JSON.parse(raw) : null;
+    const userId = session?.user?.id ?? "anon";
+    return `kashio:demo-sync-status:${userId}`;
+  } catch {
+    return "kashio:demo-sync-status:anon";
+  }
+}
 
 export const demoBankProvider: BankProvider = {
   source: "DEMO_BANK",
@@ -64,7 +75,7 @@ export const demoBankProvider: BankProvider = {
 
   loadStatus() {
     try {
-      const raw = localStorage.getItem(DEMO_SYNC_STATUS_KEY);
+      const raw = localStorage.getItem(demoSyncKey());
       return raw ? (JSON.parse(raw) as StoredSyncStatus) : null;
     } catch {
       return null;
@@ -73,7 +84,7 @@ export const demoBankProvider: BankProvider = {
 
   saveStatus(result) {
     const value: StoredSyncStatus = { lastSynced: new Date().toISOString(), result };
-    localStorage.setItem(DEMO_SYNC_STATUS_KEY, JSON.stringify(value));
+    localStorage.setItem(demoSyncKey(), JSON.stringify(value));
   },
 
   isConnected() {
