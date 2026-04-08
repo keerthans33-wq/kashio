@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useSyncState } from "../../../lib/syncState";
 import type { SyncResult } from "../../../lib/syncState";
-import { demoBankProvider } from "../../../lib/providers";
+import { createDemoBankProvider } from "../../../lib/providers";
 import type { BankProvider, StoredSyncStatus } from "../../../lib/providers";
+import { supabase } from "../../../lib/supabase";
 
 // ── Shared sub-components ─────────────────────────────────────────────────────
 
@@ -187,10 +188,16 @@ export default function ConnectBankSection() {
 
   const [storedStatus, setStoredStatus] = useState<StoredSyncStatus | null>(null);
   const [isConnected, setIsConnected]   = useState(false);
+  const [demoProvider, setDemoProvider] = useState<BankProvider>(() => createDemoBankProvider("anon"));
 
   useEffect(() => {
-    setStoredStatus(demoBankProvider.loadStatus());
-    setIsConnected(demoBankProvider.isConnected());
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const userId = session?.user?.id ?? "anon";
+      const provider = createDemoBankProvider(userId);
+      setDemoProvider(provider);
+      setStoredStatus(provider.loadStatus());
+      setIsConnected(provider.isConnected());
+    });
   }, []);
 
   const demo = useSyncState();
@@ -245,9 +252,9 @@ export default function ConnectBankSection() {
       const res = await fetch("/api/basiq/transactions", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Could not import transactions.");
-      demoBankProvider.saveStatus(data);
-      setStoredStatus(demoBankProvider.loadStatus());
-      setIsConnected(demoBankProvider.isConnected());
+      demoProvider.saveStatus(data);
+      setStoredStatus(demoProvider.loadStatus());
+      setIsConnected(demoProvider.isConnected());
       demo.setSuccess(data);
       router.replace("/import");
     } catch (err) {
@@ -266,11 +273,11 @@ export default function ConnectBankSection() {
   }
 
   if (demo.sync.status === "success") {
-    return <SyncSuccess result={demo.sync.result} onSync={() => handleSync(demoBankProvider)} />;
+    return <SyncSuccess result={demo.sync.result} onSync={() => handleSync(demoProvider)} />;
   }
 
   if (demo.sync.status === "error") {
-    return <SyncFailed onRetry={() => handleSync(demoBankProvider)} />;
+    return <SyncFailed onRetry={() => handleSync(demoProvider)} />;
   }
 
   // ── Idle ──────────────────────────────────────────────────────────────────────
@@ -294,7 +301,7 @@ export default function ConnectBankSection() {
           {connecting ? "Connecting…" : "Connect Bank"}
         </button>
         <button
-          onClick={() => handleSync(demoBankProvider)}
+          onClick={() => handleSync(demoProvider)}
           disabled={connecting}
           className="rounded-md border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
         >
@@ -304,11 +311,11 @@ export default function ConnectBankSection() {
 
       {storedStatus && (
         <SyncStatusSection
-          source={demoBankProvider.name}
+          source={demoProvider.name}
           connected={isConnected}
           lastSynced={new Date(storedStatus.lastSynced)}
           result={storedStatus.result}
-          onSync={() => handleSync(demoBankProvider)}
+          onSync={() => handleSync(demoProvider)}
         />
       )}
 

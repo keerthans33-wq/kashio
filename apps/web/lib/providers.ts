@@ -49,45 +49,39 @@ export interface BankProvider {
 
 // ── Demo Bank ─────────────────────────────────────────────────────────────────
 
-function demoSyncKey() {
-  // Scope the key by userId so different users on the same browser
-  // don't see each other's sync status.
-  try {
-    const raw = localStorage.getItem("sb-bsesatofpepifsgrkcny-auth-token");
-    const session = raw ? JSON.parse(raw) : null;
-    const userId = session?.user?.id ?? "anon";
-    return `kashio:demo-sync-status:${userId}`;
-  } catch {
-    return "kashio:demo-sync-status:anon";
-  }
+export function createDemoBankProvider(userId: string): BankProvider {
+  const key = `kashio:demo-sync-status:${userId}`;
+
+  return {
+    source: "DEMO_BANK",
+    name: "Demo Bank",
+
+    async sync() {
+      const res = await fetch("/api/demo/connect", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Demo sync failed.");
+      return data as SyncResult;
+    },
+
+    loadStatus() {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? (JSON.parse(raw) as StoredSyncStatus) : null;
+      } catch {
+        return null;
+      }
+    },
+
+    saveStatus(result) {
+      const value: StoredSyncStatus = { lastSynced: new Date().toISOString(), result };
+      localStorage.setItem(key, JSON.stringify(value));
+    },
+
+    isConnected() {
+      return this.loadStatus() !== null;
+    },
+  };
 }
 
-export const demoBankProvider: BankProvider = {
-  source: "DEMO_BANK",
-  name: "Demo Bank",
-
-  async sync() {
-    const res = await fetch("/api/demo/connect", { method: "POST" });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error ?? "Demo sync failed.");
-    return data as SyncResult;
-  },
-
-  loadStatus() {
-    try {
-      const raw = localStorage.getItem(demoSyncKey());
-      return raw ? (JSON.parse(raw) as StoredSyncStatus) : null;
-    } catch {
-      return null;
-    }
-  },
-
-  saveStatus(result) {
-    const value: StoredSyncStatus = { lastSynced: new Date().toISOString(), result };
-    localStorage.setItem(demoSyncKey(), JSON.stringify(value));
-  },
-
-  isConnected() {
-    return this.loadStatus() !== null;
-  },
-};
+// Fallback for places that haven't loaded the userId yet
+export const demoBankProvider = createDemoBankProvider("anon");
