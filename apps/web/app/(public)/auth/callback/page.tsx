@@ -16,14 +16,14 @@ function CallbackHandler() {
 
     if (!code) {
       // No code means something went wrong — send back to sign-in
-      window.location.href = "/auth";
+      window.location.href = "/login";
       return;
     }
 
     // Exchange the one-time code for a Supabase session
     supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
       if (error) {
-        window.location.href = "/auth";
+        window.location.href = "/login";
       } else {
         window.location.href = "/import";
       }
