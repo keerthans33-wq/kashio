@@ -29,7 +29,7 @@ export async function POST() {
   } catch (err) {
     console.error("Demo import error:", err);
     return NextResponse.json(
-      { error: "Could not run demo import. The database may be unavailable." },
+      { error: "Could not run demo import.", detail: err instanceof Error ? err.message : String(err) },
       { status: 500 },
     );
   }
