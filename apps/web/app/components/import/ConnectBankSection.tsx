@@ -189,6 +189,7 @@ export default function ConnectBankSection() {
   const [storedStatus, setStoredStatus] = useState<StoredSyncStatus | null>(null);
   const [isConnected, setIsConnected]   = useState(false);
   const [demoProvider, setDemoProvider] = useState<BankProvider>(() => createDemoBankProvider("anon"));
+  const [providerReady, setProviderReady] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -197,6 +198,7 @@ export default function ConnectBankSection() {
       setDemoProvider(provider);
       setStoredStatus(provider.loadStatus());
       setIsConnected(provider.isConnected());
+      setProviderReady(true);
     });
   }, []);
 
@@ -309,7 +311,7 @@ export default function ConnectBankSection() {
         </button>
       </div>
 
-      {storedStatus && (
+      {providerReady && storedStatus && (
         <SyncStatusSection
           source={demoProvider.name}
           connected={isConnected}
