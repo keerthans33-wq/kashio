@@ -11,7 +11,7 @@ type Item = {
 };
 
 export function ExportDetails({ items }: { items: Item[] }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
 
   return (
     <div className="mt-6 border-t border-gray-100 pt-4 dark:border-gray-800">

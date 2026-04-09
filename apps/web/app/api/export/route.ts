@@ -1,4 +1,3 @@
-import ExcelJS from "exceljs";
 import { db } from "../../../lib/db";
 import { mapExportRow } from "../../../lib/export/mapExportRow";
 import { getUser } from "../../../lib/auth";
@@ -14,122 +13,26 @@ export async function GET() {
   });
 
   if (candidates.length === 0) {
-    return Response.json({ error: "No confirmed candidates to export." }, { status: 404 });
+    return Response.json({ error: "No confirmed deductions to export." }, { status: 404 });
   }
 
-  const now       = new Date();
-  const year      = now.getFullYear();
-  const generated = now.toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" });
+  const year = new Date().getFullYear();
 
-  const confirmed = candidates.length;
-  const total     = candidates.reduce((sum, c) => sum + Math.abs(c.transaction.amount), 0);
+  const headers = ["Date", "Merchant", "Description", "Category", "Amount (AUD)"];
 
-  const wb = new ExcelJS.Workbook();
-  wb.creator = "Kashio";
-  wb.created = now;
-
-  const ws = wb.addWorksheet("Deductions");
-
-  ws.columns = [
-    { key: "date",        width: 14 },
-    { key: "merchant",    width: 30 },
-    { key: "description", width: 42 },
-    { key: "category",    width: 24 },
-    { key: "amount",      width: 16 },
-  ];
-
-  const NCOLS = 5;
-
-  // ── Title ────────────────────────────────────────────────────────────────────
-  ws.mergeCells(1, 1, 1, NCOLS);
-  const titleCell = ws.getCell("A1");
-  titleCell.value = `Kashio — Tax Deduction Summary ${year}`;
-  titleCell.font  = { bold: true, size: 16, color: { argb: "FFFFFFFF" } };
-  titleCell.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: "FF7C3AED" } };
-  titleCell.alignment = { horizontal: "left", vertical: "middle", indent: 1 };
-  ws.getRow(1).height = 34;
-
-  // ── Generated date ────────────────────────────────────────────────────────────
-  ws.mergeCells(2, 1, 2, NCOLS);
-  const genCell = ws.getCell("A2");
-  genCell.value = `Generated: ${generated}`;
-  genCell.font  = { size: 10, color: { argb: "FF6B7280" } };
-  genCell.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF5F3FF" } };
-  genCell.alignment = { horizontal: "left", vertical: "middle", indent: 1 };
-  ws.getRow(2).height = 18;
-
-  // ── Summary line ──────────────────────────────────────────────────────────────
-  ws.mergeCells(3, 1, 3, NCOLS);
-  const summCell = ws.getCell("A3");
-  summCell.value = `Confirmed: ${confirmed}   ·   Total: $${total.toFixed(2)} AUD`;
-  summCell.font  = { size: 10, color: { argb: "FF374151" } };
-  summCell.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF5F3FF" } };
-  summCell.alignment = { horizontal: "left", vertical: "middle", indent: 1 };
-  ws.getRow(3).height = 20;
-
-  // ── Blank spacer ──────────────────────────────────────────────────────────────
-  ws.addRow([]);
-
-  // ── Column headers ────────────────────────────────────────────────────────────
-  const headerRow = ws.addRow(["Date", "Merchant", "Description", "Category", "Amount (AUD)"]);
-  headerRow.height = 22;
-  headerRow.eachCell((cell) => {
-    cell.font      = { bold: true, color: { argb: "FFFFFFFF" }, size: 10 };
-    cell.fill      = { type: "pattern", pattern: "solid", fgColor: { argb: "FF374151" } };
-    cell.alignment = { horizontal: "left", vertical: "middle" };
-    cell.border    = { bottom: { style: "thin", color: { argb: "FF6B7280" } } };
+  const rows = candidates.map((c) => {
+    const row = mapExportRow(c);
+    return [row.date, row.merchant, row.description, row.category, row.amount.toFixed(2)];
   });
 
-  // ── Data rows ─────────────────────────────────────────────────────────────────
-  for (const c of candidates) {
-    const row = mapExportRow(c);
+  const csv = [headers, ...rows]
+    .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+    .join("\n");
 
-    const dataRow = ws.addRow([
-      row.date,
-      row.merchant,
-      row.description,
-      row.category,
-      row.amount,
-    ]);
-    dataRow.height = 18;
-
-    dataRow.getCell(5).numFmt = '"$"#,##0.00';
-
-    dataRow.eachCell((cell, colNum) => {
-      cell.alignment = { vertical: "middle", wrapText: colNum === 3 };
-      cell.border    = { bottom: { style: "hair", color: { argb: "FFE5E7EB" } } };
-    });
-  }
-
-  // ── Total row ─────────────────────────────────────────────────────────────────
-  ws.addRow([]);
-  const totalRowNum = ws.rowCount + 1;
-  const totalRow    = ws.addRow(["", "", "", "Total", total]);
-  totalRow.height   = 22;
-  totalRow.getCell(4).font  = { bold: true, size: 10 };
-  totalRow.getCell(5).font  = { bold: true, size: 10 };
-  totalRow.getCell(5).numFmt = '"$"#,##0.00';
-  for (let col = 1; col <= NCOLS; col++) {
-    const cell = ws.getCell(totalRowNum, col);
-    cell.fill   = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF3F4F6" } };
-    cell.border = { top: { style: "thin", color: { argb: "FFD1D5DB" } } };
-  }
-
-  // ── Footer note ───────────────────────────────────────────────────────────────
-  ws.addRow([]);
-  const footerRow = ws.addRow([
-    "This report was generated by Kashio. Verify all deductions with your tax agent before lodging.",
-  ]);
-  ws.mergeCells(footerRow.number, 1, footerRow.number, NCOLS);
-  footerRow.getCell(1).font      = { italic: true, size: 9, color: { argb: "FF9CA3AF" } };
-  footerRow.getCell(1).alignment = { horizontal: "left", indent: 1 };
-
-  const buffer = Buffer.from(await wb.xlsx.writeBuffer());
-
-  return new Response(buffer, {
+  return new Response(csv, {
     headers: {
-      "Content-Type":        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": `attachment; filename="kashio-deductions-${year}.xlsx"`,
+      "Content-Type":        "text/csv; charset=utf-8",
+      "Content-Disposition": `attachment; filename="kashio-deductions-${year}.csv"`,
     },
   });
 }
