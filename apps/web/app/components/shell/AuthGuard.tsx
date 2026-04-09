@@ -31,7 +31,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  if (!ready) return null;
+  if (!ready) return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-violet-600" />
+    </div>
+  );
 
   return <>{children}</>;
 }
