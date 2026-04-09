@@ -13,7 +13,6 @@ export default function OnboardingPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState<string | null>(null);
-  const [saved, setSaved]       = useState(false);
 
   async function handleContinue() {
     if (!selected) return;
@@ -26,22 +25,11 @@ export default function OnboardingPage() {
 
     if (error) {
       setError("Couldn't save your selection. Please try again.");
+      setLoading(false);
     } else {
-      setSaved(true);
+      window.location.href = "/import";
     }
 
-    setLoading(false);
-  }
-
-  if (saved) {
-    return (
-      <main className="flex min-h-screen items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md text-center">
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">You're all set!</p>
-          <p className="mt-2 text-gray-500 dark:text-gray-400">Your profile has been saved.</p>
-        </div>
-      </main>
-    );
   }
 
   return (

@@ -33,7 +33,7 @@ export default function LoginPage() {
     // Sign in immediately after creating the account
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) { setError(friendlyError(signInError.message)); setLoading(false); return; }
-    window.location.href = "/import";
+    window.location.href = "/onboarding";
   }
 
   async function handleGoogle() {
