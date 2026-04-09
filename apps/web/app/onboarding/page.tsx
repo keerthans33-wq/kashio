@@ -25,7 +25,7 @@ export default function OnboardingPage() {
     });
 
     if (error) {
-      setError("Couldn't save your selection. Please try again.");
+      setError(`Couldn't save your selection: ${error.message}`);
     } else {
       setSaved(true);
     }
