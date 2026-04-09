@@ -21,9 +21,10 @@ export default function LoginPage() {
 
   async function handleSignIn() {
     setError(null); setMessage(null); setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) { setError(friendlyError(error.message)); setLoading(false); return; }
-    window.location.href = "/import";
+    const userType = data.user?.user_metadata?.user_type;
+    window.location.href = userType ? "/import" : "/onboarding";
   }
 
   async function handleSignUp() {

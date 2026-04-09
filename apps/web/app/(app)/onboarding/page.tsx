@@ -19,19 +19,18 @@ export default function OnboardingPage() {
     setLoading(true);
     setError(null);
 
-    console.log("Selected user_type:", selected);
-
     const { data: { user } } = await supabase.auth.getUser();
-    console.log("Current user:", user?.id ?? "none");
+    if (!user) {
+      window.location.href = "/login";
+      return;
+    }
 
-    const { data, error } = await supabase.auth.updateUser({ data: { user_type: selected } });
-    console.log("updateUser result:", { data, error });
+    const { error } = await supabase.auth.updateUser({ data: { user_type: selected } });
 
     if (error) {
       setError("Couldn't save your selection. Please try again.");
       setLoading(false);
     } else {
-      console.log("Redirecting to /import");
       window.location.href = "/import";
     }
   }

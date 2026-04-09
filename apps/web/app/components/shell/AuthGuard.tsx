@@ -7,15 +7,16 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
+    // Use getUser() instead of getSession() — getUser() validates the token
+    // with the server, so a stale/expired session is caught immediately.
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) {
         window.location.replace("/login");
       } else {
         setReady(true);
       }
     });
 
-    // Redirect on explicit sign-out (e.g. from another tab)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
         window.location.replace("/login");
