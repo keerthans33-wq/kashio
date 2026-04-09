@@ -19,14 +19,7 @@ export default function OnboardingPage() {
     setLoading(true);
     setError(null);
 
-    const { data: { user } } = await supabase.auth.getUser();
-    console.log("Current user:", user?.id ?? "none");
-    console.log("Selected user_type:", selected);
-
-    const { data, error } = await supabase.auth.updateUser({
-      data: { user_type: selected },
-    });
-    console.log("updateUser response:", { data, error });
+    const { error } = await supabase.auth.updateUser({ data: { user_type: selected } });
 
     if (error) {
       setError("Couldn't save your selection. Please try again.");
