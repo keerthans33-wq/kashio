@@ -1,12 +1,18 @@
 import { db } from "../../../lib/db";
-import { requireUser } from "../../../lib/auth";
+import { requireUserWithType } from "../../../lib/auth";
+
+const HEADING: Record<string, string> = {
+  employee:    "Your work deductions are ready",
+  contractor:  "Your business expenses are ready",
+  sole_trader: "Your business deductions are ready",
+};
 import { mapExportRow } from "../../../lib/export/mapExportRow";
 import { ExportDetails } from "./ExportDetails";
 
 export const dynamic = "force-dynamic";
 
 export default async function Export() {
-  const userId = await requireUser();
+  const { id: userId, userType } = await requireUserWithType();
   const confirmed = await db.deductionCandidate.findMany({
     where:   { status: "CONFIRMED", userId },
     include: { transaction: true },
@@ -40,7 +46,9 @@ export default async function Export() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
-      <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Export</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+        {userType ? HEADING[userType] ?? "Your deductions are ready" : "Export"}
+      </h1>
       <p className="mt-1 text-gray-500 dark:text-gray-400">
         Download your confirmed deductions as a spreadsheet for tax time.
       </p>

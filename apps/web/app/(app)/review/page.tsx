@@ -1,5 +1,11 @@
 import { db } from "../../../lib/db";
-import { requireUser } from "../../../lib/auth";
+import { requireUserWithType } from "../../../lib/auth";
+
+const HEADING: Record<string, string> = {
+  employee:    "Work-related deductions",
+  contractor:  "Business expenses",
+  sole_trader: "Business deductions",
+};
 import { ReviewFilters } from "./ReviewFilters";
 import { ReviewList } from "./ReviewList";
 import type { CandidateCardProps } from "./CandidateCard";
@@ -13,7 +19,7 @@ type Candidate = Awaited<ReturnType<typeof db.deductionCandidate.findMany>>[numb
   confidenceReason?: string | null;
 };
 
-function toCardProps(c: Candidate): CandidateCardProps {
+function toCardProps(c: Candidate, userType: string | null): CandidateCardProps {
   return {
     id:               c.id,
     status:           c.status,
@@ -24,14 +30,15 @@ function toCardProps(c: Candidate): CandidateCardProps {
     hasEvidence:      c.hasEvidence,
     evidenceNote:     c.evidenceNote ?? null,
     transaction:      c.transaction,
+    userType,
   };
 }
 
 type SearchParams = { category?: string; confidence?: string; sort?: string };
 
 export default async function Review({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const [userId, { category, confidence, sort }] = await Promise.all([
-    requireUser(),
+  const [{ id: userId, userType }, { category, confidence, sort }] = await Promise.all([
+    requireUserWithType(),
     searchParams,
   ]);
 
@@ -83,7 +90,9 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
     <main className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Your possible deductions</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+            {userType ? HEADING[userType] ?? "Your possible deductions" : "Your possible deductions"}
+          </h1>
           {nudge && (
             <p className="mt-1 text-gray-500 dark:text-gray-400">{nudge}</p>
           )}
@@ -143,9 +152,9 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
       ) : (
         <div className="mt-6">
           <ReviewList
-            needsReview={needsReview.map(toCardProps)}
-            confirmed={confirmed.map(toCardProps)}
-            rejected={rejected.map(toCardProps)}
+            needsReview={needsReview.map((c) => toCardProps(c, userType))}
+            confirmed={confirmed.map((c) => toCardProps(c, userType))}
+            rejected={rejected.map((c) => toCardProps(c, userType))}
           />
         </div>
       )}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabase";
+import { isValidUserType } from "../../../lib/user-context";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
@@ -15,11 +16,13 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         return;
       }
       const onOnboarding = window.location.pathname === "/onboarding";
-      if (!user.user_metadata?.user_type && !onOnboarding) {
+      if (!isValidUserType(user.user_metadata?.user_type) && !onOnboarding) {
         window.location.replace("/onboarding");
       } else {
         setReady(true);
       }
+    }).catch(() => {
+      window.location.replace("/login");
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {

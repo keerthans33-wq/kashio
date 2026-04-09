@@ -24,6 +24,14 @@ export async function requireUser(): Promise<string> {
   return user.id;
 }
 
+// Like requireUser() but also returns user_type from metadata.
+export async function requireUserWithType(): Promise<{ id: string; userType: string | null }> {
+  const supabase = await makeServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  return { id: user.id, userType: user.user_metadata?.user_type ?? null };
+}
+
 // For API routes: returns the user ID or null (caller handles the 401).
 export async function getUser(): Promise<string | null> {
   const supabase = await makeServerClient();

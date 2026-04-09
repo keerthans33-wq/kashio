@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../../../lib/supabase";
 
 const OPTIONS = [
@@ -11,6 +11,13 @@ const OPTIONS = [
 
 export default function OnboardingPage() {
   const [selected, setSelected] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      const existing = user?.user_metadata?.user_type;
+      if (existing) setSelected(existing);
+    });
+  }, []);
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState<string | null>(null);
 

@@ -5,6 +5,13 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "./ThemeToggle";
 import { supabase } from "../../../lib/supabase";
+import { useUser } from "../../../lib/user-context";
+
+const USER_TYPE_LABEL: Record<string, string> = {
+  employee:    "Employee",
+  contractor:  "Contractor / Freelancer",
+  sole_trader: "Sole trader",
+};
 
 const links = [
   { href: "/import", label: "1. Import" },
@@ -14,6 +21,7 @@ const links = [
 
 export default function Nav() {
   const pathname = usePathname();
+  const { userType } = useUser();
 
   return (
     <nav className="sticky top-0 z-50 border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
@@ -53,11 +61,16 @@ export default function Nav() {
               );
             })}
           </div>
+          {userType && USER_TYPE_LABEL[userType] && (
+            <span className="hidden sm:block text-xs text-gray-400 dark:text-gray-500">
+              Mode: {USER_TYPE_LABEL[userType]}
+            </span>
+          )}
           <ThemeToggle />
           <button
             onClick={async () => {
               await supabase.auth.signOut();
-              window.location.href = "/auth";
+              window.location.href = "/login";
             }}
             className="text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
           >

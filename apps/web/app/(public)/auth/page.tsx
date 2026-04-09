@@ -40,11 +40,12 @@ export default function AuthPage() {
 
     setLoading(true);
     setMessage(null);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setMessage({ text: friendlyError(error.message), error: true });
     } else {
-      window.location.href = "/import";
+      const userType = data.user?.user_metadata?.user_type;
+      window.location.href = userType ? "/import" : "/onboarding";
     }
     setLoading(false);
   }

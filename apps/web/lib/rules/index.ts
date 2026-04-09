@@ -3,12 +3,18 @@ import { detectSoftware } from "./detectSoftware";
 import { detectOfficeSupplies } from "./detectOfficeSupplies";
 import { detectWorkEquipment } from "./detectWorkEquipment";
 import { detectWorkwear } from "./detectWorkwear";
+import { detectTravel } from "./detectTravel";
+import { detectTools } from "./detectTools";
+import { detectPhoneInternet } from "./detectPhoneInternet";
 
 const rules: Rule[] = [
   detectSoftware,
   detectOfficeSupplies,
   detectWorkEquipment,
   detectWorkwear,
+  detectTravel,
+  detectTools,
+  detectPhoneInternet,
 ];
 
 // Confidence rank used to resolve conflicts when multiple rules match.

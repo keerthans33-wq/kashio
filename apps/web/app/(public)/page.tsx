@@ -37,7 +37,7 @@ export default async function Home({
 
         {/* What it does */}
         <p className="mt-3 text-lg text-gray-600 dark:text-gray-400">
-          Kashio helps Australian employees spot possible work-related deductions in their bank transactions.
+          Kashio helps Australian employees, contractors, and sole traders spot possible deductions in their bank transactions.
         </p>
         <p className="mt-2 text-gray-500 dark:text-gray-400">
           Connect your bank directly or upload a CSV. Kashio scans your transactions, flags what looks work-related, and gives you a tidy summary at tax time.

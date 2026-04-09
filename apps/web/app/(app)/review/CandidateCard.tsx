@@ -16,7 +16,21 @@ export type CandidateCardProps = {
   hasEvidence:       boolean;
   evidenceNote:      string | null;
   transaction:       { normalizedMerchant: string; amount: number; date: string; description: string };
+  userType?:         string | null;
 };
+
+const USER_TYPE_EXPLANATION: Record<string, string> = {
+  employee:    "This may be deductible if used for your job",
+  contractor:  "This may be a business expense related to your work",
+  sole_trader: "This may be a business-related deduction",
+};
+
+const MIXED_USE_KEYWORDS = ["phone", "internet", "laptop", "subscription", "software", "mobile"];
+
+function isMixedUse(category: string, reason: string): boolean {
+  const text = `${category} ${reason}`.toLowerCase();
+  return MIXED_USE_KEYWORDS.some((k) => text.includes(k));
+}
 
 const STATUS_BORDER: Record<Status, string> = {
   NEEDS_REVIEW: "border-gray-200 dark:border-gray-700",
@@ -32,7 +46,7 @@ const STATUS_BG: Record<Status, string> = {
 
 export function CandidateCard({
   id, status: initialStatus, confidence, category, reason, confidenceReason,
-  hasEvidence, evidenceNote, transaction,
+  hasEvidence, evidenceNote, transaction, userType,
 }: CandidateCardProps) {
   const [status, setStatus]                 = useState<Status>(initialStatus);
   const [expanded, setExpanded]             = useState(false);
@@ -98,6 +112,20 @@ export function CandidateCard({
 
         {/* Why flagged */}
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{reason}</p>
+
+        {/* User-type context */}
+        {userType && USER_TYPE_EXPLANATION[userType] && (
+          <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+            {USER_TYPE_EXPLANATION[userType]}
+          </p>
+        )}
+
+        {/* Mixed-use hint */}
+        {isMixedUse(category, reason) && (
+          <p className="mt-0.5 text-xs text-amber-500 dark:text-amber-400">
+            May include personal use — review before claiming
+          </p>
+        )}
 
         {/* Confidence label — surface uncertainty before the user decides */}
         {confidence !== "HIGH" && !settled && (
