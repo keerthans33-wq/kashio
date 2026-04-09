@@ -12,6 +12,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) {
         window.location.replace("/login");
+        return;
+      }
+      const onOnboarding = window.location.pathname === "/onboarding";
+      if (!user.user_metadata?.user_type && !onOnboarding) {
+        window.location.replace("/onboarding");
       } else {
         setReady(true);
       }
