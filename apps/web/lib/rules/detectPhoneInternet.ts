@@ -1,15 +1,12 @@
 // Category:   Phone & Internet
-// Confidence: MEDIUM for known telco merchants (strong merchant signal)
-//             LOW for keyword-only matches
-// Detects:    Phone bills, internet plans, and mobile subscriptions
-// ATO note:   Only the work-use portion is deductible. Mixed personal/work
-//             use is very common — the hint in the UI flags this automatically.
+// Confidence: MEDIUM when a telco merchant AND a billing keyword both match
+//             LOW for merchant-only or keyword-only matches
+// ATO note:   Only the work-use portion is deductible.
 
-import type { Rule } from "./types";
+import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
-import { isExcluded } from "./shared";
+import { merchantText, combinedText } from "./shared";
 
-// Australian telcos and ISPs
 const MERCHANTS = [
   "telstra",
   "optus",
@@ -40,31 +37,43 @@ const KEYWORDS = [
   "telecommunications",
 ];
 
-export const detectPhoneInternet: Rule = (transaction) => {
-  if (transaction.amount >= 0) return null;
-  if (isExcluded(transaction.description)) return null;
+function detect(tx: { normalizedMerchant: string; description: string }): RawMatch | null {
+  const combined = combinedText(tx);
 
-  const merchant = transaction.normalizedMerchant.toLowerCase();
-  const desc     = transaction.description.toLowerCase();
+  const merchantMatch = MERCHANTS.some((m) => merchantText(tx).includes(m));
+  const keyword       = KEYWORDS.find((k) => combined.includes(k));
 
-  const merchantMatch  = MERCHANTS.some((m) => merchant.includes(m));
-  const matchedKeyword = KEYWORDS.find((k) => desc.includes(k) || merchant.includes(k));
+  if (!merchantMatch && !keyword) return null;
 
-  if (!merchantMatch && !matchedKeyword) return null;
+  return {
+    category:   CATEGORIES.PHONE_INTERNET,
+    confidence: merchantMatch && keyword ? "MEDIUM" : "LOW",
+    signals:    { merchantMatch, keyword },
+  };
+}
+
+function explain(match: RawMatch, tx: { normalizedMerchant: string }): Explanation {
+  const { merchantMatch, keyword } = match.signals;
+  const both = merchantMatch && keyword;
+
+  if (both) {
+    return {
+      reason:           `This looks like a ${tx.normalizedMerchant} ${keyword}. If you use this service for work, the work-use portion is deductible. Personal use isn't claimable.`,
+      confidenceReason: "Recognised telco and a billing keyword in the description — two signals pointing to a recurring phone or internet charge.",
+    };
+  }
 
   if (merchantMatch) {
     return {
-      category:   CATEGORIES.PHONE_INTERNET,
-      confidence: "MEDIUM",
-      reason:     `${transaction.normalizedMerchant} is a phone or internet provider. If you use this service for work, the work-use portion of the bill is deductible. Personal use isn't claimable.`,
-      confidenceReason: "Recognised Australian telco or ISP — strong signal, but phone and internet are almost always mixed personal and work use.",
+      reason:           `${tx.normalizedMerchant} is a phone or internet provider. If this is a recurring bill you use for work, the work portion is deductible — but confirm it's a service charge, not a device purchase.`,
+      confidenceReason: "Recognised telco, but no billing keyword — could be a handset, accessory, or store payment rather than a phone or internet bill.",
     };
   }
 
   return {
-    category:   CATEGORIES.PHONE_INTERNET,
-    confidence: "LOW",
-    reason:     `The description mentions "${matchedKeyword}". If this is a phone or internet service you use for work, the work portion is deductible. Keep a record of how much you use it for work vs personal.`,
-    confidenceReason: "Keyword matched, but without a recognised telco merchant it's harder to confirm this is a phone or internet bill.",
+    reason:           `The description mentions "${keyword}". If this is a phone or internet service you use for work, the work portion is deductible. Keep a record of how much you use it for work vs personal.`,
+    confidenceReason: "Billing keyword matched, but without a recognised telco merchant it's harder to confirm this is a phone or internet bill.",
   };
-};
+}
+
+export const detectPhoneInternet: Rule = { priority: 4, detect, explain };

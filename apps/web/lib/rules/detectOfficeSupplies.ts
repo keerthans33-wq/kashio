@@ -1,12 +1,10 @@
 // Category:   Office Supplies & Equipment
-// Confidence: MEDIUM only when a known retailer AND a work-specific keyword both match
-//             (e.g. Officeworks + "ink cartridge") — corroborating evidence required.
-//             LOW when only one signal is present — could easily be a personal purchase.
-// Detects:    Known office supply retailers and consumable keywords
+// Confidence: MEDIUM when a known retailer AND a work keyword both match
+//             LOW when only one signal is present
 
-import type { Rule } from "./types";
+import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
-import { isExcluded } from "./shared";
+import { merchantText, combinedText } from "./shared";
 
 const MERCHANTS = [
   "officeworks",
@@ -21,37 +19,43 @@ const KEYWORDS = [
   "printer paper",
 ];
 
-export const detectOfficeSupplies: Rule = (transaction) => {
-  if (transaction.amount >= 0) return null;
-  if (isExcluded(transaction.description)) return null;
+function detect(tx: { normalizedMerchant: string; description: string }): RawMatch | null {
+  const combined = combinedText(tx);
 
-  const merchant = transaction.normalizedMerchant.toLowerCase();
-  const descLower = transaction.description.toLowerCase();
+  const merchantMatch = MERCHANTS.some((m) => merchantText(tx).includes(m));
+  const keyword       = KEYWORDS.find((k) => combined.includes(k));
 
-  const merchantMatch = MERCHANTS.some((m) => merchant.includes(m));
-  const matchedKeyword = KEYWORDS.find((k) => descLower.includes(k) || merchant.includes(k));
+  if (!merchantMatch && !keyword) return null;
 
-  if (!merchantMatch && !matchedKeyword) return null;
+  return {
+    category:   CATEGORIES.OFFICE_SUPPLIES,
+    confidence: merchantMatch && keyword ? "MEDIUM" : "LOW",
+    signals:    { merchantMatch, keyword },
+  };
+}
 
-  // Both signals present → stronger evidence it's a work purchase
-  if (merchantMatch && matchedKeyword) {
+function explain(match: RawMatch, tx: { normalizedMerchant: string }): Explanation {
+  const { merchantMatch, keyword } = match.signals;
+  const both = merchantMatch && keyword;
+
+  if (both) {
     return {
-      category:   CATEGORIES.OFFICE_SUPPLIES,
-      confidence: "MEDIUM",
-      reason:     `This looks like a ${matchedKeyword} purchase from ${transaction.normalizedMerchant}. Office supplies you buy for work are deductible — home or personal use doesn't qualify.`,
+      reason:           `This looks like a ${keyword} purchase from ${tx.normalizedMerchant}. Office supplies you buy for work are deductible — home or personal use doesn't qualify.`,
       confidenceReason: "Both the store and the item type matched — two signals pointing to a work purchase.",
     };
   }
 
-  // Only one signal → could still be personal
+  if (merchantMatch) {
+    return {
+      reason:           `${tx.normalizedMerchant} is an office supply store. If this was for work — stationery, printer supplies, or similar — you can claim it. Home purchases from the same store don't count.`,
+      confidenceReason: "Known office store matched, but no specific item in the description — could still be a personal purchase.",
+    };
+  }
+
   return {
-    category:   CATEGORIES.OFFICE_SUPPLIES,
-    confidence: "LOW",
-    reason:     merchantMatch
-      ? `${transaction.normalizedMerchant} is an office supply store. If this was for work — stationery, printer supplies, or similar — you can claim it. Home purchases from the same store don't count.`
-      : `The description mentions "${matchedKeyword}". Office supplies bought for work are deductible — if it was for home use, it won't qualify.`,
-    confidenceReason: merchantMatch
-      ? "Known office store matched, but no specific item in the description — could still be a personal purchase."
-      : "Item type matched in the description, but without a recognised office store it's harder to be sure.",
+    reason:           `The description mentions "${keyword}". Office supplies bought for work are deductible — if it was for home use, it won't qualify.`,
+    confidenceReason: "Item type matched in the description, but without a recognised office store it's harder to be sure.",
   };
-};
+}
+
+export const detectOfficeSupplies: Rule = { priority: 4, detect, explain };

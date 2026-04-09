@@ -5,20 +5,21 @@ import { CandidateCard, type CandidateCardProps } from "./CandidateCard";
 import { bulkConfirmCandidates, bulkRejectCandidates, bulkResetCandidates } from "./actions";
 
 type Props = {
-  needsReview: CandidateCardProps[];
-  confirmed:   CandidateCardProps[];
-  rejected:    CandidateCardProps[];
+  needsReview:     CandidateCardProps[];
+  confirmed:       CandidateCardProps[];
+  rejected:        CandidateCardProps[];
+  missingEvidence: number;
 };
 
-export function ReviewList({ needsReview, confirmed, rejected }: Props) {
-  const reviewed = [...confirmed, ...rejected];
-
-  const [selected, setSelected]         = useState<Set<string>>(new Set());
-  const [isSaving, setIsSaving]         = useState(false);
-  const [error, setError]               = useState<string | null>(null);
-  const [successMsg, setSuccessMsg]     = useState<string | null>(null);
-  const [lastIds, setLastIds]           = useState<string[]>([]);
-  const [showReviewed, setShowReviewed] = useState(false);
+export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }: Props) {
+  const [selected, setSelected]             = useState<Set<string>>(new Set());
+  const [isSaving, setIsSaving]             = useState(false);
+  const [error, setError]                   = useState<string | null>(null);
+  const [successMsg, setSuccessMsg]         = useState<string | null>(null);
+  const [lastIds, setLastIds]               = useState<string[]>([]);
+  // Auto-expand confirmed when there are items missing receipts
+  const [showConfirmed, setShowConfirmed]   = useState(missingEvidence > 0);
+  const [showRejected, setShowRejected]     = useState(false);
 
   const needsReviewIds = needsReview.map((c) => c.id);
 
@@ -98,18 +99,18 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
         <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
           <span className="text-sm text-gray-600 dark:text-gray-400">{selected.size} selected</span>
           <button
-            onClick={() => bulkAction(bulkConfirmCandidates, "claimed")}
+            onClick={() => bulkAction(bulkConfirmCandidates, "marked deductible")}
             disabled={isSaving}
             className="rounded-md bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-40"
           >
-            {isSaving ? "Saving…" : "Yes, claim all"}
+            {isSaving ? "Saving…" : "Looks deductible"}
           </button>
           <button
-            onClick={() => bulkAction(bulkRejectCandidates, "skipped")}
+            onClick={() => bulkAction(bulkRejectCandidates, "marked not deductible")}
             disabled={isSaving}
             className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-600 dark:text-gray-400"
           >
-            {isSaving ? "Saving…" : "Skip all"}
+            {isSaving ? "Saving…" : "Not deductible"}
           </button>
           <button
             onClick={() => setSelected(new Set())}
@@ -124,7 +125,7 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
       {/* ── Needs review — primary ─────────────────────────────────────────── */}
       {needsReview.length === 0 ? (
         <p className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">
-          {reviewed.length > 0 ? "All items reviewed." : "Nothing to review yet."}
+          {confirmed.length + rejected.length > 0 ? "All items reviewed." : "Nothing to review yet."}
         </p>
       ) : (
         <>
@@ -163,25 +164,42 @@ export function ReviewList({ needsReview, confirmed, rejected }: Props) {
         </>
       )}
 
-      {/* ── Reviewed — secondary, collapsible ─────────────────────────────── */}
-      {reviewed.length > 0 && (
+      {/* ── Confirmed — secondary, collapsible ────────────────────────────── */}
+      {confirmed.length > 0 && (
         <div className="mt-8 border-t border-gray-100 pt-6 dark:border-gray-800">
           <button
-            onClick={() => setShowReviewed((v) => !v)}
-            className="text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+            onClick={() => setShowConfirmed((v) => !v)}
+            className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
           >
-            {showReviewed ? "Hide" : "Show"} reviewed ({reviewed.length})
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-green-100 text-xs text-green-600 dark:bg-green-900/30 dark:text-green-400">✓</span>
+            {showConfirmed ? "Hide" : "Show"} confirmed ({confirmed.length})
           </button>
-
-          {showReviewed && (
+          {showConfirmed && (
             <div className="mt-4 space-y-2">
-              {reviewed.map((c) => (
-                <CandidateCard key={c.id} {...c} />
-              ))}
+              {confirmed.map((c) => <CandidateCard key={c.id} {...c} />)}
             </div>
           )}
         </div>
       )}
+
+      {/* ── Rejected — secondary, collapsible ─────────────────────────────── */}
+      {rejected.length > 0 && (
+        <div className="mt-4 border-t border-gray-100 pt-6 dark:border-gray-800">
+          <button
+            onClick={() => setShowRejected((v) => !v)}
+            className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+          >
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-500 dark:bg-gray-700 dark:text-gray-400">✗</span>
+            {showRejected ? "Hide" : "Show"} not deductible ({rejected.length})
+          </button>
+          {showRejected && (
+            <div className="mt-4 space-y-2">
+              {rejected.map((c) => <CandidateCard key={c.id} {...c} />)}
+            </div>
+          )}
+        </div>
+      )}
+
     </div>
   );
 }

@@ -12,73 +12,101 @@ export function ReviewFilters() {
 
   function update(key: string, value: string) {
     const next = new URLSearchParams(params.toString());
-    if (value === "") {
-      next.delete(key);
-    } else {
-      next.set(key, value);
-    }
+    value === "" ? next.delete(key) : next.set(key, value);
     router.push(`${pathname}?${next.toString()}`);
   }
 
   const category   = params.get("category") ?? "";
   const confidence = params.get("confidence") ?? "";
   const sort       = params.get("sort") ?? "";
-  const hasFilters = category || confidence;
+  const hasFilters = category || confidence || sort;
 
   return (
     <div className="mt-4">
+
+      {/* Toggle row */}
       <div className="flex items-center gap-3">
         <button
           onClick={() => setOpen((v) => !v)}
           className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
         >
-          {open ? "Hide filters" : "Filter"}
+          {open ? "Hide options" : "View options"}
           {hasFilters && !open && (
             <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
           )}
         </button>
         {hasFilters && (
           <button
-            onClick={() => router.push(sort ? `${pathname}?sort=${sort}` : pathname)}
-            className="text-sm text-gray-400 hover:text-gray-600 underline dark:text-gray-500 dark:hover:text-gray-300"
+            onClick={() => router.push(pathname)}
+            className="text-sm text-gray-400 underline hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
           >
-            Clear
+            Reset
           </button>
         )}
       </div>
 
+      {/* Filter panel */}
       {open && (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <select
-            value={category}
-            onChange={(e) => update("category", e.target.value)}
-            className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
-          >
-            <option value="">All categories</option>
-            {ACTIVE_CATEGORIES.map((c) => (
-              <option key={c} value={c}>{c}</option>
+        <div className="mt-3 space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs text-gray-400 dark:text-gray-500 self-center">Category</span>
+            {["", ...ACTIVE_CATEGORIES].map((c) => (
+              <button
+                key={c}
+                onClick={() => update("category", c)}
+                className={`rounded-full px-3 py-1 text-xs transition-colors ${
+                  category === c
+                    ? "bg-violet-600 text-white"
+                    : "border border-gray-200 text-gray-500 hover:border-gray-300 dark:border-gray-600 dark:text-gray-400"
+                }`}
+              >
+                {c === "" ? "All" : c}
+              </button>
             ))}
-          </select>
+          </div>
 
-          <select
-            value={confidence}
-            onChange={(e) => update("confidence", e.target.value)}
-            className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
-          >
-            <option value="">Any confidence</option>
-            <option value="MEDIUM">Looks likely</option>
-            <option value="LOW">Worth checking</option>
-          </select>
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs text-gray-400 dark:text-gray-500 self-center">Match</span>
+            {[
+              { value: "",       label: "All" },
+              { value: "HIGH",   label: "Likely deductible" },
+              { value: "MEDIUM", label: "Needs a closer look" },
+              { value: "LOW",    label: "Review carefully" },
+            ].map(({ value, label }) => (
+              <button
+                key={value}
+                onClick={() => update("confidence", value)}
+                className={`rounded-full px-3 py-1 text-xs transition-colors ${
+                  confidence === value
+                    ? "bg-violet-600 text-white"
+                    : "border border-gray-200 text-gray-500 hover:border-gray-300 dark:border-gray-600 dark:text-gray-400"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
 
-          <select
-            value={sort}
-            onChange={(e) => update("sort", e.target.value)}
-            className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
-          >
-            <option value="">Sort: Date</option>
-            <option value="amount">Sort: Amount</option>
-            <option value="confidence">Sort: Certainty</option>
-          </select>
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs text-gray-400 dark:text-gray-500 self-center">Sort</span>
+            {[
+              { value: "",           label: "Date" },
+              { value: "amount",     label: "Amount" },
+              { value: "confidence", label: "Certainty" },
+            ].map(({ value, label }) => (
+              <button
+                key={value}
+                onClick={() => update("sort", value)}
+                className={`rounded-full px-3 py-1 text-xs transition-colors ${
+                  sort === value
+                    ? "bg-violet-600 text-white"
+                    : "border border-gray-200 text-gray-500 hover:border-gray-300 dark:border-gray-600 dark:text-gray-400"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>

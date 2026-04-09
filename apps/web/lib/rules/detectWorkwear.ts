@@ -1,17 +1,13 @@
 // Category:   Work Clothing & Uniforms
-// Confidence: MEDIUM for known dedicated workwear retailers (strong merchant signal)
-//             LOW for keyword-only matches (description could still be personal)
-// Detects:    Occupation-specific clothing and protective gear.
-//             Conventional clothing (suits, shirts) is NOT deductible
-//             under ATO rules and is intentionally excluded.
+// Confidence: MEDIUM for known specialist workwear retailers
+//             LOW for keyword-only matches
+// ATO note:   Conventional clothing is NOT deductible. Only occupation-specific
+//             gear that can't reasonably be worn outside of work qualifies.
 
-import type { Rule } from "./types";
+import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
-import { isExcluded } from "./shared";
+import { merchantText, combinedText } from "./shared";
 
-// Dedicated workwear retailers — specific brand names only.
-// Avoid broad substrings like "workwear" or "work wear" that could
-// over-match general retailers who happen to stock some PPE.
 const MERCHANTS = [
   "hard yakka",
   "king gee",
@@ -21,7 +17,6 @@ const MERCHANTS = [
   "safety world",
 ];
 
-// Keywords specific enough to indicate deductible clothing
 const KEYWORDS = [
   "uniform",
   "hi-vis",
@@ -40,32 +35,35 @@ const KEYWORDS = [
   "scrubs",
 ];
 
-export const detectWorkwear: Rule = (transaction) => {
-  if (transaction.amount >= 0) return null;
-  if (isExcluded(transaction.description)) return null;
+function detect(tx: { normalizedMerchant: string; description: string }): RawMatch | null {
+  const combined = combinedText(tx);
 
-  const merchant = transaction.normalizedMerchant.toLowerCase();
-  const desc     = transaction.description.toLowerCase();
-  const combined = desc + " " + merchant;
+  const merchantMatch = MERCHANTS.some((m) => merchantText(tx).includes(m));
+  const keyword       = KEYWORDS.find((k) => combined.includes(k));
 
-  if (MERCHANTS.some((m) => merchant.includes(m))) {
+  if (!merchantMatch && !keyword) return null;
+
+  return {
+    category:   CATEGORIES.WORK_CLOTHING,
+    confidence: merchantMatch ? "MEDIUM" : "LOW",
+    signals:    { merchantMatch, keyword },
+  };
+}
+
+function explain(match: RawMatch, tx: { normalizedMerchant: string }): Explanation {
+  const { merchantMatch, keyword } = match.signals;
+
+  if (merchantMatch) {
     return {
-      category:   CATEGORIES.WORK_CLOTHING,
-      confidence: "MEDIUM",
-      reason:     `${transaction.normalizedMerchant} sells work and safety clothing. If you bought something required for your job that you can't wear outside of work, you can claim it.`,
-      confidenceReason: "This is a specialist workwear store — a strong sign the purchase is work clothing. Not fully certain because the same stores sometimes carry casual items too.",
+      reason:           `${tx.normalizedMerchant} sells work and safety clothing. If you bought something required for your job that you can't wear outside of work, you can claim it.`,
+      confidenceReason: "Specialist workwear store — a strong signal. Not fully certain because the same stores sometimes carry casual items too.",
     };
   }
 
-  const matchedKeyword = KEYWORDS.find((k) => combined.includes(k));
-  if (matchedKeyword) {
-    return {
-      category:   CATEGORIES.WORK_CLOTHING,
-      confidence: "LOW",
-      reason:     `The description mentions "${matchedKeyword}", which is the kind of item you can claim if it's required for your job. Everyday clothing worn at work doesn't qualify — only gear you couldn't reasonably wear outside of work.`,
-      confidenceReason: "The item type suggests work gear, but the store isn't a specialist workwear retailer — harder to be confident without both.",
-    };
-  }
+  return {
+    reason:           `The description mentions "${keyword}", which is the kind of item you can claim if it's required for your job. Everyday clothing worn at work doesn't qualify — only gear you couldn't reasonably wear outside of work.`,
+    confidenceReason: "The item type suggests work gear, but the store isn't a specialist workwear retailer — harder to be confident without both.",
+  };
+}
 
-  return null;
-};
+export const detectWorkwear: Rule = { priority: 5, detect, explain };

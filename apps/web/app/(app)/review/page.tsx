@@ -72,18 +72,19 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
   // Dollar values — always from unfiltered set
   const amt = (c: Candidate) => Math.abs(c.transaction.amount);
-  const potentialValue = all.filter((c) => c.status !== "REJECTED").reduce((s, c) => s + amt(c), 0);
+  const unreviewedValue = all.filter((c) => c.status === "NEEDS_REVIEW").reduce((s, c) => s + amt(c), 0);
+  const potentialValue  = all.filter((c) => c.status !== "REJECTED").reduce((s, c) => s + amt(c), 0);
   const fmt = (n: number) => n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 
   const isFiltered = category || confidence;
 
-  // Single priority-based nudge
+  // Single top-priority nudge: 1) items to review, 2) missing evidence
   const nudge =
-    all.length === 0        ? null :
-    totalNeedsReview > 0   ? "Kashio flagged these as possible deductions — you make the final call." :
-    missingEvidence > 0    ? `Add receipts for ${missingEvidence} confirmed deduction${missingEvidence !== 1 ? "s" : ""} before exporting.` :
-    totalConfirmed > 0     ? "All done — nice work. Ready to export whenever you are." :
-                              null;
+    all.length === 0         ? "Import your bank transactions and Kashio will flag what looks deductible." :
+    totalNeedsReview > 0     ? `${totalNeedsReview} item${totalNeedsReview !== 1 ? "s" : ""} left to review${unreviewedValue > 0 ? ` — ${fmt(unreviewedValue)} to consider` : ""}.` :
+    missingEvidence > 0      ? `${missingEvidence} confirmed item${missingEvidence !== 1 ? "s" : ""} still need${missingEvidence === 1 ? "s" : ""} a receipt.` :
+    totalConfirmed > 0       ? "All reviewed. Ready to export." :
+                                "Nothing confirmed yet.";
 
 
   return (
@@ -91,11 +92,9 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-            {userType ? HEADING[userType] ?? "Your possible deductions" : "Your possible deductions"}
+            {userType ? HEADING[userType] ?? "Possible deductions" : "Possible deductions"}
           </h1>
-          {nudge && (
-            <p className="mt-1 text-gray-500 dark:text-gray-400">{nudge}</p>
-          )}
+          <p className="mt-1 text-gray-500 dark:text-gray-400">{nudge}</p>
         </div>
         {totalConfirmed > 0 && (
           <a
@@ -155,6 +154,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
             needsReview={needsReview.map((c) => toCardProps(c, userType))}
             confirmed={confirmed.map((c) => toCardProps(c, userType))}
             rejected={rejected.map((c) => toCardProps(c, userType))}
+            missingEvidence={missingEvidence}
           />
         </div>
       )}

@@ -1,15 +1,14 @@
 // Category:   Tools & Equipment
-// Confidence: MEDIUM for specialist trade/hardware merchants with a tool keyword
-//             LOW for keyword-only or merchant-only matches
-// Detects:    Hand tools, power tools, and trade equipment
-// ATO note:   Tools costing $300 or less can be claimed immediately.
-//             Items over $300 must be depreciated. User should confirm cost.
+// Confidence: MEDIUM when a trade merchant AND a tool keyword both match
+//             LOW for keyword-only matches
+// Note:       Merchant-only matches are not flagged — broad hardware stores
+//             like Bunnings sell far more non-deductible items than tools.
+// ATO note:   Tools $300 or less can be claimed immediately; over $300 must be depreciated.
 
-import type { Rule } from "./types";
+import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
-import { isExcluded } from "./shared";
+import { merchantText, combinedText } from "./shared";
 
-// Trade and hardware merchants with high work-use overlap
 const MERCHANTS = [
   "bunnings",
   "total tools",
@@ -23,7 +22,6 @@ const MERCHANTS = [
   "protector alsafe",
 ];
 
-// Tool and equipment keywords
 const KEYWORDS = [
   "drill",
   "saw",
@@ -47,40 +45,36 @@ const KEYWORDS = [
   "workbench",
 ];
 
-export const detectTools: Rule = (transaction) => {
-  if (transaction.amount >= 0) return null;
-  if (isExcluded(transaction.description)) return null;
+function detect(tx: { normalizedMerchant: string; description: string }): RawMatch | null {
+  const combined     = combinedText(tx);
+  const keyword      = KEYWORDS.find((k) => combined.includes(k));
 
-  const merchant = transaction.normalizedMerchant.toLowerCase();
-  const desc     = transaction.description.toLowerCase();
+  // Require a tool keyword — merchant name alone is too broad.
+  if (!keyword) return null;
 
-  const merchantMatch  = MERCHANTS.some((m) => merchant.includes(m));
-  const matchedKeyword = KEYWORDS.find((k) => desc.includes(k) || merchant.includes(k));
+  const merchantMatch = MERCHANTS.some((m) => merchantText(tx).includes(m));
 
-  if (!merchantMatch && !matchedKeyword) return null;
+  return {
+    category:   CATEGORIES.TOOLS_EQUIPMENT,
+    confidence: merchantMatch ? "MEDIUM" : "LOW",
+    signals:    { merchantMatch, keyword },
+  };
+}
 
-  if (merchantMatch && matchedKeyword) {
+function explain(match: RawMatch, tx: { normalizedMerchant: string }): Explanation {
+  const { merchantMatch, keyword } = match.signals;
+
+  if (merchantMatch) {
     return {
-      category:   CATEGORIES.TOOLS_EQUIPMENT,
-      confidence: "MEDIUM",
-      reason:     `This looks like a ${matchedKeyword} purchase from ${transaction.normalizedMerchant}. Tools you buy for work are deductible — items under $300 can be claimed in full this year.`,
+      reason:           `This looks like a ${keyword} purchase from ${tx.normalizedMerchant}. Tools you buy for work are deductible — items under $300 can be claimed in full this year.`,
       confidenceReason: "Both the store and the item type matched — two signals pointing to a work tool purchase.",
     };
   }
 
-  if (merchantMatch) {
-    return {
-      category:   CATEGORIES.TOOLS_EQUIPMENT,
-      confidence: "LOW",
-      reason:     `${transaction.normalizedMerchant} sells tools and trade supplies. If this was for work — not a personal home project — you may be able to claim it.`,
-      confidenceReason: "Known hardware or trade store matched, but without a specific item in the description it could still be a personal purchase.",
-    };
-  }
-
   return {
-    category:   CATEGORIES.TOOLS_EQUIPMENT,
-    confidence: "LOW",
-    reason:     `The description mentions a ${matchedKeyword}. If you bought this for work and it costs $300 or less, you can claim the full amount this year.`,
+    reason:           `The description mentions a ${keyword}. If you bought this for work and it costs $300 or less, you can claim the full amount this year.`,
     confidenceReason: "Item type matched, but without a recognised trade store it's harder to confirm this was a work purchase.",
   };
-};
+}
+
+export const detectTools: Rule = { priority: 4, detect, explain };
