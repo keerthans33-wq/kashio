@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "../../../lib/supabase";
 
 const OPTIONS = [
   { id: "employee",    label: "Employee" },
@@ -25,7 +25,7 @@ export default function OnboardingPage() {
     });
 
     if (error) {
-      setError(`Couldn't save your selection: ${error.message}`);
+      setError("Couldn't save your selection. Please try again.");
     } else {
       setSaved(true);
     }
