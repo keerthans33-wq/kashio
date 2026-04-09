@@ -27,9 +27,11 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${origin}/import`);
+      // New users (no user_type set) go to onboarding, returning users go to import
+      const userType = data.user?.user_metadata?.user_type;
+      return NextResponse.redirect(`${origin}${userType ? "/import" : "/onboarding"}`);
     }
   }
 
