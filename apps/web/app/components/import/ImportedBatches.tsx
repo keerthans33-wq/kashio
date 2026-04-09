@@ -51,6 +51,11 @@ export default function ImportedBatches() {
       const res = await fetch("/api/batches", { method: "DELETE" });
       if (!res.ok) throw new Error();
       setBatches([]);
+      // Clear demo bank sync status from localStorage so the "Connected" badge disappears
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith("kashio:demo-sync-status:"))
+        .forEach((k) => localStorage.removeItem(k));
+      window.location.reload();
     } catch {
       setError("Failed to clear all imports. Try again.");
     } finally {
