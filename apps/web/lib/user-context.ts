@@ -4,12 +4,9 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "./supabase";
 import type { User } from "@supabase/supabase-js";
 
-export const VALID_USER_TYPES = ["employee", "contractor", "sole_trader"] as const;
-export type UserType = typeof VALID_USER_TYPES[number];
-
-export function isValidUserType(value: unknown): value is UserType {
-  return VALID_USER_TYPES.includes(value as UserType);
-}
+export { VALID_USER_TYPES, isValidUserType } from "./userType";
+export type { UserType } from "./userType";
+import { isValidUserType } from "./userType";
 
 type UserContextValue = {
   user: User | null;

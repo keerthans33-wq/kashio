@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { isValidUserType } from "./user-context";
+import { isValidUserType } from "./userType";
 
 async function makeServerClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

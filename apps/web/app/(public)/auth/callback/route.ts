@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import { isValidUserType } from "../../../../lib/user-context";
+import { isValidUserType } from "../../../../lib/userType";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
