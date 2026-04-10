@@ -3,14 +3,15 @@ import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { isValidUserType } from "../../../../lib/user-context";
 
-// Handles the OAuth callback from Google (and any other provider).
-// Exchanges the one-time ?code= for a real session server-side,
-// where cookies can be reliably read and written.
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
 
-  if (code) {
+  if (!code) {
+    return NextResponse.redirect(`${origin}/login`);
+  }
+
+  try {
     const cookieStore = await cookies();
 
     const supabase = createServerClient(
@@ -29,13 +30,18 @@ export async function GET(request: NextRequest) {
     );
 
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
-      // New users (no valid user_type) go to onboarding, returning users go to import
-      const userType = data.user?.user_metadata?.user_type;
-      return NextResponse.redirect(`${origin}${isValidUserType(userType) ? "/import" : "/onboarding"}`);
-    }
-  }
 
-  // Something went wrong — send back to login
-  return NextResponse.redirect(`${origin}/login`);
+    if (error || !data.user) {
+      console.error("Auth callback error:", error?.message);
+      return NextResponse.redirect(`${origin}/login`);
+    }
+
+    const userType = data.user.user_metadata?.user_type;
+    return NextResponse.redirect(
+      `${origin}${isValidUserType(userType) ? "/import" : "/onboarding"}`
+    );
+  } catch (err) {
+    console.error("Auth callback exception:", err);
+    return NextResponse.redirect(`${origin}/login`);
+  }
 }
