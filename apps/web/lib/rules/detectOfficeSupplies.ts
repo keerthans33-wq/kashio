@@ -1,17 +1,17 @@
 // Category:   Office Supplies
-// Confidence: MEDIUM when a known retailer AND a supply keyword both match
-//             LOW for keyword-only matches (no recognised office store)
-// Note:       Merchant-only matches are not flagged — Officeworks and Staples
+// Confidence: MEDIUM when a specialist office retailer AND a supply keyword both match
+//             LOW for broad retailers (Ikea, Woolworths) or keyword-only matches
+// Note:       Merchant-only matches are not flagged — even specialist stores
 //             sell a wide range of items with no obvious work connection.
+//             mixedUse is always true: these stores sell personal items too.
 
 import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
 import { merchantText, combinedText } from "./shared";
+import { getMerchantsForCategory, getMerchantInfo } from "../merchants";
 
-const MERCHANTS = [
-  "officeworks",
-  "staples",
-];
+// Dedicated office supply stores — eligible for MEDIUM confidence when a keyword also matches.
+const SPECIALIST_MERCHANTS = getMerchantsForCategory(CATEGORIES.OFFICE_SUPPLIES, "specialist");
 
 const KEYWORDS = [
   "stationery",
@@ -29,7 +29,8 @@ function detect(tx: { normalizedMerchant: string; description: string }): RawMat
   // Require a supply keyword — merchant name alone is too broad.
   if (!keyword) return null;
 
-  const merchantMatch = MERCHANTS.some((m) => merchantText(tx).includes(m));
+  // Only specialist stores lift confidence to MEDIUM; broad retailers stay LOW.
+  const merchantMatch = SPECIALIST_MERCHANTS.some((m) => merchantText(tx).includes(m));
 
   return {
     category:   CATEGORIES.OFFICE_SUPPLIES,
@@ -44,9 +45,15 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?:
   const supplies = userType === "sole_trader" ? "Business supplies" : "Office supplies";
 
   if (merchantMatch) {
+    // Use merchant knowledge to describe what the store carries.
+    const info = getMerchantInfo(tx.normalizedMerchant);
+    const what = info
+      ? info.description.split(". ")[0].replace(/\.$/, "").toLowerCase()
+      : "office supplies and stationery";
     return {
-      reason:           `${supplies} bought for ${context} are deductible, and a ${keyword} from ${tx.normalizedMerchant} fits the pattern. If it was for home rather than ${context}, it won't qualify.`,
-      confidenceReason: "Recognised office retailer and a matching item type. Two signals pointing to a work purchase.",
+      reason:           `${tx.normalizedMerchant} sells ${what}. ${supplies} bought for ${context} are deductible — if this ${keyword} was for home rather than ${context}, it won't qualify.`,
+      confidenceReason: "Recognised office retailer and a matching supply keyword. Two signals pointing to a work purchase.",
+      mixedUse:         true,
     };
   }
 

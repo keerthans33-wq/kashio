@@ -6,19 +6,11 @@
 import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
 import { merchantText, combinedText, matchesMerchant } from "./shared";
+import { getMerchantsForCategory, getMerchantInfo } from "../merchants";
 
-const TRANSPORT_MERCHANTS = [
-  "uber",
-  "ola",
-  "didi",
-  "13cabs",
-  "ingogo",
-  "opal",
-  "myki",
-  "go card",
-  "metrocard",
-  "airportlink",
-];
+const TRANSPORT_MERCHANTS    = getMerchantsForCategory(CATEGORIES.WORK_TRAVEL, "transport");
+const FUEL_MERCHANTS         = getMerchantsForCategory(CATEGORIES.WORK_TRAVEL, "fuel");
+const CONVENIENCE_MERCHANTS  = getMerchantsForCategory(CATEGORIES.WORK_TRAVEL, "convenience");
 
 // Services from transport-adjacent brands that are NOT work travel
 const TRANSPORT_EXCLUSIONS = [
@@ -26,22 +18,6 @@ const TRANSPORT_EXCLUSIONS = [
   "food",
   "grocery",
   "delivery",
-];
-
-// Dedicated fuel stations — merchant alone is a LOW fuel signal.
-const FUEL_MERCHANTS = [
-  "bp",
-  "shell",
-  "caltex",
-  "ampol",
-  "united petroleum",
-  "puma energy",
-];
-
-// Mixed-use merchants that sell fuel but also food, drinks, and other non-deductibles.
-// Only treated as fuel if a fuel keyword is also present.
-const CONVENIENCE_MERCHANTS = [
-  "7-eleven",
 ];
 
 // Keywords that confirm a fuel purchase at a convenience merchant.
@@ -104,10 +80,34 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?:
   const isBusiness = userType === "contractor" || userType === "sole_trader";
 
   if (isTransport) {
+    // Use merchant knowledge to tailor the explanation: flights vs rideshare/transit vs car hire.
+    const info = getMerchantInfo(tx.normalizedMerchant);
+    const desc = info?.description.toLowerCase() ?? "";
+    const isFlight   = desc.includes("flight");
+    const isCarHire  = desc.includes("car hire") || desc.includes("car share");
+
+    if (isFlight) {
+      return {
+        reason: isBusiness
+          ? `${tx.normalizedMerchant} is an airline. If this was a flight for business — attending meetings, visiting clients, or travel your business requires — it's deductible. Personal and holiday flights don't count. Check that this was a genuine work trip.`
+          : `${tx.normalizedMerchant} is an airline. If this was a flight for work — attending meetings, visiting clients, or travel your job requires — it's deductible. Personal trips and holidays don't qualify. Check before claiming.`,
+        confidenceReason: "Recognised airline, but work flights and personal travel look identical in the data. Confirm this was a work trip.",
+      };
+    }
+
+    if (isCarHire) {
+      return {
+        reason: isBusiness
+          ? `${tx.normalizedMerchant} is a car hire service. If this hire was for business travel, it's deductible. Keep the rental agreement and note the business reason for the trip.`
+          : `${tx.normalizedMerchant} is a car hire service. If this hire was for work travel, it's deductible. Keep the rental agreement and note the work reason for the trip.`,
+        confidenceReason: "Car hire for work travel is claimable, but personal or mixed-use hires aren't. Confirm this was a work trip.",
+      };
+    }
+
     return {
       reason: isBusiness
-        ? `${tx.normalizedMerchant} trips for business are deductible: visiting clients, travelling between sites, attending business meetings. Travel from your home office to a client counts; a regular commute generally doesn't.`
-        : `${tx.normalizedMerchant} trips for work are deductible: visiting clients, travelling between job sites, attending work events. Your regular commute to the office doesn't count.`,
+        ? `${tx.normalizedMerchant} is a transport provider. If this trip was for business — visiting clients, travelling between sites, attending meetings — it's deductible. A regular commute generally doesn't count. Check this was a genuine business journey.`
+        : `${tx.normalizedMerchant} is a transport provider. If this trip was for work — visiting clients, travelling between job sites, attending work events — it's deductible. Your regular commute doesn't count. Check this was a genuine work journey.`,
       confidenceReason: "Recognised transport provider, but work trips and commutes look identical in the data. Confirm this was a work journey, not the daily commute.",
     };
   }
@@ -115,9 +115,9 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?:
   if (isFuel) {
     return {
       reason: isBusiness
-        ? `Fuel for business driving is deductible. Keep a logbook or trip notes — you'll need to show the trip was for business, not personal use.`
-        : `Fuel used for work-related driving is deductible, but not your commute to a regular workplace. A logbook or trip notes will help you confirm and support the claim.`,
-      confidenceReason: "Fuel is used for both work and personal driving. Without a logbook it's hard to separate the two.",
+        ? `${tx.normalizedMerchant} is mainly a fuel station. If this was a fuel purchase for business driving, the cost is deductible. We can't see the exact purchase — check your receipt, and keep a logbook or trip notes to show the drive was for business.`
+        : `${tx.normalizedMerchant} is mainly a fuel station. If this was fuel for work-related driving, the cost is deductible — but not your commute to a regular workplace. Check your receipt, and keep a logbook or trip notes to support the claim.`,
+      confidenceReason: "Fuel station recognised, but without a fuel keyword we can't confirm this was a fuel purchase rather than a food or convenience buy. Fuel is also used for both work and personal driving.",
     };
   }
 

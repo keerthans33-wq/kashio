@@ -6,23 +6,9 @@
 import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
 import { merchantText, combinedText, matchesMerchant } from "./shared";
+import { getMerchantsForCategory, getMerchantInfo } from "../merchants";
 
-const MERCHANTS = [
-  "telstra",
-  "optus",
-  "vodafone",
-  "tpg",
-  "iinet",
-  "aussie broadband",
-  "internode",
-  "amaysim",
-  "boost mobile",
-  "belong",
-  "circles.life",
-  "kogan mobile",
-  "dodo",
-  "spintel",
-];
+const MERCHANTS = getMerchantsForCategory(CATEGORIES.PHONE_INTERNET);
 
 const KEYWORDS = [
   "phone bill",
@@ -68,15 +54,20 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?:
   }
 
   if (merchantMatch) {
+    // Use merchant knowledge to describe what this provider offers, so users can identify the charge.
+    const info = getMerchantInfo(tx.normalizedMerchant);
+    const what = info
+      ? info.description.split(". ")[0].replace(/\.$/, "").toLowerCase()
+      : "mobile and internet services";
     return {
-      reason:           `If this ${tx.normalizedMerchant} charge is for a recurring service you use for ${isBusiness ? "your business" : "work"}, the ${useLabel} portion is deductible. A handset or accessory purchase would be treated differently, as an equipment claim.`,
+      reason:           `${tx.normalizedMerchant} offers ${what}. We can see this is from ${tx.normalizedMerchant} but not what the charge is for — check your statement. If it's a plan or service you use for ${isBusiness ? "your business" : "work"}, the ${useLabel} portion is deductible. If it's a device or accessory, that would be an equipment claim instead.`,
       confidenceReason: "Recognised telco, but no billing keyword. Could be a device or accessory purchase rather than a recurring service bill.",
       mixedUse:         true,
     };
   }
 
   return {
-    reason:           `This may be a phone or internet charge. If so, the ${useLabel} portion could be claimable. Without a recognised provider, it's hard to be sure what this charge is for. Check before claiming.`,
+    reason:           `This looks like it could be a phone or internet charge, but we can't confirm — the provider isn't one we recognise. If it is a plan or service used for ${isBusiness ? "your business" : "work"}, the ${useLabel} portion would be claimable. Check your statement before confirming.`,
     confidenceReason: "Billing keyword matched, but without a recognised telco it's hard to confirm this is a phone or internet bill.",
     mixedUse:         true,
   };

@@ -8,6 +8,7 @@
 import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
 import { merchantText, combinedText } from "./shared";
+import { getMerchantsForCategory, getMerchantInfo } from "../merchants";
 
 // Rarely bought for personal use — stronger work signal
 const STRONG_KEYWORDS = [
@@ -27,19 +28,7 @@ const WEAK_KEYWORDS = [
 const ALL_KEYWORDS = [...STRONG_KEYWORDS, ...WEAK_KEYWORDS];
 
 // Known tech retailers — a merchant match strengthens a weak keyword signal.
-const TECH_MERCHANTS = [
-  "jb hi-fi",
-  "jb hifi",
-  "harvey norman",
-  "officeworks",
-  "apple",
-  "umart",
-  "centre com",
-  "mwave",
-  "scorptec",
-  "pccasegear",
-  "ple computers",
-];
+const TECH_MERCHANTS = getMerchantsForCategory(CATEGORIES.EQUIPMENT, "tech_retailer");
 
 function detect(tx: { normalizedMerchant: string; description: string }): RawMatch | null {
   const combined = combinedText(tx);
@@ -69,14 +58,20 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?:
   const forWork     = isBusiness ? "for business" : "for work";
 
   if (techMerchant) {
+    // Use merchant knowledge to describe what the retailer sells.
+    const info = getMerchantInfo(tx.normalizedMerchant);
+    const what = info
+      ? info.description.split(". ")[0].replace(/\.$/, "").toLowerCase()
+      : "electronics and computers";
     return {
       reason: isStrong
-        ? `A ${keyword} from ${tx.normalizedMerchant} used ${forWork} is deductible. If you also use it personally, you can only claim the proportion used ${forWork}.`
-        : `If this ${keyword} from ${tx.normalizedMerchant} is mainly used for ${useContext}, the cost is deductible. Personal or gaming use means only the work proportion counts.`,
+        ? `${tx.normalizedMerchant} sells ${what}. If this ${keyword} is used ${forWork}, it's deductible — if you also use it personally, only the work-use proportion can be claimed. Check your receipt to confirm it was a work purchase.`
+        : `${tx.normalizedMerchant} sells ${what}. If this ${keyword} is mainly used for ${useContext}, the cost is deductible. Personal or gaming use means only the work proportion counts. Check before claiming.`,
       confidenceReason: isStrong
         ? "Specialist item from a tech retailer. A strong signal for a work purchase."
         : "Tech retailer and matching item type. Reasonable, but this item is also commonly bought for personal or gaming use.",
-      mixedUse: !isStrong,
+      // Tech retailers stock both work and personal items — always flag mixed use.
+      mixedUse: true,
     };
   }
 

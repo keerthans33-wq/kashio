@@ -5,24 +5,13 @@
 import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
 import { merchantText, combinedText } from "./shared";
+import { getMerchantsForCategory, getMerchantInfo } from "../merchants";
 
 // Near-exclusively B2B — merchant name alone is a reasonable signal
-const SPECIFIC_MERCHANTS = [
-  "figma",
-  "google workspace",
-  "notion",
-  "slack",
-];
+const SPECIFIC_MERCHANTS = getMerchantsForCategory(CATEGORIES.SOFTWARE, "specific");
 
 // Significant personal-use overlap — require a subscription/work keyword
-const BROAD_MERCHANTS = [
-  "adobe",
-  "canva",
-  "dropbox",
-  "github",
-  "microsoft",
-  "zoom",
-];
+const BROAD_MERCHANTS = getMerchantsForCategory(CATEGORIES.SOFTWARE, "broad");
 
 const SOFTWARE_KEYWORDS = [
   "subscription",
@@ -66,12 +55,27 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?:
   const isBusiness = userType === "contractor" || userType === "sole_trader";
   const context    = isBusiness ? "your business" : "your job";
   const qualifier  = isBusiness ? "used to run your business" : "used for your job";
+
+  // Use merchant knowledge to describe what the tool is, so users can verify the charge.
+  const info = getMerchantInfo(tx.normalizedMerchant);
+  const what = info ? (() => {
+    // Take the first sentence of the description and lowercase it for inline use.
+    const first = info.description.split(". ")[0].replace(/\.$/, "");
+    return first.charAt(0).toLowerCase() + first.slice(1);
+  })() : null;
+
   return {
     reason: isSpecific && hasKeyword
-      ? `Paid ${tx.normalizedMerchant} subscriptions ${qualifier} are deductible. If this is your work account, you can claim the full subscription cost.`
+      ? what
+        ? `${tx.normalizedMerchant} is ${/^[aeiou]/i.test(what) ? "an" : "a"} ${what}. Paid subscriptions ${qualifier} are deductible — if this is your work account, you can claim the full cost.`
+        : `Paid ${tx.normalizedMerchant} subscriptions ${qualifier} are deductible. If this is your work account, you can claim the full subscription cost.`
       : isSpecific
-      ? `If this is a paid ${tx.normalizedMerchant} account used for ${context}, the subscription cost is claimable. Free tiers and personal accounts don't qualify.`
-      : `Paid ${tx.normalizedMerchant} subscriptions ${qualifier} are deductible. Confirm this is your work account. Personal plans don't qualify.`,
+      ? what
+        ? `${tx.normalizedMerchant} is ${/^[aeiou]/i.test(what) ? "an" : "a"} ${what}. If this is a paid account used for ${context}, the subscription cost is claimable. Free tiers and personal accounts don't qualify.`
+        : `If this is a paid ${tx.normalizedMerchant} account used for ${context}, the subscription cost is claimable. Free tiers and personal accounts don't qualify.`
+      : what
+        ? `${tx.normalizedMerchant} is ${/^[aeiou]/i.test(what) ? "an" : "a"} ${what}. Paid subscriptions ${qualifier} are deductible. Confirm this is your work account — personal plans don't qualify.`
+        : `Paid ${tx.normalizedMerchant} subscriptions ${qualifier} are deductible. Confirm this is your work account. Personal plans don't qualify.`,
     confidenceReason: isSpecific && hasKeyword
       ? "Recognised work tool and a subscription keyword — two signals pointing to a paid work account."
       : isSpecific
