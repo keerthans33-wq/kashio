@@ -64,7 +64,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
     searchParams,
   ]);
 
-  const allowedCategories = (userType && CATEGORIES_BY_USER_TYPE[userType]) ?? ACTIVE_CATEGORIES;
+  const allowedCategories = (userType ? CATEGORIES_BY_USER_TYPE[userType] : undefined) ?? ACTIVE_CATEGORIES;
 
   const all = (await db.deductionCandidate.findMany({
     where:   { userId },
