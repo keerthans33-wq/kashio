@@ -59,22 +59,22 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }): Explanati
 
   if (both) {
     return {
-      reason:           `Your ${tx.normalizedMerchant} ${keyword} has a work-use portion that's deductible. You'll need to estimate what percentage you use for work — the ATO suggests a 4-week representative log to work out the split.`,
-      confidenceReason: "Recognised telco and a billing keyword — two signals pointing to a recurring phone or internet charge.",
+      reason:           `Your ${tx.normalizedMerchant} ${keyword} has a work-use portion that's deductible. You'll need to estimate what percentage you use for work. The ATO suggests a 4-week representative log to work out the split.`,
+      confidenceReason: "Recognised telco and a billing keyword. Two signals pointing to a recurring phone or internet charge.",
       mixedUse:         true,
     };
   }
 
   if (merchantMatch) {
     return {
-      reason:           `If this ${tx.normalizedMerchant} charge is for a recurring service you use for work, the work-use portion is deductible. A handset or accessory purchase would be treated differently — as an equipment claim.`,
-      confidenceReason: "Recognised telco, but no billing keyword — could be a device or accessory purchase rather than a recurring service bill.",
+      reason:           `If this ${tx.normalizedMerchant} charge is for a recurring service you use for work, the work-use portion is deductible. A handset or accessory purchase would be treated differently, as an equipment claim.`,
+      confidenceReason: "Recognised telco, but no billing keyword. Could be a device or accessory purchase rather than a recurring service bill.",
       mixedUse:         true,
     };
   }
 
   return {
-    reason:           `This may be a phone or internet charge — if so, the work-use portion could be claimable. Without a recognised provider, it's hard to be sure what this charge is for. Check before claiming.`,
+    reason:           `This may be a phone or internet charge. If so, the work-use portion could be claimable. Without a recognised provider, it's hard to be sure what this charge is for. Check before claiming.`,
     confidenceReason: "Billing keyword matched, but without a recognised telco it's hard to confirm this is a phone or internet bill.",
     mixedUse:         true,
   };

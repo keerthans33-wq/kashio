@@ -68,12 +68,12 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }): Explanati
       ? `Paid ${tx.normalizedMerchant} subscriptions used to earn income are deductible. If this is your work account, you can claim the full cost.`
       : isSpecific
       ? `If this is a paid ${tx.normalizedMerchant} account for work, the subscription cost is claimable. Free tiers and personal accounts don't qualify.`
-      : `Paid ${tx.normalizedMerchant} subscriptions used for work are deductible. Confirm this is your work account — personal plans don't qualify.`,
+      : `Paid ${tx.normalizedMerchant} subscriptions used for work are deductible. Confirm this is your work account. Personal plans don't qualify.`,
     confidenceReason: isSpecific && hasKeyword
       ? "Recognised work tool and a subscription keyword — two signals pointing to a paid work account."
       : isSpecific
-      ? "Recognised work tool, but no subscription keyword — could be a free or personal plan rather than a paid work account."
-      : "A subscription keyword supports this, but this tool has personal plans too — confirm it's a work account before claiming.",
+      ? "Recognised work tool, but no subscription keyword. Could be a free or personal plan rather than a paid work account."
+      : "A subscription keyword supports this, but this tool has personal plans too. Confirm it's a work account before claiming.",
     mixedUse: true,
   };
 }

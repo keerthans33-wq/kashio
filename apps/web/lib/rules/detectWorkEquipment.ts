@@ -71,8 +71,8 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }): Explanati
         ? `A ${keyword} from ${tx.normalizedMerchant} used for work is deductible. If you also use it personally, you can only claim the proportion of time it's used for work.`
         : `If this ${keyword} from ${tx.normalizedMerchant} is mainly for work, the cost is deductible. If it doubles as personal or gaming equipment, only the work proportion counts.`,
       confidenceReason: isStrong
-        ? "Specialist item from a tech retailer — a strong signal for a work purchase."
-        : "Tech retailer and matching item type — reasonable, but this item is also commonly bought for personal or gaming use.",
+        ? "Specialist item from a tech retailer. A strong signal for a work purchase."
+        : "Tech retailer and matching item type. Reasonable, but this item is also commonly bought for personal or gaming use.",
       mixedUse: !isStrong,
     };
   }
@@ -82,8 +82,8 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }): Explanati
       ? `A ${keyword} used for work is deductible. If you also use it personally, only the proportion of time it's used for work can be claimed.`
       : `If this ${keyword} is used primarily for work, the cost is deductible. Gaming or personal use means you can only claim the work-use portion.`,
     confidenceReason: isStrong
-      ? "This item is rarely bought for personal use — a reasonably strong work signal."
-      : "Matches a work keyword, but also commonly bought for personal or gaming use — confirm it's primarily for work.",
+      ? "This item is rarely bought for personal use. A reasonably strong work signal."
+      : "Matches a work keyword, but also commonly bought for personal or gaming use. Confirm it's primarily for work.",
     mixedUse: !isStrong,
   };
 }

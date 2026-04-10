@@ -85,7 +85,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
   // Single top-priority nudge: 1) items to review, 2) missing evidence
   const nudge =
     all.length === 0         ? "Import your bank transactions and Kashio will flag what looks deductible." :
-    totalNeedsReview > 0     ? `${totalNeedsReview} item${totalNeedsReview !== 1 ? "s" : ""} left to review${unreviewedValue > 0 ? ` — ${fmt(unreviewedValue)} to consider` : ""}.` :
+    totalNeedsReview > 0     ? `${totalNeedsReview} item${totalNeedsReview !== 1 ? "s" : ""} left to review${unreviewedValue > 0 ? `. ${fmt(unreviewedValue)} to consider` : ""}.` :
     missingEvidence > 0      ? `${missingEvidence} confirmed item${missingEvidence !== 1 ? "s" : ""} still need${missingEvidence === 1 ? "s" : ""} a receipt.` :
     totalConfirmed > 0       ? "All reviewed. Ready to export." :
                                 "Nothing confirmed yet.";
@@ -116,7 +116,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
           <div className="flex justify-between text-sm text-gray-400 dark:text-gray-500 mb-1.5">
             {totalNeedsReview > 0
               ? <span>{totalReviewed} of {all.length} reviewed</span>
-              : <span className="text-green-600 dark:text-green-400">All done — {all.length} reviewed</span>
+              : <span className="text-green-600 dark:text-green-400">All done. {all.length} reviewed.</span>
             }
             {totalNeedsReview > 0 && potentialValue > 0 && (
               <span>{fmt(potentialValue)} potential</span>
@@ -165,7 +165,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
       {all.length > 0 && (
         <p className="mt-10 text-xs text-gray-400 dark:text-gray-500">
-          Kashio helps you spot possible deductions — it's not a tax adviser. When in doubt, check with your accountant.
+          Kashio helps you spot possible deductions. It's not a tax adviser. When in doubt, check with your accountant.
         </p>
       )}
     </main>

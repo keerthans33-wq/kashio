@@ -104,25 +104,25 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }): Explanati
 
   if (isTransport) {
     return {
-      reason:           `${tx.normalizedMerchant} trips for work — visiting clients, travelling between job sites, attending work events — are deductible. Your regular commute to the office doesn't count.`,
-      confidenceReason: "Recognised transport provider, but work trips and commutes look identical in the data — confirm this was a work journey, not the daily commute.",
+      reason:           `${tx.normalizedMerchant} trips for work are deductible: visiting clients, travelling between job sites, attending work events. Your regular commute to the office doesn't count.`,
+      confidenceReason: "Recognised transport provider, but work trips and commutes look identical in the data. Confirm this was a work journey, not the daily commute.",
     };
   }
 
   if (isFuel) {
     return {
-      reason:           `Fuel used for work-related driving is deductible — but not your commute to a regular workplace. A logbook or trip notes will help you confirm and support the claim.`,
-      confidenceReason: "Fuel is used for both work and personal driving — without a logbook it's hard to separate the two.",
+      reason:           `Fuel used for work-related driving is deductible, but not your commute to a regular workplace. A logbook or trip notes will help you confirm and support the claim.`,
+      confidenceReason: "Fuel is used for both work and personal driving. Without a logbook it's hard to separate the two.",
     };
   }
 
   return {
     reason: isStrong
-      ? `The description says "${keyword}", which is a clear sign this may be a work travel claim. Confirm the trip was for business — personal travel and commuting don't count.`
-      : `This could be a work travel expense, but ${keyword} is also common for personal trips. Only claim it if this was a business journey — not a commute or holiday.`,
+      ? `The description says "${keyword}", which is a clear sign this may be a work travel claim. Confirm the trip was for business. Personal travel and commuting don't count.`
+      : `This could be a work travel expense, but ${keyword} is also common for personal trips. Only claim it if this was a business journey. Not a commute or holiday.`,
     confidenceReason: isStrong
-      ? "Explicit work travel language in the description — a strong signal."
-      : "Travel keyword matched, but personal trips look identical — this needs your confirmation before claiming.",
+      ? "Explicit work travel language in the description. A strong signal."
+      : "Travel keyword matched, but personal trips look identical. Confirm this was a work trip before claiming.",
   };
 }
 

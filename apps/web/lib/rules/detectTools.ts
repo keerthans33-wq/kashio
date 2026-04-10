@@ -76,14 +76,14 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }): Explanati
   if (isTradeOnly) {
     return {
       reason:           `A ${keyword} from ${tx.normalizedMerchant} used for work is deductible. Tools under $300 can be claimed in full; over $300 must be depreciated over the asset's life.`,
-      confidenceReason: "Trade-only retailer and a matching tool — a strong signal this was a work purchase.",
+      confidenceReason: "Trade-only retailer and a matching tool. A strong signal this was a work purchase.",
     };
   }
 
   if (merchantMatch) {
     return {
-      reason:           `If this ${keyword} from ${tx.normalizedMerchant} was bought for work — not a home project — it's deductible. Tools under $300 can be claimed in full; over $300 must be depreciated.`,
-      confidenceReason: "Hardware store and a matching tool type — reasonable, but these stores also serve homeowners and DIY buyers.",
+      reason:           `If this ${keyword} from ${tx.normalizedMerchant} was bought for work, not a home project, it's deductible. Tools under $300 can be claimed in full; over $300 must be depreciated.`,
+      confidenceReason: "Hardware store and a matching tool type. Reasonable, but these stores also serve homeowners and DIY buyers.",
     };
   }
 

@@ -194,7 +194,7 @@ export default function CsvUploader() {
             </p>
             <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
               {noneAdded
-                ? `${importResult.duplicates} transaction${importResult.duplicates !== 1 ? "s" : ""} already saved — nothing new to add.`
+                ? `${importResult.duplicates} transaction${importResult.duplicates !== 1 ? "s" : ""} already saved. Nothing new to add.`
                 : <>
                     {importResult.inserted} transaction{importResult.inserted !== 1 ? "s" : ""} added
                     {importResult.duplicates > 0 && <> · {importResult.duplicates} skipped</>}
@@ -215,7 +215,7 @@ export default function CsvUploader() {
               {importResult.totalValue > 0 ? fmt(importResult.totalValue) : `${importResult.flagged} items`}
             </p>
             <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-              {importResult.flagged} candidate{importResult.flagged !== 1 ? "s" : ""} flagged — review them to confirm which ones apply to you.
+              {importResult.flagged} candidate{importResult.flagged !== 1 ? "s" : ""} flagged. Review them to confirm which ones apply to you.
             </p>
           </div>
         )}

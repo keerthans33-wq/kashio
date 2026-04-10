@@ -44,7 +44,7 @@ export default function ColumnMapper({ rows, onConfirm }: Props) {
       <div className="rounded-md border border-yellow-200 bg-yellow-50 p-4">
         <p className="text-sm font-medium text-yellow-800">We couldn't recognise your column names</p>
         <p className="mt-1 text-sm text-yellow-700">
-          No problem — use the preview below to identify which column contains the date, description, and amount, then tell us which is which.
+          No problem. Use the preview below to identify which column contains the date, description, and amount, then tell us which is which.
         </p>
       </div>
 
@@ -108,7 +108,7 @@ export default function ColumnMapper({ rows, onConfirm }: Props) {
           onChange={(e) => setSkipFirstRow(e.target.checked)}
           className="rounded border-gray-300"
         />
-        First row is a header row — skip it when importing
+        First row is a header row. Skip it when importing.
       </label>
 
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}

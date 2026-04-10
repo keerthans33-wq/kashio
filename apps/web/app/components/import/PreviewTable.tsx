@@ -13,7 +13,7 @@ export default function PreviewTable({ rows }: Props) {
   return (
     <div className="mt-6">
       <p className="mb-2 text-sm font-medium text-gray-700">
-        Preview — {Math.min(rows.length, PREVIEW_LIMIT)} of {rows.length} valid transaction{rows.length !== 1 ? "s" : ""}
+        Preview: {Math.min(rows.length, PREVIEW_LIMIT)} of {rows.length} valid transaction{rows.length !== 1 ? "s" : ""}
       </p>
       <div className="overflow-x-auto rounded-md border border-gray-200">
         <table className="w-full text-sm">

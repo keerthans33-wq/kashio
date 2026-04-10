@@ -13,9 +13,9 @@ export default function LoginPage() {
   function friendlyError(msg: string): string {
     if (msg.includes("Invalid login credentials")) return "Wrong email or password.";
     if (msg.includes("Email not confirmed"))        return "Check your inbox and confirm your email before signing in.";
-    if (msg.includes("User already registered"))   return "Account already exists — try signing in.";
+    if (msg.includes("User already registered"))   return "Account already exists. Try signing in.";
     if (msg.includes("Password should be at least")) return "Password must be at least 6 characters.";
-    if (msg.includes("rate limit"))                return "Too many attempts — wait a moment and try again.";
+    if (msg.includes("rate limit"))                return "Too many attempts. Wait a moment and try again.";
     return msg;
   }
 

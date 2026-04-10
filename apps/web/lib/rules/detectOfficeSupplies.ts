@@ -43,13 +43,13 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }): Explanati
   if (merchantMatch) {
     return {
       reason:           `Office supplies bought for work are deductible, and a ${keyword} from ${tx.normalizedMerchant} fits the pattern. If it was for home rather than work, it won't qualify.`,
-      confidenceReason: "Recognised office retailer and a matching item type — two signals pointing to a work purchase.",
+      confidenceReason: "Recognised office retailer and a matching item type. Two signals pointing to a work purchase.",
     };
   }
 
   return {
     reason:           `${typeof keyword === "string" ? keyword.charAt(0).toUpperCase() + keyword.slice(1) : "This item"} bought for work is deductible, but without a recognised office store this is harder to confirm. Check before claiming.`,
-    confidenceReason: "Supply keyword matched, but not from a recognised office retailer — could be from a non-work purchase.",
+    confidenceReason: "Supply keyword matched, but not from a recognised office retailer. Could be from a non-work purchase.",
   };
 }
 

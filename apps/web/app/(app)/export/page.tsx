@@ -25,9 +25,9 @@ const TOTAL_LABEL: Record<string, string> = {
 };
 
 const TRUST_NOTE: Record<string, string> = {
-  employee:    "Before you lodge, go through each item — only expenses directly related to your job qualify.",
-  contractor:  "Before you lodge, review each item — only genuine business expenses are claimable.",
-  sole_trader: "Before you lodge, check each item — personal expenses mixed with business ones won't qualify.",
+  employee:    "Before you lodge, go through each item. Only expenses directly related to your job qualify.",
+  contractor:  "Before you lodge, review each item. Only genuine business expenses are claimable.",
+  sole_trader: "Before you lodge, check each item. Personal expenses mixed with business ones won't qualify.",
 };
 
 export default async function Export() {
@@ -113,10 +113,10 @@ export default async function Export() {
           <div>
             <ExportButton />
             <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-              {userType ? TRUST_NOTE[userType] ?? "Before you lodge, take a quick look through the list above — you know your spending better than Kashio does." : "Before you lodge, take a quick look through the list above — you know your spending better than Kashio does."}
+              {userType ? TRUST_NOTE[userType] ?? "Before you lodge, take a quick look through the list above. You know your spending better than Kashio does." : "Before you lodge, take a quick look through the list above. You know your spending better than Kashio does."}
             </p>
             <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
-              The ATO recommends keeping receipts for your records. Kashio is not a tax adviser — check with your accountant if you're unsure about any claim.
+              The ATO recommends keeping receipts for your records. Kashio is not a tax adviser. Check with your accountant if you're unsure about any claim.
             </p>
           </div>
 

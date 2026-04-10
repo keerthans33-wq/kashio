@@ -23,7 +23,7 @@ export type CandidateCardProps = {
 const CONFIDENCE_LABEL: Record<Confidence, string> = {
   HIGH:   "Strong match",
   MEDIUM: "Possible match",
-  LOW:    "Weak match — check before claiming",
+  LOW:    "Weak match. Check before claiming.",
 };
 
 const CONFIDENCE_STYLE: Record<Confidence, string> = {
@@ -172,7 +172,7 @@ export function CandidateCard({
             <p className="mt-0.5 text-sm text-gray-600 dark:text-gray-400">{reason}</p>
             {mixedUse && (
               <p className="mt-1 text-xs text-amber-500 dark:text-amber-400">
-                May include personal use — review before claiming
+                May include personal use. Review before claiming.
               </p>
             )}
           </div>

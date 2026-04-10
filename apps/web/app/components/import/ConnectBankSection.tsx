@@ -108,7 +108,7 @@ function SyncSuccess({ result, onSync }: { result: SyncResult; onSync: () => voi
           </p>
           <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
             {noneAdded
-              ? `${result.duplicates} transaction${result.duplicates !== 1 ? "s" : ""} already saved — nothing new to add.`
+              ? `${result.duplicates} transaction${result.duplicates !== 1 ? "s" : ""} already saved. Nothing new to add.`
               : <>
                   {result.inserted} transaction{result.inserted !== 1 ? "s" : ""} imported
                   {result.duplicates > 0 && <> · {result.duplicates} skipped</>}
@@ -129,7 +129,7 @@ function SyncSuccess({ result, onSync }: { result: SyncResult; onSync: () => voi
             {result.totalValue ? fmt(result.totalValue) : `${result.flagged} items`}
           </p>
           <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-            {result.flagged} candidate{result.flagged !== 1 ? "s" : ""} flagged — review them to confirm which ones apply to you.
+            {result.flagged} candidate{result.flagged !== 1 ? "s" : ""} flagged. Review them to confirm which ones apply to you.
           </p>
         </div>
       )}
@@ -322,7 +322,7 @@ export default function ConnectBankSection() {
       )}
 
       <p className="text-xs text-gray-400 dark:text-gray-500">
-        No real bank account needed — Connect Bank (Demo) loads sample data so you can try the full flow.
+        No real bank account needed. Connect Bank (Demo) loads sample data so you can try the full flow.
       </p>
 
       {connectError && (
