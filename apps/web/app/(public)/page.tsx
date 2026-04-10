@@ -25,7 +25,7 @@ export default async function Home({
             Find tax deductions in your everyday spending
           </h1>
           <p className="mt-4 text-base text-gray-500 dark:text-gray-400">
-            Upload your bank transactions and Kashio flags what looks work-related — ready to review and export at tax time.
+            Upload your bank transactions and Kashio flags what looks work-related. Review and export at tax time.
           </p>
         </div>
 
@@ -49,7 +49,7 @@ export default async function Home({
             Get started
           </Link>
           <p className="text-xs text-gray-400 dark:text-gray-500">
-            Kashio suggests possible deductions — it's not a tax adviser. Check with your accountant before lodging.
+            Kashio suggests possible deductions. It's not a tax adviser. Check with your accountant before lodging.
           </p>
         </div>
 

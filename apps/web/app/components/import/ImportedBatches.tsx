@@ -82,7 +82,7 @@ export default function ImportedBatches() {
   if (batches.length === 0) {
     return (
       <p className="mt-8 text-sm text-gray-400 dark:text-gray-500">
-        No transactions yet — upload a CSV or connect your bank to get started.
+        No transactions yet. Upload a CSV or connect your bank to get started.
       </p>
     );
   }

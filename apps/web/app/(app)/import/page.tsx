@@ -9,10 +9,10 @@ export default function Import() {
     <main className="mx-auto max-w-lg px-4 sm:px-6 py-12">
       <div className="flex items-center gap-2">
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Import your transactions</h1>
-        <InfoTip text="Connecting your bank uses open banking — Kashio gets read-only access to your transactions and can never move money. Uploading a CSV works too: just export your transaction history from your bank's app and upload the file here." />
+        <InfoTip text="Connecting your bank uses open banking. Kashio gets read-only access to your transactions and can never move money. Uploading a CSV works too: just export your transaction history from your bank's app and upload the file here." />
       </div>
       <p className="mt-2 text-gray-500 dark:text-gray-400">
-        Connect your bank or upload a CSV — Kashio will scan for possible deductions.
+        Connect your bank or upload a CSV. Kashio will scan for possible deductions.
       </p>
 
       <div className="mt-8">
@@ -31,7 +31,7 @@ export default function Import() {
       <ImportedBatches />
 
       <p className="mt-10 text-xs text-gray-400 dark:text-gray-500">
-        Your data is only used to find possible deductions — it's never shared or sold.
+        Your data is only used to find possible deductions. It's never shared or sold.
       </p>
     </main>
   );
