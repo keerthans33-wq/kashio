@@ -36,7 +36,7 @@ export function InfoTip({ text }: { text: string }) {
       </button>
 
       {open && (
-        <div className="absolute left-6 top-0 z-10 w-64 rounded-lg border border-gray-200 bg-white px-3 py-2.5 shadow-md dark:border-gray-700 dark:bg-gray-800">
+        <div className="absolute left-0 top-6 z-10 w-[min(16rem,calc(100vw-2rem))] rounded-lg border border-gray-200 bg-white px-3 py-2.5 shadow-md sm:left-6 sm:top-0 dark:border-gray-700 dark:bg-gray-800">
           <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-300">{text}</p>
         </div>
       )}
