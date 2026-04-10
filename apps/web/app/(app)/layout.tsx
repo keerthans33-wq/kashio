@@ -1,7 +1,6 @@
 "use client";
 
 import Nav from "../components/shell/Nav";
-import { AuthGuard } from "../components/shell/AuthGuard";
 import { UserContext, useUserContext } from "../../lib/user-context";
 
 function AppLayoutInner({ children }: { children: React.ReactNode }) {
@@ -45,9 +44,5 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <AuthGuard>
-      <AppLayoutInner>{children}</AppLayoutInner>
-    </AuthGuard>
-  );
+  return <AppLayoutInner>{children}</AppLayoutInner>;
 }

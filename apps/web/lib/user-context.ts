@@ -32,15 +32,28 @@ export function useUserContext(): UserContextValue {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
+    // Use getSession() — reads local cookies without a server round-trip.
+    // getUser() can fail transiently and falsely redirect signed-in users to /login.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const u = session?.user ?? null;
+      setUser(u);
       setLoading(false);
+      if (!u) {
+        window.location.replace("/login");
+      } else if (!isValidUserType(u.user_metadata?.user_type) &&
+                 window.location.pathname !== "/onboarding") {
+        window.location.replace("/onboarding");
+      }
     }).catch(() => {
       setLoading(false);
+      window.location.replace("/login");
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
+      if (event === "SIGNED_OUT") {
+        window.location.replace("/login");
+      }
     });
 
     return () => subscription.unsubscribe();
