@@ -267,11 +267,11 @@ export default function ConnectBankSection() {
   // ── Active sync states take over the section entirely ────────────────────────
 
   if (demo.sync.status === "connecting") {
-    return <SyncInProgress label="Connecting to Demo Bank…" detail="Setting up the sample data connection." />;
+    return <SyncInProgress label="Connecting…" detail="This will only take a moment." />;
   }
 
   if (demo.sync.status === "syncing" || justConnected) {
-    return <SyncInProgress label="Syncing transactions…" detail="Fetching sample transactions from Demo Bank." />;
+    return <SyncInProgress label="Importing transactions…" detail="This will only take a moment." />;
   }
 
   if (demo.sync.status === "success") {
@@ -322,7 +322,7 @@ export default function ConnectBankSection() {
       )}
 
       <p className="text-xs text-gray-400 dark:text-gray-500">
-        <span className="font-medium">Connect Bank (Demo)</span> loads sample transactions so you can try the full flow — no real bank account needed.
+        No real bank account needed — Connect Bank (Demo) loads sample data so you can try the full flow.
       </p>
 
       {connectError && (

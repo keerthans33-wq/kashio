@@ -257,13 +257,9 @@ export default function CsvUploader() {
   }
 
   return (
-    <div className="mt-8">
+    <div>
       <div className="max-w-md">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          CSV file
-        </label>
-
-        <div className="mt-2 flex items-center gap-3">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
@@ -316,16 +312,10 @@ export default function CsvUploader() {
           <div className="mt-4 space-y-3">
 
             {/* Pre-import summary */}
-            <div className="rounded-md border border-gray-200 bg-gray-50 p-4 text-sm dark:border-gray-700 dark:bg-gray-800">
-              <p className="font-medium text-gray-800 dark:text-gray-200">Ready to import from CSV</p>
-              <ul className="mt-2 space-y-1">
-                <li className="text-gray-500 dark:text-gray-400">{result.raw.length} rows read from file</li>
-                <li className="text-green-700 dark:text-green-400">{result.valid.length} valid — ready to import</li>
-                {result.invalid.length > 0 && (
-                  <li className="text-yellow-700 dark:text-yellow-400">{result.invalid.length} invalid — see details below</li>
-                )}
-              </ul>
-            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {result.valid.length} transaction{result.valid.length !== 1 ? "s" : ""} ready to import
+              {result.invalid.length > 0 && <span className="ml-2 text-yellow-600 dark:text-yellow-400">· {result.invalid.length} row{result.invalid.length !== 1 ? "s" : ""} skipped</span>}
+            </p>
 
             {/* Invalid row details */}
             {result.invalid.length > 0 && (
