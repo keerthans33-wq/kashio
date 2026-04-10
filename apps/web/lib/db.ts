@@ -7,6 +7,7 @@ function createClient() {
   // as 'verify-full', which rejects Supabase's certificate chain. We set SSL
   // explicitly on the Pool instead so rejectUnauthorized: false takes effect.
   const rawUrl = process.env.DATABASE_URL ?? "";
+  if (!rawUrl) throw new Error("DATABASE_URL is not set. Add it to your Vercel environment variables.");
   const url = new URL(rawUrl);
   url.searchParams.delete("sslmode");
   const connectionString = url.toString();
