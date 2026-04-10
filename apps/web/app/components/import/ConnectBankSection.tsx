@@ -285,30 +285,45 @@ export default function ConnectBankSection() {
   // ── Idle ──────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-row flex-wrap items-center gap-2">
-        <input
-          type="tel"
-          placeholder="Your mobile number"
-          value={mobile}
-          onChange={(e) => setMobile(e.target.value)}
-          className="w-52 rounded-md border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
-        />
-        <button
-          onClick={handleConnect}
-          disabled={connecting || !mobile.trim()}
-          className="flex items-center gap-2 rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
-        >
-          {connecting && <Spinner />}
-          {connecting ? "Connecting…" : "Connect Bank"}
-        </button>
+    <div className="space-y-5">
+
+      {/* Primary: demo path */}
+      <div>
         <button
           onClick={() => handleSync(demoProvider)}
           disabled={connecting}
-          className="rounded-md border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          className="rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
         >
-          Connect Bank (Demo)
+          Try with sample data
         </button>
+        <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+          No bank account needed. Loads sample transactions so you can try the full flow.
+        </p>
+      </div>
+
+      {/* Secondary: real bank */}
+      <div>
+        <p className="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">Or connect your real bank</p>
+        <div className="flex flex-row flex-wrap items-center gap-2">
+          <input
+            type="tel"
+            placeholder="Mobile number"
+            value={mobile}
+            onChange={(e) => setMobile(e.target.value)}
+            className="w-44 rounded-md border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
+          />
+          <button
+            onClick={handleConnect}
+            disabled={connecting || !mobile.trim()}
+            className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          >
+            {connecting && <Spinner />}
+            {connecting ? "Connecting…" : "Connect"}
+          </button>
+        </div>
+        <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+          Your bank sends a verification code to this number.
+        </p>
       </div>
 
       {providerReady && storedStatus && (
@@ -320,10 +335,6 @@ export default function ConnectBankSection() {
           onSync={() => handleSync(demoProvider)}
         />
       )}
-
-      <p className="text-xs text-gray-400 dark:text-gray-500">
-        No real bank account needed. Connect Bank (Demo) loads sample data so you can try the full flow.
-      </p>
 
       {connectError && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20">

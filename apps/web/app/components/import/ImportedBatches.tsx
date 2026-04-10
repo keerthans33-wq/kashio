@@ -136,15 +136,6 @@ export default function ImportedBatches() {
       </ul>
 
       {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
-
-      <div className="mt-6">
-        <a
-          href="/review"
-          className="inline-block rounded-md bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-700"
-        >
-          Go to Review →
-        </a>
-      </div>
     </div>
   );
 }

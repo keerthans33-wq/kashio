@@ -79,6 +79,7 @@ export default function CsvUploader() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
+  const [showAllErrors, setShowAllErrors] = useState(false);
 
   function reset() {
     setFileError(null);
@@ -324,12 +325,21 @@ export default function CsvUploader() {
                   {result.invalid.length} row{result.invalid.length !== 1 ? "s" : ""} rejected
                 </p>
                 <ul className="mt-2 space-y-1">
-                  {result.invalid.map((row) => (
+                  {(showAllErrors ? result.invalid : result.invalid.slice(0, 3)).map((row) => (
                     <li key={row.rowNumber} className="text-sm text-yellow-700 dark:text-yellow-400">
                       Row {row.rowNumber}: {row.reason}
                     </li>
                   ))}
                 </ul>
+                {result.invalid.length > 3 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllErrors((v) => !v)}
+                    className="mt-2 text-xs text-yellow-700 hover:underline dark:text-yellow-400"
+                  >
+                    {showAllErrors ? "Show less" : `Show ${result.invalid.length - 3} more`}
+                  </button>
+                )}
               </div>
             )}
 
