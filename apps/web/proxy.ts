@@ -34,8 +34,13 @@ export async function proxy(request: NextRequest) {
   });
 
   // Refreshes the token if needed and updates cookies.
-  // Do not add any logic between createServerClient and getUser().
-  await supabase.auth.getUser();
+  // Wrapped in try/catch — if the refresh token is expired or invalid,
+  // we still want to serve the request rather than crashing the middleware.
+  try {
+    await supabase.auth.getUser();
+  } catch {
+    // Auth failure is handled downstream by requireUser() / getUserWithType().
+  }
 
   return response;
 }

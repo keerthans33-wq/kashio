@@ -58,8 +58,16 @@ export function createDemoBankProvider(userId: string): BankProvider {
 
     async sync() {
       const res = await fetch("/api/demo/connect", { method: "POST" });
+      if (!res.ok) {
+        // Parse the error body only if it looks like JSON, otherwise use a fallback.
+        let message = `Demo sync failed (${res.status}).`;
+        try {
+          const data = await res.json();
+          if (data.error) message = data.error;
+        } catch { /* response wasn't JSON */ }
+        throw new Error(message);
+      }
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Demo sync failed.");
       return data as SyncResult;
     },
 
