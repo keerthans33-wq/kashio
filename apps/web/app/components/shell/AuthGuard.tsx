@@ -8,9 +8,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Use getUser() instead of getSession() — getUser() validates the token
-    // with the server, so a stale/expired session is caught immediately.
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const user = session?.user;
       if (!user) {
         window.location.replace("/login");
         return;

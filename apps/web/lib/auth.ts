@@ -4,17 +4,16 @@ import { redirect } from "next/navigation";
 import { isValidUserType } from "./user-context";
 
 async function makeServerClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) throw new Error(`Missing Supabase env vars (url=${!!url}, key=${!!key})`);
   const cookieStore = await cookies();
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll: () => cookieStore.getAll(),
-        setAll: () => {},
-      },
+  return createServerClient(url, key, {
+    cookies: {
+      getAll: () => cookieStore.getAll(),
+      setAll: () => {},
     },
-  );
+  });
 }
 
 // For server components and actions: redirects to /login if not signed in.
