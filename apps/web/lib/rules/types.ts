@@ -16,9 +16,11 @@ export type RawMatch = {
 };
 
 // What explain() returns: human-readable text for the UI.
+// mixedUse: true signals the UI to show a "may include personal use" warning.
 export type Explanation = {
   reason:            string;
   confidenceReason?: string;
+  mixedUse?:         boolean;
 };
 
 // The full match surfaced to the rest of the app.

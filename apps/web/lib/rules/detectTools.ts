@@ -1,25 +1,31 @@
-// Category:   Tools & Equipment
-// Confidence: MEDIUM when a trade merchant AND a tool keyword both match
+// Category:   Equipment
+// Confidence: HIGH when a trade-only merchant AND a tool keyword both match
+//             MEDIUM when a general hardware merchant AND a tool keyword both match
 //             LOW for keyword-only matches
-// Note:       Merchant-only matches are not flagged — broad hardware stores
-//             like Bunnings sell far more non-deductible items than tools.
+// Note:       Merchant-only matches are not flagged — hardware stores sell far more
+//             non-deductible items than tools.
 // ATO note:   Tools $300 or less can be claimed immediately; over $300 must be depreciated.
 
 import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
 import { merchantText, combinedText } from "./shared";
 
-const MERCHANTS = [
-  "bunnings",
+// Near-exclusively professional/trade customers — strong work signal with a tool keyword.
+const TRADE_ONLY_MERCHANTS = [
   "total tools",
   "sydney tools",
   "tools warehouse",
   "tool kit depot",
+  "blackwoods",
+  "protector alsafe",
+];
+
+// General hardware stores that also serve homeowners and DIY buyers — weaker signal.
+const GENERAL_MERCHANTS = [
+  "bunnings",
   "mitre 10",
   "home hardware",
   "hardings hardware",
-  "blackwoods",
-  "protector alsafe",
 ];
 
 const KEYWORDS = [
@@ -46,34 +52,44 @@ const KEYWORDS = [
 ];
 
 function detect(tx: { normalizedMerchant: string; description: string }): RawMatch | null {
-  const combined     = combinedText(tx);
-  const keyword      = KEYWORDS.find((k) => combined.includes(k));
+  const combined = combinedText(tx);
+  const keyword  = KEYWORDS.find((k) => combined.includes(k));
 
   // Require a tool keyword — merchant name alone is too broad.
   if (!keyword) return null;
 
-  const merchantMatch = MERCHANTS.some((m) => merchantText(tx).includes(m));
+  const merchant     = merchantText(tx);
+  const isTradeOnly  = TRADE_ONLY_MERCHANTS.some((m) => merchant.includes(m));
+  const isGeneral    = !isTradeOnly && GENERAL_MERCHANTS.some((m) => merchant.includes(m));
+  const merchantMatch = isTradeOnly || isGeneral;
 
   return {
-    category:   CATEGORIES.TOOLS_EQUIPMENT,
-    confidence: merchantMatch ? "MEDIUM" : "LOW",
-    signals:    { merchantMatch, keyword },
+    category:   CATEGORIES.EQUIPMENT,
+    confidence: isTradeOnly ? "HIGH" : merchantMatch ? "MEDIUM" : "LOW",
+    signals:    { isTradeOnly, isGeneral, merchantMatch, keyword },
   };
 }
 
 function explain(match: RawMatch, tx: { normalizedMerchant: string }): Explanation {
-  const { merchantMatch, keyword } = match.signals;
+  const { isTradeOnly, merchantMatch, keyword } = match.signals;
+
+  if (isTradeOnly) {
+    return {
+      reason:           `A ${keyword} from ${tx.normalizedMerchant} used for work is deductible. Tools under $300 can be claimed in full; over $300 must be depreciated over the asset's life.`,
+      confidenceReason: "Trade-only retailer and a matching tool — a strong signal this was a work purchase.",
+    };
+  }
 
   if (merchantMatch) {
     return {
-      reason:           `This looks like a ${keyword} purchase from ${tx.normalizedMerchant}. Tools you buy for work are deductible — items under $300 can be claimed in full this year.`,
-      confidenceReason: "Both the store and the item type matched — two signals pointing to a work tool purchase.",
+      reason:           `If this ${keyword} from ${tx.normalizedMerchant} was bought for work — not a home project — it's deductible. Tools under $300 can be claimed in full; over $300 must be depreciated.`,
+      confidenceReason: "Hardware store and a matching tool type — reasonable, but these stores also serve homeowners and DIY buyers.",
     };
   }
 
   return {
-    reason:           `The description mentions a ${keyword}. If you bought this for work and it costs $300 or less, you can claim the full amount this year.`,
-    confidenceReason: "Item type matched, but without a recognised trade store it's harder to confirm this was a work purchase.",
+    reason:           `If this ${keyword} was bought for work, it's deductible. Tools $300 or under can be claimed immediately; over $300 must be depreciated over time.`,
+    confidenceReason: "Tool type matched, but without a recognised trade store it's harder to confirm this was a work purchase.",
   };
 }
 

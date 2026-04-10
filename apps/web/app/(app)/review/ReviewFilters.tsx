@@ -69,9 +69,9 @@ export function ReviewFilters() {
             <span className="text-xs text-gray-400 dark:text-gray-500 self-center">Match</span>
             {[
               { value: "",       label: "All" },
-              { value: "HIGH",   label: "Likely deductible" },
-              { value: "MEDIUM", label: "Needs a closer look" },
-              { value: "LOW",    label: "Review carefully" },
+              { value: "HIGH",   label: "Strong match" },
+              { value: "MEDIUM", label: "Possible match" },
+              { value: "LOW",    label: "Weak match" },
             ].map(({ value, label }) => (
               <button
                 key={value}

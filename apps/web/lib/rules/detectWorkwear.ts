@@ -1,5 +1,6 @@
-// Category:   Work Clothing & Uniforms
-// Confidence: MEDIUM for known specialist workwear retailers
+// Category:   Work Clothing
+// Confidence: HIGH for specialist workwear retailer AND a workwear keyword (strong double signal)
+//             MEDIUM for specialist retailer alone
 //             LOW for keyword-only matches
 // ATO note:   Conventional clothing is NOT deductible. Only occupation-specific
 //             gear that can't reasonably be worn outside of work qualifies.
@@ -45,7 +46,7 @@ function detect(tx: { normalizedMerchant: string; description: string }): RawMat
 
   return {
     category:   CATEGORIES.WORK_CLOTHING,
-    confidence: merchantMatch ? "MEDIUM" : "LOW",
+    confidence: merchantMatch && keyword ? "HIGH" : merchantMatch ? "MEDIUM" : "LOW",
     signals:    { merchantMatch, keyword },
   };
 }
@@ -53,16 +54,23 @@ function detect(tx: { normalizedMerchant: string; description: string }): RawMat
 function explain(match: RawMatch, tx: { normalizedMerchant: string }): Explanation {
   const { merchantMatch, keyword } = match.signals;
 
+  if (merchantMatch && keyword) {
+    return {
+      reason:           `${typeof keyword === "string" ? keyword.charAt(0).toUpperCase() + keyword.slice(1) : "Workwear"} from ${tx.normalizedMerchant} is deductible if it's required for your job. The test: could you wear it as everyday clothing? If not, you can claim it.`,
+      confidenceReason: "Specialist workwear store and a matching item type — a strong signal for an occupation-specific clothing claim.",
+    };
+  }
+
   if (merchantMatch) {
     return {
-      reason:           `${tx.normalizedMerchant} sells work and safety clothing. If you bought something required for your job that you can't wear outside of work, you can claim it.`,
-      confidenceReason: "Specialist workwear store — a strong signal. Not fully certain because the same stores sometimes carry casual items too.",
+      reason:           `Occupation-specific clothing from ${tx.normalizedMerchant} is deductible if you need it for your job — protective gear, registered uniforms, or items you can't wear outside of work. Casual clothing from the same store doesn't qualify.`,
+      confidenceReason: "Recognised workwear retailer, but no specific item in the description — the same stores sometimes carry casual items too.",
     };
   }
 
   return {
-    reason:           `The description mentions "${keyword}", which is the kind of item you can claim if it's required for your job. Everyday clothing worn at work doesn't qualify — only gear you couldn't reasonably wear outside of work.`,
-    confidenceReason: "The item type suggests work gear, but the store isn't a specialist workwear retailer — harder to be confident without both.",
+    reason:           `${typeof keyword === "string" ? keyword.charAt(0).toUpperCase() + keyword.slice(1) : "This item"} is deductible if it's required for your job and not something you'd wear in daily life. Everyday clothing worn to work doesn't qualify — only occupation-specific gear counts.`,
+    confidenceReason: "Item type suggests work gear, but the store isn't a specialist workwear retailer — harder to be confident without both.",
   };
 }
 

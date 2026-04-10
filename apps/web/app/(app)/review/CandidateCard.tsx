@@ -13,6 +13,7 @@ export type CandidateCardProps = {
   category:          string;
   reason:            string;
   confidenceReason?: string;
+  mixedUse?:         boolean;
   hasEvidence:       boolean;
   evidenceNote:      string | null;
   transaction:       { normalizedMerchant: string; amount: number; date: string; description: string };
@@ -20,9 +21,9 @@ export type CandidateCardProps = {
 };
 
 const CONFIDENCE_LABEL: Record<Confidence, string> = {
-  HIGH:   "Likely deductible",
-  MEDIUM: "Needs a closer look",
-  LOW:    "Review carefully",
+  HIGH:   "Strong match",
+  MEDIUM: "Possible match",
+  LOW:    "Weak match — check before claiming",
 };
 
 const CONFIDENCE_STYLE: Record<Confidence, string> = {
@@ -31,11 +32,6 @@ const CONFIDENCE_STYLE: Record<Confidence, string> = {
   LOW:    "text-gray-400 dark:text-gray-500",
 };
 
-const MIXED_USE_KEYWORDS = ["phone", "internet", "laptop", "subscription", "software", "mobile"];
-
-function isMixedUse(category: string, reason: string): boolean {
-  return MIXED_USE_KEYWORDS.some((k) => `${category} ${reason}`.toLowerCase().includes(k));
-}
 
 const STATUS_BORDER: Record<Status, string> = {
   NEEDS_REVIEW: "border-gray-200 dark:border-gray-700",
@@ -50,7 +46,7 @@ const STATUS_BG: Record<Status, string> = {
 };
 
 export function CandidateCard({
-  id, status: initialStatus, confidence, category, reason, confidenceReason,
+  id, status: initialStatus, confidence, category, reason, confidenceReason, mixedUse,
   hasEvidence, evidenceNote, transaction, userType,
 }: CandidateCardProps) {
   const [status, setStatus]                 = useState<Status>(initialStatus);
@@ -123,7 +119,7 @@ export function CandidateCard({
               <span className={`text-xs font-medium ${
                 status === "CONFIRMED" ? "text-green-600 dark:text-green-400" : "text-gray-400 dark:text-gray-500"
               }`}>
-                {status === "CONFIRMED" ? "✓ Deductible" : "✗ Not deductible"}
+                {status === "CONFIRMED" ? "✓ Marked deductible" : "✗ Marked not deductible"}
               </span>
               <button
                 onClick={handleReset}
@@ -172,9 +168,9 @@ export function CandidateCard({
           </div>
 
           <div>
-            <p className="text-xs text-gray-400 dark:text-gray-500">Why it was flagged</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">Why Kashio flagged this</p>
             <p className="mt-0.5 text-sm text-gray-600 dark:text-gray-400">{reason}</p>
-            {isMixedUse(category, reason) && (
+            {mixedUse && (
               <p className="mt-1 text-xs text-amber-500 dark:text-amber-400">
                 May include personal use — review before claiming
               </p>

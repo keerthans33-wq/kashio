@@ -5,7 +5,7 @@
 
 import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
-import { merchantText, combinedText } from "./shared";
+import { merchantText, combinedText, matchesMerchant } from "./shared";
 
 const MERCHANTS = [
   "telstra",
@@ -40,7 +40,8 @@ const KEYWORDS = [
 function detect(tx: { normalizedMerchant: string; description: string }): RawMatch | null {
   const combined = combinedText(tx);
 
-  const merchantMatch = MERCHANTS.some((m) => merchantText(tx).includes(m));
+  const merchant      = merchantText(tx);
+  const merchantMatch = MERCHANTS.some((m) => matchesMerchant(merchant, m));
   const keyword       = KEYWORDS.find((k) => combined.includes(k));
 
   if (!merchantMatch && !keyword) return null;
@@ -58,21 +59,24 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }): Explanati
 
   if (both) {
     return {
-      reason:           `This looks like a ${tx.normalizedMerchant} ${keyword}. If you use this service for work, the work-use portion is deductible. Personal use isn't claimable.`,
-      confidenceReason: "Recognised telco and a billing keyword in the description — two signals pointing to a recurring phone or internet charge.",
+      reason:           `Your ${tx.normalizedMerchant} ${keyword} has a work-use portion that's deductible. You'll need to estimate what percentage you use for work — the ATO suggests a 4-week representative log to work out the split.`,
+      confidenceReason: "Recognised telco and a billing keyword — two signals pointing to a recurring phone or internet charge.",
+      mixedUse:         true,
     };
   }
 
   if (merchantMatch) {
     return {
-      reason:           `${tx.normalizedMerchant} is a phone or internet provider. If this is a recurring bill you use for work, the work portion is deductible — but confirm it's a service charge, not a device purchase.`,
-      confidenceReason: "Recognised telco, but no billing keyword — could be a handset, accessory, or store payment rather than a phone or internet bill.",
+      reason:           `If this ${tx.normalizedMerchant} charge is for a recurring service you use for work, the work-use portion is deductible. A handset or accessory purchase would be treated differently — as an equipment claim.`,
+      confidenceReason: "Recognised telco, but no billing keyword — could be a device or accessory purchase rather than a recurring service bill.",
+      mixedUse:         true,
     };
   }
 
   return {
-    reason:           `The description mentions "${keyword}". If this is a phone or internet service you use for work, the work portion is deductible. Keep a record of how much you use it for work vs personal.`,
-    confidenceReason: "Billing keyword matched, but without a recognised telco merchant it's harder to confirm this is a phone or internet bill.",
+    reason:           `This may be a phone or internet charge — if so, the work-use portion could be claimable. Without a recognised provider, it's hard to be sure what this charge is for. Check before claiming.`,
+    confidenceReason: "Billing keyword matched, but without a recognised telco it's hard to confirm this is a phone or internet bill.",
+    mixedUse:         true,
   };
 }
 

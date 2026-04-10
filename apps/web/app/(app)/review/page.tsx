@@ -15,8 +15,9 @@ export const dynamic = "force-dynamic";
 const CONFIDENCE_RANK: Record<string, number> = { HIGH: 3, MEDIUM: 2, LOW: 1 };
 
 type Candidate = Awaited<ReturnType<typeof db.deductionCandidate.findMany>>[number] & {
-  transaction: { normalizedMerchant: string; amount: number; date: string; description: string };
+  transaction:      { normalizedMerchant: string; amount: number; date: string; description: string };
   confidenceReason?: string | null;
+  mixedUse?:         boolean;
 };
 
 function toCardProps(c: Candidate, userType: string | null): CandidateCardProps {
@@ -27,6 +28,7 @@ function toCardProps(c: Candidate, userType: string | null): CandidateCardProps 
     category:         c.category,
     reason:           c.reason,
     confidenceReason: c.confidenceReason ?? undefined,
+    mixedUse:         c.mixedUse,
     hasEvidence:      c.hasEvidence,
     evidenceNote:     c.evidenceNote ?? null,
     transaction:      c.transaction,
@@ -55,9 +57,11 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
   });
 
   const candidates = [...filtered].sort((a, b) => {
-    if (sort === "amount")     return Math.abs(b.transaction.amount) - Math.abs(a.transaction.amount);
-    if (sort === "confidence") return CONFIDENCE_RANK[b.confidence] - CONFIDENCE_RANK[a.confidence];
-    return 0; // default: keep date desc from DB
+    if (sort === "amount") return Math.abs(b.transaction.amount) - Math.abs(a.transaction.amount);
+    // Default and explicit confidence sort: HIGH → MEDIUM → LOW, then date desc within each band.
+    const rankDiff = CONFIDENCE_RANK[b.confidence] - CONFIDENCE_RANK[a.confidence];
+    if (rankDiff !== 0) return rankDiff;
+    return new Date(b.transaction.date).getTime() - new Date(a.transaction.date).getTime();
   });
 
   const needsReview   = candidates.filter((c) => c.status === "NEEDS_REVIEW");

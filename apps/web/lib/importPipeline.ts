@@ -67,10 +67,11 @@ export async function runImportPipeline(
       if (!match) return null;
       return {
         transactionId: t.id,
-        category: match.category,
-        confidence: match.confidence,
-        reason: match.reason,
+        category:         match.category,
+        confidence:       match.confidence,
+        reason:           match.reason,
         confidenceReason: match.confidenceReason,
+        mixedUse:         match.mixedUse ?? false,
       };
     })
     .filter((c): c is NonNullable<typeof c> => c !== null);

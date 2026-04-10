@@ -1,6 +1,8 @@
-// Category:   Office Supplies & Equipment
-// Confidence: MEDIUM when a known retailer AND a work keyword both match
-//             LOW when only one signal is present
+// Category:   Office Supplies
+// Confidence: MEDIUM when a known retailer AND a supply keyword both match
+//             LOW for keyword-only matches (no recognised office store)
+// Note:       Merchant-only matches are not flagged — Officeworks and Staples
+//             sell a wide range of items with no obvious work connection.
 
 import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
@@ -22,39 +24,32 @@ const KEYWORDS = [
 function detect(tx: { normalizedMerchant: string; description: string }): RawMatch | null {
   const combined = combinedText(tx);
 
-  const merchantMatch = MERCHANTS.some((m) => merchantText(tx).includes(m));
-  const keyword       = KEYWORDS.find((k) => combined.includes(k));
+  const keyword = KEYWORDS.find((k) => combined.includes(k));
 
-  if (!merchantMatch && !keyword) return null;
+  // Require a supply keyword — merchant name alone is too broad.
+  if (!keyword) return null;
+
+  const merchantMatch = MERCHANTS.some((m) => merchantText(tx).includes(m));
 
   return {
     category:   CATEGORIES.OFFICE_SUPPLIES,
-    confidence: merchantMatch && keyword ? "MEDIUM" : "LOW",
+    confidence: merchantMatch ? "MEDIUM" : "LOW",
     signals:    { merchantMatch, keyword },
   };
 }
 
 function explain(match: RawMatch, tx: { normalizedMerchant: string }): Explanation {
   const { merchantMatch, keyword } = match.signals;
-  const both = merchantMatch && keyword;
-
-  if (both) {
-    return {
-      reason:           `This looks like a ${keyword} purchase from ${tx.normalizedMerchant}. Office supplies you buy for work are deductible — home or personal use doesn't qualify.`,
-      confidenceReason: "Both the store and the item type matched — two signals pointing to a work purchase.",
-    };
-  }
-
   if (merchantMatch) {
     return {
-      reason:           `${tx.normalizedMerchant} is an office supply store. If this was for work — stationery, printer supplies, or similar — you can claim it. Home purchases from the same store don't count.`,
-      confidenceReason: "Known office store matched, but no specific item in the description — could still be a personal purchase.",
+      reason:           `Office supplies bought for work are deductible, and a ${keyword} from ${tx.normalizedMerchant} fits the pattern. If it was for home rather than work, it won't qualify.`,
+      confidenceReason: "Recognised office retailer and a matching item type — two signals pointing to a work purchase.",
     };
   }
 
   return {
-    reason:           `The description mentions "${keyword}". Office supplies bought for work are deductible — if it was for home use, it won't qualify.`,
-    confidenceReason: "Item type matched in the description, but without a recognised office store it's harder to be sure.",
+    reason:           `${typeof keyword === "string" ? keyword.charAt(0).toUpperCase() + keyword.slice(1) : "This item"} bought for work is deductible, but without a recognised office store this is harder to confirm. Check before claiming.`,
+    confidenceReason: "Supply keyword matched, but not from a recognised office retailer — could be from a non-work purchase.",
   };
 }
 

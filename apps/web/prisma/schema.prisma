@@ -71,6 +71,7 @@ model DeductionCandidate {
   confidence    Confidence
   reason              String          // short explanation, e.g. "Matches known software subscription"
   confidenceReason    String?         // explains why confidence is LOW/MEDIUM/HIGH
+  mixedUse            Boolean         @default(false) // true if category may include personal use
   status        DeductionStatus @default(NEEDS_REVIEW)
   hasEvidence   Boolean         @default(false)
   evidenceNote  String?         // optional free text, e.g. "Bunnings receipt Feb 2025"

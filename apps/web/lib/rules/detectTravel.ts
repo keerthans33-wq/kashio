@@ -1,11 +1,11 @@
-// Category:   Work-Related Travel
-// Confidence: MEDIUM for known transport merchants or explicit work-travel keywords
-//             LOW for fuel merchants or general travel keywords
+// Category:   Work Travel
+// Confidence: MEDIUM for explicit work-travel keywords (alone or alongside a transport merchant)
+//             LOW for transport/fuel merchants without a work keyword, or general travel keywords
 // ATO note:   Travel between home and work is generally NOT deductible.
 
 import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
-import { merchantText, combinedText } from "./shared";
+import { merchantText, combinedText, matchesMerchant } from "./shared";
 
 const TRANSPORT_MERCHANTS = [
   "uber",
@@ -28,15 +28,24 @@ const TRANSPORT_EXCLUSIONS = [
   "delivery",
 ];
 
+// Dedicated fuel stations — merchant alone is a LOW fuel signal.
 const FUEL_MERCHANTS = [
   "bp",
   "shell",
   "caltex",
   "ampol",
-  "7-eleven",
   "united petroleum",
   "puma energy",
 ];
+
+// Mixed-use merchants that sell fuel but also food, drinks, and other non-deductibles.
+// Only treated as fuel if a fuel keyword is also present.
+const CONVENIENCE_MERCHANTS = [
+  "7-eleven",
+];
+
+// Keywords that confirm a fuel purchase at a convenience merchant.
+const FUEL_KEYWORDS = ["fuel", "petrol", "diesel", "unleaded"];
 
 // Explicit work intent — strong enough for MEDIUM on their own
 const STRONG_KEYWORDS = [
@@ -45,7 +54,8 @@ const STRONG_KEYWORDS = [
 ];
 
 // General travel terms — LOW without a merchant signal.
-// airfare/flight are intentionally LOW because they are equally common for personal holidays.
+// "flight" and "airfare" are omitted: without a known transport merchant or explicit
+// work-travel language, a standalone flight keyword is indistinguishable from a holiday.
 const WEAK_KEYWORDS = [
   "parking",
   "toll",
@@ -53,8 +63,6 @@ const WEAK_KEYWORDS = [
   "e-toll",
   "fuel",
   "petrol",
-  "airfare",
-  "flight",
   "train",
   "bus ticket",
   "ferry",
@@ -69,16 +77,24 @@ function detect(tx: { normalizedMerchant: string; description: string }): RawMat
   const combined = combinedText(tx);
 
   const isExcludedTransport = TRANSPORT_EXCLUSIONS.some((e) => combined.includes(e));
-  const isTransport = !isExcludedTransport && TRANSPORT_MERCHANTS.some((m) => merchant.includes(m));
-  const isFuel      = !isTransport && FUEL_MERCHANTS.some((m) => merchant.includes(m));
-  const keyword     = ALL_KEYWORDS.find((k) => combined.includes(k));
-  const isStrong    = keyword ? STRONG_KEYWORDS.includes(keyword) : false;
+  const isTransport = !isExcludedTransport && TRANSPORT_MERCHANTS.some((m) => matchesMerchant(merchant, m));
+
+  const hasFuelKeyword = FUEL_KEYWORDS.some((k) => combined.includes(k));
+  const isFuel = !isTransport && (
+    FUEL_MERCHANTS.some((m) => matchesMerchant(merchant, m)) ||
+    (CONVENIENCE_MERCHANTS.some((m) => merchant.includes(m)) && hasFuelKeyword)
+  );
+
+  const keyword  = ALL_KEYWORDS.find((k) => combined.includes(k));
+  const isStrong = keyword ? STRONG_KEYWORDS.includes(keyword) : false;
 
   if (!isTransport && !isFuel && !keyword) return null;
 
+  // Transport merchant alone can't distinguish work travel from commuting — require a strong
+  // keyword to reach MEDIUM. Fuel and general keywords stay LOW regardless.
   return {
     category:   CATEGORIES.WORK_TRAVEL,
-    confidence: isTransport || isStrong ? "MEDIUM" : "LOW",
+    confidence: isStrong ? "MEDIUM" : "LOW",
     signals:    { isTransport, isFuel, keyword, isStrong },
   };
 }
@@ -88,23 +104,25 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }): Explanati
 
   if (isTransport) {
     return {
-      reason:           `${tx.normalizedMerchant} is a transport provider. If this trip was for work — visiting a client, attending a site, or travelling between work locations — you can claim it. Commuting to your regular workplace doesn't qualify.`,
-      confidenceReason: "Recognised transport merchant — likely work travel, but commuting trips look the same and aren't deductible.",
+      reason:           `${tx.normalizedMerchant} trips for work — visiting clients, travelling between job sites, attending work events — are deductible. Your regular commute to the office doesn't count.`,
+      confidenceReason: "Recognised transport provider, but work trips and commutes look identical in the data — confirm this was a work journey, not the daily commute.",
     };
   }
 
   if (isFuel) {
     return {
-      reason:           `${tx.normalizedMerchant} is a fuel station. If you drove for work — not your regular commute — the fuel cost is deductible. Keep a logbook or note the trips this covers.`,
-      confidenceReason: "Fuel purchases are common for both work and personal driving — a logbook is the best way to confirm the work portion.",
+      reason:           `Fuel used for work-related driving is deductible — but not your commute to a regular workplace. A logbook or trip notes will help you confirm and support the claim.`,
+      confidenceReason: "Fuel is used for both work and personal driving — without a logbook it's hard to separate the two.",
     };
   }
 
   return {
-    reason:           `The description mentions "${keyword}", which could be a work travel expense. If this trip was for work, you can claim it — regular commutes don't qualify.`,
+    reason: isStrong
+      ? `The description says "${keyword}", which is a clear sign this may be a work travel claim. Confirm the trip was for business — personal travel and commuting don't count.`
+      : `This could be a work travel expense, but ${keyword} is also common for personal trips. Only claim it if this was a business journey — not a commute or holiday.`,
     confidenceReason: isStrong
-      ? "The description explicitly mentions work or business travel — a strong signal."
-      : "Keyword matched, but travel expenses often mix personal and work trips — confirm this was a work-related journey.",
+      ? "Explicit work travel language in the description — a strong signal."
+      : "Travel keyword matched, but personal trips look identical — this needs your confirmation before claiming.",
   };
 }
 

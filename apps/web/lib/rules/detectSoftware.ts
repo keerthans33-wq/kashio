@@ -1,6 +1,6 @@
-// Category:   Work Software & Tools
-// Confidence: MEDIUM for SPECIFIC merchants (near-exclusively B2B tools)
-//             LOW for BROAD merchants even with a keyword (significant personal overlap)
+// Category:   Software & Subscriptions
+// Confidence: MEDIUM for specific B2B merchants WITH a subscription keyword
+//             LOW for specific merchants without a keyword, or broad merchants with a keyword
 
 import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
@@ -50,22 +50,31 @@ function detect(tx: { normalizedMerchant: string; description: string }): RawMat
   const keyword = SOFTWARE_KEYWORDS.find((k) => combined.includes(k));
   if (isBroad && !keyword) return null;
 
+  // Specific merchant alone is not enough — require a keyword to confirm it's a paid work account.
+  const confidence = isSpecific && keyword ? "MEDIUM" : "LOW";
+
   return {
-    category:   CATEGORIES.WORK_SOFTWARE,
-    confidence: isSpecific ? "MEDIUM" : "LOW",
+    category:   CATEGORIES.SOFTWARE,
+    confidence,
     signals:    { tier: isSpecific ? "specific" : "broad", keyword },
   };
 }
 
 function explain(match: RawMatch, tx: { normalizedMerchant: string }): Explanation {
   const isSpecific = match.signals.tier === "specific";
+  const hasKeyword = !!match.signals.keyword;
   return {
-    reason: isSpecific
-      ? `${tx.normalizedMerchant} is a work tool. If you use this subscription for your job, you can claim the cost — personal accounts and free tiers don't qualify.`
-      : `This looks like a paid ${tx.normalizedMerchant} subscription. If the account is used for work, the cost is deductible — personal plans don't count.`,
-    confidenceReason: isSpecific
-      ? "Recognised as a near-exclusively B2B tool — a reasonable signal, but personal plans exist so confirm it's a work account."
-      : "A subscription keyword in the description supports this, but this merchant also has personal plans — confirm it's a work account before claiming.",
+    reason: isSpecific && hasKeyword
+      ? `Paid ${tx.normalizedMerchant} subscriptions used to earn income are deductible. If this is your work account, you can claim the full cost.`
+      : isSpecific
+      ? `If this is a paid ${tx.normalizedMerchant} account for work, the subscription cost is claimable. Free tiers and personal accounts don't qualify.`
+      : `Paid ${tx.normalizedMerchant} subscriptions used for work are deductible. Confirm this is your work account — personal plans don't qualify.`,
+    confidenceReason: isSpecific && hasKeyword
+      ? "Recognised work tool and a subscription keyword — two signals pointing to a paid work account."
+      : isSpecific
+      ? "Recognised work tool, but no subscription keyword — could be a free or personal plan rather than a paid work account."
+      : "A subscription keyword supports this, but this tool has personal plans too — confirm it's a work account before claiming.",
+    mixedUse: true,
   };
 }
 

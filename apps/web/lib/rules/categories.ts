@@ -1,24 +1,21 @@
-// Canonical category names used by detection rules, the UI, and future export logic.
-// Always reference these constants instead of writing the string directly,
-// so names stay consistent if they ever need to change.
+// Canonical category names used by detection rules, the UI, and export logic.
+// Always reference these constants instead of writing the string directly.
 export const CATEGORIES = {
-  WORK_SOFTWARE:            "Work Software & Tools",
-  OFFICE_SUPPLIES:          "Office Supplies & Equipment",
-  WORK_CLOTHING:            "Work Clothing & Uniforms",
-  PROFESSIONAL_DEVELOPMENT: "Professional Development",
-  WORK_TRAVEL:              "Work-Related Travel",
-  HOME_OFFICE:              "Home Office",
-  TOOLS_EQUIPMENT:          "Tools & Equipment",
-  PHONE_INTERNET:           "Phone & Internet",
+  WORK_TRAVEL:     "Work Travel",
+  EQUIPMENT:       "Equipment",
+  SOFTWARE:        "Software & Subscriptions",
+  OFFICE_SUPPLIES: "Office Supplies",
+  PHONE_INTERNET:  "Phone & Internet",
+  WORK_CLOTHING:   "Work Clothing",
 } as const;
 
 // Only categories that at least one active rule can produce.
-// Update this when new rules are added.
+// Update this when new rules are added or removed.
 export const ACTIVE_CATEGORIES: string[] = [
-  CATEGORIES.WORK_SOFTWARE,
-  CATEGORIES.OFFICE_SUPPLIES,
-  CATEGORIES.WORK_CLOTHING,
   CATEGORIES.WORK_TRAVEL,
-  CATEGORIES.TOOLS_EQUIPMENT,
+  CATEGORIES.EQUIPMENT,
+  CATEGORIES.SOFTWARE,
+  CATEGORIES.OFFICE_SUPPLIES,
   CATEGORIES.PHONE_INTERNET,
+  CATEGORIES.WORK_CLOTHING,
 ];
