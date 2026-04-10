@@ -29,11 +29,18 @@ export default function LoginPage() {
 
   async function handleSignUp() {
     setError(null); setMessage(null); setLoading(true);
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) { setError(friendlyError(error.message)); setLoading(false); return; }
-    // Sign in immediately after creating the account
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-    if (signInError) { setError(friendlyError(signInError.message)); setLoading(false); return; }
+
+    // If Supabase requires email confirmation, session is null after signUp.
+    // In that case, tell the user to check their inbox rather than trying to sign in.
+    if (!data.session) {
+      setMessage("Account created. Check your email to confirm, then sign in.");
+      setLoading(false);
+      return;
+    }
+
+    // Email confirmation disabled — session is ready, proceed directly.
     window.location.href = "/onboarding";
   }
 
