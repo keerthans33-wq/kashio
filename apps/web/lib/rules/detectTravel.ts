@@ -99,27 +99,32 @@ function detect(tx: { normalizedMerchant: string; description: string }): RawMat
   };
 }
 
-function explain(match: RawMatch, tx: { normalizedMerchant: string }): Explanation {
+function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?: string | null): Explanation {
   const { isTransport, isFuel, keyword, isStrong } = match.signals;
+  const isBusiness = userType === "contractor" || userType === "sole_trader";
 
   if (isTransport) {
     return {
-      reason:           `${tx.normalizedMerchant} trips for work are deductible: visiting clients, travelling between job sites, attending work events. Your regular commute to the office doesn't count.`,
+      reason: isBusiness
+        ? `${tx.normalizedMerchant} trips for business are deductible: visiting clients, travelling between sites, attending business meetings. Travel from your home office to a client counts; a regular commute generally doesn't.`
+        : `${tx.normalizedMerchant} trips for work are deductible: visiting clients, travelling between job sites, attending work events. Your regular commute to the office doesn't count.`,
       confidenceReason: "Recognised transport provider, but work trips and commutes look identical in the data. Confirm this was a work journey, not the daily commute.",
     };
   }
 
   if (isFuel) {
     return {
-      reason:           `Fuel used for work-related driving is deductible, but not your commute to a regular workplace. A logbook or trip notes will help you confirm and support the claim.`,
+      reason: isBusiness
+        ? `Fuel for business driving is deductible. Keep a logbook or trip notes — you'll need to show the trip was for business, not personal use.`
+        : `Fuel used for work-related driving is deductible, but not your commute to a regular workplace. A logbook or trip notes will help you confirm and support the claim.`,
       confidenceReason: "Fuel is used for both work and personal driving. Without a logbook it's hard to separate the two.",
     };
   }
 
   return {
     reason: isStrong
-      ? `The description says "${keyword}", which is a clear sign this may be a work travel claim. Confirm the trip was for business. Personal travel and commuting don't count.`
-      : `This could be a work travel expense, but ${keyword} is also common for personal trips. Only claim it if this was a business journey. Not a commute or holiday.`,
+      ? `The description says "${keyword}", which is a clear sign this may be a ${isBusiness ? "business travel" : "work travel"} claim. Confirm the trip was for ${isBusiness ? "business" : "work"}. Personal travel and commuting don't count.`
+      : `This could be a ${isBusiness ? "business travel expense" : "work travel expense"}, but ${keyword} is also common for personal trips. Only claim it if this was a ${isBusiness ? "business journey" : "work journey"}. Not a commute or holiday.`,
     confidenceReason: isStrong
       ? "Explicit work travel language in the description. A strong signal."
       : "Travel keyword matched, but personal trips look identical. Confirm this was a work trip before claiming.",

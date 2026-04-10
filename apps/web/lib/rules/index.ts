@@ -8,7 +8,7 @@ import { detectTravel } from "./detectTravel";
 import { detectTools } from "./detectTools";
 import { detectPhoneInternet } from "./detectPhoneInternet";
 
-const rules: Rule[] = [
+const ALL_RULES: Rule[] = [
   detectSoftware,
   detectOfficeSupplies,
   detectWorkEquipment,
@@ -24,9 +24,10 @@ const CONFIDENCE_RANK: Record<RawMatch["confidence"], number> = {
   LOW:    1,
 };
 
-// Runs all rules against a transaction and returns the highest-confidence
+// Runs all relevant rules against a transaction and returns the highest-confidence
 // match with its explanation, or null if nothing matches.
-export function detectDeduction(transaction: TransactionInput): DeductionMatch | null {
+export function detectDeduction(transaction: TransactionInput, userType?: string | null): DeductionMatch | null {
+  const rules = ALL_RULES;
   // Only debit transactions (negative amounts) can be deductions.
   if (transaction.amount >= 0) return null;
 
@@ -65,7 +66,7 @@ export function detectDeduction(transaction: TransactionInput): DeductionMatch |
   }
 
   // Generate explanation from the winning rule.
-  const explanation = rule.explain(match, transaction);
+  const explanation = rule.explain(match, transaction, userType);
 
   return { ...match, ...explanation };
 }

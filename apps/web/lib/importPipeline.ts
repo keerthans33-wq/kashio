@@ -18,6 +18,7 @@ export async function runImportPipeline(
   fileName: string,
   source: TransactionSource = "CSV",
   userId: string,
+  userType?: string | null,
 ): Promise<PipelineResult> {
   // Manually filter duplicates instead of relying on skipDuplicates: true,
   // which has known issues with Prisma's driverAdapters preview feature.
@@ -63,7 +64,7 @@ export async function runImportPipeline(
         description: t.description,
         normalizedMerchant: t.normalizedMerchant,
         amount: t.amount,
-      });
+      }, userType);
       if (!match) return null;
       return {
         transactionId: t.id,

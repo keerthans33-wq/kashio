@@ -1,14 +1,34 @@
 import { db } from "../../../lib/db";
 import { requireUserWithType } from "../../../lib/auth";
+import { ACTIVE_CATEGORIES, CATEGORIES_BY_USER_TYPE, CATEGORY_PRIORITY_BY_USER_TYPE } from "../../../lib/rules/categories";
+import { ReviewFilters } from "./ReviewFilters";
+import { ReviewList } from "./ReviewList";
+import type { CandidateCardProps } from "./CandidateCard";
 
 const HEADING: Record<string, string> = {
   employee:    "Work-related deductions",
   contractor:  "Business expenses",
   sole_trader: "Business deductions",
 };
-import { ReviewFilters } from "./ReviewFilters";
-import { ReviewList } from "./ReviewList";
-import type { CandidateCardProps } from "./CandidateCard";
+
+const EMPTY_STATE: Record<string, string> = {
+  employee:    "Import your bank transactions and Kashio will flag expenses that look work-related.",
+  contractor:  "Import your bank transactions and Kashio will flag your possible business expenses.",
+  sole_trader: "Import your bank transactions and Kashio will flag your possible business deductions.",
+};
+
+const DISCLAIMER: Record<string, string> = {
+  employee:    "Kashio helps you spot possible work-related deductions. It's not a tax adviser. Check with your accountant before lodging.",
+  contractor:  "Kashio helps you spot possible business expenses. It's not a tax adviser. Check with your accountant before lodging.",
+  sole_trader: "Kashio helps you spot possible business deductions. It's not a tax adviser. Check with your accountant before lodging.",
+};
+
+// One contextual tip shown while reviewing — surfaced once per user type, not a repeat of other copy.
+const TIP: Record<string, string> = {
+  employee:    "Your regular commute isn't deductible. Only trips to a client, second workplace, or work event qualify.",
+  contractor:  "Keep receipts for everything you confirm. The ATO can ask for evidence at any time.",
+  sole_trader: "If an expense mixes personal and business use, you can only claim the business portion.",
+};
 
 export const dynamic = "force-dynamic";
 
@@ -44,11 +64,13 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
     searchParams,
   ]);
 
-  const all = await db.deductionCandidate.findMany({
+  const allowedCategories = (userType && CATEGORIES_BY_USER_TYPE[userType]) ?? ACTIVE_CATEGORIES;
+
+  const all = (await db.deductionCandidate.findMany({
     where:   { userId },
     include: { transaction: true },
     orderBy: { transaction: { date: "desc" } },
-  });
+  })).filter((c) => allowedCategories.includes(c.category));
 
   const filtered = all.filter((c) => {
     if (category   && c.category   !== category)   return false;
@@ -56,11 +78,16 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
     return true;
   });
 
+  const categoryOrder = (userType && CATEGORY_PRIORITY_BY_USER_TYPE[userType]) ?? [];
+  const categoryRank  = (cat: string) => { const i = categoryOrder.indexOf(cat); return i === -1 ? 999 : i; };
+
   const candidates = [...filtered].sort((a, b) => {
     if (sort === "amount") return Math.abs(b.transaction.amount) - Math.abs(a.transaction.amount);
-    // Default and explicit confidence sort: HIGH → MEDIUM → LOW, then date desc within each band.
+    // Default: confidence → category priority → date desc
     const rankDiff = CONFIDENCE_RANK[b.confidence] - CONFIDENCE_RANK[a.confidence];
     if (rankDiff !== 0) return rankDiff;
+    const catDiff = categoryRank(a.category) - categoryRank(b.category);
+    if (catDiff !== 0) return catDiff;
     return new Date(b.transaction.date).getTime() - new Date(a.transaction.date).getTime();
   });
 
@@ -84,7 +111,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
   // Single top-priority nudge: 1) items to review, 2) missing evidence
   const nudge =
-    all.length === 0         ? "Import your bank transactions and Kashio will flag what looks deductible." :
+    all.length === 0         ? ((userType && EMPTY_STATE[userType]) ?? "Import your bank transactions and Kashio will flag what looks deductible.") :
     totalNeedsReview > 0     ? `${totalNeedsReview} item${totalNeedsReview !== 1 ? "s" : ""} left to review${unreviewedValue > 0 ? `. ${fmt(unreviewedValue)} to consider` : ""}.` :
     missingEvidence > 0      ? `${missingEvidence} confirmed item${missingEvidence !== 1 ? "s" : ""} still need${missingEvidence === 1 ? "s" : ""} a receipt.` :
     totalConfirmed > 0       ? "All reviewed. Ready to export." :
@@ -133,14 +160,21 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
 
 
+      {all.length > 0 && userType && TIP[userType] && (
+        <p className="mt-5 text-xs text-gray-400 dark:text-gray-500">
+          <span className="font-medium text-gray-500 dark:text-gray-400">Tip</span>{" "}{TIP[userType]}
+        </p>
+      )}
+
       <div className="mt-6 border-t border-gray-100 dark:border-gray-800" />
-      <ReviewFilters />
+      <ReviewFilters categories={allowedCategories} />
 
       {all.length === 0 ? (
         <div className="mt-10 text-center space-y-1">
           <p className="text-gray-500 dark:text-gray-400">Nothing to review yet.</p>
           <p className="text-sm text-gray-400 dark:text-gray-500">
-            <a href="/import" className="underline hover:text-gray-600 dark:hover:text-gray-300">Upload a CSV from your bank</a> and Kashio will find your possible deductions.
+            <a href="/import" className="underline hover:text-gray-600 dark:hover:text-gray-300">Import your transactions</a>
+            {" "}and Kashio will find your possible {userType === "contractor" ? "business expenses" : "deductions"}.
           </p>
         </div>
       ) : candidates.length === 0 ? (
@@ -165,7 +199,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
       {all.length > 0 && (
         <p className="mt-10 text-xs text-gray-400 dark:text-gray-500">
-          Kashio helps you spot possible deductions. It's not a tax adviser. When in doubt, check with your accountant.
+          {(userType && DISCLAIMER[userType]) ?? "Kashio helps you spot possible deductions. It's not a tax adviser. Check with your accountant before lodging."}
         </p>
       )}
     </main>

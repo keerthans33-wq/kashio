@@ -53,13 +53,15 @@ function detect(tx: { normalizedMerchant: string; description: string }): RawMat
   };
 }
 
-function explain(match: RawMatch, tx: { normalizedMerchant: string }): Explanation {
+function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?: string | null): Explanation {
   const { merchantMatch, keyword } = match.signals;
-  const both = merchantMatch && keyword;
+  const both       = merchantMatch && keyword;
+  const isBusiness = userType === "contractor" || userType === "sole_trader";
+  const useLabel   = isBusiness ? "business-use" : "work-use";
 
   if (both) {
     return {
-      reason:           `Your ${tx.normalizedMerchant} ${keyword} has a work-use portion that's deductible. You'll need to estimate what percentage you use for work. The ATO suggests a 4-week representative log to work out the split.`,
+      reason:           `Your ${tx.normalizedMerchant} ${keyword} has a ${useLabel} portion that's deductible. You'll need to estimate what percentage you use for ${isBusiness ? "business" : "work"}. The ATO suggests a 4-week representative log to work out the split.`,
       confidenceReason: "Recognised telco and a billing keyword. Two signals pointing to a recurring phone or internet charge.",
       mixedUse:         true,
     };
@@ -67,14 +69,14 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }): Explanati
 
   if (merchantMatch) {
     return {
-      reason:           `If this ${tx.normalizedMerchant} charge is for a recurring service you use for work, the work-use portion is deductible. A handset or accessory purchase would be treated differently, as an equipment claim.`,
+      reason:           `If this ${tx.normalizedMerchant} charge is for a recurring service you use for ${isBusiness ? "your business" : "work"}, the ${useLabel} portion is deductible. A handset or accessory purchase would be treated differently, as an equipment claim.`,
       confidenceReason: "Recognised telco, but no billing keyword. Could be a device or accessory purchase rather than a recurring service bill.",
       mixedUse:         true,
     };
   }
 
   return {
-    reason:           `This may be a phone or internet charge. If so, the work-use portion could be claimable. Without a recognised provider, it's hard to be sure what this charge is for. Check before claiming.`,
+    reason:           `This may be a phone or internet charge. If so, the ${useLabel} portion could be claimable. Without a recognised provider, it's hard to be sure what this charge is for. Check before claiming.`,
     confidenceReason: "Billing keyword matched, but without a recognised telco it's hard to confirm this is a phone or internet bill.",
     mixedUse:         true,
   };

@@ -19,3 +19,56 @@ export const ACTIVE_CATEGORIES: string[] = [
   CATEGORIES.PHONE_INTERNET,
   CATEGORIES.WORK_CLOTHING,
 ];
+
+// Category priority order for sorting within a confidence band.
+// Index 0 = highest priority. Categories not listed rank last.
+export const CATEGORY_PRIORITY_BY_USER_TYPE: Record<string, string[]> = {
+  employee: [
+    CATEGORIES.WORK_TRAVEL,
+    CATEGORIES.WORK_CLOTHING,
+    CATEGORIES.EQUIPMENT,
+    CATEGORIES.OFFICE_SUPPLIES,
+    CATEGORIES.PHONE_INTERNET,
+    CATEGORIES.SOFTWARE,
+  ],
+  contractor: [
+    CATEGORIES.EQUIPMENT,
+    CATEGORIES.WORK_TRAVEL,
+    CATEGORIES.WORK_CLOTHING,
+    CATEGORIES.OFFICE_SUPPLIES,
+    CATEGORIES.PHONE_INTERNET,
+    CATEGORIES.SOFTWARE,
+  ],
+  sole_trader: [
+    CATEGORIES.EQUIPMENT,
+    CATEGORIES.WORK_TRAVEL,
+    CATEGORIES.OFFICE_SUPPLIES,
+    CATEGORIES.SOFTWARE,
+    CATEGORIES.PHONE_INTERNET,
+    CATEGORIES.WORK_CLOTHING,
+  ],
+};
+
+// Categories visible in the review stage per user type.
+// employee    — standard PAYG work deductions (no office supplies)
+// contractor  — broader business expenses (no work clothing)
+// sole_trader — full set
+export const CATEGORIES_BY_USER_TYPE: Record<string, string[]> = {
+  employee: [
+    CATEGORIES.WORK_TRAVEL,
+    CATEGORIES.EQUIPMENT,
+    CATEGORIES.SOFTWARE,
+    CATEGORIES.OFFICE_SUPPLIES,
+    CATEGORIES.PHONE_INTERNET,
+    CATEGORIES.WORK_CLOTHING,
+  ],
+  contractor: [
+    CATEGORIES.WORK_TRAVEL,
+    CATEGORIES.EQUIPMENT,
+    CATEGORIES.SOFTWARE,
+    CATEGORIES.OFFICE_SUPPLIES,
+    CATEGORIES.PHONE_INTERNET,
+    CATEGORIES.WORK_CLOTHING,
+  ],
+  sole_trader: ACTIVE_CATEGORIES,
+};

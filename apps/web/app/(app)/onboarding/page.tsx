@@ -5,7 +5,7 @@ import { supabase } from "../../../lib/supabase";
 
 const OPTIONS = [
   { id: "employee",    label: "Employee" },
-  { id: "contractor",  label: "Contractor / Freelancer" },
+  { id: "contractor",  label: "Contractor" },
   { id: "sole_trader", label: "Sole trader" },
 ];
 

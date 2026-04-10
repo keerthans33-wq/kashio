@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ACTIVE_CATEGORIES } from "../../../lib/rules/categories";
 
-export function ReviewFilters() {
+export function ReviewFilters({ categories = ACTIVE_CATEGORIES }: { categories?: string[] }) {
   const router   = useRouter();
   const pathname = usePathname();
   const params   = useSearchParams();
@@ -50,7 +50,7 @@ export function ReviewFilters() {
         <div className="mt-3 space-y-3">
           <div className="flex flex-wrap gap-2">
             <span className="text-xs text-gray-400 dark:text-gray-500 self-center">Category</span>
-            {["", ...ACTIVE_CATEGORIES].map((c) => (
+            {["", ...categories].map((c) => (
               <button
                 key={c}
                 onClick={() => update("category", c)}

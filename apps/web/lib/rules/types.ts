@@ -32,5 +32,5 @@ export type DeductionMatch = RawMatch & Explanation;
 export type Rule = {
   priority: number;
   detect:   (tx: TransactionInput) => RawMatch | null;
-  explain:  (match: RawMatch, tx: TransactionInput) => Explanation;
+  explain:  (match: RawMatch, tx: TransactionInput, userType?: string | null) => Explanation;
 };

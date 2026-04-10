@@ -51,25 +51,27 @@ function detect(tx: { normalizedMerchant: string; description: string }): RawMat
   };
 }
 
-function explain(match: RawMatch, tx: { normalizedMerchant: string }): Explanation {
+function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?: string | null): Explanation {
   const { merchantMatch, keyword } = match.signals;
+  const forWork = userType === "sole_trader" ? "required for your work" : "required for your job";
+  const context = userType === "sole_trader" ? "your work" : "your job";
 
   if (merchantMatch && keyword) {
     return {
-      reason:           `${typeof keyword === "string" ? keyword.charAt(0).toUpperCase() + keyword.slice(1) : "Workwear"} from ${tx.normalizedMerchant} is deductible if it's required for your job. The test: could you wear it as everyday clothing? If not, you can claim it.`,
+      reason:           `${typeof keyword === "string" ? keyword.charAt(0).toUpperCase() + keyword.slice(1) : "Workwear"} from ${tx.normalizedMerchant} is deductible if it's ${forWork}. The test: could you wear it as everyday clothing? If not, you can claim it.`,
       confidenceReason: "Specialist workwear store and a matching item type. A strong signal for an occupation-specific clothing claim.",
     };
   }
 
   if (merchantMatch) {
     return {
-      reason:           `Occupation-specific clothing from ${tx.normalizedMerchant} is deductible if you need it for your job: protective gear, registered uniforms, or items you can't wear outside of work. Casual clothing from the same store doesn't qualify.`,
+      reason:           `Occupation-specific clothing from ${tx.normalizedMerchant} is deductible if you need it for ${context}: protective gear, registered uniforms, or items you can't wear outside of work. Casual clothing from the same store doesn't qualify.`,
       confidenceReason: "Recognised workwear retailer, but no specific item in the description. The same stores sometimes carry casual items too.",
     };
   }
 
   return {
-    reason:           `${typeof keyword === "string" ? keyword.charAt(0).toUpperCase() + keyword.slice(1) : "This item"} is deductible if it's required for your job and not something you'd wear in daily life. Everyday clothing worn to work doesn't qualify. Only occupation-specific gear counts.`,
+    reason:           `${typeof keyword === "string" ? keyword.charAt(0).toUpperCase() + keyword.slice(1) : "This item"} is deductible if it's ${forWork} and not something you'd wear in daily life. Everyday clothing worn to work doesn't qualify. Only occupation-specific gear counts.`,
     confidenceReason: "Item type suggests work gear, but the store isn't a specialist workwear retailer. Harder to be confident without both.",
   };
 }

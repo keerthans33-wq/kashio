@@ -9,7 +9,7 @@ import { useUser } from "../../../lib/user-context";
 
 const USER_TYPE_LABEL: Record<string, string> = {
   employee:    "Employee",
-  contractor:  "Contractor / Freelancer",
+  contractor:  "Contractor",
   sole_trader: "Sole trader",
 };
 
@@ -62,8 +62,8 @@ export default function Nav() {
             })}
           </div>
           {userType && USER_TYPE_LABEL[userType] && (
-            <span className="hidden sm:block text-xs text-gray-400 dark:text-gray-500">
-              Mode: {USER_TYPE_LABEL[userType]}
+            <span className="hidden sm:inline-flex items-center rounded-full border border-gray-200 px-2 py-0.5 text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500">
+              {USER_TYPE_LABEL[userType]}
             </span>
           )}
           <ThemeToggle />

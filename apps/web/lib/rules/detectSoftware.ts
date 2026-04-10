@@ -60,15 +60,18 @@ function detect(tx: { normalizedMerchant: string; description: string }): RawMat
   };
 }
 
-function explain(match: RawMatch, tx: { normalizedMerchant: string }): Explanation {
+function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?: string | null): Explanation {
   const isSpecific = match.signals.tier === "specific";
   const hasKeyword = !!match.signals.keyword;
+  const isBusiness = userType === "contractor" || userType === "sole_trader";
+  const context    = isBusiness ? "your business" : "your job";
+  const qualifier  = isBusiness ? "used to run your business" : "used for your job";
   return {
     reason: isSpecific && hasKeyword
-      ? `Paid ${tx.normalizedMerchant} subscriptions used to earn income are deductible. If this is your work account, you can claim the full cost.`
+      ? `Paid ${tx.normalizedMerchant} subscriptions ${qualifier} are deductible. If this is your work account, you can claim the full subscription cost.`
       : isSpecific
-      ? `If this is a paid ${tx.normalizedMerchant} account for work, the subscription cost is claimable. Free tiers and personal accounts don't qualify.`
-      : `Paid ${tx.normalizedMerchant} subscriptions used for work are deductible. Confirm this is your work account. Personal plans don't qualify.`,
+      ? `If this is a paid ${tx.normalizedMerchant} account used for ${context}, the subscription cost is claimable. Free tiers and personal accounts don't qualify.`
+      : `Paid ${tx.normalizedMerchant} subscriptions ${qualifier} are deductible. Confirm this is your work account. Personal plans don't qualify.`,
     confidenceReason: isSpecific && hasKeyword
       ? "Recognised work tool and a subscription keyword — two signals pointing to a paid work account."
       : isSpecific

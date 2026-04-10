@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { isValidUserType } from "../../../../lib/user-context";
 
 // Handles the OAuth callback from Google (and any other provider).
 // Exchanges the one-time ?code= for a real session server-side,
@@ -29,9 +30,9 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      // New users (no user_type set) go to onboarding, returning users go to import
+      // New users (no valid user_type) go to onboarding, returning users go to import
       const userType = data.user?.user_metadata?.user_type;
-      return NextResponse.redirect(`${origin}${userType ? "/import" : "/onboarding"}`);
+      return NextResponse.redirect(`${origin}${isValidUserType(userType) ? "/import" : "/onboarding"}`);
     }
   }
 

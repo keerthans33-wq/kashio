@@ -70,25 +70,26 @@ function detect(tx: { normalizedMerchant: string; description: string }): RawMat
   };
 }
 
-function explain(match: RawMatch, tx: { normalizedMerchant: string }): Explanation {
+function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?: string | null): Explanation {
   const { isTradeOnly, merchantMatch, keyword } = match.signals;
+  const forWork = userType === "sole_trader" ? "for your business" : "for your trade";
 
   if (isTradeOnly) {
     return {
-      reason:           `A ${keyword} from ${tx.normalizedMerchant} used for work is deductible. Tools under $300 can be claimed in full; over $300 must be depreciated over the asset's life.`,
+      reason:           `A ${keyword} from ${tx.normalizedMerchant} used ${forWork} is deductible. Tools under $300 can be claimed in full; over $300 must be depreciated over the asset's life.`,
       confidenceReason: "Trade-only retailer and a matching tool. A strong signal this was a work purchase.",
     };
   }
 
   if (merchantMatch) {
     return {
-      reason:           `If this ${keyword} from ${tx.normalizedMerchant} was bought for work, not a home project, it's deductible. Tools under $300 can be claimed in full; over $300 must be depreciated.`,
+      reason:           `If this ${keyword} from ${tx.normalizedMerchant} was bought ${forWork}, not a home project, it's deductible. Tools under $300 can be claimed in full; over $300 must be depreciated.`,
       confidenceReason: "Hardware store and a matching tool type. Reasonable, but these stores also serve homeowners and DIY buyers.",
     };
   }
 
   return {
-    reason:           `If this ${keyword} was bought for work, it's deductible. Tools $300 or under can be claimed immediately; over $300 must be depreciated over time.`,
+    reason:           `If this ${keyword} was bought ${forWork}, it's deductible. Tools $300 or under can be claimed immediately; over $300 must be depreciated over time.`,
     confidenceReason: "Tool type matched, but without a recognised trade store it's harder to confirm this was a work purchase.",
   };
 }
