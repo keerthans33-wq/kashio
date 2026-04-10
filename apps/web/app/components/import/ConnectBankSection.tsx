@@ -157,7 +157,7 @@ function SyncSuccess({ result, onSync }: { result: SyncResult; onSync: () => voi
   );
 }
 
-function SyncFailed({ onRetry }: { onRetry: () => void }) {
+function SyncFailed({ message, onRetry }: { message?: string; onRetry: () => void }) {
   return (
     <div className="space-y-3">
       <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-4 dark:border-red-800 dark:bg-red-900/20">
@@ -167,6 +167,11 @@ function SyncFailed({ onRetry }: { onRetry: () => void }) {
         <p className="mt-1 text-sm text-red-600 dark:text-red-400">
           Your transactions weren&apos;t imported. Nothing was saved.
         </p>
+        {message && (
+          <p className="mt-2 text-xs text-red-500 dark:text-red-500 font-mono break-all">
+            {message}
+          </p>
+        )}
       </div>
       <button
         onClick={onRetry}
@@ -279,7 +284,7 @@ export default function ConnectBankSection() {
   }
 
   if (demo.sync.status === "error") {
-    return <SyncFailed onRetry={() => handleSync(demoProvider)} />;
+    return <SyncFailed message={demo.sync.message} onRetry={() => handleSync(demoProvider)} />;
   }
 
   // ── Idle ──────────────────────────────────────────────────────────────────────
