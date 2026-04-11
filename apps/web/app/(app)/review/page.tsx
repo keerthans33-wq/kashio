@@ -145,16 +145,59 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
   const { ytdHours, ytdEst, monthHours: wfhMonthHours } = calcWfhSummary(wfhEntries, now);
 
+  // Top categories — confirmed + potential (not rejected), WFH injected as synthetic row
+  const catTotals = new Map<string, number>();
+  for (const c of all) {
+    if (c.status === "REJECTED") continue;
+    catTotals.set(c.category, (catTotals.get(c.category) ?? 0) + amt(c));
+  }
+  const wfhCatLabel = userType === "contractor" || userType === "sole_trader" ? "Home office" : "Work from home";
+  if (ytdHours > 0) catTotals.set(wfhCatLabel, ytdEst);
+  const topCategories = [...catTotals.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+
+  // Biggest opportunity — one sentence, picks the most actionable signal
+  const pendingByCategory = new Map<string, number>();
+  for (const c of all) {
+    if (c.status !== "NEEDS_REVIEW") continue;
+    pendingByCategory.set(c.category, (pendingByCategory.get(c.category) ?? 0) + amt(c));
+  }
+  const biggestUnreviewed = [...pendingByCategory.entries()].sort((a, b) => b[1] - a[1])[0];
+  const biggestConfirmed  = [...all.filter((c) => c.status === "CONFIRMED")
+    .reduce((m, c) => { m.set(c.category, (m.get(c.category) ?? 0) + amt(c)); return m; }, new Map<string, number>())
+    .entries()].sort((a, b) => b[1] - a[1])[0];
+
+  // Opportunity and confirmed-category insight wording varies by user type
+  function opportunityText(cat: string, value: string): string {
+    if (userType === "contractor") return `Your biggest unreviewed expense category is ${cat} — ${value} still to confirm.`;
+    if (userType === "sole_trader") return `Your biggest unreviewed category is ${cat} — ${value} in possible deductions to review.`;
+    return `Your biggest unreviewed category is ${cat} — ${value} still to confirm.`;
+  }
+  function confirmedCategoryText(cat: string, value: string): string {
+    if (userType === "contractor") return `${cat} is your biggest confirmed expense at ${value} — ready to include in your return.`;
+    if (userType === "sole_trader") return `${cat} is your biggest confirmed deduction at ${value} — ready for your accountant.`;
+    return `${cat} is your biggest confirmed deduction at ${value} — ready to claim.`;
+  }
+  function wfhGapText(): string {
+    if (userType === "contractor" || userType === "sole_trader") return `You logged home office hours last month but nothing yet this month.`;
+    return `You logged WFH hours last month but nothing yet this month.`;
+  }
+
+  // Only surface the unreviewed-category case — action card owns WFH gap and export
+  const bigOpportunity: { text: string; href: string } | null =
+    biggestUnreviewed && biggestUnreviewed[1] > 0
+      ? { text: opportunityText(biggestUnreviewed[0], fmt(biggestUnreviewed[1])), href: `?category=${encodeURIComponent(biggestUnreviewed[0])}` }
+      : null;
+
   const fmt = (n: number) => n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 
   const isFiltered = category || confidence;
 
-  // Single top-priority nudge: 1) items to review, 2) missing evidence
-  const nudge =
-    all.length === 0         ? ((userType && EMPTY_STATE[userType]) ?? "Import your bank transactions and Kashio will flag what looks deductible.") :
-    totalNeedsReview > 0     ? (pendingValue > 0 ? `${fmt(pendingValue)} in possible ${termPlural(userType)} still to review.` : `${totalNeedsReview} item${totalNeedsReview !== 1 ? "s" : ""} left to review.`) :
-    totalConfirmed > 0       ? "All reviewed. Ready to export." :
-                                "Nothing confirmed yet.";
+  // Nudge shown only for empty state — heading + stat strip + action card handle all other states
+  const nudge = all.length === 0
+    ? ((userType && EMPTY_STATE[userType]) ?? "Import your bank transactions and Kashio will flag what looks deductible.")
+    : null;
 
 
   return (
@@ -164,7 +207,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
             {userType ? HEADING[userType] ?? "Possible deductions" : "Possible deductions"}
           </h1>
-          <p className="mt-1 text-gray-500 dark:text-gray-400">{nudge}</p>
+          {nudge && <p className="mt-1 text-gray-500 dark:text-gray-400">{nudge}</p>}
         </div>
         {totalConfirmed > 0 && (
           <a
@@ -177,7 +220,8 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
       </div>
 
 
-      {all.length > 0 && (
+      {/* Stat strip — always reflects full unfiltered set; hidden when filtered to avoid disagreeing with visible list */}
+      {all.length > 0 && !isFiltered && (
         <div className="mt-4 flex items-baseline gap-6 text-sm">
           <div>
             <span className={`font-semibold tabular-nums ${totalNeedsReview > 0 ? "text-gray-900 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"}`}>
@@ -193,16 +237,6 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
               confirmed{confirmedValue > 0 ? ` · ${fmt(confirmedValue)}` : ""}
             </span>
           </div>
-          {ytdHours > 0 && (
-            <div>
-              <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">
-                {ytdHours}
-              </span>
-              <span className="ml-1.5 text-gray-400 dark:text-gray-500">
-                hrs {wfhLabel(userType)} · ~{fmt(ytdEst)}
-              </span>
-            </div>
-          )}
         </div>
       )}
 
@@ -247,8 +281,8 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         return null;
       })()}
 
-      {(ytdPotential > 0 || ytdHours > 0) && (
-        <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 tabular-nums">
+      {(ytdPotential > 0 || ytdHours > 0) && !isFiltered && (
+        <p className="mt-2 text-xs text-gray-400 dark:text-gray-500 tabular-nums">
           {fyLabel}:{ytdPotential > 0 ? ` ${fmt(ytdPotential)} potential` : ""}
           {ytdConfirmed > 0 ? ` · ${fmt(ytdConfirmed)} confirmed` : ""}
           {ytdHours > 0 ? ` · ~${fmt(ytdEst)} ${wfhLabel(userType)}` : ""}
@@ -286,8 +320,46 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         </div>
       )}
 
+      {topCategories.length > 0 && all.length > 0 && (
+        <div className="mt-10 space-y-1">
+          {topCategories.map(([cat, value]) => {
+            const isWfh = cat === wfhCatLabel;
+            return (
+              <div key={cat} className="flex items-baseline justify-between text-sm">
+                <span className="text-gray-600 dark:text-gray-400">{cat}</span>
+                <span className="tabular-nums text-gray-500 dark:text-gray-400">
+                  {isWfh ? "~" : ""}{fmt(value)}
+                </span>
+              </div>
+            );
+          })}
+          {bigOpportunity && !isFiltered && (
+            <p className="pt-1 text-xs text-gray-400 dark:text-gray-500">
+              {bigOpportunity.text}{" "}
+              <a href={bigOpportunity.href} className="text-violet-500 dark:text-violet-400 hover:underline">Filter →</a>
+            </p>
+          )}
+        </div>
+      )}
+
+      {(() => {
+        let returnMsg: string;
+        if (all.length === 0) {
+          returnMsg = "Import your transactions whenever you're ready — Kashio will find what looks deductible.";
+        } else if (totalNeedsReview > 0) {
+          returnMsg = `Come back to review the remaining ${totalNeedsReview} item${totalNeedsReview !== 1 ? "s" : ""} when you have a moment.`;
+        } else if (wfhMonthHours === 0) {
+          returnMsg = `Log your ${wfhLabel(userType)} hours at the end of each week to keep your record up to date.`;
+        } else {
+          returnMsg = "Check back after your next bank statement — Kashio will flag any new items.";
+        }
+        return (
+          <p className="mt-8 text-xs text-gray-400 dark:text-gray-500">{returnMsg}</p>
+        );
+      })()}
+
       {all.length > 0 && (
-        <p className="mt-10 text-xs text-gray-400 dark:text-gray-500">
+        <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
           {(userType && DISCLAIMER[userType]) ?? "Kashio helps you spot possible deductions. It's not a tax adviser. Check with your accountant before lodging."}
         </p>
       )}
