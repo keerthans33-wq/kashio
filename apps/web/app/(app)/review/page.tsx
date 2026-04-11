@@ -32,6 +32,17 @@ const TIP: Record<string, string> = {
 
 export const dynamic = "force-dynamic";
 
+// Returns the singular noun for a deduction/expense depending on user type.
+// Use termPlural() for the plural form.
+function term(userType: string | null): string {
+  if (userType === "contractor")  return "business expense";
+  if (userType === "sole_trader") return "business deduction";
+  return "deduction";
+}
+function termPlural(userType: string | null): string {
+  return `${term(userType)}s`;
+}
+
 const CONFIDENCE_RANK: Record<string, number> = { HIGH: 3, MEDIUM: 2, LOW: 1 };
 
 type Candidate = Awaited<ReturnType<typeof db.deductionCandidate.findMany>>[number] & {
@@ -98,13 +109,22 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
   // Summary counts always reflect the full unfiltered set
   const totalNeedsReview  = all.filter((c) => c.status === "NEEDS_REVIEW").length;
   const totalConfirmed    = all.filter((c) => c.status === "CONFIRMED").length;
-  const totalReviewed     = all.filter((c) => c.status !== "NEEDS_REVIEW").length;
   const missingEvidence   = all.filter((c) => c.status === "CONFIRMED" && !c.hasEvidence).length;
 
-  // Dollar values — always from unfiltered set
   const amt = (c: Candidate) => Math.abs(c.transaction.amount);
-  const unreviewedValue = all.filter((c) => c.status === "NEEDS_REVIEW").reduce((s, c) => s + amt(c), 0);
-  const potentialValue  = all.filter((c) => c.status !== "REJECTED").reduce((s, c) => s + amt(c), 0);
+  const confirmedValue  = all.filter((c) => c.status === "CONFIRMED").reduce((s, c) => s + amt(c), 0);
+  const pendingValue    = all.filter((c) => c.status === "NEEDS_REVIEW").reduce((s, c) => s + amt(c), 0);
+
+  // Year-to-date — Australian financial year (1 Jul – 30 Jun)
+  const now         = new Date();
+  const fyStartYear = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
+  const fyStart     = `${fyStartYear}-07-01`;
+  const fyEnd       = `${fyStartYear + 1}-06-30`;
+  const fyLabel     = `FY${String(fyStartYear).slice(2)}–${String(fyStartYear + 1).slice(2)}`;
+  const ytd         = all.filter((c) => c.transaction.date >= fyStart && c.transaction.date <= fyEnd);
+  const ytdPotential  = ytd.filter((c) => c.status !== "REJECTED").reduce((s, c) => s + amt(c), 0);
+  const ytdConfirmed  = ytd.filter((c) => c.status === "CONFIRMED").reduce((s, c) => s + amt(c), 0);
+
   const fmt = (n: number) => n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 
   const isFiltered = category || confidence;
@@ -112,7 +132,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
   // Single top-priority nudge: 1) items to review, 2) missing evidence
   const nudge =
     all.length === 0         ? ((userType && EMPTY_STATE[userType]) ?? "Import your bank transactions and Kashio will flag what looks deductible.") :
-    totalNeedsReview > 0     ? `${totalNeedsReview} item${totalNeedsReview !== 1 ? "s" : ""} left to review${unreviewedValue > 0 ? `. ${fmt(unreviewedValue)} to consider` : ""}.` :
+    totalNeedsReview > 0     ? (pendingValue > 0 ? `${fmt(pendingValue)} in possible ${termPlural(userType)} still to review.` : `${totalNeedsReview} item${totalNeedsReview !== 1 ? "s" : ""} left to review.`) :
     missingEvidence > 0      ? `${missingEvidence} confirmed item${missingEvidence !== 1 ? "s" : ""} still need${missingEvidence === 1 ? "s" : ""} a receipt.` :
     totalConfirmed > 0       ? "All reviewed. Ready to export." :
                                 "Nothing confirmed yet.";
@@ -127,42 +147,71 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
           </h1>
           <p className="mt-1 text-gray-500 dark:text-gray-400">{nudge}</p>
         </div>
-        {totalConfirmed > 0 && (
-          <a
-            href="/export"
-            className="shrink-0 rounded-md bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700"
-          >
-            Export →
-          </a>
-        )}
       </div>
 
 
       {all.length > 0 && (
-        <div className="mt-5">
-          <div className="flex justify-between text-sm text-gray-400 dark:text-gray-500 mb-1.5">
-            {totalNeedsReview > 0
-              ? <span>{totalReviewed} of {all.length} reviewed</span>
-              : <span className="text-green-600 dark:text-green-400">All done. {all.length} reviewed.</span>
-            }
-            {totalNeedsReview > 0 && potentialValue > 0 && (
-              <span>{fmt(potentialValue)} potential</span>
-            )}
+        <div className="mt-4 flex items-baseline gap-6 text-sm">
+          <div>
+            <span className={`font-semibold tabular-nums ${totalNeedsReview > 0 ? "text-gray-900 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"}`}>
+              {totalNeedsReview}
+            </span>
+            <span className="ml-1.5 text-gray-400 dark:text-gray-500">to review</span>
           </div>
-          <div className="h-1.5 w-full rounded-full bg-gray-100 dark:bg-gray-700">
-            <div
-              className={`h-1.5 rounded-full transition-all ${totalNeedsReview === 0 ? "bg-green-500" : "bg-violet-400"}`}
-              style={{ width: all.length > 0 ? `${Math.round((totalReviewed / all.length) * 100)}%` : "0%" }}
-            />
+          <div>
+            <span className={`font-semibold tabular-nums ${totalConfirmed > 0 ? "text-gray-900 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"}`}>
+              {totalConfirmed}
+            </span>
+            <span className="ml-1.5 text-gray-400 dark:text-gray-500">
+              confirmed{confirmedValue > 0 ? ` · ${fmt(confirmedValue)}` : ""}
+            </span>
           </div>
         </div>
       )}
 
 
 
-      {all.length > 0 && userType && TIP[userType] && (
-        <p className="mt-5 text-xs text-gray-400 dark:text-gray-500">
-          <span className="font-medium text-gray-500 dark:text-gray-400">Tip</span>{" "}{TIP[userType]}
+      {/* Next best action — hidden when filters are active to avoid disagreeing with the visible list */}
+      {all.length > 0 && !isFiltered && (() => {
+        if (totalNeedsReview > 0) return (
+          <div className="mt-5 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between gap-4">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              {pendingValue > 0
+                ? <>Review {totalNeedsReview} item{totalNeedsReview !== 1 ? "s" : ""} — {fmt(pendingValue)} in possible {termPlural(userType)}.</>
+                : <>Review {totalNeedsReview} item{totalNeedsReview !== 1 ? "s" : ""} still waiting.</>
+              }
+            </p>
+            <a href="#needs-review" className="shrink-0 text-sm font-semibold text-violet-600 dark:text-violet-400 hover:underline">
+              Start reviewing →
+            </a>
+          </div>
+        );
+        if (missingEvidence > 0) return (
+          <div className="mt-5 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between gap-4">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              {missingEvidence} confirmed item{missingEvidence !== 1 ? "s" : ""} still need{missingEvidence === 1 ? "s" : ""} a receipt.
+            </p>
+            <a href="#confirmed" className="shrink-0 text-sm font-semibold text-violet-600 dark:text-violet-400 hover:underline">
+              Add receipts →
+            </a>
+          </div>
+        );
+        if (totalConfirmed > 0) return (
+          <div className="mt-5 rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 px-4 py-3 flex items-center justify-between gap-4">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              {fmt(confirmedValue)} in confirmed {termPlural(userType)} ready to export.
+            </p>
+            <a href="/export" className="shrink-0 text-sm font-semibold text-violet-600 dark:text-violet-400 hover:underline">
+              Export →
+            </a>
+          </div>
+        );
+        return null;
+      })()}
+
+      {ytdPotential > 0 && (
+        <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 tabular-nums">
+          {fyLabel}: {fmt(ytdPotential)} potential{ytdConfirmed > 0 ? ` · ${fmt(ytdConfirmed)} confirmed` : ""}
         </p>
       )}
 
@@ -174,12 +223,12 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
           <p className="text-gray-500 dark:text-gray-400">Nothing to review yet.</p>
           <p className="text-sm text-gray-400 dark:text-gray-500">
             <a href="/import" className="underline hover:text-gray-600 dark:hover:text-gray-300">Import your transactions</a>
-            {" "}and Kashio will find your possible {userType === "contractor" ? "business expenses" : "deductions"}.
+            {" "}and Kashio will find your possible {termPlural(userType)}.
           </p>
         </div>
       ) : candidates.length === 0 ? (
         <div className="mt-10 text-center space-y-1">
-          <p className="text-gray-500 dark:text-gray-400">No possible deductions match your filters.</p>
+          <p className="text-gray-500 dark:text-gray-400">No possible {termPlural(userType)} match your filters.</p>
           <p className="text-sm text-gray-400 dark:text-gray-500">
             Try adjusting the filters above, or{" "}
             <a href="/review" className="underline hover:text-gray-600 dark:hover:text-gray-300">clear all filters</a>{" "}

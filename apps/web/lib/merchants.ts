@@ -11,23 +11,37 @@ export type MerchantEntry = {
   // travel:    "transport" | "fuel" | "convenience"
   // equipment: "trade_only" | "general" | "tech_retailer"
   // software:  "specific" | "broad"
+  // office:    "specialist"
   tier?: string;
+  // If set, this merchant is only included for the listed user types.
+  // Omit to include for all user types.
+  forUserTypes?: string[];
 };
 
-// Returns all merchant names for a given category, optionally filtered by tier.
-export function getMerchantsForCategory(category: string, tier?: string): string[] {
+// Returns merchant names for a given category, optionally filtered by tier and/or user type.
+export function getMerchantsForCategory(category: string, tier?: string, userType?: string | null): string[] {
   return Object.entries(MERCHANTS)
-    .filter(([, entry]) => entry.category === category && (tier === undefined || entry.tier === tier))
+    .filter(([, entry]) => {
+      if (entry.category !== category) return false;
+      if (tier !== undefined && entry.tier !== tier) return false;
+      if (userType && entry.forUserTypes && !entry.forUserTypes.includes(userType)) return false;
+      return true;
+    })
     .map(([name]) => name);
 }
 
 // Returns the merchant entry that best matches a normalizedMerchant string, or null.
-// Uses the longest matching key to avoid short-name false positives (e.g. "bp" inside "ubp").
+// Uses the longest matching key to avoid short-name false positives.
+// Short keys (≤4 chars) require a word boundary so "bp" doesn't match inside "ubp",
+// "myob" doesn't match inside "myoband", etc. — mirrors the matchesMerchant() logic.
 export function getMerchantInfo(normalizedMerchant: string): MerchantEntry | null {
   const lower = normalizedMerchant.toLowerCase();
   let bestKey: string | null = null;
   for (const key of Object.keys(MERCHANTS)) {
-    if (lower.includes(key) && (bestKey === null || key.length > bestKey.length)) {
+    const matched = key.length <= 4
+      ? new RegExp(`(?:^|[^a-z0-9])${key}(?:[^a-z0-9]|$)`).test(lower)
+      : lower.includes(key);
+    if (matched && (bestKey === null || key.length > bestKey.length)) {
       bestKey = key;
     }
   }
@@ -65,67 +79,80 @@ export const MERCHANTS: Record<string, MerchantEntry> = {
     description: "Commercial office desks, chairs, and fit-out products.",
   },
   "ikea": {
-    category:    CATEGORIES.OFFICE_SUPPLIES,
-    description: "Furniture including desks, chairs, and shelving for home offices.",
+    category:      CATEGORIES.OFFICE_SUPPLIES,
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Furniture including desks, chairs, and shelving for home offices.",
   },
   "freedom furniture": {
-    category:    CATEGORIES.OFFICE_SUPPLIES,
-    description: "Furniture including home office desks and chairs.",
+    category:      CATEGORIES.OFFICE_SUPPLIES,
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Furniture including home office desks and chairs.",
   },
   "woolworths": {
-    category:    CATEGORIES.OFFICE_SUPPLIES,
-    description: "Supermarket. Mostly personal groceries. Small work consumables may qualify.",
+    category:      CATEGORIES.OFFICE_SUPPLIES,
+    forUserTypes:  ["sole_trader"],
+    description:   "Supermarket. Mostly personal groceries. Small work consumables may qualify.",
   },
   "coles": {
-    category:    CATEGORIES.OFFICE_SUPPLIES,
-    description: "Supermarket. Mostly personal groceries. Small work consumables may qualify.",
+    category:      CATEGORIES.OFFICE_SUPPLIES,
+    forUserTypes:  ["sole_trader"],
+    description:   "Supermarket. Mostly personal groceries. Small work consumables may qualify.",
   },
 
   // ── Hardware, tools & trade ────────────────────────────────────────────────
   "bunnings": {
-    category:    CATEGORIES.EQUIPMENT,
-    tier:        "general",
-    description: "Hardware, tools, building materials, and home improvement products.",
+    category:      CATEGORIES.EQUIPMENT,
+    tier:          "general",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Hardware, tools, building materials, and home improvement products.",
   },
   "mitre 10": {
-    category:    CATEGORIES.EQUIPMENT,
-    tier:        "general",
-    description: "Hardware and building supplies.",
+    category:      CATEGORIES.EQUIPMENT,
+    tier:          "general",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Hardware and building supplies.",
   },
   "home hardware": {
-    category:    CATEGORIES.EQUIPMENT,
-    tier:        "general",
-    description: "Hardware and building supplies.",
+    category:      CATEGORIES.EQUIPMENT,
+    tier:          "general",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Hardware and building supplies.",
   },
   "hardings hardware": {
-    category:    CATEGORIES.EQUIPMENT,
-    tier:        "general",
-    description: "Hardware and supplies.",
+    category:      CATEGORIES.EQUIPMENT,
+    tier:          "general",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Hardware and supplies.",
   },
   "total tools": {
-    category:    CATEGORIES.EQUIPMENT,
-    tier:        "trade_only",
-    description: "Trade tools and equipment for professionals.",
+    category:      CATEGORIES.EQUIPMENT,
+    tier:          "trade_only",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Trade tools and equipment for professionals.",
   },
   "sydney tools": {
-    category:    CATEGORIES.EQUIPMENT,
-    tier:        "trade_only",
-    description: "Trade tools and equipment for professionals.",
+    category:      CATEGORIES.EQUIPMENT,
+    tier:          "trade_only",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Trade tools and equipment for professionals.",
   },
   "tools warehouse": {
-    category:    CATEGORIES.EQUIPMENT,
-    tier:        "trade_only",
-    description: "Power tools and hand tools for trade use.",
+    category:      CATEGORIES.EQUIPMENT,
+    tier:          "trade_only",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Power tools and hand tools for trade use.",
   },
   "tool kit depot": {
-    category:    CATEGORIES.EQUIPMENT,
-    tier:        "trade_only",
-    description: "Trade tools and equipment.",
+    category:      CATEGORIES.EQUIPMENT,
+    tier:          "trade_only",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Trade tools and equipment.",
   },
   "blackwoods": {
-    category:    CATEGORIES.EQUIPMENT,
-    tier:        "trade_only",
-    description: "Industrial and safety supplies for trade and business.",
+    category:      CATEGORIES.EQUIPMENT,
+    tier:          "trade_only",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Industrial and safety supplies for trade and business.",
   },
 
   // ── Consumer electronics & computers ──────────────────────────────────────
@@ -262,19 +289,22 @@ export const MERCHANTS: Record<string, MerchantEntry> = {
     description: "Enterprise CRM and business platform.",
   },
   "xero": {
-    category:    CATEGORIES.SOFTWARE,
-    tier:        "specific",
-    description: "Cloud accounting software. Popular with Australian small businesses.",
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Cloud accounting software. Popular with Australian small businesses.",
   },
   "myob": {
-    category:    CATEGORIES.SOFTWARE,
-    tier:        "specific",
-    description: "Accounting and payroll software for Australian businesses.",
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Accounting and payroll software for Australian businesses.",
   },
   "quickbooks": {
-    category:    CATEGORIES.SOFTWARE,
-    tier:        "specific",
-    description: "Accounting and invoicing software.",
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Accounting and invoicing software.",
   },
   "aws": {
     category:    CATEGORIES.SOFTWARE,
@@ -307,9 +337,10 @@ export const MERCHANTS: Record<string, MerchantEntry> = {
     description: "Email marketing and automation platform.",
   },
   "shopify": {
-    category:    CATEGORIES.SOFTWARE,
-    tier:        "specific",
-    description: "E-commerce platform for online stores.",
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "E-commerce platform for online stores.",
   },
   "loom": {
     category:    CATEGORIES.SOFTWARE,

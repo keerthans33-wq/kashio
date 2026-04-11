@@ -56,11 +56,16 @@ export default async function Export() {
   const { id: userId, userType } = await requireUserWithType();
   const allowedCategories = (userType && CATEGORIES_BY_USER_TYPE[userType]) ?? ACTIVE_CATEGORIES;
 
-  const confirmed = (await db.deductionCandidate.findMany({
-    where:   { status: "CONFIRMED", userId },
-    include: { transaction: true },
-    orderBy: { transaction: { date: "asc" } },
-  })).filter((c) => allowedCategories.includes(c.category));
+  const [confirmedRaw, pendingCount] = await Promise.all([
+    db.deductionCandidate.findMany({
+      where:   { status: "CONFIRMED", userId },
+      include: { transaction: true },
+      orderBy: { transaction: { date: "asc" } },
+    }),
+    db.deductionCandidate.count({ where: { status: "NEEDS_REVIEW", userId } }),
+  ]);
+
+  const confirmed = confirmedRaw.filter((c) => allowedCategories.includes(c.category));
 
   const allItems = confirmed.map((c) => ({
     id:          c.id,
@@ -76,7 +81,8 @@ export default async function Export() {
     amount:   c.row.amount,
   }));
 
-  const total = allItems.reduce((sum, c) => sum + c.row.amount, 0);
+  const total          = allItems.reduce((sum, c) => sum + c.row.amount, 0);
+  const missingReceipt = allItems.filter((c) => !c.hasEvidence).length;
 
   // Rough tax impact using the 32.5c marginal rate (applies $45k–$120k).
   // Displayed as an estimate only — not financial advice.
@@ -137,6 +143,26 @@ export default async function Export() {
                 : `Estimated tax saving ~${fmtRound(estimatedSaving)} at 32.5c marginal rate`}
             </p>
           </div>
+
+          {/* Missing evidence nudge — shown before download so it's not missed */}
+          {missingReceipt > 0 && (
+            <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 flex items-center justify-between gap-4">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                {missingReceipt} item{missingReceipt !== 1 ? "s" : ""} still need{missingReceipt === 1 ? "s" : ""} a receipt before you lodge.
+              </p>
+              <a href="/review#confirmed" className="shrink-0 text-sm font-semibold text-amber-700 dark:text-amber-400 hover:underline">
+                Add receipts →
+              </a>
+            </div>
+          )}
+
+          {/* Unreviewed items nudge */}
+          {pendingCount > 0 && (
+            <p className="text-sm text-gray-400 dark:text-gray-500">
+              {pendingCount} possible item{pendingCount !== 1 ? "s" : ""} still to review — some may be claimable.{" "}
+              <a href="/review" className="text-violet-600 dark:text-violet-400 hover:underline">Review now →</a>
+            </p>
+          )}
 
           {/* Item list */}
           <ExportDetails items={detailItems} />

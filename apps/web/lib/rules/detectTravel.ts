@@ -8,10 +8,6 @@ import { CATEGORIES } from "./categories";
 import { merchantText, combinedText, matchesMerchant } from "./shared";
 import { getMerchantsForCategory, getMerchantInfo } from "../merchants";
 
-const TRANSPORT_MERCHANTS    = getMerchantsForCategory(CATEGORIES.WORK_TRAVEL, "transport");
-const FUEL_MERCHANTS         = getMerchantsForCategory(CATEGORIES.WORK_TRAVEL, "fuel");
-const CONVENIENCE_MERCHANTS  = getMerchantsForCategory(CATEGORIES.WORK_TRAVEL, "convenience");
-
 // Services from transport-adjacent brands that are NOT work travel
 const TRANSPORT_EXCLUSIONS = [
   "eats",
@@ -48,35 +44,42 @@ const WEAK_KEYWORDS = [
 
 const ALL_KEYWORDS = [...STRONG_KEYWORDS, ...WEAK_KEYWORDS];
 
-function detect(tx: { normalizedMerchant: string; description: string }): RawMatch | null {
+function detect(tx: { normalizedMerchant: string; description: string }, userType?: string | null): RawMatch | null {
   const merchant = merchantText(tx);
   const combined = combinedText(tx);
 
+  const transportMerchants      = getMerchantsForCategory(CATEGORIES.WORK_TRAVEL, "transport",     userType);
+  const fuelMerchants           = getMerchantsForCategory(CATEGORIES.WORK_TRAVEL, "fuel",          userType);
+  const convenienceMerchants    = getMerchantsForCategory(CATEGORIES.WORK_TRAVEL, "convenience",   userType);
+  const accommodationMerchants  = getMerchantsForCategory(CATEGORIES.WORK_TRAVEL, "accommodation", userType);
+
   const isExcludedTransport = TRANSPORT_EXCLUSIONS.some((e) => combined.includes(e));
-  const isTransport = !isExcludedTransport && TRANSPORT_MERCHANTS.some((m) => matchesMerchant(merchant, m));
+  const isTransport     = !isExcludedTransport && transportMerchants.some((m) => matchesMerchant(merchant, m));
 
   const hasFuelKeyword = FUEL_KEYWORDS.some((k) => combined.includes(k));
   const isFuel = !isTransport && (
-    FUEL_MERCHANTS.some((m) => matchesMerchant(merchant, m)) ||
-    (CONVENIENCE_MERCHANTS.some((m) => merchant.includes(m)) && hasFuelKeyword)
+    fuelMerchants.some((m) => matchesMerchant(merchant, m)) ||
+    (convenienceMerchants.some((m) => matchesMerchant(merchant, m)) && hasFuelKeyword)
   );
+
+  const isAccommodation = !isTransport && !isFuel && accommodationMerchants.some((m) => matchesMerchant(merchant, m));
 
   const keyword  = ALL_KEYWORDS.find((k) => combined.includes(k));
   const isStrong = keyword ? STRONG_KEYWORDS.includes(keyword) : false;
 
-  if (!isTransport && !isFuel && !keyword) return null;
+  if (!isTransport && !isFuel && !isAccommodation && !keyword) return null;
 
   // Transport merchant alone can't distinguish work travel from commuting — require a strong
-  // keyword to reach MEDIUM. Fuel and general keywords stay LOW regardless.
+  // keyword to reach MEDIUM. Fuel, accommodation, and general keywords stay LOW regardless.
   return {
     category:   CATEGORIES.WORK_TRAVEL,
     confidence: isStrong ? "MEDIUM" : "LOW",
-    signals:    { isTransport, isFuel, keyword, isStrong },
+    signals:    { isTransport, isFuel, isAccommodation, keyword, isStrong },
   };
 }
 
 function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?: string | null): Explanation {
-  const { isTransport, isFuel, keyword, isStrong } = match.signals;
+  const { isTransport, isFuel, isAccommodation, keyword, isStrong } = match.signals;
   const isBusiness = userType === "contractor" || userType === "sole_trader";
 
   if (isTransport) {
@@ -112,11 +115,25 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?:
     };
   }
 
-  if (isFuel) {
+  if (isAccommodation) {
     return {
       reason: isBusiness
-        ? `${tx.normalizedMerchant} is mainly a fuel station. If this was a fuel purchase for business driving, the cost is deductible. We can't see the exact purchase — check your receipt, and keep a logbook or trip notes to show the drive was for business.`
-        : `${tx.normalizedMerchant} is mainly a fuel station. If this was fuel for work-related driving, the cost is deductible — but not your commute to a regular workplace. Check your receipt, and keep a logbook or trip notes to support the claim.`,
+        ? `${tx.normalizedMerchant} is an accommodation provider. If this stay was for a business trip, the cost is deductible. Personal travel doesn't qualify — keep your booking confirmation and note the business reason for the trip.`
+        : `${tx.normalizedMerchant} is an accommodation provider. If this stay was for work travel, the cost is deductible. Personal trips don't qualify — keep your booking confirmation and note the work reason for the trip.`,
+      confidenceReason: "Recognised accommodation provider. Work stays are claimable, but personal bookings look identical in the data. Confirm this was a work trip.",
+    };
+  }
+
+  if (isFuel) {
+    // Use the merchant description so broad merchants (e.g. 7-Eleven) aren't called "mainly a fuel station".
+    const info = getMerchantInfo(tx.normalizedMerchant);
+    const what = info?.description.split(". ")[0].replace(/\.$/, "").toLowerCase() ?? null;
+    const storeLabel = what ?? "mainly a fuel station";
+    const article    = what && /^[aeiou]/i.test(what) ? "an" : "a";
+    return {
+      reason: isBusiness
+        ? `${tx.normalizedMerchant} is ${article} ${storeLabel}. If this was a fuel purchase for business driving, the cost is deductible. We can't see the exact purchase — check your receipt, and keep a logbook or trip notes to show the drive was for business.`
+        : `${tx.normalizedMerchant} is ${article} ${storeLabel}. If this was fuel for work-related driving, the cost is deductible — but not your commute to a regular workplace. Check your receipt, and keep a logbook or trip notes to support the claim.`,
       confidenceReason: "Fuel station recognised, but without a fuel keyword we can't confirm this was a fuel purchase rather than a food or convenience buy. Fuel is also used for both work and personal driving.",
     };
   }

@@ -7,7 +7,7 @@
 
 import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
-import { merchantText, combinedText } from "./shared";
+import { merchantText, combinedText, matchesMerchant } from "./shared";
 import { getMerchantsForCategory, getMerchantInfo } from "../merchants";
 
 // Rarely bought for personal use — stronger work signal
@@ -27,18 +27,17 @@ const WEAK_KEYWORDS = [
 
 const ALL_KEYWORDS = [...STRONG_KEYWORDS, ...WEAK_KEYWORDS];
 
-// Known tech retailers — a merchant match strengthens a weak keyword signal.
-const TECH_MERCHANTS = getMerchantsForCategory(CATEGORIES.EQUIPMENT, "tech_retailer");
-
-function detect(tx: { normalizedMerchant: string; description: string }): RawMatch | null {
+function detect(tx: { normalizedMerchant: string; description: string }, userType?: string | null): RawMatch | null {
   const combined = combinedText(tx);
 
   const keyword = ALL_KEYWORDS.find((k) => combined.includes(k));
   if (!keyword) return null;
 
-  const isStrong    = STRONG_KEYWORDS.includes(keyword);
-  const inDesc      = tx.description.toLowerCase().includes(keyword);
-  const techMerchant = TECH_MERCHANTS.some((m) => merchantText(tx).includes(m));
+  // Known tech retailers — a merchant match strengthens a weak keyword signal.
+  const techMerchants = getMerchantsForCategory(CATEGORIES.EQUIPMENT, "tech_retailer", userType);
+  const isStrong      = STRONG_KEYWORDS.includes(keyword);
+  const inDesc        = tx.description.toLowerCase().includes(keyword);
+  const techMerchant  = techMerchants.some((m) => matchesMerchant(merchantText(tx), m));
 
   // Weak keywords need a corroborating signal — either a tech merchant or the
   // keyword present in the description (not just in the merchant name).

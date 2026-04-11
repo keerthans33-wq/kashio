@@ -123,6 +123,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
       )}
 
       {/* ── Needs review — primary ─────────────────────────────────────────── */}
+      <div id="needs-review" />
       {needsReview.length === 0 ? (
         <p className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">
           {confirmed.length + rejected.length > 0 ? "All items reviewed." : "Nothing to review yet."}
@@ -166,7 +167,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
 
       {/* ── Confirmed — secondary, collapsible ────────────────────────────── */}
       {confirmed.length > 0 && (
-        <div className="mt-8 border-t border-gray-100 pt-6 dark:border-gray-800">
+        <div id="confirmed" className="mt-8 border-t border-gray-100 pt-6 dark:border-gray-800">
           <button
             onClick={() => setShowConfirmed((v) => !v)}
             className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"

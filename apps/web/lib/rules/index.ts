@@ -7,6 +7,7 @@ import { detectWorkwear } from "./detectWorkwear";
 import { detectTravel } from "./detectTravel";
 import { detectTools } from "./detectTools";
 import { detectPhoneInternet } from "./detectPhoneInternet";
+import { detectFallback } from "./detectFallback";
 
 const ALL_RULES: Rule[] = [
   detectSoftware,
@@ -16,6 +17,7 @@ const ALL_RULES: Rule[] = [
   detectTravel,
   detectTools,
   detectPhoneInternet,
+  detectFallback,
 ];
 
 const CONFIDENCE_RANK: Record<RawMatch["confidence"], number> = {
@@ -37,7 +39,7 @@ export function detectDeduction(transaction: TransactionInput, userType?: string
   // Run detection on all rules, keep the rule alongside its match.
   const candidates = rules
     .map((rule) => {
-      const match = rule.detect(transaction);
+      const match = rule.detect(transaction, userType);
       return match ? { rule, match } : null;
     })
     .filter((c): c is { rule: Rule; match: RawMatch } => c !== null);

@@ -3,6 +3,7 @@ import CsvUploader from "../../components/import/CsvUploader";
 import ImportedBatches from "../../components/import/ImportedBatches";
 import ConnectBankSection from "../../components/import/ConnectBankSection";
 import { InfoTip } from "../../components/InfoTip";
+import { ReviewReminderInline } from "../../components/shell/ReviewReminder";
 
 export default function Import() {
   return (
@@ -30,7 +31,11 @@ export default function Import() {
       <CsvUploader />
       <ImportedBatches />
 
-      <p className="mt-10 text-xs text-gray-400 dark:text-gray-500">
+      <Suspense>
+        <ReviewReminderInline />
+      </Suspense>
+
+      <p className="mt-4 text-xs text-gray-400 dark:text-gray-500">
         Your data is only used to find possible deductions. It's never shared or sold.
       </p>
     </main>

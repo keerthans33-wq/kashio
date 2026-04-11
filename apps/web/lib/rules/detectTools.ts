@@ -8,14 +8,10 @@
 
 import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
-import { merchantText, combinedText } from "./shared";
+import { merchantText, combinedText, matchesMerchant } from "./shared";
 import { getMerchantsForCategory, getMerchantInfo } from "../merchants";
 
-// Near-exclusively professional/trade customers — strong work signal with a tool keyword.
-const TRADE_ONLY_MERCHANTS = getMerchantsForCategory(CATEGORIES.EQUIPMENT, "trade_only");
-
-// General hardware stores that also serve homeowners and DIY buyers — weaker signal.
-const GENERAL_MERCHANTS = getMerchantsForCategory(CATEGORIES.EQUIPMENT, "general");
+// Merchant lists are computed per-call using userType so forUserTypes filtering applies.
 
 const KEYWORDS = [
   "drill",
@@ -40,16 +36,19 @@ const KEYWORDS = [
   "workbench",
 ];
 
-function detect(tx: { normalizedMerchant: string; description: string }): RawMatch | null {
+function detect(tx: { normalizedMerchant: string; description: string }, userType?: string | null): RawMatch | null {
   const combined = combinedText(tx);
   const keyword  = KEYWORDS.find((k) => combined.includes(k));
 
   // Require a tool keyword — merchant name alone is too broad.
   if (!keyword) return null;
 
+  const tradeOnlyMerchants = getMerchantsForCategory(CATEGORIES.EQUIPMENT, "trade_only", userType);
+  const generalMerchants   = getMerchantsForCategory(CATEGORIES.EQUIPMENT, "general",     userType);
+
   const merchant     = merchantText(tx);
-  const isTradeOnly  = TRADE_ONLY_MERCHANTS.some((m) => merchant.includes(m));
-  const isGeneral    = !isTradeOnly && GENERAL_MERCHANTS.some((m) => merchant.includes(m));
+  const isTradeOnly  = tradeOnlyMerchants.some((m) => matchesMerchant(merchant, m));
+  const isGeneral    = !isTradeOnly && generalMerchants.some((m) => matchesMerchant(merchant, m));
   const merchantMatch = isTradeOnly || isGeneral;
 
   return {

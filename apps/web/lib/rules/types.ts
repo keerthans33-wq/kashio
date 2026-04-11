@@ -31,6 +31,6 @@ export type DeductionMatch = RawMatch & Explanation;
 // Higher value = preferred. Set based on category specificity.
 export type Rule = {
   priority: number;
-  detect:   (tx: TransactionInput) => RawMatch | null;
+  detect:   (tx: TransactionInput, userType?: string | null) => RawMatch | null;
   explain:  (match: RawMatch, tx: TransactionInput, userType?: string | null) => Explanation;
 };

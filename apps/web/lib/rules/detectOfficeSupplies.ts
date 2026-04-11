@@ -7,11 +7,10 @@
 
 import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
-import { merchantText, combinedText } from "./shared";
+import { merchantText, combinedText, matchesMerchant } from "./shared";
 import { getMerchantsForCategory, getMerchantInfo } from "../merchants";
 
-// Dedicated office supply stores — eligible for MEDIUM confidence when a keyword also matches.
-const SPECIALIST_MERCHANTS = getMerchantsForCategory(CATEGORIES.OFFICE_SUPPLIES, "specialist");
+// Merchant list computed per-call so forUserTypes filtering applies.
 
 const KEYWORDS = [
   "stationery",
@@ -21,7 +20,7 @@ const KEYWORDS = [
   "printer paper",
 ];
 
-function detect(tx: { normalizedMerchant: string; description: string }): RawMatch | null {
+function detect(tx: { normalizedMerchant: string; description: string }, userType?: string | null): RawMatch | null {
   const combined = combinedText(tx);
 
   const keyword = KEYWORDS.find((k) => combined.includes(k));
@@ -30,7 +29,8 @@ function detect(tx: { normalizedMerchant: string; description: string }): RawMat
   if (!keyword) return null;
 
   // Only specialist stores lift confidence to MEDIUM; broad retailers stay LOW.
-  const merchantMatch = SPECIALIST_MERCHANTS.some((m) => merchantText(tx).includes(m));
+  const specialistMerchants = getMerchantsForCategory(CATEGORIES.OFFICE_SUPPLIES, "specialist", userType);
+  const merchantMatch = specialistMerchants.some((m) => matchesMerchant(merchantText(tx), m));
 
   return {
     category:   CATEGORIES.OFFICE_SUPPLIES,

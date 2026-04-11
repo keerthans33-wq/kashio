@@ -7,10 +7,8 @@
 
 import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
-import { merchantText, combinedText } from "./shared";
+import { merchantText, combinedText, matchesMerchant } from "./shared";
 import { getMerchantsForCategory, getMerchantInfo } from "../merchants";
-
-const MERCHANTS = getMerchantsForCategory(CATEGORIES.WORK_CLOTHING);
 
 const KEYWORDS = [
   "uniform",
@@ -30,10 +28,11 @@ const KEYWORDS = [
   "scrubs",
 ];
 
-function detect(tx: { normalizedMerchant: string; description: string }): RawMatch | null {
+function detect(tx: { normalizedMerchant: string; description: string }, userType?: string | null): RawMatch | null {
   const combined = combinedText(tx);
 
-  const merchantMatch = MERCHANTS.some((m) => merchantText(tx).includes(m));
+  const merchants     = getMerchantsForCategory(CATEGORIES.WORK_CLOTHING, undefined, userType);
+  const merchantMatch = merchants.some((m) => matchesMerchant(merchantText(tx), m));
   const keyword       = KEYWORDS.find((k) => combined.includes(k));
 
   if (!merchantMatch && !keyword) return null;

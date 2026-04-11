@@ -4,14 +4,10 @@
 
 import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
-import { merchantText, combinedText } from "./shared";
+import { merchantText, combinedText, matchesMerchant } from "./shared";
 import { getMerchantsForCategory, getMerchantInfo } from "../merchants";
 
-// Near-exclusively B2B — merchant name alone is a reasonable signal
-const SPECIFIC_MERCHANTS = getMerchantsForCategory(CATEGORIES.SOFTWARE, "specific");
-
-// Significant personal-use overlap — require a subscription/work keyword
-const BROAD_MERCHANTS = getMerchantsForCategory(CATEGORIES.SOFTWARE, "broad");
+// Merchant lists computed per-call so forUserTypes filtering applies.
 
 const SOFTWARE_KEYWORDS = [
   "subscription",
@@ -27,12 +23,15 @@ const SOFTWARE_KEYWORDS = [
   "business plan",
 ];
 
-function detect(tx: { normalizedMerchant: string; description: string }): RawMatch | null {
+function detect(tx: { normalizedMerchant: string; description: string }, userType?: string | null): RawMatch | null {
   const combined = combinedText(tx);
 
+  const specificMerchants = getMerchantsForCategory(CATEGORIES.SOFTWARE, "specific", userType);
+  const broadMerchants    = getMerchantsForCategory(CATEGORIES.SOFTWARE, "broad",    userType);
+
   const merchant   = merchantText(tx);
-  const isSpecific = SPECIFIC_MERCHANTS.some((m) => merchant.includes(m));
-  const isBroad    = !isSpecific && BROAD_MERCHANTS.some((m) => merchant.includes(m));
+  const isSpecific = specificMerchants.some((m) => matchesMerchant(merchant, m));
+  const isBroad    = !isSpecific && broadMerchants.some((m) => matchesMerchant(merchant, m));
 
   if (!isSpecific && !isBroad) return null;
 
