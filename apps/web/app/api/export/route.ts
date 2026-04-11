@@ -103,7 +103,7 @@ export async function GET() {
   // Category breakdown
   const catTitle = summary.addRow(["By Category", ""]);
   summary.mergeCells(`A${catTitle.number}:B${catTitle.number}`);
-  catTitle.getCell(1).font  = { name: "Calibri", size: 10, bold: true, color: { argb: "FF" + VIOLET }, allCaps: true };
+  catTitle.getCell(1).font  = { name: "Calibri", size: 10, bold: true, color: { argb: "FF" + VIOLET } };
   catTitle.getCell(1).alignment = { indent: 0 };
 
   for (const [cat, amt] of catRows) {
