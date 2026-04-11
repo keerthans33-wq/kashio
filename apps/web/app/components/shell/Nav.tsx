@@ -17,6 +17,7 @@ const links = [
   { href: "/import", label: "1. Import" },
   { href: "/review", label: "2. Review" },
   { href: "/export", label: "3. Export" },
+  { href: "/wfh",    label: "WFH log" },
 ];
 
 export default function Nav() {

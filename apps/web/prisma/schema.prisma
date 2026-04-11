@@ -62,6 +62,18 @@ enum DeductionStatus {
   REJECTED
 }
 
+model WfhLog {
+  id        String   @id @default(cuid())
+  userId    String                           // Supabase user ID
+  date      String                           // YYYY-MM-DD
+  hours     Float
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@unique([userId, date])
+}
+
 model DeductionCandidate {
   id            String          @id @default(cuid())
   userId        String                           // Supabase user ID — scopes this candidate to one user
