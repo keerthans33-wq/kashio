@@ -184,13 +184,13 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
     return `You logged WFH hours last month but nothing yet this month.`;
   }
 
+  const fmt = (n: number) => n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
+
   // Only surface the unreviewed-category case — action card owns WFH gap and export
   const bigOpportunity: { text: string; href: string } | null =
     biggestUnreviewed && biggestUnreviewed[1] > 0
       ? { text: opportunityText(biggestUnreviewed[0], fmt(biggestUnreviewed[1])), href: `?category=${encodeURIComponent(biggestUnreviewed[0])}` }
       : null;
-
-  const fmt = (n: number) => n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 
   const isFiltered = category || confidence;
 
