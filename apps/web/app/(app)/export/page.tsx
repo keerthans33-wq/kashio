@@ -2,6 +2,7 @@ import { db } from "../../../lib/db";
 import { requireUserWithType } from "../../../lib/auth";
 import { mapExportRow } from "../../../lib/export/mapExportRow";
 import { ACTIVE_CATEGORIES, CATEGORIES_BY_USER_TYPE } from "../../../lib/rules/categories";
+import { calcWfhSummary } from "../../../lib/wfhSummary";
 import { ExportDetails } from "./ExportDetails";
 import { ExportButton } from "./ExportButton";
 
@@ -52,18 +53,27 @@ const EMPTY_CTA: Record<string, string> = {
   sole_trader: "Review deductions",
 };
 
+const WFH_LABEL: Record<string, string> = {
+  employee:    "Work from home",
+  contractor:  "Home office",
+  sole_trader: "Home office",
+};
+
 export default async function Export() {
   const { id: userId, userType } = await requireUserWithType();
   const allowedCategories = (userType && CATEGORIES_BY_USER_TYPE[userType]) ?? ACTIVE_CATEGORIES;
 
-  const [confirmedRaw, pendingCount] = await Promise.all([
+  const [confirmedRaw, pendingCount, wfhEntries] = await Promise.all([
     db.deductionCandidate.findMany({
       where:   { status: "CONFIRMED", userId },
       include: { transaction: true },
       orderBy: { transaction: { date: "asc" } },
     }),
     db.deductionCandidate.count({ where: { status: "NEEDS_REVIEW", userId } }),
+    db.wfhLog.findMany({ where: { userId }, select: { date: true, hours: true } }),
   ]);
+
+  const { monthHours: wfhMonthHours, monthEst: wfhMonthEst, ytdHours: wfhYtdHours, ytdEst: wfhYtdEst, monthName: wfhMonthName, fyLabel: wfhFyLabel } = calcWfhSummary(wfhEntries);
 
   const confirmed = confirmedRaw.filter((c) => allowedCategories.includes(c.category));
 
@@ -142,6 +152,32 @@ export default async function Export() {
                 ? SAVING_LABEL[userType](fmtRound(estimatedSaving))
                 : `Estimated tax saving ~${fmtRound(estimatedSaving)} at 32.5c marginal rate`}
             </p>
+          </div>
+
+          {/* WFH summary card */}
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  {(userType && WFH_LABEL[userType]) ?? "Work from home"} · {wfhMonthName}
+                </p>
+                {wfhMonthHours > 0 ? (
+                  <p className="mt-0.5 text-sm font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+                    {wfhMonthHours} hr{wfhMonthHours !== 1 ? "s" : ""} · ~{fmtRound(wfhMonthEst)}
+                  </p>
+                ) : (
+                  <p className="mt-0.5 text-sm text-gray-400 dark:text-gray-500">No hours logged this month</p>
+                )}
+                {wfhYtdHours > wfhMonthHours && (
+                  <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500 tabular-nums">
+                    {wfhFyLabel}: {wfhYtdHours} hr{wfhYtdHours !== 1 ? "s" : ""} · ~{fmtRound(wfhYtdEst)}
+                  </p>
+                )}
+              </div>
+              <a href="/wfh" className="shrink-0 text-sm font-medium text-violet-600 dark:text-violet-400 hover:underline">
+                {wfhMonthHours > 0 ? "View log →" : "Log hours →"}
+              </a>
+            </div>
           </div>
 
           {/* Missing evidence note — informational only, not blocking */}

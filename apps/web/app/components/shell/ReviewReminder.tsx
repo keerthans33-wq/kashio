@@ -1,14 +1,20 @@
 // ReviewReminder — banner variant, used on Export.
 // ReviewReminderInline — quiet text line, used on Import (doesn't compete with the primary flow).
-// Both share the same priority logic: review → receipts → export.
+// Priority: review items → log WFH hours → export.
 
 import { db } from "../../../lib/db";
 import { requireUserWithType } from "../../../lib/auth";
+import { calcWfhSummary } from "../../../lib/wfhSummary";
 
 function termPlural(userType: string | null): string {
   if (userType === "contractor")  return "business expenses";
   if (userType === "sole_trader") return "business deductions";
   return "deductions";
+}
+
+function wfhMsg(userType: string | null): string {
+  if (userType === "contractor" || userType === "sole_trader") return "No home office hours logged this month — add them to claim the home office deduction.";
+  return "No WFH hours logged this month — add them to claim the work-from-home deduction.";
 }
 
 export async function ReviewReminder() {
@@ -17,20 +23,22 @@ export async function ReviewReminder() {
   try {
     ({ id: userId, userType } = await requireUserWithType());
   } catch {
-    // Not signed in — nothing to show.
     return null;
   }
 
-  const candidates = await db.deductionCandidate.findMany({
-    where:   { userId },
-    select:  { status: true, hasEvidence: true, transaction: { select: { amount: true } } },
-  });
+  const [candidates, wfhEntries] = await Promise.all([
+    db.deductionCandidate.findMany({
+      where:  { userId },
+      select: { status: true, transaction: { select: { amount: true } } },
+    }),
+    db.wfhLog.findMany({ where: { userId }, select: { date: true, hours: true } }),
+  ]);
 
   if (candidates.length === 0) return null;
 
-  const toReview       = candidates.filter((c) => c.status === "NEEDS_REVIEW");
-  const confirmed      = candidates.filter((c) => c.status === "CONFIRMED");
-  const missingReceipt = confirmed.filter((c) => !c.hasEvidence);
+  const toReview  = candidates.filter((c) => c.status === "NEEDS_REVIEW");
+  const confirmed = candidates.filter((c) => c.status === "CONFIRMED");
+  const { monthHours: wfhMonthHours } = calcWfhSummary(wfhEntries);
 
   const fmt = (n: number) =>
     n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
@@ -48,10 +56,10 @@ export async function ReviewReminder() {
       : `${toReview.length} possible ${toReview.length !== 1 ? terms : terms.replace(/s$/, "")} still to review.`;
     href = "/review";
     cta  = "Review now";
-  } else if (missingReceipt.length > 0) {
-    message = `${missingReceipt.length} confirmed item${missingReceipt.length !== 1 ? "s" : ""} still need${missingReceipt.length === 1 ? "s" : ""} a receipt.`;
-    href = "/review";
-    cta  = "Add receipts";
+  } else if (wfhMonthHours === 0) {
+    message = wfhMsg(userType);
+    href    = "/wfh";
+    cta     = "Log hours";
   } else if (confirmed.length > 0) {
     const value = confirmed.reduce((s, c) => s + Math.abs(c.transaction.amount), 0);
     message = `${fmt(value)} in confirmed ${terms} ready to export.`;
@@ -86,18 +94,21 @@ export async function ReviewReminderInline() {
     return null;
   }
 
-  const candidates = await db.deductionCandidate.findMany({
-    where:   { userId },
-    select:  { status: true, hasEvidence: true, transaction: { select: { amount: true } } },
-  });
+  const [candidates, wfhEntries] = await Promise.all([
+    db.deductionCandidate.findMany({
+      where:  { userId },
+      select: { status: true, transaction: { select: { amount: true } } },
+    }),
+    db.wfhLog.findMany({ where: { userId }, select: { date: true, hours: true } }),
+  ]);
 
   if (candidates.length === 0) return null;
 
-  const toReview       = candidates.filter((c) => c.status === "NEEDS_REVIEW");
-  const confirmed      = candidates.filter((c) => c.status === "CONFIRMED");
-  const missingReceipt = confirmed.filter((c) => !c.hasEvidence);
-  const terms          = termPlural(userType);
-  const fmt            = (n: number) =>
+  const toReview  = candidates.filter((c) => c.status === "NEEDS_REVIEW");
+  const confirmed = candidates.filter((c) => c.status === "CONFIRMED");
+  const { monthHours: wfhMonthHours } = calcWfhSummary(wfhEntries);
+  const terms = termPlural(userType);
+  const fmt   = (n: number) =>
     n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 
   let message: string;
@@ -109,9 +120,9 @@ export async function ReviewReminderInline() {
       ? `${fmt(value)} in possible ${terms} still to review.`
       : `${toReview.length} possible ${toReview.length !== 1 ? terms : terms.replace(/s$/, "")} still to review.`;
     href = "/review";
-  } else if (missingReceipt.length > 0) {
-    message = `${missingReceipt.length} confirmed item${missingReceipt.length !== 1 ? "s" : ""} still need${missingReceipt.length === 1 ? "s" : ""} a receipt.`;
-    href = "/review";
+  } else if (wfhMonthHours === 0) {
+    message = wfhMsg(userType);
+    href    = "/wfh";
   } else if (confirmed.length > 0) {
     const value = confirmed.reduce((s, c) => s + Math.abs(c.transaction.amount), 0);
     message = `${fmt(value)} in confirmed ${terms} ready to export.`;
@@ -124,7 +135,7 @@ export async function ReviewReminderInline() {
     <p className="mt-6 text-sm text-gray-400 dark:text-gray-500">
       {message}{" "}
       <a href={href} className="text-violet-600 dark:text-violet-400 hover:underline">
-        Go to {href === "/export" ? "Export" : "Review"} →
+        {href === "/wfh" ? "Log hours" : href === "/export" ? "Go to Export" : "Go to Review"} →
       </a>
     </p>
   );

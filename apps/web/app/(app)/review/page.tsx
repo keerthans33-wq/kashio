@@ -1,6 +1,7 @@
 import { db } from "../../../lib/db";
 import { requireUserWithType } from "../../../lib/auth";
 import { ACTIVE_CATEGORIES, CATEGORIES_BY_USER_TYPE, CATEGORY_PRIORITY_BY_USER_TYPE } from "../../../lib/rules/categories";
+import { calcWfhSummary } from "../../../lib/wfhSummary";
 import { ReviewFilters } from "./ReviewFilters";
 import { ReviewList } from "./ReviewList";
 import type { CandidateCardProps } from "./CandidateCard";
@@ -43,6 +44,18 @@ function termPlural(userType: string | null): string {
   return `${term(userType)}s`;
 }
 
+// Short label used in stats and insight lines, e.g. "WFH" or "home office".
+function wfhLabel(userType: string | null): string {
+  if (userType === "contractor" || userType === "sole_trader") return "home office";
+  return "WFH";
+}
+
+// Copy for the next-best-action card when no hours are logged this month.
+function wfhActionMsg(userType: string | null): string {
+  if (userType === "contractor" || userType === "sole_trader") return "No home office hours logged this month — add them to claim the home office deduction.";
+  return "No WFH hours logged this month — add them to claim the work-from-home deduction.";
+}
+
 const CONFIDENCE_RANK: Record<string, number> = { HIGH: 3, MEDIUM: 2, LOW: 1 };
 
 type Candidate = Awaited<ReturnType<typeof db.deductionCandidate.findMany>>[number] & {
@@ -77,11 +90,16 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
   const allowedCategories = (userType ? CATEGORIES_BY_USER_TYPE[userType] : undefined) ?? ACTIVE_CATEGORIES;
 
-  const all = (await db.deductionCandidate.findMany({
-    where:   { userId },
-    include: { transaction: true },
-    orderBy: { transaction: { date: "desc" } },
-  })).filter((c) => allowedCategories.includes(c.category));
+  const [allRaw, wfhEntries] = await Promise.all([
+    db.deductionCandidate.findMany({
+      where:   { userId },
+      include: { transaction: true },
+      orderBy: { transaction: { date: "desc" } },
+    }),
+    db.wfhLog.findMany({ where: { userId }, select: { date: true, hours: true } }),
+  ]);
+
+  const all = allRaw.filter((c) => allowedCategories.includes(c.category));
 
   const filtered = all.filter((c) => {
     if (category   && c.category   !== category)   return false;
@@ -124,6 +142,8 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
   const ytd         = all.filter((c) => c.transaction.date >= fyStart && c.transaction.date <= fyEnd);
   const ytdPotential  = ytd.filter((c) => c.status !== "REJECTED").reduce((s, c) => s + amt(c), 0);
   const ytdConfirmed  = ytd.filter((c) => c.status === "CONFIRMED").reduce((s, c) => s + amt(c), 0);
+
+  const { ytdHours, ytdEst, monthHours: wfhMonthHours } = calcWfhSummary(wfhEntries, now);
 
   const fmt = (n: number) => n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 
@@ -173,12 +193,23 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
               confirmed{confirmedValue > 0 ? ` · ${fmt(confirmedValue)}` : ""}
             </span>
           </div>
+          {ytdHours > 0 && (
+            <div>
+              <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+                {ytdHours}
+              </span>
+              <span className="ml-1.5 text-gray-400 dark:text-gray-500">
+                hrs {wfhLabel(userType)} · ~{fmt(ytdEst)}
+              </span>
+            </div>
+          )}
         </div>
       )}
 
 
 
       {/* Next best action — hidden when filters are active to avoid disagreeing with the visible list */}
+      {/* Priority: 1) review items  2) log WFH hours  3) export */}
       {all.length > 0 && !isFiltered && (() => {
         if (totalNeedsReview > 0) return (
           <div className="mt-5 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between gap-4">
@@ -190,6 +221,16 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
             </p>
             <a href="#needs-review" className="shrink-0 text-sm font-semibold text-violet-600 dark:text-violet-400 hover:underline">
               Start reviewing →
+            </a>
+          </div>
+        );
+        if (wfhMonthHours === 0) return (
+          <div className="mt-5 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between gap-4">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              {wfhActionMsg(userType)}
+            </p>
+            <a href="/wfh" className="shrink-0 text-sm font-semibold text-violet-600 dark:text-violet-400 hover:underline">
+              Log hours →
             </a>
           </div>
         );
@@ -206,9 +247,11 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         return null;
       })()}
 
-      {ytdPotential > 0 && (
+      {(ytdPotential > 0 || ytdHours > 0) && (
         <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 tabular-nums">
-          {fyLabel}: {fmt(ytdPotential)} potential{ytdConfirmed > 0 ? ` · ${fmt(ytdConfirmed)} confirmed` : ""}
+          {fyLabel}:{ytdPotential > 0 ? ` ${fmt(ytdPotential)} potential` : ""}
+          {ytdConfirmed > 0 ? ` · ${fmt(ytdConfirmed)} confirmed` : ""}
+          {ytdHours > 0 ? ` · ~${fmt(ytdEst)} ${wfhLabel(userType)}` : ""}
         </p>
       )}
 

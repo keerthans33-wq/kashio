@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { db } from "../../lib/db";
 import { requireUserWithType } from "../../lib/auth";
+import { calcWfhSummary } from "../../lib/wfhSummary";
 import { WfhForm } from "./WfhForm";
 import { deleteWfhEntry } from "./actions";
 
@@ -9,16 +10,18 @@ export const dynamic = "force-dynamic";
 function wfhCopy(userType: string | null) {
   if (userType === "contractor" || userType === "sole_trader") {
     return {
-      subtitle:    "Record the days you work from home. The ATO's fixed-rate method requires a log of actual hours — this helps you track your home office hours throughout the year.",
-      estLabel:    "estimated home office deduction",
-      logEmptyMsg: "No entries yet. Add your first home-based work day above.",
+      subtitle:         "Record the days you work from home. The ATO's fixed-rate method requires a log of actual hours — this helps you track your home office hours throughout the year.",
+      estLabel:         "estimated home office deduction",
+      monthZeroMsg:     (month: string) => `No home office hours logged for ${month} yet. Add a day next time you work from home.`,
+      logEmptyMsg:      "No entries yet. Add your first home-based work day above.",
     };
   }
   // employee (default)
   return {
-    subtitle:    "Record the days you work from home. The ATO's fixed-rate method requires a log showing actual hours worked — this helps you keep track throughout the year.",
-    estLabel:    "estimated work-from-home deduction",
-    logEmptyMsg: "No entries yet. Add your first work from home day above.",
+    subtitle:         "Record the days you work from home. The ATO's fixed-rate method requires a log showing actual hours worked — this helps you keep track throughout the year.",
+    estLabel:         "estimated work-from-home deduction",
+    monthZeroMsg:     (month: string) => `No WFH hours logged for ${month} yet. Add a day next time you work from home.`,
+    logEmptyMsg:      "No entries yet. Add your first work from home day above.",
   };
 }
 
@@ -40,15 +43,8 @@ export default async function WfhLog() {
 
   const totalHours = entries.reduce((s, e) => s + e.hours, 0);
 
-  const now         = new Date();
-  const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  const monthName   = now.toLocaleString("en-AU", { month: "long", year: "numeric" });
-  const monthHours  = entries.filter((e) => e.date.startsWith(monthPrefix)).reduce((s, e) => s + e.hours, 0);
-
-  // ATO fixed-rate method: 67c per WFH hour
-  const RATE     = 0.67;
-  const monthEst = (monthHours * RATE).toFixed(2);
-  const totalEst = (totalHours * RATE).toFixed(2);
+  const { monthHours, monthEst, ytdHours, ytdEst, monthName } = calcWfhSummary(entries);
+  const totalEst = (totalHours * 0.67).toFixed(2);
 
   return (
     <main className="mx-auto max-w-lg px-4 sm:px-6 py-12">
@@ -70,17 +66,23 @@ export default async function WfhLog() {
             </span>
           </div>
           <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">
-            ~${monthEst} {copy.estLabel} at 67c/hr (ATO fixed-rate)
+            ~${monthEst.toFixed(2)} {copy.estLabel} at 67c/hr (ATO fixed-rate)
           </p>
           <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
             The 67c rate is set by the ATO — how much tax you save depends on your marginal rate.
           </p>
+          {ytdHours > monthHours && (
+            <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+              Year to date: {ytdHours} hr{ytdHours !== 1 ? "s" : ""} · ~${ytdEst.toFixed(2)}
+            </p>
+          )}
         </div>
-      ) : (
+      ) : entries.length > 0 ? (
+        // Returning user — has past entries but nothing logged this month yet
         <p className="mt-6 text-sm text-gray-400 dark:text-gray-500">
-          No hours logged for {monthName} yet. Add a day whenever you work from home.
+          {copy.monthZeroMsg(monthName)}
         </p>
-      )}
+      ) : null /* First visit — log section below already shows the empty state */}
 
       <WfhForm />
 
