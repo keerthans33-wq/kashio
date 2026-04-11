@@ -15,7 +15,7 @@ export function ExportButton() {
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement("a");
       a.href     = url;
-      a.download = res.headers.get("Content-Disposition")?.match(/filename="(.+)"/)?.[1] ?? "kashio-deductions.csv";
+      a.download = res.headers.get("Content-Disposition")?.match(/filename="(.+)"/)?.[1] ?? "kashio-tax-summary.xlsx";
       a.click();
       URL.revokeObjectURL(url);
 
