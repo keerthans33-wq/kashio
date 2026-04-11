@@ -73,7 +73,7 @@ export function WfhForm() {
             type="date"
             value={date}
             onChange={(e) => { setDate(e.target.value); setDateError(null); setSuccess(false); }}
-            className={`w-full rounded-md border bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 ${dateError ? "border-red-400 dark:border-red-500" : "border-gray-300 dark:border-gray-600"}`}
+            className={`h-11 w-full rounded-md border bg-white dark:bg-gray-800 px-3 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 ${dateError ? "border-red-400 dark:border-red-500" : "border-gray-300 dark:border-gray-600"}`}
           />
           {dateError && <p className="mt-1 text-xs text-red-500">{dateError}</p>}
         </div>
@@ -90,7 +90,7 @@ export function WfhForm() {
             placeholder="e.g. 8"
             value={hours}
             onChange={(e) => { setHours(e.target.value); setHoursError(null); setSuccess(false); }}
-            className={`w-full rounded-md border bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 ${hoursError ? "border-red-400 dark:border-red-500" : "border-gray-300 dark:border-gray-600"}`}
+            className={`h-11 w-full rounded-md border bg-white dark:bg-gray-800 px-3 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 ${hoursError ? "border-red-400 dark:border-red-500" : "border-gray-300 dark:border-gray-600"}`}
           />
           {hoursError && <p className="mt-1 text-xs text-red-500">{hoursError}</p>}
         </div>
