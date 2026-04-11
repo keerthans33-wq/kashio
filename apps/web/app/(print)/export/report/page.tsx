@@ -1,17 +1,21 @@
 import { db } from "../../../../lib/db";
 import { requireUser } from "../../../../lib/auth";
 import { mapExportRow } from "../../../../lib/export/mapExportRow";
+import { calcWfhSummary } from "../../../../lib/wfhSummary";
 import { PrintButton } from "./PrintButton";
 
 export const dynamic = "force-dynamic";
 
 export default async function ExportReport() {
   const userId = await requireUser();
-  const candidates = await db.deductionCandidate.findMany({
-    where:   { status: "CONFIRMED", userId },
-    include: { transaction: true },
-    orderBy: { transaction: { date: "asc" } },
-  });
+  const [candidates, wfhEntries] = await Promise.all([
+    db.deductionCandidate.findMany({
+      where:   { status: "CONFIRMED", userId },
+      include: { transaction: true },
+      orderBy: { transaction: { date: "asc" } },
+    }),
+    db.wfhLog.findMany({ where: { userId }, select: { date: true, hours: true } }),
+  ]);
 
   const now       = new Date();
   const year      = now.getFullYear();
@@ -27,6 +31,8 @@ export default async function ExportReport() {
   const total        = rows.reduce((s, r) => s + r.amount, 0);
   const withEvidence = rows.filter((r) => r.hasEvidence).length;
   const missing      = rows.length - withEvidence;
+
+  const { ytdHours: wfhHours, ytdEst: wfhEst, fyLabel: wfhFyLabel } = calcWfhSummary(wfhEntries);
 
   const categoryTotals = Object.entries(
     rows.reduce<Record<string, number>>((acc, r) => {
@@ -73,6 +79,10 @@ export default async function ExportReport() {
         .cat-table td { padding: 6px 12px; border-bottom: 1px solid #f3f4f6; }
         .cat-table td:last-child { text-align: right; font-weight: 600; color: #111827; }
         .cat-table tr.total-row td { background: #f9fafb; font-weight: 700; color: #111827; border-top: 2px solid #e5e7eb; }
+        /* WFH table */
+        .wfh-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .wfh-table td { padding: 6px 12px; color: #374151; }
+        .wfh-table td:last-child { text-align: right; font-weight: 600; color: #111827; }
       `}</style>
 
       {/* Toolbar — screen only */}
@@ -144,6 +154,27 @@ export default async function ExportReport() {
             </table>
           </div>
         </div>
+
+        {/* ── Work from home ─────────────────────────────────────── */}
+        {wfhHours > 0 && (
+          <div style={{ marginBottom: 24 }} className="page-break-inside-avoid">
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#9ca3af", marginBottom: 6 }}>Work From Home</div>
+            <div style={{ border: "1px solid #e5e7eb", borderRadius: 6, overflow: "hidden" }}>
+              <table className="wfh-table">
+                <tbody>
+                  <tr>
+                    <td>Hours logged ({wfhFyLabel})</td>
+                    <td>{wfhHours} hr{wfhHours !== 1 ? "s" : ""}</td>
+                  </tr>
+                  <tr style={{ background: "#f9fafb", borderTop: "2px solid #e5e7eb" }}>
+                    <td style={{ fontWeight: 700, color: "#111827" }}>Estimated deduction (67c/hr ATO fixed-rate)</td>
+                    <td style={{ fontWeight: 700, color: "#111827" }}>${wfhEst.toFixed(2)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* ── Deductions table ───────────────────────────────────── */}
         <div style={{ marginBottom: 24 }}>

@@ -84,7 +84,7 @@ export function CandidateCard({
   const handleReset   = () => save(() => resetCandidate(id),   "NEEDS_REVIEW");
 
   return (
-    <div className={`rounded-lg border transition-all ${STATUS_BORDER[status]} ${STATUS_BG[status]}`}>
+    <div className={`rounded-lg border transition-all duration-200 ${STATUS_BORDER[status]} ${STATUS_BG[status]}`}>
       <div className="px-4 py-4">
 
         {/* Merchant + amount */}
@@ -124,7 +124,7 @@ export function CandidateCard({
               <button
                 onClick={handleReset}
                 disabled={isSaving}
-                className="text-xs text-gray-400 hover:underline disabled:opacity-40 dark:text-gray-500"
+                className="text-xs text-gray-400 transition-colors duration-150 hover:text-gray-600 disabled:opacity-40 dark:text-gray-500 dark:hover:text-gray-300"
               >
                 {isSaving ? "Saving…" : "Undo"}
               </button>
@@ -134,14 +134,14 @@ export function CandidateCard({
               <button
                 onClick={handleConfirm}
                 disabled={isSaving}
-                className="rounded-md bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-40"
+                className="rounded-md bg-violet-600 px-3 py-1.5 text-xs font-medium text-white transition-all duration-150 hover:bg-violet-700 active:scale-95 disabled:opacity-40"
               >
                 {isSaving ? "Saving…" : "Looks deductible"}
               </button>
               <button
                 onClick={handleReject}
                 disabled={isSaving}
-                className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+                className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 transition-colors duration-150 hover:bg-gray-50 active:bg-gray-100 disabled:opacity-40 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700 dark:active:bg-gray-600"
               >
                 Not deductible
               </button>
@@ -152,7 +152,7 @@ export function CandidateCard({
         {/* Details toggle */}
         <button
           onClick={() => setExpanded((v) => !v)}
-          className="mt-3 text-xs text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+          className="mt-3 text-xs text-gray-400 transition-colors duration-150 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
         >
           {expanded ? "Hide details" : "More details"}
         </button>

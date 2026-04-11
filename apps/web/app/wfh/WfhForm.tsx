@@ -116,7 +116,7 @@ export function WfhForm() {
       <button
         type="submit"
         disabled={saving}
-        className="w-full rounded-md bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-violet-500"
+        className="w-full rounded-md bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-all duration-150 hover:bg-violet-700 active:scale-[0.98] disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-violet-500"
       >
         {saving ? "Saving…" : "Add entry"}
       </button>

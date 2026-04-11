@@ -73,7 +73,7 @@ export default function Nav() {
               await supabase.auth.signOut();
               window.location.href = "/login";
             }}
-            className="text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+            className="text-sm text-gray-400 transition-colors duration-150 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
           >
             Sign out
           </button>
