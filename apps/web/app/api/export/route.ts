@@ -139,7 +139,7 @@ export async function GET() {
   dedHeader.eachCell((cell) => {
     cell.font      = { name: "Calibri", size: 10, bold: true, color: { argb: "FFFFFFFF" } };
     cell.fill      = { type: "pattern", pattern: "solid", fgColor: { argb: "FF" + GRAY_HEADER } };
-    cell.alignment = { vertical: "middle", horizontal: cell.col === 5 ? "right" : "left" };
+    cell.alignment = { vertical: "middle", horizontal: Number(cell.col) === 5 ? "right" : "left" };
     cell.border    = border();
   });
 
