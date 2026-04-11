@@ -133,7 +133,6 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
   const nudge =
     all.length === 0         ? ((userType && EMPTY_STATE[userType]) ?? "Import your bank transactions and Kashio will flag what looks deductible.") :
     totalNeedsReview > 0     ? (pendingValue > 0 ? `${fmt(pendingValue)} in possible ${termPlural(userType)} still to review.` : `${totalNeedsReview} item${totalNeedsReview !== 1 ? "s" : ""} left to review.`) :
-    missingEvidence > 0      ? `${missingEvidence} confirmed item${missingEvidence !== 1 ? "s" : ""} still need${missingEvidence === 1 ? "s" : ""} a receipt.` :
     totalConfirmed > 0       ? "All reviewed. Ready to export." :
                                 "Nothing confirmed yet.";
 
@@ -147,6 +146,14 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
           </h1>
           <p className="mt-1 text-gray-500 dark:text-gray-400">{nudge}</p>
         </div>
+        {totalConfirmed > 0 && (
+          <a
+            href="/export"
+            className="shrink-0 rounded-md bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700"
+          >
+            Export →
+          </a>
+        )}
       </div>
 
 
@@ -183,16 +190,6 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
             </p>
             <a href="#needs-review" className="shrink-0 text-sm font-semibold text-violet-600 dark:text-violet-400 hover:underline">
               Start reviewing →
-            </a>
-          </div>
-        );
-        if (missingEvidence > 0) return (
-          <div className="mt-5 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between gap-4">
-            <p className="text-sm text-gray-700 dark:text-gray-300">
-              {missingEvidence} confirmed item{missingEvidence !== 1 ? "s" : ""} still need{missingEvidence === 1 ? "s" : ""} a receipt.
-            </p>
-            <a href="#confirmed" className="shrink-0 text-sm font-semibold text-violet-600 dark:text-violet-400 hover:underline">
-              Add receipts →
             </a>
           </div>
         );

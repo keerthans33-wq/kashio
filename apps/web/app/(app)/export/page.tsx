@@ -144,16 +144,11 @@ export default async function Export() {
             </p>
           </div>
 
-          {/* Missing evidence nudge — shown before download so it's not missed */}
+          {/* Missing evidence note — informational only, not blocking */}
           {missingReceipt > 0 && (
-            <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 flex items-center justify-between gap-4">
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                {missingReceipt} item{missingReceipt !== 1 ? "s" : ""} still need{missingReceipt === 1 ? "s" : ""} a receipt before you lodge.
-              </p>
-              <a href="/review#confirmed" className="shrink-0 text-sm font-semibold text-amber-700 dark:text-amber-400 hover:underline">
-                Add receipts →
-              </a>
-            </div>
+            <p className="text-sm text-gray-400 dark:text-gray-500">
+              Note: {missingReceipt} item{missingReceipt !== 1 ? "s" : ""} don't have a receipt attached. The ATO may ask for evidence — consider keeping receipts for your records.
+            </p>
           )}
 
           {/* Unreviewed items nudge */}
