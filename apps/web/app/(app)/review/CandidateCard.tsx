@@ -23,26 +23,13 @@ export type CandidateCardProps = {
 const CONFIDENCE_LABEL: Record<Confidence, string> = {
   HIGH:   "Strong match",
   MEDIUM: "Possible match",
-  LOW:    "Weak match. Check before claiming.",
+  LOW:    "Weak match — check before claiming",
 };
 
-const CONFIDENCE_STYLE: Record<Confidence, string> = {
-  HIGH:   "text-green-600 dark:text-green-400",
-  MEDIUM: "text-amber-500 dark:text-amber-400",
-  LOW:    "text-gray-400 dark:text-gray-500",
-};
-
-
-const STATUS_BORDER: Record<Status, string> = {
-  NEEDS_REVIEW: "border-gray-200 dark:border-gray-700",
-  CONFIRMED:    "border-green-400 dark:border-green-700",
-  REJECTED:     "border-gray-200 dark:border-gray-700 opacity-60",
-};
-
-const STATUS_BG: Record<Status, string> = {
-  NEEDS_REVIEW: "bg-white dark:bg-gray-800",
-  CONFIRMED:    "bg-green-50 dark:bg-green-900/10",
-  REJECTED:     "bg-white dark:bg-gray-800",
+const CONFIDENCE_COLOR: Record<Confidence, string> = {
+  HIGH:   "#22C55E",
+  MEDIUM: "#F59E0B",
+  LOW:    "#6B7280",
 };
 
 export function CandidateCard({
@@ -83,48 +70,59 @@ export function CandidateCard({
   const handleReject  = () => save(() => rejectCandidate(id),  "REJECTED");
   const handleReset   = () => save(() => resetCandidate(id),   "NEEDS_REVIEW");
 
+  const borderColor = status === "CONFIRMED" ? "#22C55E33"
+                    : status === "REJECTED"  ? "var(--bg-elevated)"
+                    : "var(--bg-elevated)";
+
+  const bgColor = status === "CONFIRMED" ? "rgba(34,197,94,0.06)"
+                : "var(--bg-card)";
+
   return (
-    <div className={`rounded-lg border transition-all duration-200 ${STATUS_BORDER[status]} ${STATUS_BG[status]}`}>
+    <div
+      className="rounded-xl border transition-all duration-200"
+      style={{ borderColor, backgroundColor: bgColor }}
+    >
       <div className="px-4 py-4">
 
         {/* Merchant + amount */}
         <div className="flex items-baseline justify-between gap-4">
-          <p className="truncate font-semibold text-gray-900 dark:text-gray-100">
+          <p className="truncate text-[15px] font-semibold" style={{ color: "var(--text-primary)", opacity: status === "REJECTED" ? 0.5 : 1 }}>
             {transaction.normalizedMerchant}
           </p>
-          <p className="shrink-0 text-sm font-semibold tabular-nums text-gray-700 dark:text-gray-300">
+          <p className="shrink-0 text-[15px] font-bold tabular-nums" style={{ color: "var(--text-primary)", opacity: status === "REJECTED" ? 0.5 : 1 }}>
             −${Math.abs(amount).toFixed(2)}
           </p>
         </div>
 
-        {/* Date */}
-        <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{transaction.date}</p>
+        {/* Date + category */}
+        <p className="mt-1 text-xs" style={{ color: "var(--text-muted)" }}>
+          {transaction.date} · {category}
+        </p>
 
-        {/* Confidence label */}
+        {/* Confidence */}
         {!settled && (
-          <p className={`mt-2 text-xs font-medium ${CONFIDENCE_STYLE[confidence]}`}>
+          <p className="mt-2 text-xs font-medium" style={{ color: CONFIDENCE_COLOR[confidence] }}>
             {CONFIDENCE_LABEL[confidence]}
           </p>
         )}
 
-        {/* Reason — key context before the decision */}
-        <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{reason}</p>
+        {/* Reason */}
+        <p className="mt-1 text-sm" style={{ color: "var(--text-secondary)" }}>{reason}</p>
 
         {/* Actions */}
         <div className="mt-3">
-          {error && <p className="mb-2 text-xs text-red-500">{error}</p>}
+          {error && <p className="mb-2 text-xs text-red-400">{error}</p>}
 
           {settled ? (
             <div className="flex items-center justify-between">
-              <span className={`text-xs font-medium ${
-                status === "CONFIRMED" ? "text-green-600 dark:text-green-400" : "text-gray-400 dark:text-gray-500"
-              }`}>
+              <span className="text-xs font-medium" style={{ color: status === "CONFIRMED" ? "#22C55E" : "var(--text-muted)" }}>
                 {status === "CONFIRMED" ? "✓ Marked deductible" : "✗ Marked not deductible"}
               </span>
               <button
                 onClick={handleReset}
                 disabled={isSaving}
-                className="text-xs text-gray-400 transition-colors duration-150 hover:text-gray-600 disabled:opacity-40 dark:text-gray-500 dark:hover:text-gray-300"
+                className="text-xs transition-colors duration-150 disabled:opacity-40"
+                style={{ color: "var(--text-muted)" }}
               >
                 {isSaving ? "Saving…" : "Undo"}
               </button>
@@ -134,14 +132,16 @@ export function CandidateCard({
               <button
                 onClick={handleConfirm}
                 disabled={isSaving}
-                className="rounded-md bg-violet-600 px-3 py-1.5 text-xs font-medium text-white transition-all duration-150 hover:bg-violet-700 active:scale-95 disabled:opacity-40"
+                className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-all duration-150 active:scale-95 disabled:opacity-40"
+                style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
               >
                 {isSaving ? "Saving…" : "Looks deductible"}
               </button>
               <button
                 onClick={handleReject}
                 disabled={isSaving}
-                className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 transition-colors duration-150 hover:bg-gray-50 active:bg-gray-100 disabled:opacity-40 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700 dark:active:bg-gray-600"
+                className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors duration-150 active:scale-95 disabled:opacity-40"
+                style={{ border: "1px solid var(--bg-elevated)", color: "var(--text-muted)" }}
               >
                 Not deductible
               </button>
@@ -152,42 +152,38 @@ export function CandidateCard({
         {/* Details toggle */}
         <button
           onClick={() => setExpanded((v) => !v)}
-          className="mt-3 text-xs text-gray-400 transition-colors duration-150 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+          className="mt-3 text-xs transition-colors duration-150"
+          style={{ color: "var(--text-muted)" }}
         >
           {expanded ? "Hide details" : "More details"}
         </button>
       </div>
 
-      {/* ── Expanded details ─────────────────────────────────────────────── */}
+      {/* Expanded details */}
       {expanded && (
-        <div className="border-t border-gray-100 px-4 py-4 space-y-3 dark:border-gray-700">
+        <div className="border-t px-4 py-4 space-y-3" style={{ borderColor: "var(--bg-elevated)" }}>
 
           <div>
-            <p className="text-xs text-gray-400 dark:text-gray-500">Transaction</p>
-            <p className="mt-0.5 text-sm text-gray-600 dark:text-gray-400 break-words">{transaction.description}</p>
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>Transaction</p>
+            <p className="mt-0.5 text-sm break-words" style={{ color: "var(--text-secondary)" }}>{transaction.description}</p>
           </div>
 
           <div>
-            <p className="text-xs text-gray-400 dark:text-gray-500">Why Kashio flagged this</p>
-            <p className="mt-0.5 text-sm text-gray-600 dark:text-gray-400">{reason}</p>
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>Why Kashio flagged this</p>
+            <p className="mt-0.5 text-sm" style={{ color: "var(--text-secondary)" }}>{reason}</p>
             {mixedUse && (
-              <p className="mt-1 text-xs text-amber-500 dark:text-amber-400">
+              <p className="mt-1 text-xs" style={{ color: "#F59E0B" }}>
                 May include personal use. Review before claiming.
               </p>
             )}
           </div>
 
-          <div>
-            <p className="text-xs text-gray-400 dark:text-gray-500">Category</p>
-            <p className="mt-0.5 text-sm text-gray-600 dark:text-gray-400">{category}</p>
-          </div>
-
           {confidenceReason && (
             <div>
-              <p className={`text-xs font-medium ${CONFIDENCE_STYLE[confidence]}`}>
+              <p className="text-xs font-medium" style={{ color: CONFIDENCE_COLOR[confidence] }}>
                 {CONFIDENCE_LABEL[confidence]}
               </p>
-              <p className="mt-0.5 text-sm text-gray-600 dark:text-gray-400">{confidenceReason}</p>
+              <p className="mt-0.5 text-sm" style={{ color: "var(--text-secondary)" }}>{confidenceReason}</p>
             </div>
           )}
 
@@ -204,9 +200,10 @@ export function CandidateCard({
                     setEvidenceSaving(true);
                     try { await saveEvidence(id, next, note); flashSaved(next ? "Saved" : "Removed"); } finally { setEvidenceSaving(false); }
                   }}
-                  className="h-4 w-4 rounded border-gray-300 accent-violet-600 dark:border-gray-600"
+                  className="h-4 w-4 rounded accent-violet-600"
+                  style={{ borderColor: "var(--bg-elevated)" }}
                 />
-                <span className="text-sm text-gray-600 dark:text-gray-400">I have a receipt or invoice</span>
+                <span className="text-sm" style={{ color: "var(--text-secondary)" }}>I have a receipt or invoice</span>
               </label>
               {evidence && (
                 <input
@@ -218,11 +215,16 @@ export function CandidateCard({
                     try { await saveEvidence(id, evidence, note); flashSaved("Note saved"); } finally { setEvidenceSaving(false); }
                   }}
                   placeholder="e.g. Bunnings receipt Feb 2025"
-                  className="mt-2 w-full rounded border border-gray-200 px-3 py-1.5 text-sm text-gray-700 placeholder-gray-300 focus:border-gray-400 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:placeholder-gray-600 dark:focus:border-gray-500"
+                  className="mt-2 w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1"
+                  style={{
+                    backgroundColor: "var(--bg-elevated)",
+                    border: "1px solid var(--bg-elevated)",
+                    color: "var(--text-primary)",
+                  }}
                 />
               )}
-              {evidenceSaving && <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Saving…</p>}
-              {evidenceSaved && !evidenceSaving && <p className="mt-1 text-xs text-green-600 dark:text-green-400">{evidenceSaved}</p>}
+              {evidenceSaving && <p className="mt-1 text-xs" style={{ color: "var(--text-muted)" }}>Saving…</p>}
+              {evidenceSaved && !evidenceSaving && <p className="mt-1 text-xs" style={{ color: "#22C55E" }}>{evidenceSaved}</p>}
             </div>
           )}
         </div>

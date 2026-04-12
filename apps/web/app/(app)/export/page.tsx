@@ -59,10 +59,9 @@ export default async function Export() {
     row: mapExportRow(c),
   }));
 
-  const total          = allItems.reduce((sum, c) => sum + c.row.amount, 0);
+  const total           = allItems.reduce((sum, c) => sum + c.row.amount, 0);
   const estimatedSaving = Math.round(total * 0.325);
 
-  // Group by category, sorted by total value desc
   const catTotals = new Map<string, number>();
   for (const item of allItems) {
     catTotals.set(item.row.category, (catTotals.get(item.row.category) ?? 0) + item.row.amount);
@@ -83,17 +82,18 @@ export default async function Export() {
   if (confirmed.length === 0) {
     return (
       <main className="mx-auto max-w-lg px-4 sm:px-6 py-12 text-center space-y-4">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+        <h1 className="text-[30px] font-bold" style={{ color: "var(--text-primary)" }}>
           Your tax summary is empty
         </h1>
-        <p className="text-gray-500 dark:text-gray-400">
+        <p className="text-[15px]" style={{ color: "var(--text-secondary)" }}>
           {userType === "contractor"
             ? "Confirm your business expenses in Review and they'll appear in your summary."
             : "Confirm some deductions in Review and they'll appear in your summary."}
         </p>
         <a
           href="/review"
-          className="inline-block rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700"
+          className="inline-block rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-all duration-150 hover:opacity-90"
+          style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
         >
           {(userType && EMPTY_CTA[userType]) ?? "Review deductions"}
         </a>
@@ -102,14 +102,14 @@ export default async function Export() {
   }
 
   return (
-    <main className="mx-auto max-w-lg px-4 sm:px-6 py-12 space-y-10">
+    <main className="mx-auto max-w-lg px-4 sm:px-6 py-8 sm:py-12 space-y-6">
 
       {/* 1. Header */}
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+        <h1 className="text-[30px] font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
           Your tax summary
         </h1>
-        <p className="mt-1 text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-[15px]" style={{ color: "var(--text-secondary)" }}>
           {(userType && SUBTITLE[userType]) ?? "Everything you've confirmed this financial year."}
         </p>
       </div>
@@ -117,91 +117,96 @@ export default async function Export() {
       {/* 2. Summary cards */}
       <div className={wfhYtdHours > 0 ? "grid grid-cols-2 gap-4" : ""}>
         {/* Total deductions */}
-        <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 px-5 py-6 flex flex-col justify-between">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
+        <div className="rounded-xl px-5 py-5 flex flex-col justify-between" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
+          <p className="text-xs font-medium uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
             {(userType && TOTAL_LABEL[userType]) ?? "Total deductions"}
           </p>
           <div className="mt-3">
-            <p className="text-4xl font-bold tabular-nums text-gray-900 dark:text-gray-100">
+            <p className="text-4xl font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
               {fmt(total)}
             </p>
-            <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+            <p className="mt-1 text-sm" style={{ color: "var(--text-secondary)" }}>
               {confirmed.length} item{confirmed.length !== 1 ? "s" : ""}
             </p>
           </div>
-          <p className="mt-4 text-xs text-gray-400 dark:text-gray-500">
+          <p className="mt-4 text-xs" style={{ color: "var(--text-muted)" }}>
             {userType && SAVING_LABEL[userType]
               ? SAVING_LABEL[userType](fmtRound(estimatedSaving))
               : `~${fmtRound(estimatedSaving)} estimated saving at 32.5c`}
           </p>
         </div>
 
-        {/* WFH — only shown when hours exist */}
+        {/* WFH — only when hours exist */}
         {wfhYtdHours > 0 && (
-          <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 px-5 py-6 flex flex-col justify-between">
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
+          <div className="rounded-xl px-5 py-5 flex flex-col justify-between" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
+            <p className="text-xs font-medium uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
               {(userType && WFH_LABEL[userType]) ?? "Work from home"}
             </p>
             <div className="mt-3">
-              <p className="text-4xl font-bold tabular-nums text-gray-900 dark:text-gray-100">
+              <p className="text-4xl font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
                 ~{fmtRound(wfhYtdEst)}
               </p>
-              <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+              <p className="mt-1 text-sm" style={{ color: "var(--text-secondary)" }}>
                 {wfhYtdHours} hr{wfhYtdHours !== 1 ? "s" : ""} logged
               </p>
             </div>
-            <p className="mt-4 text-xs text-gray-400 dark:text-gray-500">
+            <p className="mt-4 text-xs" style={{ color: "var(--text-muted)" }}>
               {wfhFyLabel} · 67c/hr ATO fixed-rate
               {wfhMonthHours === 0 && (
-                <> · <a href="/wfh" className="text-violet-500 dark:text-violet-400 hover:underline">log this month →</a></>
+                <> · <a href="/wfh" className="hover:underline" style={{ color: "var(--violet-from)" }}>log this month →</a></>
               )}
             </p>
           </div>
         )}
       </div>
 
-      {/* 3. Grouped tax summary */}
-      <div className="rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+      {/* 3. Grouped ledger */}
+      <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--bg-elevated)" }}>
         {categoryGroups.map(({ cat, catTotal, items }, ci) => (
-          <div key={cat} className={ci > 0 ? "border-t border-gray-100 dark:border-gray-800" : ""}>
+          <div key={cat} style={ci > 0 ? { borderTop: "1px solid var(--bg-elevated)" } : {}}>
             {/* Category header */}
-            <div className="flex items-baseline justify-between px-4 py-2 bg-gray-50 dark:bg-gray-800/60">
-              <span className="text-xs font-medium text-gray-400 dark:text-gray-500">{cat}</span>
-              <span className="text-xs font-medium tabular-nums text-gray-400 dark:text-gray-500">{fmt(catTotal)}</span>
+            <div className="flex items-baseline justify-between px-4 py-2" style={{ backgroundColor: "var(--bg-elevated)" }}>
+              <span className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>{cat}</span>
+              <span className="text-xs font-medium tabular-nums" style={{ color: "var(--text-muted)" }}>{fmt(catTotal)}</span>
             </div>
             {/* Items */}
-            <div className="divide-y divide-gray-50 dark:divide-gray-800/40">
-              {items.map((item) => (
-                <div key={item.id} className="flex items-center justify-between gap-4 px-4 py-2.5">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm text-gray-500 dark:text-gray-400">{item.row.merchant}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-600">{item.row.date}</p>
-                  </div>
-                  <span className="shrink-0 text-sm tabular-nums text-gray-400 dark:text-gray-500">
-                    {fmt(item.row.amount)}
-                  </span>
+            {items.map((item, ii) => (
+              <div
+                key={item.id}
+                className="flex items-center justify-between gap-4 px-4 py-3"
+                style={{ borderTop: ii > 0 ? "1px solid rgba(31,41,55,0.5)" : undefined, backgroundColor: "var(--bg-card)" }}
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm" style={{ color: "var(--text-secondary)" }}>{item.row.merchant}</p>
+                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>{item.row.date}</p>
                 </div>
-              ))}
-            </div>
+                <span className="shrink-0 text-sm tabular-nums" style={{ color: "var(--text-secondary)" }}>
+                  {fmt(item.row.amount)}
+                </span>
+              </div>
+            ))}
           </div>
         ))}
         {/* Total row */}
-        <div className="border-t border-gray-200 dark:border-gray-700 flex items-baseline justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800/60">
-          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Total</span>
-          <span className="text-sm font-semibold tabular-nums text-gray-700 dark:text-gray-300">{fmt(total)}</span>
+        <div
+          className="flex items-baseline justify-between px-4 py-3"
+          style={{ borderTop: "1px solid var(--bg-elevated)", backgroundColor: "var(--bg-elevated)" }}
+        >
+          <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Total</span>
+          <span className="text-sm font-semibold tabular-nums" style={{ color: "var(--text-primary)" }}>{fmt(total)}</span>
         </div>
       </div>
 
       {/* 4. Download */}
       <div className="space-y-3 pt-2">
         <ExportButton />
-        <p className="text-xs text-center text-gray-400 dark:text-gray-500">
+        <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
           The ATO recommends keeping receipts for your records.
         </p>
       </div>
 
       {/* Footer */}
-      <p className="text-xs text-center text-gray-300 dark:text-gray-600 border-t border-gray-100 dark:border-gray-800 pt-6">
+      <p className="text-xs text-center" style={{ borderTop: "1px solid var(--bg-elevated)", paddingTop: "1.5rem", color: "var(--text-muted)", opacity: 0.6 }}>
         Kashio is not a tax adviser. Check with your accountant if you're unsure about any claim.
       </p>
 

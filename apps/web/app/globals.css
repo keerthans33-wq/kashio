@@ -3,15 +3,29 @@
 /* Enable class-based dark mode: .dark on <html> activates dark: variants */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ── Design tokens ───────────────────────────────────────────────────── */
+:root {
+  --bg-app:       #0B1220;
+  --bg-card:      #111827;
+  --bg-elevated:  #1F2937;
+  --bg-border:    #1F2937;
+  --text-primary: #F9FAFB;
+  --text-secondary: #9CA3AF;
+  --text-muted:   #6B7280;
+  --violet-from:  #7C3AED;
+  --violet-to:    #9333EA;
+  --success:      #22C55E;
+  --warning:      #F59E0B;
+}
+
 body {
   font-family: system-ui, sans-serif;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
 }
 
-.dark body {
-  background-color: #111827;
-  color: #f9fafb;
-}
-
+/* ── Animations ──────────────────────────────────────────────────────── */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }

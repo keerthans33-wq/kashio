@@ -12,14 +12,13 @@ type Props = {
 };
 
 export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }: Props) {
-  const [selected, setSelected]             = useState<Set<string>>(new Set());
-  const [isSaving, setIsSaving]             = useState(false);
-  const [error, setError]                   = useState<string | null>(null);
-  const [successMsg, setSuccessMsg]         = useState<string | null>(null);
-  const [lastIds, setLastIds]               = useState<string[]>([]);
-  // Auto-expand confirmed when there are items missing receipts
-  const [showConfirmed, setShowConfirmed]   = useState(missingEvidence > 0);
-  const [showRejected, setShowRejected]     = useState(false);
+  const [selected, setSelected]   = useState<Set<string>>(new Set());
+  const [isSaving, setIsSaving]   = useState(false);
+  const [error, setError]         = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [lastIds, setLastIds]     = useState<string[]>([]);
+  const [showConfirmed, setShowConfirmed] = useState(missingEvidence > 0);
+  const [showRejected, setShowRejected]   = useState(false);
 
   const needsReviewIds = needsReview.map((c) => c.id);
 
@@ -32,20 +31,15 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
   }
 
   function toggleAll() {
-    setSelected(
-      selected.size === needsReviewIds.length ? new Set() : new Set(needsReviewIds),
-    );
+    setSelected(selected.size === needsReviewIds.length ? new Set() : new Set(needsReviewIds));
   }
 
   async function bulkAction(action: (ids: string[]) => Promise<void>, label: string) {
     const ids = [...selected];
-    setIsSaving(true);
-    setError(null);
-    setSuccessMsg(null);
+    setIsSaving(true); setError(null); setSuccessMsg(null);
     try {
       await action(ids);
-      setSelected(new Set());
-      setLastIds(ids);
+      setSelected(new Set()); setLastIds(ids);
       setSuccessMsg(`${ids.length} item${ids.length !== 1 ? "s" : ""} ${label}.`);
     } catch {
       setError("Could not save. Please try again.");
@@ -55,12 +49,10 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
   }
 
   async function handleBulkUndo() {
-    setIsSaving(true);
-    setError(null);
+    setIsSaving(true); setError(null);
     try {
       await bulkResetCandidates(lastIds);
-      setSuccessMsg(null);
-      setLastIds([]);
+      setSuccessMsg(null); setLastIds([]);
     } catch {
       setError("Could not undo. Please try again.");
     } finally {
@@ -73,21 +65,15 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
 
       {/* Success banner */}
       {successMsg && !isSaving && (
-        <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 dark:border-green-800 dark:bg-green-900/20">
-          <p className="text-sm text-green-700 dark:text-green-400">{successMsg}</p>
+        <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border px-4 py-3" style={{ borderColor: "#22C55E33", backgroundColor: "rgba(34,197,94,0.06)" }}>
+          <p className="text-sm" style={{ color: "#22C55E" }}>{successMsg}</p>
           <div className="flex items-center gap-3">
             {lastIds.length > 0 && (
-              <button
-                onClick={handleBulkUndo}
-                className="text-xs font-medium text-green-700 underline hover:text-green-900 dark:text-green-400"
-              >
+              <button onClick={handleBulkUndo} className="text-xs font-medium underline" style={{ color: "#22C55E" }}>
                 Undo
               </button>
             )}
-            <button
-              onClick={() => { setSuccessMsg(null); setLastIds([]); }}
-              className="text-xs text-green-500 hover:text-green-700"
-            >
+            <button onClick={() => { setSuccessMsg(null); setLastIds([]); }} className="text-xs" style={{ color: "var(--text-muted)" }}>
               Dismiss
             </button>
           </div>
@@ -96,36 +82,35 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
 
       {/* Bulk action bar */}
       {selected.size > 0 && (
-        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
-          <span className="text-sm text-gray-600 dark:text-gray-400">{selected.size} selected</span>
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3" style={{ borderColor: "var(--bg-elevated)", backgroundColor: "var(--bg-card)" }}>
+          <span className="text-sm" style={{ color: "var(--text-secondary)" }}>{selected.size} selected</span>
           <button
             onClick={() => bulkAction(bulkConfirmCandidates, "marked deductible")}
             disabled={isSaving}
-            className="rounded-md bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-40"
+            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40 transition-all duration-150"
+            style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
           >
             {isSaving ? "Saving…" : "Looks deductible"}
           </button>
           <button
             onClick={() => bulkAction(bulkRejectCandidates, "marked not deductible")}
             disabled={isSaving}
-            className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-600 dark:text-gray-400"
+            className="rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-40 transition-colors duration-150"
+            style={{ border: "1px solid var(--bg-elevated)", color: "var(--text-muted)" }}
           >
             {isSaving ? "Saving…" : "Not deductible"}
           </button>
-          <button
-            onClick={() => setSelected(new Set())}
-            className="text-xs text-gray-400 underline hover:text-gray-600"
-          >
+          <button onClick={() => setSelected(new Set())} className="text-xs underline" style={{ color: "var(--text-muted)" }}>
             Clear
           </button>
-          {error && <span className="text-xs text-red-500">{error}</span>}
+          {error && <span className="text-xs text-red-400">{error}</span>}
         </div>
       )}
 
-      {/* ── Needs review — primary ─────────────────────────────────────────── */}
+      {/* Needs review */}
       <div id="needs-review" />
       {needsReview.length === 0 ? (
-        <p className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+        <p className="py-8 text-center text-sm" style={{ color: "var(--text-muted)" }}>
           {confirmed.length + rejected.length > 0 ? "All items reviewed." : "Nothing to review yet."}
         </p>
       ) : (
@@ -136,14 +121,14 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
                 type="checkbox"
                 checked={selected.size === needsReviewIds.length}
                 onChange={toggleAll}
-                className="h-4 w-4 cursor-pointer rounded border-gray-300 accent-violet-600 dark:border-gray-600"
+                className="h-4 w-4 cursor-pointer rounded accent-violet-600"
               />
-              <span className="text-xs text-gray-400 dark:text-gray-500">
+              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
                 {selected.size === needsReviewIds.length ? "Deselect all" : "Select all"}
               </span>
             </div>
           )}
-          <div className="space-y-2">
+          <div className="space-y-3">
             {needsReview.map((c) => (
               <div key={c.id} className="flex items-start gap-3">
                 {needsReviewIds.length > 1 ? (
@@ -151,7 +136,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
                     type="checkbox"
                     checked={selected.has(c.id)}
                     onChange={() => toggle(c.id)}
-                    className="mt-4 h-4 w-4 shrink-0 cursor-pointer rounded border-gray-300 accent-violet-600 dark:border-gray-600"
+                    className="mt-4 h-4 w-4 shrink-0 cursor-pointer rounded accent-violet-600"
                   />
                 ) : (
                   <div className="mt-4 h-4 w-4 shrink-0" />
@@ -165,36 +150,38 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
         </>
       )}
 
-      {/* ── Confirmed — secondary, collapsible ────────────────────────────── */}
+      {/* Confirmed — collapsible */}
       {confirmed.length > 0 && (
-        <div id="confirmed" className="mt-8 border-t border-gray-100 pt-6 dark:border-gray-800">
+        <div id="confirmed" className="mt-8 border-t pt-6" style={{ borderColor: "var(--bg-elevated)" }}>
           <button
             onClick={() => setShowConfirmed((v) => !v)}
-            className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+            className="flex items-center gap-2 text-sm transition-colors duration-150"
+            style={{ color: "var(--text-muted)" }}
           >
-            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-green-100 text-xs text-green-600 dark:bg-green-900/30 dark:text-green-400">✓</span>
+            <span className="flex h-4 w-4 items-center justify-center rounded-full text-xs" style={{ backgroundColor: "rgba(34,197,94,0.15)", color: "#22C55E" }}>✓</span>
             {showConfirmed ? "Hide" : "Show"} confirmed ({confirmed.length})
           </button>
           {showConfirmed && (
-            <div className="mt-4 space-y-2">
+            <div className="mt-4 space-y-3">
               {confirmed.map((c) => <CandidateCard key={c.id} {...c} />)}
             </div>
           )}
         </div>
       )}
 
-      {/* ── Rejected — secondary, collapsible ─────────────────────────────── */}
+      {/* Rejected — collapsible */}
       {rejected.length > 0 && (
-        <div className="mt-4 border-t border-gray-100 pt-6 dark:border-gray-800">
+        <div className="mt-4 border-t pt-6" style={{ borderColor: "var(--bg-elevated)" }}>
           <button
             onClick={() => setShowRejected((v) => !v)}
-            className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+            className="flex items-center gap-2 text-sm transition-colors duration-150"
+            style={{ color: "var(--text-muted)" }}
           >
-            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-500 dark:bg-gray-700 dark:text-gray-400">✗</span>
+            <span className="flex h-4 w-4 items-center justify-center rounded-full text-xs" style={{ backgroundColor: "var(--bg-elevated)", color: "var(--text-muted)" }}>✗</span>
             {showRejected ? "Hide" : "Show"} not deductible ({rejected.length})
           </button>
           {showRejected && (
-            <div className="mt-4 space-y-2">
+            <div className="mt-4 space-y-3">
               {rejected.map((c) => <CandidateCard key={c.id} {...c} />)}
             </div>
           )}

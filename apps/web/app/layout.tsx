@@ -12,19 +12,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="h-full" suppressHydrationWarning>
-      <head>
-        {/* Runs before paint to prevent flash of wrong theme */}
-        <script dangerouslySetInnerHTML={{ __html: `
-          try {
-            if (localStorage.getItem('theme') === 'dark' ||
-                (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-              document.documentElement.classList.add('dark');
-            }
-          } catch {}
-        `}} />
-      </head>
-      <body className="min-h-full flex flex-col antialiased bg-white dark:bg-gray-900">{children}</body>
+    <html lang="en" className="h-full dark" suppressHydrationWarning>
+      <body className="min-h-full flex flex-col antialiased" style={{ backgroundColor: "var(--bg-app)", color: "var(--text-primary)" }}>
+        {children}
+      </body>
     </html>
   );
 }

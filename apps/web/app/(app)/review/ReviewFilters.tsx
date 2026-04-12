@@ -21,88 +21,67 @@ export function ReviewFilters({ categories = ACTIVE_CATEGORIES }: { categories?:
   const sort       = params.get("sort") ?? "";
   const hasFilters = category || confidence || sort;
 
+  const chipBase  = "rounded-full px-3 py-1 text-xs transition-all duration-150 border";
+  const chipActive = { background: "var(--violet-from)", borderColor: "var(--violet-from)", color: "#fff" };
+  const chipIdle   = { borderColor: "var(--bg-elevated)", color: "var(--text-muted)", background: "transparent" };
+
   return (
     <div className="mt-4">
-
-      {/* Toggle row */}
       <div className="flex items-center gap-3">
         <button
           onClick={() => setOpen((v) => !v)}
-          className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+          className="flex items-center gap-1.5 text-sm transition-colors duration-150"
+          style={{ color: "var(--text-muted)" }}
         >
           {open ? "Hide options" : "View options"}
           {hasFilters && !open && (
-            <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
+            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: "var(--violet-from)" }} />
           )}
         </button>
         {hasFilters && (
           <button
             onClick={() => router.push(pathname)}
-            className="text-sm text-gray-400 underline hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+            className="text-sm underline transition-colors duration-150"
+            style={{ color: "var(--text-muted)" }}
           >
             Reset
           </button>
         )}
       </div>
 
-      {/* Filter panel */}
       {open && (
         <div className="mt-3 space-y-3">
-          <div className="flex flex-wrap gap-2">
-            <span className="text-xs text-gray-400 dark:text-gray-500 self-center">Category</span>
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-xs" style={{ color: "var(--text-muted)" }}>Category</span>
             {["", ...categories].map((c) => (
-              <button
-                key={c}
-                onClick={() => update("category", c)}
-                className={`rounded-full px-3 py-1 text-xs transition-colors ${
-                  category === c
-                    ? "bg-violet-600 text-white"
-                    : "border border-gray-200 text-gray-500 hover:border-gray-300 dark:border-gray-600 dark:text-gray-400"
-                }`}
-              >
+              <button key={c} onClick={() => update("category", c)} className={chipBase} style={category === c ? chipActive : chipIdle}>
                 {c === "" ? "All" : c}
               </button>
             ))}
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <span className="text-xs text-gray-400 dark:text-gray-500 self-center">Match</span>
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-xs" style={{ color: "var(--text-muted)" }}>Match</span>
             {[
               { value: "",       label: "All" },
-              { value: "HIGH",   label: "Strong match" },
-              { value: "MEDIUM", label: "Possible match" },
-              { value: "LOW",    label: "Weak match" },
+              { value: "HIGH",   label: "Strong" },
+              { value: "MEDIUM", label: "Possible" },
+              { value: "LOW",    label: "Weak" },
             ].map(({ value, label }) => (
-              <button
-                key={value}
-                onClick={() => update("confidence", value)}
-                className={`rounded-full px-3 py-1 text-xs transition-colors ${
-                  confidence === value
-                    ? "bg-violet-600 text-white"
-                    : "border border-gray-200 text-gray-500 hover:border-gray-300 dark:border-gray-600 dark:text-gray-400"
-                }`}
-              >
+              <button key={value} onClick={() => update("confidence", value)} className={chipBase} style={confidence === value ? chipActive : chipIdle}>
                 {label}
               </button>
             ))}
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <span className="text-xs text-gray-400 dark:text-gray-500 self-center">Sort</span>
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-xs" style={{ color: "var(--text-muted)" }}>Sort</span>
             {[
               { value: "",           label: "Date" },
               { value: "amount",     label: "Amount" },
               { value: "confidence", label: "Certainty" },
             ].map(({ value, label }) => (
-              <button
-                key={value}
-                onClick={() => update("sort", value)}
-                className={`rounded-full px-3 py-1 text-xs transition-colors ${
-                  sort === value
-                    ? "bg-violet-600 text-white"
-                    : "border border-gray-200 text-gray-500 hover:border-gray-300 dark:border-gray-600 dark:text-gray-400"
-                }`}
-              >
+              <button key={value} onClick={() => update("sort", value)} className={chipBase} style={sort === value ? chipActive : chipIdle}>
                 {label}
               </button>
             ))}
