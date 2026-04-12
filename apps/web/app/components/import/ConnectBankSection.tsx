@@ -91,56 +91,60 @@ function SyncSuccess({ result, onSync }: { result: SyncResult; onSync: () => voi
 
   const noneAdded = result.inserted === 0 && result.duplicates > 0;
 
+  if (noneAdded) {
+    return (
+      <div className="rounded-xl px-5 py-5 space-y-4" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
+        <div className="flex items-center gap-2">
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs" style={{ backgroundColor: "rgba(34,197,94,0.12)", color: "#22C55E" }}>✓</span>
+          <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Already up to date</p>
+        </div>
+        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+          {result.duplicates} transaction{result.duplicates !== 1 ? "s" : ""} already saved. Nothing new to add.
+        </p>
+        <button onClick={onSync} className="text-sm" style={{ color: "var(--text-muted)" }}>Sync again</button>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
 
-      {/* Header */}
-      <div className="flex items-start gap-3 px-5 py-4">
-        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs" style={{ backgroundColor: "rgba(34,197,94,0.12)", color: "#22C55E" }}>
-          ✓
-        </span>
-        <div>
-          <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-            {noneAdded ? "Already up to date" : "Sync complete"}
-          </p>
-          <p className="mt-0.5 text-sm" style={{ color: "var(--text-muted)" }}>
-            {noneAdded
-              ? `${result.duplicates} transaction${result.duplicates !== 1 ? "s" : ""} already saved. Nothing new to add.`
-              : <>
-                  {result.inserted} transaction{result.inserted !== 1 ? "s" : ""} imported
-                  {result.duplicates > 0 && <> · {result.duplicates} skipped</>}
-                  {(result.invalid ?? 0) > 0 && <> · {result.invalid} unreadable</>}
-                </>
-            }
-          </p>
+      {/* Status row */}
+      <div className="flex items-center justify-between px-5 pt-5 pb-4">
+        <div className="flex items-center gap-2">
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs" style={{ backgroundColor: "rgba(34,197,94,0.12)", color: "#22C55E" }}>✓</span>
+          <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Sync complete</p>
         </div>
+        <p className="text-xs tabular-nums" style={{ color: "var(--text-muted)" }}>
+          {result.inserted} imported{result.duplicates > 0 ? ` · ${result.duplicates} skipped` : ""}
+        </p>
       </div>
 
-      {/* Deduction summary */}
+      {/* Money — main focus */}
       {result.flagged > 0 && (
-        <div className="px-5 py-4" style={{ borderTop: "1px solid var(--bg-elevated)" }}>
-          <p className="text-xs font-medium uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
-            Potential deductions found
+        <div className="px-5 pb-5">
+          <p className="text-[11px] font-medium uppercase tracking-widest mb-1" style={{ color: "var(--text-muted)" }}>
+            Potential deductions
           </p>
-          <p className="mt-1 text-2xl font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
+          <p className="text-[42px] font-bold leading-none tabular-nums" style={{ color: "var(--text-primary)" }}>
             {result.totalValue ? fmt(result.totalValue) : `${result.flagged} items`}
           </p>
-          <p className="mt-0.5 text-sm" style={{ color: "var(--text-muted)" }}>
-            {result.flagged} candidate{result.flagged !== 1 ? "s" : ""} flagged. Review them to confirm which apply to you.
+          <p className="mt-2 text-sm" style={{ color: "var(--text-muted)" }}>
+            {result.flagged} candidate{result.flagged !== 1 ? "s" : ""} found — review to confirm which apply to you.
           </p>
         </div>
       )}
 
-      {/* CTA */}
-      <div className="px-5 py-4 flex flex-wrap items-center gap-3" style={{ borderTop: "1px solid var(--bg-elevated)" }}>
+      {/* Actions */}
+      <div className="px-5 pb-5 flex items-center gap-4" style={result.flagged > 0 ? { borderTop: "1px solid var(--bg-elevated)", paddingTop: "1.25rem" } : {}}>
         <a
           href="/review"
-          className="rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98]"
+          className="flex-1 rounded-xl py-3 text-center text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98]"
           style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
         >
-          Review deductions →
+          Review deductions
         </a>
-        <button onClick={onSync} className="text-sm" style={{ color: "var(--text-muted)" }}>
+        <button onClick={onSync} className="shrink-0 text-sm" style={{ color: "var(--text-muted)" }}>
           Sync again
         </button>
       </div>
