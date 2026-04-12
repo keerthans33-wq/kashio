@@ -42,29 +42,46 @@ export default async function WfhLog() {
 
       {/* 3. Monthly summary */}
       {monthHours > 0 ? (
-        <div
-          className="mt-6 rounded-xl px-5 py-5"
-          style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}
-        >
-          <p className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>
-            {monthName}
-          </p>
-          <div className="flex items-end gap-3">
-            <span className="text-[42px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
-              {monthHours}
-            </span>
-            <span className="text-base mb-1" style={{ color: "var(--text-secondary)" }}>
-              hr{monthHours !== 1 ? "s" : ""}
-            </span>
+        <div className="mt-6">
+          <div className="grid grid-cols-2 gap-4">
+
+            {/* Hours */}
+            <div
+              className="rounded-xl px-4 py-4 flex flex-col justify-between"
+              style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)", minHeight: 110 }}
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
+                {monthName}
+              </p>
+              <div className="mt-3 flex items-baseline gap-1.5">
+                <span className="text-[36px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
+                  {monthHours}
+                </span>
+                <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                  hr{monthHours !== 1 ? "s" : ""}
+                </span>
+              </div>
+            </div>
+
+            {/* Est. deduction */}
+            <div
+              className="rounded-xl px-4 py-4 flex flex-col justify-between"
+              style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)", minHeight: 110 }}
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
+                Est. deduction
+              </p>
+              <div className="mt-3">
+                <span className="text-[36px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
+                  ~${Math.round(monthEst)}
+                </span>
+              </div>
+            </div>
+
           </div>
-          <p className="mt-2 text-sm font-semibold tabular-nums" style={{ color: "var(--text-secondary)" }}>
-            ~${monthEst.toFixed(2)}
-          </p>
-          <p className="mt-0.5 text-xs" style={{ color: "var(--text-muted)" }}>
-            estimated deduction · 67c/hr ATO fixed-rate
-          </p>
+
           {ytdHours > monthHours && (
-            <p className="mt-3 text-xs" style={{ color: "var(--text-muted)", borderTop: "1px solid var(--bg-elevated)", paddingTop: "0.75rem" }}>
+            <p className="mt-3 text-xs text-center" style={{ color: "var(--text-muted)" }}>
               Year to date: {ytdHours} hr{ytdHours !== 1 ? "s" : ""} · ~${ytdEst.toFixed(2)}
             </p>
           )}
