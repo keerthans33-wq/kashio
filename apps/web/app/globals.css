@@ -1,18 +1,34 @@
 @import "tailwindcss";
 
-/* ── Design tokens ───────────────────────────────────────────────────── */
+/* Enable class-based dark mode: .dark on <html> activates dark: variants */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Design tokens — light mode (default) ────────────────────────────── */
 :root {
-  --bg-app:       #0B1220;
-  --bg-card:      #111827;
-  --bg-elevated:  #1F2937;
-  --bg-border:    #1F2937;
-  --text-primary: #F9FAFB;
+  --bg-app:         #F8FAFC;
+  --bg-card:        #FFFFFF;
+  --bg-elevated:    #F1F5F9;
+  --bg-border:      #E2E8F0;
+  --text-primary:   #0F172A;
+  --text-secondary: #475569;
+  --text-muted:     #94A3B8;
+  --violet-from:    #7C3AED;
+  --violet-to:      #9333EA;
+  --success:        #16A34A;
+  --warning:        #D97706;
+}
+
+/* ── Design tokens — dark mode ───────────────────────────────────────── */
+.dark {
+  --bg-app:         #0B1220;
+  --bg-card:        #111827;
+  --bg-elevated:    #1F2937;
+  --bg-border:      #1F2937;
+  --text-primary:   #F9FAFB;
   --text-secondary: #9CA3AF;
-  --text-muted:   #6B7280;
-  --violet-from:  #7C3AED;
-  --violet-to:    #9333EA;
-  --success:      #22C55E;
-  --warning:      #F59E0B;
+  --text-muted:     #6B7280;
+  --success:        #22C55E;
+  --warning:        #F59E0B;
 }
 
 body {

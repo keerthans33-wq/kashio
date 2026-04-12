@@ -12,7 +12,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="h-full" suppressHydrationWarning>
+    <html lang="en" className="h-full dark" suppressHydrationWarning>
+      <head>
+        {/* Restore saved theme before first paint to avoid flash */}
+        <script dangerouslySetInnerHTML={{ __html: `try{const t=localStorage.getItem('theme');if(t==='light')document.documentElement.classList.remove('dark');else document.documentElement.classList.add('dark');}catch{}` }} />
+      </head>
       <body className="min-h-full flex flex-col antialiased" style={{ backgroundColor: "var(--bg-app)", color: "var(--text-primary)" }}>
         {children}
       </body>
