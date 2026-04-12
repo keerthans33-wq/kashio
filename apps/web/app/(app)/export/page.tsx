@@ -211,21 +211,21 @@ export default async function Export() {
         </div>
       </div>
 
-      {/* 5. Download */}
+      {/* 5. Download + success block */}
       <ExportButton />
 
-      {/* 6. ATO note */}
-      <p className="mt-4 text-xs text-center" style={{ color: "var(--text-muted)" }}>
-        The ATO recommends keeping receipts and records for all claims.
-      </p>
-
-      {/* 7. Trust note */}
-      <p
-        className="mt-6 pt-6 text-xs text-center"
-        style={{ borderTop: "1px solid var(--bg-elevated)", color: "var(--text-muted)", opacity: 0.6 }}
+      {/* 6–7. Footer notes */}
+      <div
+        className="mt-8 pt-6 space-y-1.5 text-center"
+        style={{ borderTop: "1px solid var(--bg-elevated)" }}
       >
-        Kashio is not a tax adviser. Check with your accountant if you&apos;re unsure about any claim.
-      </p>
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+          The ATO recommends keeping receipts and records for all claims.
+        </p>
+        <p className="text-xs" style={{ color: "var(--text-muted)", opacity: 0.6 }}>
+          Kashio is not a tax adviser. Check with your accountant before lodging.
+        </p>
+      </div>
 
     </main>
   );
