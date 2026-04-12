@@ -1,6 +1,7 @@
 "use client";
 
 import Nav from "../components/shell/Nav";
+import { ThemeToggle } from "../components/shell/ThemeToggle";
 import { UserContext, useUserContext } from "../../lib/user-context";
 
 function AppLayoutInner({ children }: { children: React.ReactNode }) {
@@ -21,6 +22,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
         <div className="flex-1">{children}</div>
         <footer style={{ borderTop: "1px solid var(--bg-elevated)" }}>
           <div className="mx-auto max-w-5xl px-5 py-3 flex items-center justify-end gap-4" style={{ opacity: 0.45 }}>
+            <ThemeToggle />
             <a
               href="mailto:feedback@kashio.app?subject=Kashio%20issue&body=Page%3A%20%0A%0AWhat%20happened%3A%20%0A%0AWhat%20I%20expected%3A%20"
               className="text-xs transition-opacity hover:opacity-100"

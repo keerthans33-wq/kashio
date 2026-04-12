@@ -4,7 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
-import { ThemeToggle } from "./ThemeToggle";
 
 const links = [
   { href: "/import", label: "Import" },
@@ -51,8 +50,6 @@ export default function Nav() {
               );
             })}
           </div>
-
-          <ThemeToggle />
 
           {/* Sign out */}
           <button
