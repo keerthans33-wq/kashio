@@ -118,14 +118,8 @@ export function CandidateCard({
         {/* Short reason — clamped to 2 lines, only when unreviewed */}
         {!settled && (
           <p
-            className="mt-2 text-sm"
-            style={{
-              color: "var(--text-secondary)",
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-            }}
+            className="mt-2 text-sm line-clamp-2"
+            style={{ color: "var(--text-secondary)" }}
           >
             {reason}
           </p>

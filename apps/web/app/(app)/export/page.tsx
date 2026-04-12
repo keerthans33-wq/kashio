@@ -111,7 +111,7 @@ export default async function Export() {
         <h1 className="text-[30px] font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
           Your tax summary
         </h1>
-        <p className="mt-1.5 text-[15px]" style={{ color: "var(--text-secondary)" }}>
+        <p className="mt-1.5 text-sm" style={{ color: "var(--text-muted)" }}>
           {(userType && SUBTITLE[userType]) ?? "Everything you've confirmed this financial year."}
         </p>
       </div>

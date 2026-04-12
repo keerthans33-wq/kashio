@@ -113,7 +113,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
   const isFiltered = category || confidence;
 
   return (
-    <main className="mx-auto max-w-3xl px-4 sm:px-6 py-8 sm:py-10">
+    <main className="mx-auto max-w-3xl px-5 py-8 sm:py-10">
 
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
@@ -140,14 +140,16 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
       {/* Progress summary — hidden when filtered */}
       {all.length > 0 && !isFiltered && (() => {
-        const parts = [
-          totalNeedsReview > 0 && `${totalNeedsReview} to review`,
-          totalConfirmed > 0 && `${totalConfirmed} confirmed`,
-          confirmedValue > 0 && fmt(confirmedValue),
+        const parts: React.ReactNode[] = [
+          totalNeedsReview > 0 && <span key="review">{totalNeedsReview} to review</span>,
+          totalConfirmed > 0 && <span key="confirmed">{totalConfirmed} confirmed</span>,
+          confirmedValue > 0 && <span key="value" className="font-semibold" style={{ color: "var(--text-secondary)" }}>{fmt(confirmedValue)}</span>,
         ].filter(Boolean);
         return parts.length > 0 ? (
           <p className="mt-2 text-sm" style={{ color: "var(--text-muted)" }}>
-            {parts.join(" · ")}
+            {parts.map((part, i) => (
+              <span key={i}>{i > 0 && " · "}{part}</span>
+            ))}
           </p>
         ) : null;
       })()}
@@ -158,7 +160,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
           <div className="mt-4 rounded-xl px-4 py-3 flex items-center justify-between gap-4" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
               {totalNeedsReview} item{totalNeedsReview !== 1 ? "s" : ""} left
-              {pendingValue > 0 && <span style={{ color: "var(--text-muted)" }}> · {fmt(pendingValue)} to go through</span>}
+              {pendingValue > 0 && <> · <span className="font-semibold" style={{ color: "var(--text-primary)" }}>{fmt(pendingValue)}</span></>}
             </p>
             <a href="#needs-review" className="shrink-0 text-sm font-semibold" style={{ color: "var(--violet-from)" }}>
               Continue →
@@ -211,7 +213,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
       )}
 
       {all.length > 0 && (
-        <p className="mt-10 text-xs" style={{ color: "var(--text-muted)" }}>
+        <p className="mt-10 text-xs" style={{ color: "var(--text-muted)", opacity: 0.6 }}>
           {(userType && DISCLAIMER[userType]) ?? "Kashio helps you spot possible deductions. It's not a tax adviser."}
         </p>
       )}
