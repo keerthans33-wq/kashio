@@ -100,6 +100,12 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
   const totalConfirmed   = all.filter((c) => c.status === "CONFIRMED").length;
   const missingEvidence  = all.filter((c) => c.status === "CONFIRMED" && !c.hasEvidence).length;
 
+  const confirmedValue = all
+    .filter((c) => c.status === "CONFIRMED")
+    .reduce((s, c) => s + Math.abs(c.transaction.amount), 0);
+
+  const fmt = (n: number) => n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
+
   const isFiltered = category || confidence;
 
   return (
@@ -130,17 +136,16 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
       {/* Progress summary — hidden when filtered */}
       {all.length > 0 && !isFiltered && (() => {
-        const totalItems = all.filter((c) => c.status !== "REJECTED").length;
         const parts = [
-          `${totalItems} possible ${totalItems !== 1 ? termPlural(userType) : term(userType)}`,
-          totalConfirmed > 0 && `${totalConfirmed} confirmed`,
           totalNeedsReview > 0 && `${totalNeedsReview} to review`,
+          totalConfirmed > 0 && `${totalConfirmed} confirmed`,
+          confirmedValue > 0 && fmt(confirmedValue),
         ].filter(Boolean);
-        return (
-          <p className="mt-3 text-[15px]" style={{ color: "var(--text-secondary)" }}>
+        return parts.length > 0 ? (
+          <p className="mt-2 text-sm" style={{ color: "var(--text-muted)" }}>
             {parts.join(" · ")}
           </p>
-        );
+        ) : null;
       })()}
 
       {/* Next action card — hidden when filtered */}
