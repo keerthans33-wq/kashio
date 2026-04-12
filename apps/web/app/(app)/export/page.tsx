@@ -8,9 +8,9 @@ import { ExportButton } from "./ExportButton";
 export const dynamic = "force-dynamic";
 
 const SUBTITLE: Record<string, string> = {
-  employee:    "Everything you've confirmed this financial year, ready for your accountant or tax return.",
-  contractor:  "Everything you've confirmed this financial year, ready to reconcile and lodge.",
-  sole_trader: "Everything you've confirmed this financial year, ready for your accountant or tax return.",
+  employee:    "Your confirmed deductions for this financial year, ready for your accountant or tax return.",
+  contractor:  "Your confirmed expenses for this financial year, ready to reconcile and lodge.",
+  sole_trader: "Your confirmed deductions for this financial year, ready for your accountant or tax return.",
 };
 
 const TOTAL_LABEL: Record<string, string> = {
@@ -20,7 +20,7 @@ const TOTAL_LABEL: Record<string, string> = {
 };
 
 const SAVING_LABEL: Record<string, (saving: string) => string> = {
-  employee:    (s) => `~${s} estimated saving at 32.5c`,
+  employee:    (s) => `~${s} estimated saving at 32.5c marginal rate`,
   contractor:  (s) => `~${s} estimated saving`,
   sole_trader: (s) => `~${s} estimated saving`,
 };
@@ -50,7 +50,7 @@ export default async function Export() {
     db.wfhLog.findMany({ where: { userId }, select: { date: true, hours: true } }),
   ]);
 
-  const { monthHours: wfhMonthHours, ytdHours: wfhYtdHours, ytdEst: wfhYtdEst, fyLabel: wfhFyLabel } = calcWfhSummary(wfhEntries);
+  const { ytdHours: wfhYtdHours, ytdEst: wfhYtdEst, fyLabel: wfhFyLabel } = calcWfhSummary(wfhEntries);
 
   const confirmed = confirmedRaw.filter((c) => allowedCategories.includes(c.category));
 
@@ -101,113 +101,130 @@ export default async function Export() {
     );
   }
 
-  return (
-    <main className="mx-auto max-w-lg px-4 sm:px-6 py-8 sm:py-12 space-y-6">
+  const sectionLabel = "text-[11px] font-semibold uppercase tracking-widest mb-3";
 
-      {/* 1. Header */}
-      <div>
+  return (
+    <main className="mx-auto max-w-lg px-4 sm:px-6 py-8 sm:py-12">
+
+      {/* 1. Title + subtitle */}
+      <div className="mb-8">
         <h1 className="text-[30px] font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
           Your tax summary
         </h1>
-        <p className="mt-1 text-[15px]" style={{ color: "var(--text-secondary)" }}>
+        <p className="mt-1.5 text-[15px]" style={{ color: "var(--text-secondary)" }}>
           {(userType && SUBTITLE[userType]) ?? "Everything you've confirmed this financial year."}
         </p>
       </div>
 
-      {/* 2. Summary cards */}
-      <div className={wfhYtdHours > 0 ? "grid grid-cols-2 gap-4" : ""}>
-        {/* Total deductions */}
-        <div className="rounded-xl px-5 py-5 flex flex-col justify-between" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
-          <p className="text-xs font-medium uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
-            {(userType && TOTAL_LABEL[userType]) ?? "Total deductions"}
+      {/* 2. Summary card */}
+      <div className="mb-8">
+        <p className={sectionLabel} style={{ color: "var(--text-muted)" }}>
+          {(userType && TOTAL_LABEL[userType]) ?? "Total deductions"}
+        </p>
+        <div className="rounded-xl px-5 py-6" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
+          <p className="text-[46px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
+            {fmt(total)}
           </p>
-          <div className="mt-3">
-            <p className="text-4xl font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
-              {fmt(total)}
-            </p>
-            <p className="mt-1 text-sm" style={{ color: "var(--text-secondary)" }}>
-              {confirmed.length} item{confirmed.length !== 1 ? "s" : ""}
-            </p>
-          </div>
+          <p className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>
+            {confirmed.length} confirmed item{confirmed.length !== 1 ? "s" : ""}
+          </p>
           <p className="mt-4 text-xs" style={{ color: "var(--text-muted)" }}>
             {userType && SAVING_LABEL[userType]
               ? SAVING_LABEL[userType](fmtRound(estimatedSaving))
               : `~${fmtRound(estimatedSaving)} estimated saving at 32.5c`}
           </p>
         </div>
-
-        {/* WFH — only when hours exist */}
-        {wfhYtdHours > 0 && (
-          <div className="rounded-xl px-5 py-5 flex flex-col justify-between" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
-            <p className="text-xs font-medium uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
-              {(userType && WFH_LABEL[userType]) ?? "Work from home"}
-            </p>
-            <div className="mt-3">
-              <p className="text-4xl font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
-                ~{fmtRound(wfhYtdEst)}
-              </p>
-              <p className="mt-1 text-sm" style={{ color: "var(--text-secondary)" }}>
-                {wfhYtdHours} hr{wfhYtdHours !== 1 ? "s" : ""} logged
-              </p>
-            </div>
-            <p className="mt-4 text-xs" style={{ color: "var(--text-muted)" }}>
-              {wfhFyLabel} · 67c/hr ATO fixed-rate
-              {wfhMonthHours === 0 && (
-                <> · <a href="/wfh" className="hover:underline" style={{ color: "var(--violet-from)" }}>log this month →</a></>
-              )}
-            </p>
-          </div>
-        )}
       </div>
 
-      {/* 3. Grouped ledger */}
-      <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--bg-elevated)" }}>
-        {categoryGroups.map(({ cat, catTotal, items }, ci) => (
-          <div key={cat} style={ci > 0 ? { borderTop: "1px solid var(--bg-elevated)" } : {}}>
-            {/* Category header */}
-            <div className="flex items-baseline justify-between px-4 py-2" style={{ backgroundColor: "var(--bg-elevated)" }}>
-              <span className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>{cat}</span>
-              <span className="text-xs font-medium tabular-nums" style={{ color: "var(--text-muted)" }}>{fmt(catTotal)}</span>
-            </div>
-            {/* Items */}
-            {items.map((item, ii) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between gap-4 px-4 py-3"
-                style={{ borderTop: ii > 0 ? "1px solid rgba(31,41,55,0.5)" : undefined, backgroundColor: "var(--bg-card)" }}
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm" style={{ color: "var(--text-secondary)" }}>{item.row.merchant}</p>
-                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>{item.row.date}</p>
-                </div>
-                <span className="shrink-0 text-sm tabular-nums" style={{ color: "var(--text-secondary)" }}>
-                  {fmt(item.row.amount)}
-                </span>
+      {/* 3. Category breakdown */}
+      <div className="mb-8">
+        <p className={sectionLabel} style={{ color: "var(--text-muted)" }}>
+          Breakdown
+        </p>
+        <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--bg-elevated)" }}>
+          {categoryGroups.map(({ cat, catTotal, items }, ci) => (
+            <div key={cat} style={ci > 0 ? { borderTop: "1px solid var(--bg-elevated)" } : {}}>
+              <div className="flex items-baseline justify-between px-4 py-2" style={{ backgroundColor: "var(--bg-elevated)" }}>
+                <span className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>{cat}</span>
+                <span className="text-xs font-medium tabular-nums" style={{ color: "var(--text-muted)" }}>{fmt(catTotal)}</span>
               </div>
-            ))}
+              {items.map((item, ii) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between gap-4 px-4 py-3"
+                  style={{ borderTop: ii > 0 ? "1px solid rgba(31,41,55,0.5)" : undefined, backgroundColor: "var(--bg-card)" }}
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm" style={{ color: "var(--text-secondary)" }}>{item.row.merchant}</p>
+                    <p className="text-xs" style={{ color: "var(--text-muted)" }}>{item.row.date}</p>
+                  </div>
+                  <span className="shrink-0 text-sm tabular-nums" style={{ color: "var(--text-secondary)" }}>
+                    {fmt(item.row.amount)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ))}
+          <div
+            className="flex items-baseline justify-between px-4 py-3"
+            style={{ borderTop: "1px solid var(--bg-elevated)", backgroundColor: "var(--bg-elevated)" }}
+          >
+            <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Total</span>
+            <span className="text-sm font-semibold tabular-nums" style={{ color: "var(--text-primary)" }}>{fmt(total)}</span>
           </div>
-        ))}
-        {/* Total row */}
-        <div
-          className="flex items-baseline justify-between px-4 py-3"
-          style={{ borderTop: "1px solid var(--bg-elevated)", backgroundColor: "var(--bg-elevated)" }}
-        >
-          <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Total</span>
-          <span className="text-sm font-semibold tabular-nums" style={{ color: "var(--text-primary)" }}>{fmt(total)}</span>
         </div>
       </div>
 
-      {/* 4. Download */}
-      <div className="space-y-3 pt-2">
-        <ExportButton />
-        <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
-          The ATO recommends keeping receipts for your records.
-        </p>
-      </div>
+      {/* 4. Work From Home */}
+      {wfhYtdHours > 0 && (
+        <div className="mb-8">
+          <p className={sectionLabel} style={{ color: "var(--text-muted)" }}>
+            {(userType && WFH_LABEL[userType]) ?? "Work from home"}
+          </p>
+          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--bg-elevated)" }}>
+            <div
+              className="flex items-center justify-between px-4 py-3"
+              style={{ backgroundColor: "var(--bg-card)" }}
+            >
+              <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                Hours logged ({wfhFyLabel})
+              </span>
+              <span className="text-sm tabular-nums" style={{ color: "var(--text-secondary)" }}>
+                {wfhYtdHours} hr{wfhYtdHours !== 1 ? "s" : ""}
+              </span>
+            </div>
+            <div
+              className="flex items-baseline justify-between px-4 py-3"
+              style={{ borderTop: "1px solid var(--bg-elevated)", backgroundColor: "var(--bg-elevated)" }}
+            >
+              <div>
+                <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                  Estimated deduction
+                </span>
+                <span className="ml-2 text-xs" style={{ color: "var(--text-muted)" }}>67c/hr</span>
+              </div>
+              <span className="text-sm font-semibold tabular-nums" style={{ color: "var(--text-primary)" }}>
+                ~{fmt(wfhYtdEst)}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* Footer */}
-      <p className="text-xs text-center" style={{ borderTop: "1px solid var(--bg-elevated)", paddingTop: "1.5rem", color: "var(--text-muted)", opacity: 0.6 }}>
-        Kashio is not a tax adviser. Check with your accountant if you're unsure about any claim.
+      {/* 5. Download */}
+      <ExportButton />
+
+      {/* 6. ATO note */}
+      <p className="mt-4 text-xs text-center" style={{ color: "var(--text-muted)" }}>
+        The ATO recommends keeping receipts and records for all claims.
+      </p>
+
+      {/* 7. Trust note */}
+      <p
+        className="mt-6 pt-6 text-xs text-center"
+        style={{ borderTop: "1px solid var(--bg-elevated)", color: "var(--text-muted)", opacity: 0.6 }}
+      >
+        Kashio is not a tax adviser. Check with your accountant if you&apos;re unsure about any claim.
       </p>
 
     </main>
