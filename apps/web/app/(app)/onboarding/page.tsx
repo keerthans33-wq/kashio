@@ -43,31 +43,47 @@ export default function OnboardingPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
+    <main
+      className="flex min-h-screen items-center justify-center px-5 py-12"
+      style={{ backgroundColor: "var(--bg-app)" }}
+    >
+      <div className="w-full max-w-[360px]">
 
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Who is this for?</h1>
-        <p className="mt-2 text-gray-500 dark:text-gray-400">This helps Kashio find the right deductions for you.</p>
+        <div className="mb-8">
+          <h1 className="text-[28px] font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
+            Who is this for?
+          </h1>
+          <p className="mt-2 text-sm" style={{ color: "var(--text-muted)" }}>
+            This helps Kashio find the right deductions for you.
+          </p>
+        </div>
 
-        <div className="mt-8 space-y-3">
+        <div className="space-y-3">
           {OPTIONS.map((option) => {
             const isSelected = selected === option.id;
             return (
               <button
                 key={option.id}
                 onClick={() => setSelected(option.id)}
-                className={`flex w-full items-center gap-4 rounded-xl border px-5 py-4 text-left transition-colors ${
-                  isSelected
-                    ? "border-violet-500 bg-violet-50 dark:bg-violet-900/20"
-                    : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
-                }`}
+                className="flex w-full items-center gap-4 rounded-xl px-5 py-4 text-left transition-all duration-150 active:scale-[0.98]"
+                style={{
+                  backgroundColor: isSelected ? "rgba(124,58,237,0.10)" : "var(--bg-card)",
+                  border: isSelected ? "1px solid var(--violet-from)" : "1px solid var(--bg-elevated)",
+                }}
               >
-                <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-                  isSelected ? "border-violet-500 bg-violet-500" : "border-gray-300 dark:border-gray-600"
-                }`}>
+                <span
+                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-all duration-150"
+                  style={{
+                    border: isSelected ? "2px solid var(--violet-from)" : "2px solid var(--text-muted)",
+                    backgroundColor: isSelected ? "var(--violet-from)" : "transparent",
+                  }}
+                >
                   {isSelected && <span className="h-2 w-2 rounded-full bg-white" />}
                 </span>
-                <span className={`text-sm font-semibold ${isSelected ? "text-violet-700 dark:text-violet-300" : "text-gray-900 dark:text-gray-100"}`}>
+                <span
+                  className="text-sm font-semibold"
+                  style={{ color: isSelected ? "var(--text-primary)" : "var(--text-secondary)" }}
+                >
                   {option.label}
                 </span>
               </button>
@@ -75,12 +91,13 @@ export default function OnboardingPage() {
           })}
         </div>
 
-        {error && <p className="mt-4 text-sm text-red-500">{error}</p>}
+        {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
 
         <button
           onClick={handleContinue}
           disabled={!selected || loading}
-          className="mt-6 w-full rounded-lg bg-violet-600 py-3 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-40 transition-colors"
+          className="mt-6 w-full rounded-xl py-3 text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98] disabled:opacity-40"
+          style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
         >
           {loading ? "Saving…" : "Continue"}
         </button>
