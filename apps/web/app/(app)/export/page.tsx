@@ -220,7 +220,7 @@ export default async function Export() {
         style={{ borderTop: "1px solid var(--bg-elevated)" }}
       >
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          The ATO recommends keeping receipts and records for all claims.
+          The ATO recommends keeping receipts for your records.
         </p>
         <p className="text-xs" style={{ color: "var(--text-muted)", opacity: 0.6 }}>
           Kashio is not a tax adviser. Check with your accountant before lodging.
