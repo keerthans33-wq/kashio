@@ -23,6 +23,12 @@ export type CandidateCardProps = {
 const CONFIDENCE_LABEL: Record<Confidence, string> = {
   HIGH:   "Strong match",
   MEDIUM: "Possible match",
+  LOW:    "Weak match",
+};
+
+const CONFIDENCE_LABEL_LONG: Record<Confidence, string> = {
+  HIGH:   "Strong match",
+  MEDIUM: "Possible match",
   LOW:    "Weak match — check before claiming",
 };
 
@@ -70,44 +76,57 @@ export function CandidateCard({
   const handleReject  = () => save(() => rejectCandidate(id),  "REJECTED");
   const handleReset   = () => save(() => resetCandidate(id),   "NEEDS_REVIEW");
 
-  const borderColor = status === "CONFIRMED" ? "#22C55E33"
-                    : status === "REJECTED"  ? "var(--bg-elevated)"
-                    : "var(--bg-elevated)";
-
-  const bgColor = status === "CONFIRMED" ? "rgba(34,197,94,0.06)"
-                : "var(--bg-card)";
+  const borderColor = status === "CONFIRMED" ? "#22C55E33" : "var(--bg-elevated)";
+  const bgColor     = status === "CONFIRMED" ? "rgba(34,197,94,0.06)" : "var(--bg-card)";
+  const dimmed      = { opacity: status === "REJECTED" ? 0.5 : 1 };
 
   return (
     <div
-      className="rounded-xl border transition-all duration-200"
-      style={{ borderColor, backgroundColor: bgColor }}
+      className="rounded-xl transition-all duration-200"
+      style={{ borderColor, backgroundColor: bgColor, border: `1px solid ${borderColor}` }}
     >
       <div className="px-4 py-4">
 
         {/* Merchant + amount */}
         <div className="flex items-baseline justify-between gap-4">
-          <p className="truncate text-[15px] font-semibold" style={{ color: "var(--text-primary)", opacity: status === "REJECTED" ? 0.5 : 1 }}>
+          <p className="truncate text-[15px] font-semibold" style={{ color: "var(--text-primary)", ...dimmed }}>
             {transaction.normalizedMerchant}
           </p>
-          <p className="shrink-0 text-[15px] font-bold tabular-nums" style={{ color: "var(--text-primary)", opacity: status === "REJECTED" ? 0.5 : 1 }}>
+          <p className="shrink-0 text-[15px] font-bold tabular-nums" style={{ color: "var(--text-primary)", ...dimmed }}>
             −${Math.abs(amount).toFixed(2)}
           </p>
         </div>
 
-        {/* Date + category */}
-        <p className="mt-1 text-xs" style={{ color: "var(--text-muted)" }}>
-          {transaction.date} · {category}
-        </p>
+        {/* Date + confidence badge */}
+        <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+          <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+            {transaction.date}
+          </span>
+          {!settled && (
+            <>
+              <span className="text-xs" style={{ color: "var(--bg-elevated)" }}>·</span>
+              <span className="text-xs font-medium" style={{ color: CONFIDENCE_COLOR[confidence] }}>
+                {CONFIDENCE_LABEL[confidence]}
+              </span>
+            </>
+          )}
+        </div>
 
-        {/* Confidence */}
+        {/* Short reason — clamped to 2 lines, only when unreviewed */}
         {!settled && (
-          <p className="mt-2 text-xs font-medium" style={{ color: CONFIDENCE_COLOR[confidence] }}>
-            {CONFIDENCE_LABEL[confidence]}
+          <p
+            className="mt-2 text-sm"
+            style={{
+              color: "var(--text-secondary)",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {reason}
           </p>
         )}
-
-        {/* Reason */}
-        <p className="mt-1 text-sm" style={{ color: "var(--text-secondary)" }}>{reason}</p>
 
         {/* Actions */}
         <div className="mt-3">
@@ -121,14 +140,14 @@ export function CandidateCard({
               <button
                 onClick={handleReset}
                 disabled={isSaving}
-                className="text-xs transition-colors duration-150 disabled:opacity-40"
+                className="text-xs disabled:opacity-40"
                 style={{ color: "var(--text-muted)" }}
               >
                 {isSaving ? "Saving…" : "Undo"}
               </button>
             </div>
           ) : (
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <button
                 onClick={handleConfirm}
                 disabled={isSaving}
@@ -145,18 +164,27 @@ export function CandidateCard({
               >
                 Not deductible
               </button>
+              <button
+                onClick={() => setExpanded((v) => !v)}
+                className="ml-auto text-xs transition-colors duration-150"
+                style={{ color: "var(--text-muted)" }}
+              >
+                {expanded ? "Less" : "More"}
+              </button>
             </div>
           )}
         </div>
 
-        {/* Details toggle */}
-        <button
-          onClick={() => setExpanded((v) => !v)}
-          className="mt-3 text-xs transition-colors duration-150"
-          style={{ color: "var(--text-muted)" }}
-        >
-          {expanded ? "Hide details" : "More details"}
-        </button>
+        {/* Details toggle for settled cards */}
+        {settled && (
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="mt-2 text-xs transition-colors duration-150"
+            style={{ color: "var(--text-muted)" }}
+          >
+            {expanded ? "Hide details" : "More details"}
+          </button>
+        )}
       </div>
 
       {/* Expanded details */}
@@ -164,8 +192,8 @@ export function CandidateCard({
         <div className="border-t px-4 py-4 space-y-3" style={{ borderColor: "var(--bg-elevated)" }}>
 
           <div>
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>Transaction</p>
-            <p className="mt-0.5 text-sm break-words" style={{ color: "var(--text-secondary)" }}>{transaction.description}</p>
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>Category</p>
+            <p className="mt-0.5 text-sm" style={{ color: "var(--text-secondary)" }}>{category}</p>
           </div>
 
           <div>
@@ -181,11 +209,16 @@ export function CandidateCard({
           {confidenceReason && (
             <div>
               <p className="text-xs font-medium" style={{ color: CONFIDENCE_COLOR[confidence] }}>
-                {CONFIDENCE_LABEL[confidence]}
+                {CONFIDENCE_LABEL_LONG[confidence]}
               </p>
               <p className="mt-0.5 text-sm" style={{ color: "var(--text-secondary)" }}>{confidenceReason}</p>
             </div>
           )}
+
+          <div>
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>Transaction</p>
+            <p className="mt-0.5 text-sm break-words" style={{ color: "var(--text-secondary)" }}>{transaction.description}</p>
+          </div>
 
           {status === "CONFIRMED" && (
             <div>
@@ -201,7 +234,6 @@ export function CandidateCard({
                     try { await saveEvidence(id, next, note); flashSaved(next ? "Saved" : "Removed"); } finally { setEvidenceSaving(false); }
                   }}
                   className="h-4 w-4 rounded accent-violet-600"
-                  style={{ borderColor: "var(--bg-elevated)" }}
                 />
                 <span className="text-sm" style={{ color: "var(--text-secondary)" }}>I have a receipt or invoice</span>
               </label>
