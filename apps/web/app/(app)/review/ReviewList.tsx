@@ -12,11 +12,12 @@ type Props = {
 };
 
 export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }: Props) {
-  const [selected, setSelected]   = useState<Set<string>>(new Set());
-  const [isSaving, setIsSaving]   = useState(false);
-  const [error, setError]         = useState<string | null>(null);
+  const [selected, setSelected]     = useState<Set<string>>(new Set());
+  const [isSaving, setIsSaving]     = useState(false);
+  const [error, setError]           = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const [lastIds, setLastIds]     = useState<string[]>([]);
+  const [successSub, setSuccessSub] = useState<string | null>(null);
+  const [lastIds, setLastIds]       = useState<string[]>([]);
   const [showConfirmed, setShowConfirmed] = useState(missingEvidence > 0);
   const [showRejected, setShowRejected]   = useState(false);
 
@@ -34,13 +35,21 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
     setSelected(selected.size === needsReviewIds.length ? new Set() : new Set(needsReviewIds));
   }
 
-  async function bulkAction(action: (ids: string[]) => Promise<void>, label: string) {
+  const fmt = (n: number) =>
+    n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
+
+  async function bulkAction(
+    action: (ids: string[]) => Promise<void>,
+    buildMsg: (ids: string[]) => { primary: string; sub?: string },
+  ) {
     const ids = [...selected];
-    setIsSaving(true); setError(null); setSuccessMsg(null);
+    setIsSaving(true); setError(null); setSuccessMsg(null); setSuccessSub(null);
     try {
       await action(ids);
       setSelected(new Set()); setLastIds(ids);
-      setSuccessMsg(`${ids.length} item${ids.length !== 1 ? "s" : ""} ${label}.`);
+      const { primary, sub } = buildMsg(ids);
+      setSuccessMsg(primary);
+      setSuccessSub(sub ?? null);
     } catch {
       setError("Could not save. Please try again.");
     } finally {
@@ -52,7 +61,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
     setIsSaving(true); setError(null);
     try {
       await bulkResetCandidates(lastIds);
-      setSuccessMsg(null); setLastIds([]);
+      setSuccessMsg(null); setSuccessSub(null); setLastIds([]);
     } catch {
       setError("Could not undo. Please try again.");
     } finally {
@@ -65,15 +74,18 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
 
       {/* Success banner */}
       {successMsg && !isSaving && (
-        <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border px-4 py-3" style={{ borderColor: "#22C55E33", backgroundColor: "rgba(34,197,94,0.06)" }}>
-          <p className="text-sm" style={{ color: "#22C55E" }}>{successMsg}</p>
-          <div className="flex items-center gap-3">
+        <div className="mb-4 flex items-start justify-between gap-3 rounded-xl px-4 py-3" style={{ borderColor: "#22C55E33", backgroundColor: "rgba(34,197,94,0.06)", border: "1px solid #22C55E33" }}>
+          <div>
+            <p className="text-sm font-semibold" style={{ color: "#22C55E" }}>{successMsg}</p>
+            {successSub && <p className="mt-0.5 text-xs" style={{ color: "#22C55E", opacity: 0.7 }}>{successSub}</p>}
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
             {lastIds.length > 0 && (
               <button onClick={handleBulkUndo} className="text-xs font-medium underline" style={{ color: "#22C55E" }}>
                 Undo
               </button>
             )}
-            <button onClick={() => { setSuccessMsg(null); setLastIds([]); }} className="text-xs" style={{ color: "var(--text-muted)" }}>
+            <button onClick={() => { setSuccessMsg(null); setSuccessSub(null); setLastIds([]); }} className="text-xs" style={{ color: "var(--text-muted)" }}>
               Dismiss
             </button>
           </div>
@@ -85,7 +97,16 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
         <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3" style={{ borderColor: "var(--bg-elevated)", backgroundColor: "var(--bg-card)" }}>
           <span className="text-sm" style={{ color: "var(--text-secondary)" }}>{selected.size} selected</span>
           <button
-            onClick={() => bulkAction(bulkConfirmCandidates, "marked deductible")}
+            onClick={() => bulkAction(bulkConfirmCandidates, (ids) => {
+              const total = needsReview
+                .filter((c) => ids.includes(c.id))
+                .reduce((s, c) => s + Math.abs(c.transaction.amount), 0);
+              const count = ids.length;
+              return {
+                primary: total > 0 ? `${fmt(total)} confirmed deductions` : `${count} item${count !== 1 ? "s" : ""} confirmed`,
+                sub: total > 0 ? `${count} item${count !== 1 ? "s" : ""}` : undefined,
+              };
+            })}
             disabled={isSaving}
             className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40 transition-all duration-150"
             style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
@@ -93,7 +114,9 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
             {isSaving ? "Saving…" : "Looks deductible"}
           </button>
           <button
-            onClick={() => bulkAction(bulkRejectCandidates, "marked not deductible")}
+            onClick={() => bulkAction(bulkRejectCandidates, (ids) => ({
+              primary: `${ids.length} item${ids.length !== 1 ? "s" : ""} marked not deductible`,
+            }))}
             disabled={isSaving}
             className="rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-40 transition-colors duration-150"
             style={{ border: "1px solid var(--bg-elevated)", color: "var(--text-muted)" }}
