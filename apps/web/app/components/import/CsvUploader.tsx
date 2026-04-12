@@ -182,18 +182,18 @@ export default function CsvUploader() {
   if (importResult !== null) {
     const noneAdded = importResult.inserted === 0 && importResult.duplicates > 0;
     return (
-      <div className="mt-8 max-w-md rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 overflow-hidden">
+      <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
 
         {/* Header */}
         <div className="flex items-start gap-3 px-5 py-4">
-          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600 text-xs dark:bg-green-900/40 dark:text-green-400">
+          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs" style={{ backgroundColor: "rgba(34,197,94,0.12)", color: "#22C55E" }}>
             ✓
           </span>
           <div>
-            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
               {noneAdded ? "Already up to date" : "Import complete"}
             </p>
-            <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-0.5 text-sm" style={{ color: "var(--text-muted)" }}>
               {noneAdded
                 ? `${importResult.duplicates} transaction${importResult.duplicates !== 1 ? "s" : ""} already saved. Nothing new to add.`
                 : <>
@@ -206,49 +206,35 @@ export default function CsvUploader() {
           </div>
         </div>
 
-        {/* Deduction summary — only shown when candidates were found */}
+        {/* Deduction summary */}
         {importResult.flagged > 0 && (
-          <div className="border-t border-gray-100 dark:border-gray-700 px-5 py-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
+          <div className="px-5 py-4" style={{ borderTop: "1px solid var(--bg-elevated)" }}>
+            <p className="text-xs font-medium uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
               Potential deductions found
             </p>
-            <p className="mt-1 text-2xl font-bold tabular-nums text-gray-900 dark:text-gray-100">
+            <p className="mt-1 text-2xl font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
               {importResult.totalValue > 0 ? fmt(importResult.totalValue) : `${importResult.flagged} items`}
             </p>
-            <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-              {importResult.flagged} candidate{importResult.flagged !== 1 ? "s" : ""} flagged. Review them to confirm which ones apply to you.
+            <p className="mt-0.5 text-sm" style={{ color: "var(--text-muted)" }}>
+              {importResult.flagged} candidate{importResult.flagged !== 1 ? "s" : ""} flagged. Review them to confirm which apply to you.
             </p>
           </div>
         )}
 
         {/* CTA */}
-        <div className="border-t border-gray-100 dark:border-gray-700 px-5 py-4 flex flex-wrap items-center gap-3">
-          {importResult.flagged > 0 ? (
-            <a
-              href="/review"
-              className="rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700"
-            >
-              Review deductions →
-            </a>
-          ) : importResult.inserted > 0 ? (
-            <a
-              href="/transactions"
-              className="rounded-md bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900"
-            >
-              View transactions →
-            </a>
-          ) : (
-            <a
-              href="/review"
-              className="rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700"
-            >
-              Go to Review →
-            </a>
-          )}
+        <div className="px-5 py-4 flex flex-wrap items-center gap-3" style={{ borderTop: "1px solid var(--bg-elevated)" }}>
+          <a
+            href="/review"
+            className="rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98]"
+            style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
+          >
+            Review deductions →
+          </a>
           <button
             type="button"
             onClick={reset}
-            className="text-sm text-gray-400 hover:underline dark:text-gray-500"
+            className="text-sm"
+            style={{ color: "var(--text-muted)" }}
           >
             Import another file
           </button>
@@ -259,16 +245,20 @@ export default function CsvUploader() {
 
   return (
     <div>
-      <div className="max-w-md">
+      {/* Tertiary: CSV upload */}
+      <div className="rounded-xl px-5 py-4" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
+        <p className="text-sm font-medium mb-3" style={{ color: "var(--text-secondary)" }}>Upload a CSV</p>
+
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+            className="rounded-lg px-4 py-2 text-xs font-medium transition-colors duration-150"
+            style={{ backgroundColor: "var(--bg-elevated)", color: "var(--text-secondary)" }}
           >
             Choose file
           </button>
-          <span className="text-sm text-gray-500 dark:text-gray-400">
+          <span className="text-xs truncate" style={{ color: "var(--text-muted)" }}>
             {file ? file.name : "No file chosen"}
           </span>
         </div>
@@ -281,52 +271,54 @@ export default function CsvUploader() {
           className="hidden"
         />
 
-        {fileError && (
-          <p className="mt-3 text-sm text-red-600">{fileError}</p>
+        {fileError && <p className="mt-2 text-xs text-red-400">{fileError}</p>}
+
+        {file && (
+          <button
+            type="button"
+            onClick={handleUpload}
+            className="mt-3 rounded-lg px-4 py-2 text-xs font-medium transition-colors duration-150"
+            style={{ backgroundColor: "var(--bg-elevated)", color: "var(--text-secondary)" }}
+          >
+            Preview CSV
+          </button>
         )}
 
-        <button
-          type="button"
-          onClick={handleUpload}
-          className="mt-4 rounded-md bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300"
-        >
-          Preview CSV
-        </button>
-
         {parseError && (
-          <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-            <p className="text-sm font-medium text-red-700 dark:text-red-400">Could not read file</p>
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{parseError}</p>
+          <div className="mt-3 rounded-xl px-4 py-3" style={{ backgroundColor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+            <p className="text-xs font-medium text-red-400">Could not read file</p>
+            <p className="mt-0.5 text-xs text-red-400" style={{ opacity: 0.8 }}>{parseError}</p>
           </div>
         )}
 
         {noUsableRows && (
-          <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-            <p className="text-sm font-medium text-red-700 dark:text-red-400">No valid transactions found</p>
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-              Every row in this file was skipped. Check the errors below and fix your CSV.
+          <div className="mt-3 rounded-xl px-4 py-3" style={{ backgroundColor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+            <p className="text-xs font-medium text-red-400">No valid transactions found</p>
+            <p className="mt-0.5 text-xs text-red-400" style={{ opacity: 0.8 }}>
+              Every row was skipped. Check the errors below and fix your CSV.
             </p>
           </div>
         )}
 
         {result && !noUsableRows && (
-          <div className="mt-4 space-y-3">
-
-            {/* Pre-import summary */}
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+          <div className="mt-3 space-y-3">
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
               {result.valid.length} transaction{result.valid.length !== 1 ? "s" : ""} ready to import
-              {result.invalid.length > 0 && <span className="ml-2 text-yellow-600 dark:text-yellow-400">· {result.invalid.length} row{result.invalid.length !== 1 ? "s" : ""} skipped</span>}
+              {result.invalid.length > 0 && (
+                <span className="ml-2" style={{ color: "#F59E0B" }}>
+                  · {result.invalid.length} row{result.invalid.length !== 1 ? "s" : ""} skipped
+                </span>
+              )}
             </p>
 
-            {/* Invalid row details */}
             {result.invalid.length > 0 && (
-              <div className="rounded-md border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/20">
-                <p className="text-sm font-medium text-yellow-800 dark:text-yellow-400">
+              <div className="rounded-xl px-4 py-3" style={{ backgroundColor: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)" }}>
+                <p className="text-xs font-medium" style={{ color: "#F59E0B" }}>
                   {result.invalid.length} row{result.invalid.length !== 1 ? "s" : ""} rejected
                 </p>
-                <ul className="mt-2 space-y-1">
+                <ul className="mt-1.5 space-y-1">
                   {(showAllErrors ? result.invalid : result.invalid.slice(0, 3)).map((row) => (
-                    <li key={row.rowNumber} className="text-sm text-yellow-700 dark:text-yellow-400">
+                    <li key={row.rowNumber} className="text-xs" style={{ color: "#F59E0B", opacity: 0.8 }}>
                       Row {row.rowNumber}: {row.reason}
                     </li>
                   ))}
@@ -335,7 +327,8 @@ export default function CsvUploader() {
                   <button
                     type="button"
                     onClick={() => setShowAllErrors((v) => !v)}
-                    className="mt-2 text-xs text-yellow-700 hover:underline dark:text-yellow-400"
+                    className="mt-1.5 text-xs"
+                    style={{ color: "#F59E0B" }}
                   >
                     {showAllErrors ? "Show less" : `Show ${result.invalid.length - 3} more`}
                   </button>
@@ -347,14 +340,13 @@ export default function CsvUploader() {
               type="button"
               onClick={handleImport}
               disabled={importing}
-              className="rounded-md bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300"
+              className="w-full rounded-xl py-3 text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+              style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
             >
               {importing ? "Importing…" : `Import ${result.valid.length} transaction${result.valid.length !== 1 ? "s" : ""}`}
             </button>
 
-            {importError && (
-              <p className="text-sm text-red-600 dark:text-red-400">{importError}</p>
-            )}
+            {importError && <p className="text-xs text-red-400">{importError}</p>}
           </div>
         )}
       </div>

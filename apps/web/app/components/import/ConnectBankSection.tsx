@@ -51,39 +51,36 @@ function SyncStatusSection({
   ].filter(Boolean).join("  ·  ");
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/50">
+    <div className="rounded-xl px-4 py-3" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{source}</p>
+          <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>{source}</p>
           {connected && (
-            <span className="rounded px-1.5 py-0.5 text-xs font-medium bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400">
+            <span className="rounded px-1.5 py-0.5 text-xs font-medium" style={{ backgroundColor: "rgba(34,197,94,0.1)", color: "#22C55E" }}>
               Connected
             </span>
           )}
         </div>
         <div className="flex items-center gap-3">
-          <p className="text-xs text-gray-400 dark:text-gray-500">Last synced {time}</p>
-          <button
-            onClick={onSync}
-            className="text-xs font-medium text-violet-600 hover:underline dark:text-violet-400"
-          >
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>Last synced {time}</p>
+          <button onClick={onSync} className="text-xs font-medium" style={{ color: "var(--violet-from)" }}>
             Sync again
           </button>
         </div>
       </div>
-      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{stats}</p>
+      <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>{stats}</p>
     </div>
   );
 }
 
 function SyncInProgress({ label, detail }: { label: string; detail: string }) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white px-4 py-4 dark:border-gray-700 dark:bg-gray-900">
+    <div className="rounded-xl px-4 py-4" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
       <div className="flex items-center gap-2.5">
         <Spinner />
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</p>
+        <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{label}</p>
       </div>
-      <p className="mt-1.5 pl-[26px] text-sm text-gray-400 dark:text-gray-500">{detail}</p>
+      <p className="mt-1.5 pl-[26px] text-sm" style={{ color: "var(--text-muted)" }}>{detail}</p>
     </div>
   );
 }
@@ -95,18 +92,18 @@ function SyncSuccess({ result, onSync }: { result: SyncResult; onSync: () => voi
   const noneAdded = result.inserted === 0 && result.duplicates > 0;
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 overflow-hidden">
+    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
 
       {/* Header */}
       <div className="flex items-start gap-3 px-5 py-4">
-        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600 text-xs dark:bg-green-900/40 dark:text-green-400">
+        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs" style={{ backgroundColor: "rgba(34,197,94,0.12)", color: "#22C55E" }}>
           ✓
         </span>
         <div>
-          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
             {noneAdded ? "Already up to date" : "Sync complete"}
           </p>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-0.5 text-sm" style={{ color: "var(--text-muted)" }}>
             {noneAdded
               ? `${result.duplicates} transaction${result.duplicates !== 1 ? "s" : ""} already saved. Nothing new to add.`
               : <>
@@ -121,35 +118,29 @@ function SyncSuccess({ result, onSync }: { result: SyncResult; onSync: () => voi
 
       {/* Deduction summary */}
       {result.flagged > 0 && (
-        <div className="border-t border-gray-100 dark:border-gray-700 px-5 py-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
+        <div className="px-5 py-4" style={{ borderTop: "1px solid var(--bg-elevated)" }}>
+          <p className="text-xs font-medium uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
             Potential deductions found
           </p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-gray-900 dark:text-gray-100">
+          <p className="mt-1 text-2xl font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
             {result.totalValue ? fmt(result.totalValue) : `${result.flagged} items`}
           </p>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-            {result.flagged} candidate{result.flagged !== 1 ? "s" : ""} flagged. Review them to confirm which ones apply to you.
+          <p className="mt-0.5 text-sm" style={{ color: "var(--text-muted)" }}>
+            {result.flagged} candidate{result.flagged !== 1 ? "s" : ""} flagged. Review them to confirm which apply to you.
           </p>
         </div>
       )}
 
       {/* CTA */}
-      <div className="border-t border-gray-100 dark:border-gray-700 px-5 py-4 flex flex-wrap items-center gap-3">
-        {result.flagged > 0 ? (
-          <a href="/review" className="rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700">
-            Review deductions →
-          </a>
-        ) : result.inserted > 0 ? (
-          <a href="/transactions" className="rounded-md bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900">
-            View transactions →
-          </a>
-        ) : (
-          <a href="/review" className="rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700">
-            Go to Review →
-          </a>
-        )}
-        <button onClick={onSync} className="text-sm text-gray-400 hover:underline dark:text-gray-500">
+      <div className="px-5 py-4 flex flex-wrap items-center gap-3" style={{ borderTop: "1px solid var(--bg-elevated)" }}>
+        <a
+          href="/review"
+          className="rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98]"
+          style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
+        >
+          Review deductions →
+        </a>
+        <button onClick={onSync} className="text-sm" style={{ color: "var(--text-muted)" }}>
           Sync again
         </button>
       </div>
@@ -160,22 +151,23 @@ function SyncSuccess({ result, onSync }: { result: SyncResult; onSync: () => voi
 function SyncFailed({ message, onRetry }: { message?: string; onRetry: () => void }) {
   return (
     <div className="space-y-3">
-      <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-4 dark:border-red-800 dark:bg-red-900/20">
-        <p className="text-sm font-medium text-red-800 dark:text-red-300">
+      <div className="rounded-xl px-4 py-4" style={{ backgroundColor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+        <p className="text-sm font-medium text-red-400">
           Sync didn&apos;t complete
         </p>
-        <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+        <p className="mt-1 text-sm text-red-400" style={{ opacity: 0.8 }}>
           Your transactions weren&apos;t imported. Nothing was saved.
         </p>
         {message && (
-          <p className="mt-2 text-xs text-red-500 dark:text-red-500 font-mono break-all">
+          <p className="mt-2 text-xs font-mono break-all text-red-400" style={{ opacity: 0.7 }}>
             {message}
           </p>
         )}
       </div>
       <button
         onClick={onRetry}
-        className="rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700"
+        className="w-full rounded-xl py-3 text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98]"
+        style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
       >
         Try again
       </button>
@@ -290,43 +282,54 @@ export default function ConnectBankSection() {
   // ── Idle ──────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
 
-      {/* Primary: demo path */}
+      {/* Primary: sample data */}
       <div>
         <button
           onClick={() => handleSync(demoProvider)}
           disabled={connecting}
-          className="rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
+          className="w-full rounded-xl py-3.5 text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+          style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
         >
           Try with sample data
         </button>
-        <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
-          No bank account needed. Loads sample transactions so you can try the full flow.
+        <p className="mt-2 text-xs text-center" style={{ color: "var(--text-muted)" }}>
+          No bank account needed — loads sample transactions instantly.
         </p>
       </div>
 
+      {/* Divider */}
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1" style={{ backgroundColor: "var(--bg-elevated)" }} />
+        <span className="text-xs" style={{ color: "var(--text-muted)" }}>or connect your bank</span>
+        <div className="h-px flex-1" style={{ backgroundColor: "var(--bg-elevated)" }} />
+      </div>
+
       {/* Secondary: real bank */}
-      <div>
-        <p className="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">Or connect your real bank</p>
-        <div className="flex flex-row flex-wrap items-center gap-2">
-          <input
-            type="tel"
-            placeholder="Mobile number"
-            value={mobile}
-            onChange={(e) => setMobile(e.target.value)}
-            className="w-44 rounded-md border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
-          />
-          <button
-            onClick={handleConnect}
-            disabled={connecting || !mobile.trim()}
-            className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-          >
-            {connecting && <Spinner />}
-            {connecting ? "Connecting…" : "Connect"}
-          </button>
-        </div>
-        <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+      <div className="space-y-2">
+        <input
+          type="tel"
+          placeholder="Mobile number"
+          value={mobile}
+          onChange={(e) => setMobile(e.target.value)}
+          className="h-11 w-full rounded-xl px-3 text-sm focus:outline-none focus:ring-1 focus:ring-violet-500 transition-colors"
+          style={{
+            backgroundColor: "var(--bg-elevated)",
+            border: "1px solid transparent",
+            color: "var(--text-primary)",
+          }}
+        />
+        <button
+          onClick={handleConnect}
+          disabled={connecting || !mobile.trim()}
+          className="flex w-full items-center justify-center gap-2 h-11 rounded-xl text-sm font-medium transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+          style={{ backgroundColor: "var(--bg-elevated)", color: "var(--text-secondary)" }}
+        >
+          {connecting && <Spinner />}
+          {connecting ? "Connecting…" : "Connect bank"}
+        </button>
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
           Your bank sends a verification code to this number.
         </p>
       </div>
@@ -342,9 +345,9 @@ export default function ConnectBankSection() {
       )}
 
       {connectError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20">
-          <p className="text-sm font-medium text-red-800 dark:text-red-300">Connection failed</p>
-          <p className="mt-0.5 text-sm text-red-600 dark:text-red-400">{connectError}</p>
+        <div className="rounded-xl px-4 py-3" style={{ backgroundColor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+          <p className="text-sm font-medium text-red-400">Connection failed</p>
+          <p className="mt-0.5 text-sm text-red-400" style={{ opacity: 0.8 }}>{connectError}</p>
         </div>
       )}
     </div>
