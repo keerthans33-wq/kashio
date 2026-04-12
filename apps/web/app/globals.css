@@ -38,6 +38,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ── Normalize date input across browsers/iOS ───────────────────────── */
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 /* ── Animations ──────────────────────────────────────────────────────── */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
