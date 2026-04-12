@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Image from "next/image";
+import { getUserWithType } from "../../lib/auth";
 
 const steps = [
   { n: "1", label: "Import your transactions" },
@@ -14,6 +15,10 @@ export default async function Home({
 }) {
   const { code } = await searchParams;
   if (code) redirect(`/auth/callback?code=${code}`);
+
+  // Already logged in — skip the landing page
+  const user = await getUserWithType();
+  if (user) redirect(user.userType ? "/import" : "/onboarding");
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-6 py-16 text-center" style={{ backgroundColor: "var(--bg-app)" }}>

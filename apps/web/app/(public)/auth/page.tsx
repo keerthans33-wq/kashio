@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../../../lib/supabase";
 
 // Maps Supabase error messages to plain, friendly language.
@@ -26,6 +26,15 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading]   = useState(false);
   const [message, setMessage]   = useState<{ text: string; error: boolean } | null>(null);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return;
+      const userType = session.user.user_metadata?.user_type;
+      window.location.href = userType ? "/import" : "/onboarding";
+    });
+  }, []);
 
   // Basic checks before hitting Supabase
   function validate(): string | null {
