@@ -163,36 +163,50 @@ export default async function Export() {
         <p className={sectionLabel} style={{ color: "var(--text-muted)" }}>
           Breakdown
         </p>
-        <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--bg-elevated)" }}>
+        <div className="rounded-xl px-5 py-5" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
           {categoryGroups.map(({ cat, catTotal, items }, ci) => (
-            <div key={cat} style={ci > 0 ? { borderTop: "1px solid var(--bg-elevated)" } : {}}>
-              <div className="flex items-baseline justify-between px-4 py-2" style={{ backgroundColor: "var(--bg-elevated)" }}>
-                <span className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>{cat}</span>
-                <span className="text-xs font-medium tabular-nums" style={{ color: "var(--text-muted)" }}>{fmt(catTotal)}</span>
+            <div
+              key={cat}
+              className={ci > 0 ? "mt-5 pt-5" : ""}
+              style={ci > 0 ? { borderTop: "1px solid var(--bg-elevated)" } : {}}
+            >
+              {/* Category label + subtotal */}
+              <div className="flex items-baseline justify-between mb-3">
+                <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+                  {cat}
+                </span>
+                <span className="text-xs tabular-nums" style={{ color: "var(--text-muted)" }}>
+                  {fmt(catTotal)}
+                </span>
               </div>
-              {items.map((item, ii) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between gap-4 px-4 py-3"
-                  style={{ borderTop: ii > 0 ? "1px solid rgba(31,41,55,0.5)" : undefined, backgroundColor: "var(--bg-card)" }}
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm" style={{ color: "var(--text-secondary)" }}>{item.row.merchant}</p>
-                    <p className="text-xs" style={{ color: "var(--text-muted)" }}>{item.row.date}</p>
+              {/* Items */}
+              <div className="space-y-3">
+                {items.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm" style={{ color: "var(--text-secondary)" }}>
+                        {item.row.merchant}
+                      </p>
+                      <p className="text-xs" style={{ color: "var(--text-muted)" }}>{item.row.date}</p>
+                    </div>
+                    <span className="shrink-0 text-sm tabular-nums" style={{ color: "var(--text-secondary)" }}>
+                      {fmt(item.row.amount)}
+                    </span>
                   </div>
-                  <span className="shrink-0 text-sm tabular-nums" style={{ color: "var(--text-secondary)" }}>
-                    {fmt(item.row.amount)}
-                  </span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           ))}
+
+          {/* Total */}
           <div
-            className="flex items-baseline justify-between px-4 py-3"
-            style={{ borderTop: "1px solid var(--bg-elevated)", backgroundColor: "var(--bg-elevated)" }}
+            className="flex items-baseline justify-between mt-5 pt-5"
+            style={{ borderTop: "1px solid var(--bg-elevated)" }}
           >
             <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Total</span>
-            <span className="text-sm font-semibold tabular-nums" style={{ color: "var(--text-primary)" }}>{fmt(total)}</span>
+            <span className="text-sm font-semibold tabular-nums" style={{ color: "var(--text-primary)" }}>
+              {fmt(total)}
+            </span>
           </div>
         </div>
       </div>
