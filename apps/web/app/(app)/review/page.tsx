@@ -100,12 +100,6 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
   const totalConfirmed   = all.filter((c) => c.status === "CONFIRMED").length;
   const missingEvidence  = all.filter((c) => c.status === "CONFIRMED" && !c.hasEvidence).length;
 
-  const amt = (c: Candidate) => Math.abs(c.transaction.amount);
-  const confirmedValue = all.filter((c) => c.status === "CONFIRMED").reduce((s, c) => s + amt(c), 0);
-  const pendingValue   = all.filter((c) => c.status === "NEEDS_REVIEW").reduce((s, c) => s + amt(c), 0);
-
-  const fmt = (n: number) => n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
-
   const isFiltered = category || confidence;
 
   return (
@@ -137,12 +131,14 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
       {/* Progress summary — hidden when filtered */}
       {all.length > 0 && !isFiltered && (() => {
         const totalItems = all.filter((c) => c.status !== "REJECTED").length;
-        const totalValue = pendingValue + confirmedValue;
+        const parts = [
+          `${totalItems} possible ${totalItems !== 1 ? termPlural(userType) : term(userType)}`,
+          totalConfirmed > 0 && `${totalConfirmed} confirmed`,
+          totalNeedsReview > 0 && `${totalNeedsReview} to review`,
+        ].filter(Boolean);
         return (
           <p className="mt-3 text-[15px]" style={{ color: "var(--text-secondary)" }}>
-            {totalItems} possible {totalItems !== 1 ? termPlural(userType) : term(userType)} found
-            {totalValue > 0 ? ` — ${fmt(totalValue)} to go through` : ""}.
-            {totalConfirmed > 0 && ` ${totalConfirmed} confirmed so far.`}
+            {parts.join(" · ")}
           </p>
         );
       })()}
@@ -150,12 +146,9 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
       {/* Next action card — hidden when filtered */}
       {all.length > 0 && !isFiltered && (() => {
         if (totalNeedsReview > 0) return (
-          <div className="mt-4 rounded-xl px-4 py-3 flex items-center justify-between gap-4 border" style={{ borderColor: "var(--bg-elevated)", backgroundColor: "var(--bg-card)" }}>
+          <div className="mt-4 rounded-xl px-4 py-3 flex items-center justify-between gap-4" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-              {pendingValue > 0
-                ? <>{fmt(pendingValue)} in possible {termPlural(userType)} still to review.</>
-                : <>{totalNeedsReview} item{totalNeedsReview !== 1 ? "s" : ""} still waiting.</>
-              }
+              {totalNeedsReview} item{totalNeedsReview !== 1 ? "s" : ""} still to review.
             </p>
             <a href="#needs-review" className="shrink-0 text-sm font-semibold" style={{ color: "var(--violet-from)" }}>
               Start →
@@ -163,9 +156,9 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
           </div>
         );
         if (totalConfirmed > 0) return (
-          <div className="mt-4 rounded-xl px-4 py-3 flex items-center justify-between gap-4 border" style={{ borderColor: "var(--violet-from)", backgroundColor: "rgba(124,58,237,0.08)" }}>
+          <div className="mt-4 rounded-xl px-4 py-3 flex items-center justify-between gap-4" style={{ backgroundColor: "rgba(124,58,237,0.08)", border: "1px solid var(--violet-from)" }}>
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-              {totalConfirmed} confirmed — ready to export.
+              All reviewed — ready to export.
             </p>
             <a href="/export" className="shrink-0 text-sm font-semibold" style={{ color: "var(--violet-from)" }}>
               Export →
