@@ -104,6 +104,10 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
     .filter((c) => c.status === "CONFIRMED")
     .reduce((s, c) => s + Math.abs(c.transaction.amount), 0);
 
+  const pendingValue = all
+    .filter((c) => c.status === "NEEDS_REVIEW")
+    .reduce((s, c) => s + Math.abs(c.transaction.amount), 0);
+
   const fmt = (n: number) => n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 
   const isFiltered = category || confidence;
@@ -148,15 +152,16 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         ) : null;
       })()}
 
-      {/* Next action card — hidden when filtered */}
+      {/* Next action — hidden when filtered */}
       {all.length > 0 && !isFiltered && (() => {
         if (totalNeedsReview > 0) return (
           <div className="mt-4 rounded-xl px-4 py-3 flex items-center justify-between gap-4" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-              {totalNeedsReview} item{totalNeedsReview !== 1 ? "s" : ""} still to review.
+              {totalNeedsReview} item{totalNeedsReview !== 1 ? "s" : ""} left
+              {pendingValue > 0 && <span style={{ color: "var(--text-muted)" }}> · {fmt(pendingValue)} to go through</span>}
             </p>
             <a href="#needs-review" className="shrink-0 text-sm font-semibold" style={{ color: "var(--violet-from)" }}>
-              Start →
+              Continue →
             </a>
           </div>
         );
