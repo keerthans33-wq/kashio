@@ -116,24 +116,46 @@ export default async function Export() {
         </p>
       </div>
 
-      {/* 2. Summary card */}
-      <div className="mb-8">
-        <p className={sectionLabel} style={{ color: "var(--text-muted)" }}>
-          {(userType && TOTAL_LABEL[userType]) ?? "Total deductions"}
-        </p>
-        <div className="rounded-xl px-5 py-6" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
-          <p className="text-[46px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
-            {fmt(total)}
+      {/* 2. Summary cards */}
+      <div className={`mb-8 ${wfhYtdHours > 0 ? "grid grid-cols-2 gap-4" : ""}`}>
+
+        {/* Total deductions */}
+        <div className="rounded-xl px-5 py-5 flex flex-col justify-between" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)", minHeight: 160 }}>
+          <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
+            {(userType && TOTAL_LABEL[userType]) ?? "Total deductions"}
           </p>
-          <p className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-            {confirmed.length} confirmed item{confirmed.length !== 1 ? "s" : ""}
-          </p>
-          <p className="mt-4 text-xs" style={{ color: "var(--text-muted)" }}>
-            {userType && SAVING_LABEL[userType]
-              ? SAVING_LABEL[userType](fmtRound(estimatedSaving))
-              : `~${fmtRound(estimatedSaving)} estimated saving at 32.5c`}
+          <div>
+            <p className={`font-bold tabular-nums leading-none ${wfhYtdHours > 0 ? "text-[30px]" : "text-[42px]"}`} style={{ color: "var(--text-primary)" }}>
+              {fmtRound(total)}
+            </p>
+            <p className="mt-1.5 text-sm" style={{ color: "var(--text-secondary)" }}>
+              {confirmed.length} item{confirmed.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+            ~{fmtRound(estimatedSaving)} est. saving
           </p>
         </div>
+
+        {/* Home office — only when hours exist */}
+        {wfhYtdHours > 0 && (
+          <div className="rounded-xl px-5 py-5 flex flex-col justify-between" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)", minHeight: 160 }}>
+            <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
+              {(userType && WFH_LABEL[userType]) ?? "Home office"}
+            </p>
+            <div>
+              <p className="text-[30px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
+                ~{fmtRound(wfhYtdEst)}
+              </p>
+              <p className="mt-1.5 text-sm" style={{ color: "var(--text-secondary)" }}>
+                {wfhYtdHours} hr{wfhYtdHours !== 1 ? "s" : ""} logged
+              </p>
+            </div>
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              67c/hr ATO fixed-rate
+            </p>
+          </div>
+        )}
       </div>
 
       {/* 3. Category breakdown */}
@@ -174,42 +196,6 @@ export default async function Export() {
           </div>
         </div>
       </div>
-
-      {/* 4. Work From Home */}
-      {wfhYtdHours > 0 && (
-        <div className="mb-8">
-          <p className={sectionLabel} style={{ color: "var(--text-muted)" }}>
-            {(userType && WFH_LABEL[userType]) ?? "Work from home"}
-          </p>
-          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--bg-elevated)" }}>
-            <div
-              className="flex items-center justify-between px-4 py-3"
-              style={{ backgroundColor: "var(--bg-card)" }}
-            >
-              <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                Hours logged ({wfhFyLabel})
-              </span>
-              <span className="text-sm tabular-nums" style={{ color: "var(--text-secondary)" }}>
-                {wfhYtdHours} hr{wfhYtdHours !== 1 ? "s" : ""}
-              </span>
-            </div>
-            <div
-              className="flex items-baseline justify-between px-4 py-3"
-              style={{ borderTop: "1px solid var(--bg-elevated)", backgroundColor: "var(--bg-elevated)" }}
-            >
-              <div>
-                <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-                  Estimated deduction
-                </span>
-                <span className="ml-2 text-xs" style={{ color: "var(--text-muted)" }}>67c/hr</span>
-              </div>
-              <span className="text-sm font-semibold tabular-nums" style={{ color: "var(--text-primary)" }}>
-                ~{fmt(wfhYtdEst)}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 5. Download */}
       <ExportButton />
