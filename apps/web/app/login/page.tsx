@@ -57,29 +57,32 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-violet-600 via-violet-700 to-indigo-800 flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-sm">
+    <main
+      className="min-h-screen flex flex-col items-center justify-center px-5 py-12"
+      style={{ backgroundColor: "var(--bg-app)" }}
+    >
+      <div className="w-full max-w-[360px]">
 
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <span className="text-3xl font-bold tracking-tight text-white">Kashio</span>
-          <p className="mt-1 text-sm text-violet-200">Your tax deductions, sorted.</p>
+        {/* Logo + tagline */}
+        <div className="text-center mb-10">
+          <p className="text-[28px] font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>Kashio</p>
+          <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>Your tax deductions, sorted.</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 space-y-5">
+        <div className="rounded-2xl p-6 space-y-5" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
 
           {/* Mode tabs */}
-          <div className="flex rounded-lg bg-gray-100 p-1 gap-1">
+          <div className="flex rounded-xl p-1 gap-1" style={{ backgroundColor: "var(--bg-elevated)" }}>
             {(["signin", "signup"] as Mode[]).map((m) => (
               <button
                 key={m}
                 onClick={() => { setMode(m); reset(); }}
-                className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-all duration-150 ${
-                  mode === m
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
+                className="flex-1 rounded-lg py-2 text-sm font-medium transition-all duration-150"
+                style={mode === m
+                  ? { backgroundColor: "var(--bg-app)", color: "var(--text-primary)" }
+                  : { backgroundColor: "transparent", color: "var(--text-muted)" }
+                }
               >
                 {m === "signin" ? "Sign in" : "Create account"}
               </button>
@@ -90,7 +93,11 @@ export default function LoginPage() {
           <button
             onClick={handleGoogle}
             disabled={loading}
-            className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors duration-150"
+            className="flex w-full items-center justify-center gap-3 rounded-xl py-3 text-sm font-semibold transition-all duration-150 disabled:opacity-50 active:scale-[0.98]"
+            style={{
+              backgroundColor: "var(--bg-elevated)",
+              color: "var(--text-primary)",
+            }}
           >
             <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -101,27 +108,37 @@ export default function LoginPage() {
             Continue with Google
           </button>
 
+          {/* Divider */}
           <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-gray-100" />
-            <span className="text-xs text-gray-400">or</span>
-            <div className="h-px flex-1 bg-gray-100" />
+            <div className="h-px flex-1" style={{ backgroundColor: "var(--bg-elevated)" }} />
+            <span className="text-xs" style={{ color: "var(--text-muted)" }}>or</span>
+            <div className="h-px flex-1" style={{ backgroundColor: "var(--bg-elevated)" }} />
           </div>
 
           {/* Fields */}
           <div className="space-y-3">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
+                Email
+              </label>
               <input
                 type="email"
                 autoComplete="email"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); reset(); }}
-                className="h-11 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 placeholder-gray-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-colors"
+                className="h-11 w-full rounded-xl px-3 text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-violet-500"
+                style={{
+                  backgroundColor: "var(--bg-elevated)",
+                  border: "1px solid transparent",
+                  color: "var(--text-primary)",
+                }}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Password</label>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
+                Password
+              </label>
               <input
                 type="password"
                 autoComplete={mode === "signup" ? "new-password" : "current-password"}
@@ -129,31 +146,41 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); reset(); }}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-                className="h-11 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 placeholder-gray-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-colors"
+                className="h-11 w-full rounded-xl px-3 text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-violet-500"
+                style={{
+                  backgroundColor: "var(--bg-elevated)",
+                  border: "1px solid transparent",
+                  color: "var(--text-primary)",
+                }}
               />
             </div>
           </div>
 
-          {error   && <p className="text-sm text-red-500">{error}</p>}
+          {/* Feedback */}
+          {error && <p className="text-sm text-red-400">{error}</p>}
           {message && (
-            <div className="rounded-lg bg-green-50 border border-green-100 px-4 py-3">
-              <p className="text-sm text-green-700">{message}</p>
+            <div className="rounded-xl px-4 py-3" style={{ backgroundColor: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)" }}>
+              <p className="text-sm" style={{ color: "#22C55E" }}>{message}</p>
             </div>
           )}
 
+          {/* Submit */}
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="w-full rounded-lg bg-violet-600 py-3 text-sm font-semibold text-white hover:bg-violet-700 active:scale-[0.98] disabled:opacity-50 transition-all duration-150"
+            className="w-full rounded-xl py-3 text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+            style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
           >
             {loading ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
           </button>
 
         </div>
 
-        <p className="mt-6 text-center text-xs text-violet-300">
+        {/* Disclaimer */}
+        <p className="mt-8 text-center text-xs" style={{ color: "var(--text-muted)", opacity: 0.6 }}>
           Kashio is not a tax adviser. Always verify with your accountant.
         </p>
+
       </div>
     </main>
   );
