@@ -31,9 +31,20 @@ export default async function WfhLog() {
     >
 
       {/* 1. Title */}
-      <h1 className="text-[28px] font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
-        Work from home
-      </h1>
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="text-[28px] font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
+          Work from home
+        </h1>
+        {entries.length > 0 && (
+          <a
+            href="/export"
+            className="shrink-0 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
+            style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
+          >
+            Export →
+          </a>
+        )}
+      </div>
 
       {/* 2. Subtitle */}
       <p className="mt-2 text-sm" style={{ color: "var(--text-muted)" }}>

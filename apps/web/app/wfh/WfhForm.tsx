@@ -47,7 +47,7 @@ export function WfhForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+    <form onSubmit={handleSubmit} className="mt-8 space-y-5">
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="wfh-date" className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
