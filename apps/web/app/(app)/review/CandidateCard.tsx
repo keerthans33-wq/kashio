@@ -21,15 +21,15 @@ export type CandidateCardProps = {
 };
 
 const CONFIDENCE_LABEL: Record<Confidence, string> = {
-  HIGH:   "Strong match",
+  HIGH:   "Likely deductible",
   MEDIUM: "Possible match",
-  LOW:    "Weak match",
+  LOW:    "Review carefully",
 };
 
 const CONFIDENCE_LABEL_LONG: Record<Confidence, string> = {
-  HIGH:   "Strong match",
+  HIGH:   "Likely deductible",
   MEDIUM: "Possible match",
-  LOW:    "Weak match — check before claiming",
+  LOW:    "Review carefully — check before claiming",
 };
 
 const CONFIDENCE_COLOR: Record<Confidence, string> = {
