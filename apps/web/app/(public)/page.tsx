@@ -35,7 +35,7 @@ export default async function Home({
 
       {/* Subheadline */}
       <p className="mt-4 text-[16px] leading-relaxed max-w-sm" style={{ color: "var(--text-secondary)" }}>
-        Kashio scans your transactions and highlights what may be claimable for work or business use.
+        Kashio scans your transactions, highlights what may be claimable for work or business use, and helps you track work from home hours.
       </p>
 
       {/* Steps */}
