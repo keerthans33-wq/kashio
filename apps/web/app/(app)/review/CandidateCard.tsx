@@ -92,23 +92,26 @@ export function CandidateCard({
           <p className="truncate text-[15px] font-semibold" style={{ color: "var(--text-primary)", ...dimmed }}>
             {transaction.normalizedMerchant}
           </p>
-          <p className="shrink-0 text-[15px] font-bold tabular-nums" style={{ color: "var(--text-primary)", ...dimmed }}>
+          <p className="shrink-0 text-[18px] font-bold tabular-nums" style={{ color: "var(--text-primary)", ...dimmed }}>
             −${Math.abs(amount).toFixed(2)}
           </p>
         </div>
 
         {/* Date + confidence badge */}
-        <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+        <div className="mt-1.5 flex items-center gap-2 flex-wrap">
           <span className="text-xs" style={{ color: "var(--text-muted)" }}>
             {transaction.date}
           </span>
           {!settled && (
-            <>
-              <span className="text-xs" style={{ color: "var(--bg-elevated)" }}>·</span>
-              <span className="text-xs font-medium" style={{ color: CONFIDENCE_COLOR[confidence] }}>
-                {CONFIDENCE_LABEL[confidence]}
-              </span>
-            </>
+            <span
+              className="text-xs font-semibold rounded-full px-2 py-0.5"
+              style={{
+                color: CONFIDENCE_COLOR[confidence],
+                backgroundColor: CONFIDENCE_COLOR[confidence] + "1A",
+              }}
+            >
+              {CONFIDENCE_LABEL[confidence]}
+            </span>
           )}
         </div>
 
@@ -151,7 +154,7 @@ export function CandidateCard({
               <button
                 onClick={handleConfirm}
                 disabled={isSaving}
-                className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-all duration-150 active:scale-95 disabled:opacity-40"
+                className="rounded-lg px-4 py-2 text-sm font-semibold text-white transition-all duration-150 active:scale-95 disabled:opacity-40"
                 style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
               >
                 {isSaving ? "Saving…" : "Looks deductible"}
@@ -159,7 +162,7 @@ export function CandidateCard({
               <button
                 onClick={handleReject}
                 disabled={isSaving}
-                className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors duration-150 active:scale-95 disabled:opacity-40"
+                className="rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-150 active:scale-95 disabled:opacity-40"
                 style={{ border: "1px solid var(--bg-elevated)", color: "var(--text-muted)" }}
               >
                 Not deductible

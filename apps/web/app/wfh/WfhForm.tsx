@@ -104,7 +104,7 @@ export function WfhForm() {
       <button
         type="submit"
         disabled={saving}
-        className="w-full rounded-xl py-3 text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+        className="w-full rounded-xl py-3.5 text-[15px] font-semibold text-white transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
         style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
       >
         {saving ? "Saving…" : "Add entry"}
