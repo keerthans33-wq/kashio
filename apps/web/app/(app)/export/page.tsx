@@ -173,35 +173,37 @@ export default async function Export() {
       {isPaid ? (
         <>
           {/* 3. Category breakdown */}
-          <div className="mb-8">
-            <p className={sectionLabel} style={{ color: "var(--text-muted)" }}>
-              Breakdown
-            </p>
-            <div className="rounded-xl px-5 py-5" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
-              {categoryGroups.map(({ cat, catTotal, items }, ci) => (
-                <div
-                  key={cat}
-                  className={ci > 0 ? "mt-5 pt-5" : ""}
-                  style={ci > 0 ? { borderTop: "1px solid var(--bg-elevated)" } : {}}
-                >
+          <div className="mb-10">
+            <p className={sectionLabel} style={{ color: "var(--text-muted)" }}>Breakdown</p>
+            <div className="space-y-6">
+              {categoryGroups.map(({ cat, catTotal, items }) => (
+                <div key={cat}>
+                  {/* Category header */}
                   <div className="flex items-baseline justify-between mb-3">
-                    <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+                    <span className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
                       {cat}
                     </span>
-                    <span className="text-xs tabular-nums" style={{ color: "var(--text-muted)" }}>
+                    <span className="text-sm font-semibold tabular-nums" style={{ color: "var(--text-secondary)" }}>
                       {fmt(catTotal)}
                     </span>
                   </div>
-                  <div className="space-y-3">
+                  {/* Items */}
+                  <div className="space-y-0.5">
                     {items.map((item) => (
-                      <div key={item.id} className="flex items-center justify-between gap-4">
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between gap-4 py-2.5"
+                        style={{ borderBottom: "1px solid var(--bg-elevated)" }}
+                      >
                         <div className="min-w-0">
-                          <p className="truncate text-sm" style={{ color: "var(--text-secondary)" }}>
+                          <p className="truncate text-sm" style={{ color: "var(--text-primary)" }}>
                             {item.row.merchant}
                           </p>
-                          <p className="text-xs" style={{ color: "var(--text-muted)" }}>{item.row.date}</p>
+                          <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                            {item.row.date}
+                          </p>
                         </div>
-                        <span className="shrink-0 text-sm tabular-nums" style={{ color: "var(--text-secondary)" }}>
+                        <span className="shrink-0 text-sm tabular-nums font-medium" style={{ color: "var(--text-primary)" }}>
                           {fmt(item.row.amount)}
                         </span>
                       </div>
@@ -209,12 +211,11 @@ export default async function Export() {
                   </div>
                 </div>
               ))}
-              <div
-                className="flex items-baseline justify-between mt-5 pt-5"
-                style={{ borderTop: "1px solid var(--bg-elevated)" }}
-              >
+
+              {/* Total row */}
+              <div className="flex items-baseline justify-between pt-2">
                 <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Total</span>
-                <span className="text-sm font-semibold tabular-nums" style={{ color: "var(--text-primary)" }}>
+                <span className="text-[17px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
                   {fmt(total)}
                 </span>
               </div>
