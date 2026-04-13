@@ -110,7 +110,7 @@ export default async function Export() {
     <main className="mx-auto max-w-lg px-4 sm:px-6 py-8 sm:py-12">
 
       {/* 1. Title + subtitle */}
-      <div className="mb-8">
+      <div className="mb-7">
         <h1 className="text-[30px] font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
           Your tax summary
         </h1>
@@ -120,42 +120,51 @@ export default async function Export() {
       </div>
 
       {/* 2. Summary cards — always visible */}
-      <div className={`mb-8 ${wfhYtdHours > 0 ? "grid grid-cols-2 gap-4" : ""}`}>
+      <div className={`mb-10 ${wfhYtdHours > 0 ? "grid grid-cols-2 gap-4" : ""}`}>
 
         {/* Total deductions */}
-        <div className="rounded-xl px-5 py-5 flex flex-col justify-between" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)", minHeight: 160 }}>
+        <div
+          className="rounded-xl px-5 py-5 flex flex-col gap-3"
+          style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)", minHeight: 190 }}
+        >
           <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
             {(userType && TOTAL_LABEL[userType]) ?? "Total deductions"}
           </p>
-          <div>
-            <p className={`font-bold tabular-nums leading-none ${wfhYtdHours > 0 ? "text-[30px]" : "text-[42px]"}`} style={{ color: "var(--text-primary)" }}>
+          <div className="flex-1 flex flex-col justify-end gap-1">
+            <p
+              className={`font-bold tabular-nums leading-none ${wfhYtdHours > 0 ? "text-[28px]" : "text-[42px]"}`}
+              style={{ color: "var(--text-primary)" }}
+            >
               {fmtRound(total)}
             </p>
-            <p className="mt-1.5 text-sm" style={{ color: "var(--text-secondary)" }}>
+            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
               {confirmed.length} item{confirmed.length !== 1 ? "s" : ""}
             </p>
           </div>
-          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            ~{fmtRound(estimatedSaving)} est. saving
+          <p className="text-sm font-semibold" style={{ color: "var(--success)" }}>
+            ~{fmtRound(estimatedSaving)} tax saving
           </p>
         </div>
 
         {/* Home office — only when hours exist */}
         {wfhYtdHours > 0 && (
-          <div className="rounded-xl px-5 py-5 flex flex-col justify-between" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)", minHeight: 160 }}>
+          <div
+            className="rounded-xl px-5 py-5 flex flex-col gap-3"
+            style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)", minHeight: 190 }}
+          >
             <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
               {(userType && WFH_LABEL[userType]) ?? "Home office"}
             </p>
-            <div>
-              <p className="text-[30px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
+            <div className="flex-1 flex flex-col justify-end gap-1">
+              <p className="text-[28px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
                 ~{fmtRound(wfhYtdEst)}
               </p>
-              <p className="mt-1.5 text-sm" style={{ color: "var(--text-secondary)" }}>
+              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
                 {wfhYtdHours} hr{wfhYtdHours !== 1 ? "s" : ""} logged
               </p>
             </div>
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              67c/hr ATO fixed-rate
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+              67c/hr fixed rate
             </p>
           </div>
         )}
