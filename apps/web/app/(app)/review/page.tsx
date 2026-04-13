@@ -130,7 +130,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         {totalConfirmed > 0 && (
           <a
             href="/export"
-            className="shrink-0 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
+            className="shrink-0 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
             style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
           >
             Export →
@@ -143,7 +143,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         const parts: React.ReactNode[] = [
           totalNeedsReview > 0 && <span key="review">{totalNeedsReview} to review</span>,
           totalConfirmed > 0 && <span key="confirmed">{totalConfirmed} confirmed</span>,
-          confirmedValue > 0 && <span key="value" className="font-semibold" style={{ color: "var(--text-secondary)" }}>{fmt(confirmedValue)}</span>,
+          confirmedValue > 0 && <span key="value" className="font-semibold" style={{ color: "var(--text-secondary)" }}>~{fmt(confirmedValue)}</span>,
         ].filter(Boolean);
         return parts.length > 0 ? (
           <p className="mt-2 text-sm" style={{ color: "var(--text-muted)" }}>
@@ -157,26 +157,53 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
       {/* Next action — hidden when filtered */}
       {all.length > 0 && !isFiltered && (() => {
         if (totalNeedsReview > 0) return (
-          <div className="mt-4 rounded-xl px-4 py-3 flex items-center justify-between gap-4" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
-            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-              {totalNeedsReview} item{totalNeedsReview !== 1 ? "s" : ""} left
-              {pendingValue > 0 && <> · <span className="font-semibold" style={{ color: "var(--text-primary)" }}>{fmt(pendingValue)}</span></>}
-            </p>
-            <a href="#needs-review" className="shrink-0 text-sm font-semibold" style={{ color: "var(--violet-from)" }}>
-              Continue →
-            </a>
+          <div className="mt-4 space-y-2">
+            <div className="rounded-xl px-4 py-3 flex items-center justify-between gap-4" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
+              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                {totalNeedsReview} item{totalNeedsReview !== 1 ? "s" : ""} left
+                {pendingValue > 0 && <> · <span className="font-semibold" style={{ color: "var(--text-primary)" }}>~{fmt(pendingValue)}</span></>}
+              </p>
+              <a href="#needs-review" className="shrink-0 text-sm font-semibold" style={{ color: "var(--violet-from)" }}>
+                Continue →
+              </a>
+            </div>
+            {totalConfirmed > 0 && (
+              <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
+                or{" "}
+                <a href="/export" className="font-medium underline underline-offset-2" style={{ color: "var(--violet-from)" }}>
+                  view your tax summary in Export
+                </a>
+              </p>
+            )}
           </div>
         );
+
         if (totalConfirmed > 0) return (
-          <div className="mt-4 rounded-xl px-4 py-3 flex items-center justify-between gap-4" style={{ backgroundColor: "rgba(124,58,237,0.08)", border: "1px solid var(--violet-from)" }}>
+          <div className="mt-5 rounded-2xl px-6 py-6 text-center space-y-4" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--violet-from)" }}>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--text-muted)" }}>
+                Review complete
+              </p>
+              <p className="text-[28px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
+                ~{fmt(confirmedValue)}
+              </p>
+              <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
+                {totalConfirmed} confirmed {totalConfirmed === 1 ? "deduction" : "deductions"}
+              </p>
+            </div>
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-              All reviewed — ready to export.
+              Your full breakdown and downloadable report are in Export.
             </p>
-            <a href="/export" className="shrink-0 text-sm font-semibold" style={{ color: "var(--violet-from)" }}>
-              Export →
+            <a
+              href="/export"
+              className="block w-full rounded-xl py-3.5 text-base font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
+              style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
+            >
+              View your tax summary →
             </a>
           </div>
         );
+
         return null;
       })()}
 
