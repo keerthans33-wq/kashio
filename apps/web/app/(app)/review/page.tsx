@@ -130,8 +130,11 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         {totalConfirmed > 0 && (
           <a
             href="/export"
-            className="shrink-0 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
-            style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
+            className="shrink-0 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
+            style={{
+              background:  "linear-gradient(to right, var(--violet-from), var(--violet-to))",
+              boxShadow:   "0 0 16px rgba(124,58,237,0.45)",
+            }}
           >
             Export →
           </a>

@@ -168,7 +168,7 @@ export function PaywallGate({ allItems, categoryGroups, total }: Props) {
 
         <div className="mb-5 flex items-baseline gap-2">
           <span className="text-[34px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
-            $9
+            $19.99
           </span>
           <span className="text-sm" style={{ color: "var(--text-muted)" }}>
             one-time · this financial year

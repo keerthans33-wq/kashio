@@ -6,8 +6,8 @@ import { getUser } from "../../../lib/auth";
 
 // ── Palette ──────────────────────────────────────────────────────────────────
 const TEXT_DARK    = "FF111827";
-const TEXT_MID     = "FF374151";
-const TEXT_LIGHT   = "FF9CA3AF";
+const TEXT_MID     = "FF1F2937";
+const TEXT_LIGHT   = "FF374151";
 const RULE         = "FFE5E7EB";
 
 export async function GET() {
