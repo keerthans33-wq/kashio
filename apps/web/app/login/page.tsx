@@ -70,7 +70,7 @@ export default function LoginPage() {
         </div>
 
         {/* Card */}
-        <div className="rounded-2xl p-6 space-y-5" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
+        <div className="rounded-2xl p-6 space-y-5" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}>
 
           {/* Mode tabs */}
           <div className="flex rounded-xl p-1 gap-1" style={{ backgroundColor: "var(--bg-elevated)" }}>
@@ -110,9 +110,9 @@ export default function LoginPage() {
 
           {/* Divider */}
           <div className="flex items-center gap-3">
-            <div className="h-px flex-1" style={{ backgroundColor: "var(--bg-elevated)" }} />
+            <div className="h-px flex-1" style={{ backgroundColor: "var(--bg-border)" }} />
             <span className="text-xs" style={{ color: "var(--text-muted)" }}>or</span>
-            <div className="h-px flex-1" style={{ backgroundColor: "var(--bg-elevated)" }} />
+            <div className="h-px flex-1" style={{ backgroundColor: "var(--bg-border)" }} />
           </div>
 
           {/* Fields */}

@@ -67,7 +67,7 @@ export function PaywallGate({ allItems, categoryGroups, total }: Props) {
                     <div
                       key={item.id}
                       className="flex items-center justify-between gap-4 py-2.5"
-                      style={{ borderBottom: "1px solid var(--bg-elevated)" }}
+                      style={{ borderBottom: "1px solid var(--bg-border)" }}
                     >
                       <div className="min-w-0">
                         <p className="truncate text-sm" style={{ color: "var(--text-primary)" }}>
@@ -106,7 +106,7 @@ export function PaywallGate({ allItems, categoryGroups, total }: Props) {
       <div className="mb-6 relative overflow-hidden rounded-xl" style={{ pointerEvents: "none", userSelect: "none" }}>
         <div style={{ filter: "blur(5px)", opacity: 0.45 }}>
           <p className={sectionLabel} style={{ color: "var(--text-muted)" }}>Breakdown</p>
-          <div className="rounded-xl px-5 py-5" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
+          <div className="rounded-xl px-5 py-5" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}>
             {allItems.slice(0, 5).map((item, i) => (
               <div
                 key={item.id}

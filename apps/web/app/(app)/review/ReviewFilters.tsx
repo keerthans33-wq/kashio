@@ -23,7 +23,7 @@ export function ReviewFilters({ categories = ACTIVE_CATEGORIES }: { categories?:
 
   const chipBase  = "rounded-full px-3 py-1 text-xs transition-all duration-150 border";
   const chipActive = { background: "var(--violet-from)", borderColor: "var(--violet-from)", color: "#fff" };
-  const chipIdle   = { borderColor: "var(--bg-elevated)", color: "var(--text-muted)", background: "transparent" };
+  const chipIdle   = { borderColor: "var(--bg-border)", color: "var(--text-muted)", background: "transparent" };
 
   return (
     <div className="mt-4">
@@ -31,9 +31,9 @@ export function ReviewFilters({ categories = ACTIVE_CATEGORIES }: { categories?:
         <button
           onClick={() => setOpen((v) => !v)}
           className="flex items-center gap-1.5 text-sm transition-colors duration-150"
-          style={{ color: "var(--text-muted)" }}
+          style={{ color: hasFilters ? "var(--text-secondary)" : "var(--text-muted)" }}
         >
-          {open ? "Hide options" : "View options"}
+          {open ? "Hide filters" : "Filter"}
           {hasFilters && !open && (
             <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: "var(--violet-from)" }} />
           )}

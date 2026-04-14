@@ -68,7 +68,7 @@ export default function OnboardingPage() {
                 className="flex w-full items-center gap-4 rounded-xl px-5 py-4 text-left transition-all duration-150 active:scale-[0.98]"
                 style={{
                   backgroundColor: isSelected ? "rgba(124,58,237,0.10)" : "var(--bg-card)",
-                  border: isSelected ? "1px solid var(--violet-from)" : "1px solid var(--bg-elevated)",
+                  border: isSelected ? "1px solid var(--violet-from)" : "1px solid var(--bg-border)",
                 }}
               >
                 <span

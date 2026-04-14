@@ -94,7 +94,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
 
       {/* Bulk action bar */}
       {selected.size > 0 && (
-        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3" style={{ borderColor: "var(--bg-elevated)", backgroundColor: "var(--bg-card)" }}>
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3" style={{ borderColor: "var(--bg-border)", backgroundColor: "var(--bg-card)" }}>
           <span className="text-sm" style={{ color: "var(--text-secondary)" }}>{selected.size} selected</span>
           <button
             onClick={() => bulkAction(bulkConfirmCandidates, (ids) => {
@@ -119,7 +119,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
             }))}
             disabled={isSaving}
             className="rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-40 transition-colors duration-150"
-            style={{ border: "1px solid var(--bg-elevated)", color: "var(--text-muted)" }}
+            style={{ border: "1px solid var(--bg-border)", color: "var(--text-muted)" }}
           >
             {isSaving ? "Saving…" : "Not deductible"}
           </button>
@@ -175,7 +175,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
 
       {/* Confirmed — collapsible */}
       {confirmed.length > 0 && (
-        <div id="confirmed" className="mt-8 border-t pt-6" style={{ borderColor: "var(--bg-elevated)" }}>
+        <div id="confirmed" className="mt-8 border-t pt-6" style={{ borderColor: "var(--bg-border)" }}>
           <button
             onClick={() => setShowConfirmed((v) => !v)}
             className="flex items-center gap-2 text-sm transition-colors duration-150"
@@ -194,13 +194,13 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
 
       {/* Rejected — collapsible */}
       {rejected.length > 0 && (
-        <div className="mt-4 border-t pt-6" style={{ borderColor: "var(--bg-elevated)" }}>
+        <div className="mt-4 border-t pt-6" style={{ borderColor: "var(--bg-border)" }}>
           <button
             onClick={() => setShowRejected((v) => !v)}
             className="flex items-center gap-2 text-sm transition-colors duration-150"
             style={{ color: "var(--text-muted)" }}
           >
-            <span className="flex h-4 w-4 items-center justify-center rounded-full text-xs" style={{ backgroundColor: "var(--bg-elevated)", color: "var(--text-muted)" }}>✗</span>
+            <span className="flex h-4 w-4 items-center justify-center rounded-full text-xs" style={{ backgroundColor: "var(--bg-border)", color: "var(--text-muted)" }}>✗</span>
             {showRejected ? "Hide" : "Show"} not deductible ({rejected.length})
           </button>
           {showRejected && (

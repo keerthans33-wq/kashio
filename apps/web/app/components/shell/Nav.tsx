@@ -16,12 +16,12 @@ export default function Nav() {
   const pathname = usePathname();
 
   return (
-    <nav className="sticky top-0 z-50 border-b" style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--bg-elevated)" }}>
+    <nav className="sticky top-0 z-50 border-b" style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--bg-border)" }}>
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
-        <div className="flex h-12 items-center gap-4 sm:gap-6">
+        <div className="flex h-12 items-stretch gap-4 sm:gap-6">
 
           {/* Logo */}
-          <Link href="/" className="shrink-0">
+          <Link href="/" className="shrink-0 flex items-center">
             <Image
               src="/kashio - 2.PNG"
               alt="Kashio"
@@ -32,19 +32,18 @@ export default function Nav() {
           </Link>
 
           {/* Nav links — scrollable on very small screens */}
-          <div className="flex flex-1 items-center gap-1 overflow-x-auto scrollbar-none">
+          <div className="flex flex-1 items-stretch gap-1 overflow-x-auto scrollbar-none">
             {links.map((link) => {
               const active = pathname.startsWith(link.href);
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="shrink-0 px-3 text-sm font-medium whitespace-nowrap transition-colors duration-150"
+                  className="shrink-0 flex items-center px-3 text-sm font-medium whitespace-nowrap transition-colors duration-150"
                   style={{
-                    color:         active ? "var(--text-primary)" : "var(--text-muted)",
-                    paddingTop:    "calc((3rem - 1.25rem) / 2)",
-                    paddingBottom: "calc((3rem - 1.25rem) / 2 - 2px)",
-                    borderBottom:  active ? "2px solid var(--violet-from)" : "2px solid transparent",
+                    color:        active ? "var(--text-primary)" : "var(--text-muted)",
+                    borderBottom: active ? "2px solid var(--violet-from)" : "2px solid transparent",
+                    marginBottom: "-1px",
                   }}
                 >
                   {link.label}
@@ -59,7 +58,7 @@ export default function Nav() {
               await supabase.auth.signOut();
               window.location.href = "/login";
             }}
-            className="shrink-0 text-xs transition-colors duration-150 hover:text-gray-300"
+            className="shrink-0 flex items-center text-xs transition-colors duration-150"
             style={{ color: "var(--text-muted)" }}
           >
             Sign out

@@ -78,7 +78,7 @@ export function CandidateCard({
   const handleReject  = () => save(() => rejectCandidate(id),  "REJECTED");
   const handleReset   = () => save(() => resetCandidate(id),   "NEEDS_REVIEW");
 
-  const borderColor = status === "CONFIRMED" ? "#22C55E33" : "var(--bg-elevated)";
+  const borderColor = status === "CONFIRMED" ? "#22C55E33" : "var(--bg-border)";
   const bgColor     = status === "CONFIRMED" ? "rgba(34,197,94,0.06)" : "var(--bg-card)";
   const dimmed      = { opacity: status === "REJECTED" ? 0.5 : 1 };
 
@@ -132,34 +132,43 @@ export function CandidateCard({
           {error && <p className="mb-2 text-xs text-red-400">{error}</p>}
 
           {settled ? (
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-medium" style={{ color: status === "CONFIRMED" ? "#22C55E" : "var(--text-muted)" }}>
-                {status === "CONFIRMED" ? "✓ Marked deductible" : "✗ Marked not deductible"}
+                {status === "CONFIRMED" ? "✓ Deductible" : "✗ Not deductible"}
               </span>
-              <button
-                onClick={handleReset}
-                disabled={isSaving}
-                className="text-xs disabled:opacity-40"
-                style={{ color: "var(--text-muted)" }}
-              >
-                {isSaving ? "Saving…" : "Undo"}
-              </button>
+              <div className="flex items-center gap-3 shrink-0">
+                <button
+                  onClick={() => setExpanded((v) => !v)}
+                  className="text-xs"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  {expanded ? "Less" : "Details"}
+                </button>
+                <button
+                  onClick={handleReset}
+                  disabled={isSaving}
+                  className="text-xs disabled:opacity-40"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  {isSaving ? "…" : "Undo"}
+                </button>
+              </div>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={handleConfirm}
                 disabled={isSaving}
                 className="rounded-lg px-4 py-2 text-sm font-semibold text-white transition-all duration-150 active:scale-95 disabled:opacity-40"
                 style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
               >
-                {isSaving ? "Saving…" : "Looks deductible"}
+                {isSaving ? "Saving…" : "Deductible"}
               </button>
               <button
                 onClick={handleReject}
                 disabled={isSaving}
                 className="rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-150 active:scale-95 disabled:opacity-40"
-                style={{ border: "1px solid var(--bg-elevated)", color: "var(--text-muted)" }}
+                style={{ border: "1px solid var(--bg-border)", color: "var(--text-muted)" }}
               >
                 Not deductible
               </button>
@@ -168,27 +177,16 @@ export function CandidateCard({
                 className="ml-auto text-xs transition-colors duration-150"
                 style={{ color: "var(--text-muted)" }}
               >
-                {expanded ? "Less" : "More"}
+                {expanded ? "Less" : "Details"}
               </button>
             </div>
           )}
         </div>
-
-        {/* Details toggle for settled cards */}
-        {settled && (
-          <button
-            onClick={() => setExpanded((v) => !v)}
-            className="mt-2 text-xs transition-colors duration-150"
-            style={{ color: "var(--text-muted)" }}
-          >
-            {expanded ? "Hide details" : "More details"}
-          </button>
-        )}
       </div>
 
       {/* Expanded details */}
       {expanded && (
-        <div className="border-t px-4 py-4 space-y-3" style={{ borderColor: "var(--bg-elevated)" }}>
+        <div className="border-t px-4 py-4 space-y-3" style={{ borderColor: "var(--bg-border)" }}>
 
           <div>
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>Category</p>
@@ -249,7 +247,7 @@ export function CandidateCard({
                   className="mt-2 w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1"
                   style={{
                     backgroundColor: "var(--bg-elevated)",
-                    border: "1px solid var(--bg-elevated)",
+                    border: "1px solid var(--bg-border)",
                     color: "var(--text-primary)",
                   }}
                 />
