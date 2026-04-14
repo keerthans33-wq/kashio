@@ -7,6 +7,7 @@ import { remapColumns, type ColumnMapping } from "../../../lib/remapColumns";
 import { detectColumns, mergeDebitCredit } from "../../../lib/detectColumns";
 import PreviewTable from "./PreviewTable";
 import ColumnMapper from "./ColumnMapper";
+import BankCsvInstructions from "./BankCsvInstructions";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -23,27 +24,6 @@ type Result = {
   valid:   ValidRow[];
   invalid: InvalidRow[];
 };
-
-// ── Bank instructions ─────────────────────────────────────────────────────────
-
-const BANKS = [
-  {
-    name:  "Commonwealth Bank",
-    steps: ["Login to NetBank", "Go to Transactions", "Select your date range", "Click Export", "Choose CSV"],
-  },
-  {
-    name:  "ANZ",
-    steps: ["Login to Internet Banking", "Go to Account → Transactions", "Click Download", "Select CSV"],
-  },
-  {
-    name:  "NAB",
-    steps: ["Login to NAB Internet Banking", "Go to Transaction History", "Click Export", "Select CSV"],
-  },
-  {
-    name:  "Westpac",
-    steps: ["Login to Westpac Online Banking", "Go to Account Activity", "Click Download Data", "Select CSV"],
-  },
-];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -426,29 +406,8 @@ export default function CsvUploader() {
           </button>
 
           {showInstructions && (
-            <div
-              className="mt-4 rounded-2xl px-5 py-5"
-              style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
-                {BANKS.map((bank) => (
-                  <div key={bank.name}>
-                    <p className="text-sm font-semibold mb-2" style={{ color: "var(--text-primary)" }}>
-                      {bank.name}
-                    </p>
-                    <ol className="space-y-1">
-                      {bank.steps.map((step, i) => (
-                        <li key={i} className="flex gap-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-                          <span className="shrink-0 tabular-nums" style={{ color: "var(--text-muted)" }}>
-                            {i + 1}.
-                          </span>
-                          {step}
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                ))}
-              </div>
+            <div className="mt-4">
+              <BankCsvInstructions />
             </div>
           )}
         </div>
