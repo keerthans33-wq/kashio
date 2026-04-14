@@ -106,7 +106,20 @@ export default function CsvUploader() {
     setResult({ raw: rows, valid, invalid });
   }
 
-  // ── Real parser — plug your own parser here if needed ──────────────────────
+  // ── CSV parsing ────────────────────────────────────────────────────────────
+  //
+  // TODO (1/3 — CSV Parser): processFile() is the single entry point for all
+  // CSV parsing. The current pipeline is:
+  //   1. PapaParse reads the raw file into string[][]
+  //   2. detectColumns() auto-maps columns (date / amount / description)
+  //   3. remapColumns() normalises rows to { date, description, amount }
+  //   4. validateCsv() parses and validates each row
+  //
+  // To support a new bank format: add an alias or heuristic to
+  // lib/detectColumns.ts — no changes needed here.
+  // To swap the parser entirely: replace the Papa.parse block below with
+  // your own reader and call runValidation() with the normalised rows.
+  //
   function processFile(f: File) {
     if (!f.name.toLowerCase().endsWith(".csv")) {
       setFileError("Please upload a .csv file.");
@@ -190,6 +203,16 @@ export default function CsvUploader() {
     try {
       const { inserted, duplicates, flagged, totalValue } =
         await saveTransactions(result.valid, file?.name ?? "unknown.csv");
+
+      // TODO (2/3 — Review Screen): To navigate directly to /review after a
+      // successful import, add useRouter() and call router.push("/review") here.
+      // When the review page supports filtering by batch, also:
+      //   1. Add batchId to the ImportResult type above
+      //   2. Return batchId from saveTransactions() (the server already sends it)
+      //   3. Navigate to router.push(`/review?batchId=${batchId}`)
+      // The completion card below is kept for now so users can confirm the
+      // import count and optionally import another file first.
+
       setImportResult({ inserted, duplicates, invalid: result.invalid.length, flagged, totalValue });
     } catch (err) {
       setImportError(err instanceof Error ? err.message : "Something went wrong.");
@@ -241,6 +264,9 @@ export default function CsvUploader() {
         )}
 
         <div className="px-5 py-4 flex flex-wrap items-center gap-3" style={{ borderTop: "1px solid var(--bg-border)" }}>
+          {/* TODO (2/3 — Review Screen): Once the review page filters by batch,
+              change href to `/review?batchId=${importResult.batchId}` so the
+              user lands directly on the transactions they just imported. */}
           <a
             href="/review"
             className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98]"
