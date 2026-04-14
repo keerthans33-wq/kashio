@@ -60,12 +60,14 @@ export function CandidateCard({
   const settled = status !== "NEEDS_REVIEW";
 
   async function save(action: () => Promise<void>, next: Status) {
+    const prev = status;
+    setStatus(next);   // update UI instantly
     setIsSaving(true);
     setError(null);
     try {
       await action();
-      setStatus(next);
     } catch {
+      setStatus(prev); // revert if server fails
       setError("Could not save. Please try again.");
     } finally {
       setIsSaving(false);
