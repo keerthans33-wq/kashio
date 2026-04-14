@@ -1,18 +1,35 @@
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
+import { execSync } from "child_process";
+
+function resolveIPv4(hostname: string): string {
+  try {
+    const ip = execSync(
+      `node -e "require('dns').lookup('${hostname}',{family:4},(e,a)=>process.stdout.write(a||''))"`,
+      { timeout: 3000 }
+    ).toString().trim();
+    return ip || hostname;
+  } catch {
+    return hostname;
+  }
+}
 
 function createClient() {
-  // Strip sslmode from the URL — pg-connection-string v2.7+ treats 'require'
-  // as 'verify-full', which rejects Supabase's certificate chain. We set SSL
-  // explicitly on the Pool instead so rejectUnauthorized: false takes effect.
   const rawUrl = process.env.DATABASE_URL ?? "";
   if (!rawUrl) throw new Error("DATABASE_URL is not set. Add it to your Vercel environment variables.");
   const url = new URL(rawUrl);
   url.searchParams.delete("sslmode");
-  const connectionString = url.toString();
 
-  const isLocal = connectionString.includes("localhost");
+  const isLocal = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+
+  // Supabase pooler resolves to IPv6 on many machines — force IPv4 by
+  // pre-resolving the hostname and substituting the IP address.
+  if (!isLocal) {
+    url.hostname = resolveIPv4(url.hostname);
+  }
+
+  const connectionString = url.toString();
   const pool = new Pool({
     connectionString,
     ssl: isLocal ? undefined : { rejectUnauthorized: false },

@@ -54,8 +54,9 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     console.error("DB error during import:", err);
+    const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
-      { error: "Could not save transactions. The database may be unavailable." },
+      { error: process.env.NODE_ENV === "development" ? message : "Could not save transactions. The database may be unavailable." },
       { status: 500 },
     );
   }
