@@ -1,18 +1,25 @@
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
-import { execSync } from "child_process";
+import { spawnSync } from "child_process";
 
 function resolveIPv4(hostname: string): string {
   try {
-    const ip = execSync(
-      `node -e "require('dns').lookup('${hostname}',{family:4},(e,a)=>process.stdout.write(a||''))"`,
-      { timeout: 3000 }
-    ).toString().trim();
-    return ip || hostname;
+    // Use the exact node binary running this process — avoids PATH issues with nvm/volta
+    const result = spawnSync(process.execPath, [
+      "-e",
+      `require('dns').lookup('${hostname}',{family:4},(e,a)=>{if(e)process.exit(1);process.stdout.write(a)})`,
+    ], { timeout: 3000, encoding: "utf8" });
+    const ip = result.stdout?.trim();
+    if (ip) {
+      console.log(`[db] Resolved ${hostname} → ${ip} (IPv4)`);
+      return ip;
+    }
   } catch {
-    return hostname;
+    // fall through
   }
+  console.log(`[db] IPv4 resolution failed for ${hostname}, using hostname`);
+  return hostname;
 }
 
 function createClient() {
@@ -23,8 +30,6 @@ function createClient() {
 
   const isLocal = url.hostname === "localhost" || url.hostname === "127.0.0.1";
 
-  // Supabase pooler resolves to IPv6 on many machines — force IPv4 by
-  // pre-resolving the hostname and substituting the IP address.
   if (!isLocal) {
     url.hostname = resolveIPv4(url.hostname);
   }
@@ -40,7 +45,6 @@ function createClient() {
 }
 
 // Reuse the Prisma client across hot reloads in development.
-// Without this, each file save creates a new client and exhausts DB connections.
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
 export const db = globalForPrisma.prisma ?? createClient();
