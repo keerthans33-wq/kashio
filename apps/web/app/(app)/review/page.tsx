@@ -118,9 +118,23 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-[30px] font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
+          <h1 className="text-[28px] font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
             {userType ? HEADING[userType] ?? "Possible deductions" : "Possible deductions"}
           </h1>
+          {all.length > 0 && !isFiltered && (() => {
+            const parts: React.ReactNode[] = [
+              totalNeedsReview > 0 && <span key="review">{totalNeedsReview} to review</span>,
+              totalConfirmed > 0 && <span key="confirmed">{totalConfirmed} confirmed</span>,
+              confirmedValue > 0 && <span key="value" className="font-semibold" style={{ color: "var(--text-secondary)" }}>~{fmt(confirmedValue)}</span>,
+            ].filter(Boolean);
+            return parts.length > 0 ? (
+              <p className="mt-1.5 text-sm" style={{ color: "var(--text-muted)" }}>
+                {parts.map((part, i) => (
+                  <span key={i}>{i > 0 && " · "}{part}</span>
+                ))}
+              </p>
+            ) : null;
+          })()}
           {all.length === 0 && (
             <p className="mt-2 text-[15px]" style={{ color: "var(--text-secondary)" }}>
               {(userType && EMPTY_STATE[userType]) ?? "Import your bank transactions and Kashio will flag what looks deductible."}
@@ -132,8 +146,8 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
             href="/export"
             className="shrink-0 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
             style={{
-              background:  "linear-gradient(to right, var(--violet-from), var(--violet-to))",
-              boxShadow:   "0 0 16px rgba(124,58,237,0.45)",
+              background: "linear-gradient(to right, var(--violet-from), var(--violet-to))",
+              boxShadow:  "0 0 16px rgba(124,58,237,0.4)",
             }}
           >
             Export →
@@ -141,27 +155,11 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         )}
       </div>
 
-      {/* Progress summary — hidden when filtered */}
-      {all.length > 0 && !isFiltered && (() => {
-        const parts: React.ReactNode[] = [
-          totalNeedsReview > 0 && <span key="review">{totalNeedsReview} to review</span>,
-          totalConfirmed > 0 && <span key="confirmed">{totalConfirmed} confirmed</span>,
-          confirmedValue > 0 && <span key="value" className="font-semibold" style={{ color: "var(--text-secondary)" }}>~{fmt(confirmedValue)}</span>,
-        ].filter(Boolean);
-        return parts.length > 0 ? (
-          <p className="mt-2 text-sm" style={{ color: "var(--text-muted)" }}>
-            {parts.map((part, i) => (
-              <span key={i}>{i > 0 && " · "}{part}</span>
-            ))}
-          </p>
-        ) : null;
-      })()}
-
       {/* Next action — hidden when filtered */}
       {all.length > 0 && !isFiltered && (() => {
         if (totalNeedsReview > 0) return (
-          <div className="mt-4 space-y-2">
-            <div className="rounded-xl px-4 py-3 flex items-center justify-between gap-4" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
+          <div className="mt-5 space-y-2">
+            <div className="rounded-xl px-4 py-3.5 flex items-center justify-between gap-4" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}>
               <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
                 {totalNeedsReview} item{totalNeedsReview !== 1 ? "s" : ""} left
                 {pendingValue > 0 && <> · <span className="font-semibold" style={{ color: "var(--text-primary)" }}>~{fmt(pendingValue)}</span></>}
@@ -182,12 +180,12 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         );
 
         if (totalConfirmed > 0) return (
-          <div className="mt-5 rounded-2xl px-6 py-6 text-center space-y-4" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--violet-from)" }}>
+          <div className="mt-5 rounded-2xl px-6 py-6 text-center space-y-3" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "0 0 0 1px rgba(124,58,237,0.2), 0 0 24px rgba(124,58,237,0.08)" }}>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
                 Review complete
               </p>
-              <p className="text-[28px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
+              <p className="mt-2 text-[32px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
                 ~{fmt(confirmedValue)}
               </p>
               <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
@@ -199,8 +197,8 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
             </p>
             <a
               href="/export"
-              className="block w-full rounded-xl py-3.5 text-base font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
-              style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
+              className="block w-full rounded-xl py-3.5 text-[15px] font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
+              style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))", boxShadow: "0 2px 12px rgba(124,58,237,0.3)" }}
             >
               View your tax summary →
             </a>
@@ -211,7 +209,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
       })()}
 
       {/* Divider + filters */}
-      <div className="mt-6 border-t" style={{ borderColor: "var(--bg-elevated)" }} />
+      <div className="mt-6 border-t" style={{ borderColor: "var(--bg-border)" }} />
       <ReviewFilters categories={allowedCategories} />
 
       {/* List */}

@@ -86,11 +86,11 @@ export default async function ExportReport() {
       `}</style>
 
       {/* Toolbar — screen only */}
-      <div className="no-print" style={{ position: "sticky", top: 0, zIndex: 10, background: "#fff", borderBottom: "1px solid #e5e7eb", padding: "10px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div className="no-print" style={{ position: "sticky", top: 0, zIndex: 10, background: "var(--bg-card)", borderBottom: "1px solid var(--bg-border)", padding: "10px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <a href="/export" style={{ fontSize: 13, color: "#6b7280", textDecoration: "underline" }}>← Back</a>
-          <span style={{ color: "#d1d5db" }}>|</span>
-          <span style={{ fontSize: 13, color: "#9ca3af" }}>Tax Deduction Report {fy}</span>
+          <a href="/export" style={{ fontSize: 13, color: "var(--text-muted)", textDecoration: "none", fontWeight: 500 }}>← Back to Export</a>
+          <span style={{ color: "var(--bg-border)" }}>|</span>
+          <span style={{ fontSize: 13, color: "var(--text-muted)" }}>Tax Deduction Report {fy}</span>
         </div>
         <PrintButton />
       </div>

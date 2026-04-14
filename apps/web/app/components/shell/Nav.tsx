@@ -39,10 +39,12 @@ export default function Nav() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="shrink-0 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors duration-150"
+                  className="shrink-0 px-3 text-sm font-medium whitespace-nowrap transition-colors duration-150"
                   style={{
-                    color:           active ? "var(--text-primary)" : "var(--text-muted)",
-                    backgroundColor: active ? "var(--bg-elevated)"  : "transparent",
+                    color:         active ? "var(--text-primary)" : "var(--text-muted)",
+                    paddingTop:    "calc((3rem - 1.25rem) / 2)",
+                    paddingBottom: "calc((3rem - 1.25rem) / 2 - 2px)",
+                    borderBottom:  active ? "2px solid var(--violet-from)" : "2px solid transparent",
                   }}
                 >
                   {link.label}

@@ -20,23 +20,25 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen flex-col">
         <Nav />
         <div className="flex-1">{children}</div>
-        <footer style={{ borderTop: "1px solid var(--bg-elevated)" }}>
-          <div className="mx-auto max-w-5xl px-5 py-3 flex items-center justify-end gap-4" style={{ opacity: 0.45 }}>
+        <footer style={{ borderTop: "1px solid var(--bg-border)" }}>
+          <div className="mx-auto max-w-5xl px-5 py-3 flex items-center justify-between gap-4" style={{ opacity: 0.45 }}>
             <ThemeToggle />
-            <a
-              href="mailto:feedback@kashio.app?subject=Kashio%20issue&body=Page%3A%20%0A%0AWhat%20happened%3A%20%0A%0AWhat%20I%20expected%3A%20"
-              className="text-xs transition-opacity hover:opacity-100"
-              style={{ color: "var(--text-muted)" }}
-            >
-              Report an issue
-            </a>
-            <a
-              href="mailto:feedback@kashio.app?subject=Kashio%20feedback"
-              className="text-xs transition-opacity hover:opacity-100"
-              style={{ color: "var(--text-muted)" }}
-            >
-              Send feedback
-            </a>
+            <div className="flex items-center gap-4">
+              <a
+                href="mailto:feedback@kashio.app?subject=Kashio%20issue&body=Page%3A%20%0A%0AWhat%20happened%3A%20%0A%0AWhat%20I%20expected%3A%20"
+                className="text-xs transition-opacity hover:opacity-100"
+                style={{ color: "var(--text-muted)" }}
+              >
+                Report an issue
+              </a>
+              <a
+                href="mailto:feedback@kashio.app?subject=Kashio%20feedback"
+                className="text-xs transition-opacity hover:opacity-100"
+                style={{ color: "var(--text-muted)" }}
+              >
+                Send feedback
+              </a>
+            </div>
           </div>
         </footer>
       </div>

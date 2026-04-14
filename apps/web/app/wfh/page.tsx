@@ -59,7 +59,7 @@ export default async function WfhLog() {
             {/* Hours */}
             <div
               className="rounded-xl px-4 py-4 flex flex-col justify-between"
-              style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)", minHeight: 110 }}
+              style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", minHeight: 110 }}
             >
               <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
                 {monthName}
@@ -77,7 +77,7 @@ export default async function WfhLog() {
             {/* Est. deduction */}
             <div
               className="rounded-xl px-4 py-4 flex flex-col justify-between"
-              style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)", minHeight: 110 }}
+              style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", minHeight: 110 }}
             >
               <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
                 Est. deduction
@@ -125,7 +125,7 @@ export default async function WfhLog() {
               <div
                 key={entry.id}
                 className="flex items-center justify-between gap-4 rounded-xl px-4 py-3"
-                style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}
+                style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}
               >
                 <div className="flex items-center gap-4 min-w-0">
                   <span className="shrink-0 text-sm tabular-nums" style={{ color: "var(--text-primary)" }}>

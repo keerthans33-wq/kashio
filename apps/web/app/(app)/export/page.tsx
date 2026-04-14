@@ -81,19 +81,21 @@ export default async function Export() {
 
   if (confirmed.length === 0) {
     return (
-      <main className="mx-auto max-w-lg px-4 sm:px-6 py-12 text-center space-y-4">
-        <h1 className="text-[30px] font-bold" style={{ color: "var(--text-primary)" }}>
-          Your tax summary is empty
-        </h1>
-        <p className="text-[15px]" style={{ color: "var(--text-secondary)" }}>
-          {userType === "contractor"
-            ? "Confirm your business expenses in Review and they'll appear in your summary."
-            : "Confirm some deductions in Review and they'll appear in your summary."}
-        </p>
+      <main className="mx-auto max-w-lg px-4 sm:px-6 py-12 text-center space-y-5">
+        <div>
+          <h1 className="text-[28px] font-bold" style={{ color: "var(--text-primary)" }}>
+            Your tax summary is empty
+          </h1>
+          <p className="mt-2 text-[15px]" style={{ color: "var(--text-secondary)" }}>
+            {userType === "contractor"
+              ? "Confirm your business expenses in Review and they'll appear here."
+              : "Confirm some deductions in Review and they'll appear here."}
+          </p>
+        </div>
         <a
           href="/review"
-          className="inline-block rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-all duration-150 hover:opacity-90"
-          style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
+          className="inline-block rounded-xl px-6 py-3 text-sm font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
+          style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))", boxShadow: "0 2px 12px rgba(124,58,237,0.3)" }}
         >
           {(userType && EMPTY_CTA[userType]) ?? "Review deductions"}
         </a>
@@ -107,8 +109,8 @@ export default async function Export() {
     <main className="mx-auto max-w-lg px-4 sm:px-6 py-8 sm:py-12">
 
       {/* 1. Title + subtitle */}
-      <div className="mb-7">
-        <h1 className="text-[30px] font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
+      <div className="mb-8">
+        <h1 className="text-[28px] font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
           Your tax summary
         </h1>
         <p className="mt-1.5 text-sm" style={{ color: "var(--text-muted)" }}>
@@ -122,7 +124,7 @@ export default async function Export() {
         {/* Total deductions */}
         <div
           className="rounded-xl px-5 py-5 flex flex-col gap-3"
-          style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)", minHeight: 190 }}
+          style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", minHeight: 190 }}
         >
           <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
             {(userType && TOTAL_LABEL[userType]) ?? "Total deductions"}
@@ -147,7 +149,7 @@ export default async function Export() {
         {wfhYtdHours > 0 && (
           <div
             className="rounded-xl px-5 py-5 flex flex-col gap-3"
-            style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)", minHeight: 190 }}
+            style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", minHeight: 190 }}
           >
             <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
               {(userType && WFH_LABEL[userType]) ?? "Home office"}
@@ -176,7 +178,7 @@ export default async function Export() {
       {/* Footer notes */}
       <div
         className="mt-8 pt-6 space-y-1.5 text-center"
-        style={{ borderTop: "1px solid var(--bg-elevated)" }}
+        style={{ borderTop: "1px solid var(--bg-border)" }}
       >
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
           The ATO recommends keeping receipts for your records.

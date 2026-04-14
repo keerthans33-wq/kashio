@@ -42,7 +42,7 @@ export function WfhForm() {
   const inputClass = "h-11 w-full rounded-xl px-3 text-sm focus:outline-none focus:ring-1 transition-colors";
   const inputStyle = {
     backgroundColor: "var(--bg-elevated)",
-    border: "1px solid var(--bg-elevated)",
+    border: "1px solid var(--bg-border)",
     color: "var(--text-primary)",
   };
 
@@ -59,7 +59,7 @@ export function WfhForm() {
             value={date}
             onChange={(e) => { setDate(e.target.value); setDateError(null); setSuccess(false); }}
             className={inputClass}
-            style={{ ...inputStyle, borderColor: dateError ? "#EF4444" : "var(--bg-elevated)" }}
+            style={{ ...inputStyle, borderColor: dateError ? "#EF4444" : "var(--bg-border)" }}
           />
           {dateError && <p className="mt-1 text-xs text-red-400">{dateError}</p>}
         </div>
@@ -77,7 +77,7 @@ export function WfhForm() {
             value={hours}
             onChange={(e) => { setHours(e.target.value); setHoursError(null); setSuccess(false); }}
             className={inputClass}
-            style={{ ...inputStyle, borderColor: hoursError ? "#EF4444" : "var(--bg-elevated)" }}
+            style={{ ...inputStyle, borderColor: hoursError ? "#EF4444" : "var(--bg-border)" }}
           />
           {hoursError && <p className="mt-1 text-xs text-red-400">{hoursError}</p>}
         </div>

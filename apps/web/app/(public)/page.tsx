@@ -5,7 +5,8 @@ import { getUserWithType } from "../../lib/auth";
 const steps = [
   { n: "1", label: "Import your transactions" },
   { n: "2", label: "Review possible deductions" },
-  { n: "3", label: "Export your tax summary" },
+  { n: "3", label: "Track work from home hours" },
+  { n: "4", label: "Export your tax summary" },
 ];
 
 export default async function Home({
@@ -40,20 +41,20 @@ export default async function Home({
 
       {/* Subheadline */}
       <p className="mt-4 text-[16px] leading-relaxed max-w-sm" style={{ color: "var(--text-secondary)" }}>
-        Kashio scans your transactions, highlights what may be claimable for work or business use, and helps you track work from home hours.
+        Kashio scans your bank transactions, flags what may be claimable, and tracks your work from home hours — all in one place.
       </p>
 
       {/* Steps */}
-      <div className="mt-12 flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-10">
+      <div className="mt-12 grid grid-cols-2 sm:flex sm:flex-row items-center sm:items-start gap-6 sm:gap-8">
         {steps.map((step) => (
           <div key={step.n} className="flex flex-col items-center gap-2">
             <span
-              className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
               style={{ background: "linear-gradient(135deg, var(--violet-from), var(--violet-to))" }}
             >
               {step.n}
             </span>
-            <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>{step.label}</p>
+            <p className="text-sm font-medium text-center max-w-[100px]" style={{ color: "var(--text-secondary)" }}>{step.label}</p>
           </div>
         ))}
       </div>
