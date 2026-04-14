@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Papa from "papaparse";
 import { validateCsv, type ValidRow, type InvalidRow, type RawRow } from "../../../lib/validateCsv";
 import { remapColumns, type ColumnMapping } from "../../../lib/remapColumns";
+import { detectColumns, mergeDebitCredit } from "../../../lib/detectColumns";
 import PreviewTable from "./PreviewTable";
 import ColumnMapper from "./ColumnMapper";
 
@@ -45,21 +46,6 @@ const BANKS = [
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-const REQUIRED_COLUMNS = ["date", "description", "amount"];
-
-function hasMatchingHeaders(firstRow: string[]): boolean {
-  const lower = firstRow.map((h) => h.trim().toLowerCase());
-  return REQUIRED_COLUMNS.every((col) => lower.includes(col));
-}
-
-function toMappedRows(rows: string[][], headers: string[]): RawRow[] {
-  return rows.map((row) => {
-    const obj: RawRow = {};
-    headers.forEach((h, i) => { obj[h] = row[i]?.trim() ?? ""; });
-    return obj;
-  });
-}
 
 async function saveTransactions(
   transactions: ValidRow[],
@@ -139,12 +125,22 @@ export default function CsvUploader() {
         }
         const allRows = results.data;
         if (allRows.length === 0) { setParseError("The file has no rows."); return; }
-        const firstRow = allRows[0];
-        if (hasMatchingHeaders(firstRow)) {
-          const headers  = firstRow.map((h) => h.trim().toLowerCase());
-          const dataRows = toMappedRows(allRows.slice(1), headers);
-          runValidation(dataRows, headers);
+
+        const detected = detectColumns(allRows);
+
+        if (detected?.kind === "mapped") {
+          // Auto-mapped — no user intervention needed
+          const dataRows = detected.skipFirstRow ? allRows.slice(1) : allRows;
+          const mapped = remapColumns(dataRows, detected.mapping);
+          runValidation(mapped, ["date", "description", "amount"], detected.skipFirstRow ? 2 : 1);
+
+        } else if (detected?.kind === "debit_credit") {
+          // Split debit/credit columns — merge then validate
+          const merged = mergeDebitCredit(allRows, detected);
+          runValidation(merged, ["date", "description", "amount"], detected.skipFirstRow ? 2 : 1);
+
         } else {
+          // Truly ambiguous — fall back to manual ColumnMapper
           setRawRows(allRows);
         }
       },
@@ -183,7 +179,7 @@ export default function CsvUploader() {
     if (!rawRows) return;
     const dataRows = skipFirstRow ? rawRows.slice(1) : rawRows;
     const remapped = remapColumns(dataRows, mapping);
-    runValidation(remapped, REQUIRED_COLUMNS, skipFirstRow ? 2 : 1);
+    runValidation(remapped, ["date", "description", "amount"], skipFirstRow ? 2 : 1);
     setRawRows(null);
   }
 
