@@ -78,7 +78,7 @@ export default function ImportedBatches() {
   if (batches.length === 0) return null;
 
   return (
-    <div className="mt-8 pt-8" style={{ borderTop: "1px solid var(--bg-elevated)" }}>
+    <div className="mt-8 pt-8" style={{ borderTop: "1px solid var(--bg-border)" }}>
 
       <div className="flex items-center justify-between gap-4 mb-3">
         <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
@@ -94,14 +94,14 @@ export default function ImportedBatches() {
         </button>
       </div>
 
-      <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--bg-elevated)" }}>
+      <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--bg-border)" }}>
         {batches.map((batch, i) => (
           <div
             key={batch.id}
             className="flex items-center justify-between gap-4 px-4 py-3"
             style={{
               backgroundColor: "var(--bg-card)",
-              borderTop: i > 0 ? "1px solid var(--bg-elevated)" : undefined,
+              borderTop: i > 0 ? "1px solid var(--bg-border)" : undefined,
             }}
           >
             <div className="min-w-0">

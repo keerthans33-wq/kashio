@@ -204,7 +204,7 @@ export default function CsvUploader() {
   if (importResult !== null) {
     const noneAdded = importResult.inserted === 0 && importResult.duplicates > 0;
     return (
-      <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}>
         <div className="flex items-start gap-3 px-5 py-5">
           <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold" style={{ backgroundColor: "rgba(34,197,94,0.12)", color: "#22C55E" }}>
             ✓
@@ -227,7 +227,7 @@ export default function CsvUploader() {
         </div>
 
         {importResult.flagged > 0 && (
-          <div className="px-5 py-5" style={{ borderTop: "1px solid var(--bg-elevated)" }}>
+          <div className="px-5 py-5" style={{ borderTop: "1px solid var(--bg-border)" }}>
             <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
               Potential deductions found
             </p>
@@ -240,7 +240,7 @@ export default function CsvUploader() {
           </div>
         )}
 
-        <div className="px-5 py-4 flex flex-wrap items-center gap-3" style={{ borderTop: "1px solid var(--bg-elevated)" }}>
+        <div className="px-5 py-4 flex flex-wrap items-center gap-3" style={{ borderTop: "1px solid var(--bg-border)" }}>
           <a
             href="/review"
             className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98]"
@@ -269,7 +269,7 @@ export default function CsvUploader() {
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed cursor-pointer transition-all duration-150 px-6 py-10 text-center select-none"
+        className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed cursor-pointer transition-all duration-150 px-6 py-14 text-center select-none"
         style={{
           borderColor:     isDragging ? "var(--violet-from)" : "rgba(124,58,237,0.25)",
           backgroundColor: isDragging ? "rgba(124,58,237,0.06)" : "rgba(124,58,237,0.03)",
@@ -300,30 +300,18 @@ export default function CsvUploader() {
             </p>
           </>
         ) : (
-          <>
-            <div>
-              <p className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>
-                Upload CSV file
-              </p>
-              <p className="mt-0.5 text-sm" style={{ color: "var(--text-muted)" }}>
-                Drag and drop, or click to browse
-              </p>
-            </div>
-            <p className="text-xs" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
-              Accepted format: .csv
+          <div>
+            <p className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>
+              Upload CSV file
             </p>
-          </>
+            <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
+              Drag and drop, or click to browse
+            </p>
+          </div>
         )}
 
         <input ref={inputRef} type="file" accept=".csv" onChange={handleFileChange} className="hidden" />
       </div>
-
-      {/* Helper text */}
-      {!file && (
-        <p className="mt-2.5 text-center text-xs" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
-          Works with major Australian banks
-        </p>
-      )}
 
       {/* File / parse errors */}
       {(fileError || parseError) && (
@@ -370,7 +358,7 @@ export default function CsvUploader() {
             onClick={handleImport}
             disabled={importing}
             className="w-full rounded-xl py-3.5 text-[15px] font-semibold text-white transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
-            style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
+            style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))", boxShadow: "0 2px 12px rgba(124,58,237,0.3)" }}
           >
             {importing
               ? "Reading your transactions…"
@@ -396,9 +384,9 @@ export default function CsvUploader() {
             style={{ color: "var(--text-muted)" }}
           >
             <span>
-              Don&apos;t know how to download your CSV?{" "}
+              How to export from your bank?{" "}
               <span className="underline underline-offset-2" style={{ color: "var(--text-secondary)" }}>
-                See steps for your bank
+                View steps
               </span>
             </span>
             <svg
@@ -414,15 +402,15 @@ export default function CsvUploader() {
           {showInstructions && (
             <div
               className="mt-4 rounded-2xl px-5 py-5"
-              style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}
+              style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}
             >
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
                 {BANKS.map((bank) => (
                   <div key={bank.name}>
                     <p className="text-sm font-semibold mb-2" style={{ color: "var(--text-primary)" }}>
                       {bank.name}
                     </p>
-                    <ol className="space-y-1.5">
+                    <ol className="space-y-1">
                       {bank.steps.map((step, i) => (
                         <li key={i} className="flex gap-2 text-sm" style={{ color: "var(--text-secondary)" }}>
                           <span className="shrink-0 tabular-nums" style={{ color: "var(--text-muted)" }}>
