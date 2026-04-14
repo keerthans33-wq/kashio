@@ -31,9 +31,20 @@ export async function runImportPipeline(
     existing.map((t) => `${t.date}|${t.description}|${t.amount}`)
   );
 
-  const newRows = rows.filter(
+  const unseenRows = rows.filter(
     (r) => !existingKeys.has(`${r.date}|${r.description}|${r.amount}`)
   );
+
+  // Also deduplicate within the new batch itself (same day + same description + same amount).
+  // Without this, createMany throws a unique constraint violation when the file has
+  // identical-looking transactions (e.g. two $9.99 coffee purchases on the same day).
+  const seenInBatch = new Set<string>();
+  const newRows = unseenRows.filter((r) => {
+    const key = `${r.date}|${r.description}|${r.amount}`;
+    if (seenInBatch.has(key)) return false;
+    seenInBatch.add(key);
+    return true;
+  });
 
   const duplicates = rows.length - newRows.length;
 
