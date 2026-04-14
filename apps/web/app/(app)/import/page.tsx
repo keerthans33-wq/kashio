@@ -1,4 +1,5 @@
 import CsvUploader from "../../components/import/CsvUploader";
+import ImportedBatches from "../../components/import/ImportedBatches";
 
 export default function Import() {
   return (
@@ -6,10 +7,16 @@ export default function Import() {
 
       {/* Header */}
       <div className="mb-10 text-center">
+        <div
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold mb-4"
+          style={{ backgroundColor: "rgba(124,58,237,0.1)", color: "var(--violet-from)" }}
+        >
+          <span>CSV import</span>
+        </div>
         <h1 className="text-[28px] font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
           Import your bank transactions
         </h1>
-        <p className="mt-2 text-[15px]" style={{ color: "var(--text-muted)" }}>
+        <p className="mt-2 text-[15px]" style={{ color: "var(--text-secondary)" }}>
           Takes less than 30 seconds. Your data stays private.
         </p>
       </div>
@@ -17,17 +24,20 @@ export default function Import() {
       {/* Primary: CSV upload */}
       <CsvUploader />
 
+      {/* Previously imported batches with clear option */}
+      <ImportedBatches />
+
       {/* Divider */}
       <div className="my-8 flex items-center gap-4">
-        <div className="flex-1 h-px" style={{ backgroundColor: "var(--bg-elevated)" }} />
+        <div className="flex-1 h-px" style={{ backgroundColor: "var(--bg-border)" }} />
         <span className="text-xs font-medium tracking-wide" style={{ color: "var(--text-muted)" }}>OR</span>
-        <div className="flex-1 h-px" style={{ backgroundColor: "var(--bg-elevated)" }} />
+        <div className="flex-1 h-px" style={{ backgroundColor: "var(--bg-border)" }} />
       </div>
 
       {/* Coming soon: bank connection */}
       <div
         className="rounded-2xl px-5 py-5"
-        style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)", opacity: 0.65 }}
+        style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", opacity: 0.65 }}
       >
         <p className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>
           Connect your bank
