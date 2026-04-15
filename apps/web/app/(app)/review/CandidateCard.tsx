@@ -126,15 +126,15 @@ export function CandidateCard({
       >
 
         {/* Row 1: merchant + amount */}
-        <div className="flex items-baseline justify-between gap-3">
+        <div className="flex items-center justify-between gap-3">
           <p
-            className="truncate text-[15px] font-semibold"
-            style={{ color: "var(--text-primary)" }}
+            className="truncate text-[14px] font-medium"
+            style={{ color: "var(--text-secondary)" }}
           >
             {transaction.normalizedMerchant}
           </p>
           <p
-            className="shrink-0 text-[20px] font-bold tabular-nums tracking-tight"
+            className="shrink-0 text-[24px] font-bold tabular-nums tracking-tight leading-none"
             style={{ color: status === "CONFIRMED" ? "#22C55E" : "var(--text-primary)" }}
           >
             ${Math.abs(transaction.amount).toFixed(2)}
@@ -163,11 +163,11 @@ export function CandidateCard({
           )}
         </div>
 
-        {/* Row 3: short reason — default, max 2 lines */}
+        {/* Row 3: short reason — single line */}
         {!settled && (
           <p
-            className="mt-2.5 text-[13px] leading-snug line-clamp-2"
-            style={{ color: "var(--text-secondary)" }}
+            className="mt-2 text-[12px] leading-snug line-clamp-1"
+            style={{ color: "var(--text-muted)" }}
           >
             {reason}
           </p>
@@ -196,14 +196,14 @@ export function CandidateCard({
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Button size="sm" onClick={handleConfirm} disabled={isSaving}>
-                {isSaving ? "Saving…" : "Looks deductible"}
+              <Button size="sm" className="flex-1" onClick={handleConfirm} disabled={isSaving}>
+                {isSaving ? "Saving…" : "Confirm"}
               </Button>
-              <Button variant="secondary" size="sm" onClick={handleReject} disabled={isSaving}>
-                Not deductible
+              <Button variant="secondary" size="sm" className="flex-1" onClick={handleReject} disabled={isSaving}>
+                Skip
               </Button>
               <button
-                className="ml-auto text-[12px] transition-colors duration-150"
+                className="shrink-0 text-[12px] transition-colors duration-150 px-1"
                 style={{ color: "var(--text-muted)" }}
                 onClick={() => setExpanded((v) => !v)}
               >

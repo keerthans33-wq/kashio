@@ -115,7 +115,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
             })}
             disabled={isSaving}
           >
-            {isSaving ? "Saving…" : "Looks deductible"}
+            {isSaving ? "Saving…" : "Confirm"}
           </Button>
           <Button
             variant="secondary"
@@ -125,7 +125,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
             }))}
             disabled={isSaving}
           >
-            {isSaving ? "Saving…" : "Not deductible"}
+            {isSaving ? "Saving…" : "Skip"}
           </Button>
           <Button variant="ghost" size="xs" onClick={() => setSelected(new Set())}>
             Clear
