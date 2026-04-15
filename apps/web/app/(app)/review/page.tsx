@@ -16,16 +16,12 @@ const HEADING: Record<string, string> = {
 };
 
 const EMPTY_STATE: Record<string, string> = {
-  employee:    "Import your bank transactions and Kashio will flag expenses that look work-related.",
-  contractor:  "Import your bank transactions and Kashio will flag your possible business expenses.",
-  sole_trader: "Import your bank transactions and Kashio will flag your possible business deductions.",
+  employee:    "Import your bank CSV to see possible deductions.",
+  contractor:  "Import your bank CSV to see possible expenses.",
+  sole_trader: "Import your bank CSV to see possible deductions.",
 };
 
-const DISCLAIMER: Record<string, string> = {
-  employee:    "Kashio helps you spot possible work-related deductions. It's not a tax adviser. Check with your accountant before lodging.",
-  contractor:  "Kashio helps you spot possible business expenses. It's not a tax adviser. Check with your accountant before lodging.",
-  sole_trader: "Kashio helps you spot possible business deductions. It's not a tax adviser. Check with your accountant before lodging.",
-};
+const DISCLAIMER = "Not tax advice — check with your accountant before lodging.";
 
 export const dynamic = "force-dynamic";
 
@@ -187,8 +183,8 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         <div className="mt-10 rounded-2xl px-6 py-10 text-center space-y-3" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}>
           <p className="text-[15px] font-medium" style={{ color: "var(--text-secondary)" }}>Nothing to review yet</p>
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-            <Link href="/import" className="underline underline-offset-2">Import your transactions</Link>
-            {" "}and Kashio will flag your possible {termPlural(userType)}.
+            <Link href="/import" className="underline underline-offset-2">Import your bank CSV</Link>
+            {" "}to get started.
           </p>
         </div>
       ) : candidates.length === 0 ? (
@@ -212,7 +208,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
       {all.length > 0 && (
         <p className="mt-10 text-xs" style={{ color: "var(--text-muted)", opacity: 0.6 }}>
-          {(userType && DISCLAIMER[userType]) ?? "Kashio helps you spot possible deductions. It's not a tax adviser."}
+          {DISCLAIMER}
         </p>
       )}
     </MobileScreen>
