@@ -40,18 +40,23 @@ export function WfhForm() {
     }
   }
 
-  const inputClass = "h-11 w-full rounded-xl px-4 text-sm focus:outline-none focus:ring-1 transition-colors";
   const inputStyle = {
     backgroundColor: "var(--bg-elevated)",
-    border: "1px solid var(--bg-border)",
-    color: "var(--text-primary)",
+    border:          "1px solid var(--bg-border)",
+    color:           "var(--text-primary)",
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <form onSubmit={handleSubmit} className="space-y-3">
+
+      {/* Date + Hours — always side by side */}
+      <div className="grid grid-cols-2 gap-3">
         <div>
-          <label htmlFor="wfh-date" className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
+          <label
+            htmlFor="wfh-date"
+            className="block text-[12px] font-medium mb-1.5"
+            style={{ color: "var(--text-muted)" }}
+          >
             Date
           </label>
           <input
@@ -59,13 +64,18 @@ export function WfhForm() {
             type="date"
             value={date}
             onChange={(e) => { setDate(e.target.value); setDateError(null); setSuccess(false); }}
-            className={inputClass}
+            className="h-11 w-full rounded-xl px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#22C55E] transition-colors"
             style={{ ...inputStyle, borderColor: dateError ? "#EF4444" : "var(--bg-border)" }}
           />
           {dateError && <p className="mt-1 text-xs text-red-400">{dateError}</p>}
         </div>
+
         <div>
-          <label htmlFor="wfh-hours" className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
+          <label
+            htmlFor="wfh-hours"
+            className="block text-[12px] font-medium mb-1.5"
+            style={{ color: "var(--text-muted)" }}
+          >
             Hours
           </label>
           <input
@@ -74,44 +84,36 @@ export function WfhForm() {
             min="0.5"
             max="16"
             step="0.5"
-            placeholder="e.g. 8"
+            placeholder="8"
             value={hours}
             onChange={(e) => { setHours(e.target.value); setHoursError(null); setSuccess(false); }}
-            className={inputClass}
+            className="h-11 w-full rounded-xl px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#22C55E] transition-colors"
             style={{ ...inputStyle, borderColor: hoursError ? "#EF4444" : "var(--bg-border)" }}
           />
           {hoursError && <p className="mt-1 text-xs text-red-400">{hoursError}</p>}
         </div>
       </div>
 
-      <div>
-        <label htmlFor="wfh-note" className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
-          Note <span className="font-normal" style={{ color: "var(--text-muted)" }}>(optional)</span>
-        </label>
-        <input
-          id="wfh-note"
-          type="text"
-          placeholder="e.g. Full day, video calls"
-          value={note}
-          onChange={(e) => { setNote(e.target.value); setSuccess(false); }}
-          className={inputClass}
-          style={inputStyle}
-        />
-      </div>
+      {/* Note — optional, subdued */}
+      <input
+        id="wfh-note"
+        type="text"
+        placeholder="Note (optional) — e.g. Full day, video calls"
+        value={note}
+        onChange={(e) => { setNote(e.target.value); setSuccess(false); }}
+        className="h-11 w-full rounded-xl px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#22C55E] transition-colors"
+        style={inputStyle}
+      />
 
       {saveError && (
-        <div className="rounded-xl px-4 py-3" style={{ backgroundColor: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.18)" }}>
-          <p className="text-sm text-red-400">{saveError}</p>
-        </div>
+        <p className="text-sm text-red-400">{saveError}</p>
       )}
       {success && (
-        <div className="rounded-xl px-4 py-3" style={{ backgroundColor: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)" }}>
-          <p className="text-sm" style={{ color: "#22C55E" }}>Entry saved.</p>
-        </div>
+        <p className="text-sm font-medium" style={{ color: "#22C55E" }}>Entry saved.</p>
       )}
 
       <Button type="submit" disabled={saving} className="w-full">
-        {saving ? "Saving…" : "Add entry"}
+        {saving ? "Saving…" : "Log hours"}
       </Button>
     </form>
   );
