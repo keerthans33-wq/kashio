@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CandidateCard, type CandidateCardProps } from "./CandidateCard";
 import { bulkConfirmCandidates, bulkRejectCandidates, bulkResetCandidates } from "./actions";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   needsReview:     CandidateCardProps[];
@@ -96,7 +97,8 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
       {selected.size > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3" style={{ borderColor: "var(--bg-border)", backgroundColor: "var(--bg-card)" }}>
           <span className="text-sm" style={{ color: "var(--text-secondary)" }}>{selected.size} selected</span>
-          <button
+          <Button
+            size="sm"
             onClick={() => bulkAction(bulkConfirmCandidates, (ids) => {
               const total = needsReview
                 .filter((c) => ids.includes(c.id))
@@ -108,24 +110,22 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
               };
             })}
             disabled={isSaving}
-            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40 transition-all duration-150"
-            style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
           >
             {isSaving ? "Saving…" : "Looks deductible"}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => bulkAction(bulkRejectCandidates, (ids) => ({
               primary: `${ids.length} item${ids.length !== 1 ? "s" : ""} marked not deductible`,
             }))}
             disabled={isSaving}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-40 transition-colors duration-150"
-            style={{ border: "1px solid var(--bg-border)", color: "var(--text-muted)" }}
           >
             {isSaving ? "Saving…" : "Not deductible"}
-          </button>
-          <button onClick={() => setSelected(new Set())} className="text-xs underline" style={{ color: "var(--text-muted)" }}>
+          </Button>
+          <Button variant="ghost" size="xs" onClick={() => setSelected(new Set())}>
             Clear
-          </button>
+          </Button>
           {error && <span className="text-xs text-red-400">{error}</span>}
         </div>
       )}

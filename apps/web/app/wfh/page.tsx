@@ -1,9 +1,11 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "../../lib/db";
 import { requireUserWithType } from "../../lib/auth";
 import { calcWfhSummary } from "../../lib/wfhSummary";
 import { WfhForm } from "./WfhForm";
 import { deleteWfhEntry } from "./actions";
+import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -36,13 +38,9 @@ export default async function WfhLog() {
           Work from home
         </h1>
         {entries.length > 0 && (
-          <a
-            href="/export"
-            className="shrink-0 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
-            style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
-          >
-            Export →
-          </a>
+          <Button asChild size="sm">
+            <Link href="/export">Export →</Link>
+          </Button>
         )}
       </div>
 

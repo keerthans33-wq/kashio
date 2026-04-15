@@ -1,7 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import Papa from "papaparse";
+import { Button } from "@/components/ui/button";
 import { validateCsv, type ValidRow, type InvalidRow, type RawRow } from "../../../lib/validateCsv";
 import { remapColumns, type ColumnMapping } from "../../../lib/remapColumns";
 import { detectColumns, mergeDebitCredit } from "../../../lib/detectColumns";
@@ -247,16 +249,12 @@ export default function CsvUploader() {
           {/* TODO (2/3 — Review Screen): Once the review page filters by batch,
               change href to `/review?batchId=${importResult.batchId}` so the
               user lands directly on the transactions they just imported. */}
-          <a
-            href="/review"
-            className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98]"
-            style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
-          >
-            Review deductions →
-          </a>
-          <button type="button" onClick={reset} className="text-sm" style={{ color: "var(--text-muted)" }}>
+          <Button asChild size="sm">
+            <Link href="/review">Review deductions →</Link>
+          </Button>
+          <Button variant="ghost" size="sm" type="button" onClick={reset}>
             Import another file
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -359,17 +357,11 @@ export default function CsvUploader() {
       {/* Import button */}
       {result && !noUsableRows && (
         <div className="mt-4 space-y-2">
-          <button
-            type="button"
-            onClick={handleImport}
-            disabled={importing}
-            className="w-full rounded-xl py-3.5 text-[15px] font-semibold text-white transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
-            style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))", boxShadow: "0 2px 12px rgba(124,58,237,0.3)" }}
-          >
+          <Button type="button" onClick={handleImport} disabled={importing} className="w-full">
             {importing
               ? "Reading your transactions…"
               : `Import ${result.valid.length} transaction${result.valid.length !== 1 ? "s" : ""}`}
-          </button>
+          </Button>
           {importError && <p className="text-xs text-center text-red-400">{importError}</p>}
         </div>
       )}

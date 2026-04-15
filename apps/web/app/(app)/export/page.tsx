@@ -1,9 +1,11 @@
+import Link from "next/link";
 import { db } from "../../../lib/db";
 import { requireUserWithType } from "../../../lib/auth";
 import { mapExportRow } from "../../../lib/export/mapExportRow";
 import { ACTIVE_CATEGORIES, CATEGORIES_BY_USER_TYPE } from "../../../lib/rules/categories";
 import { calcWfhSummary } from "../../../lib/wfhSummary";
 import { PaywallGate } from "./PaywallGate";
+import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -92,13 +94,9 @@ export default async function Export() {
               : "Confirm some deductions in Review and they'll appear here."}
           </p>
         </div>
-        <a
-          href="/review"
-          className="inline-block rounded-xl px-6 py-3 text-sm font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
-          style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))", boxShadow: "0 2px 12px rgba(124,58,237,0.3)" }}
-        >
-          {(userType && EMPTY_CTA[userType]) ?? "Review deductions"}
-        </a>
+        <Button asChild>
+          <Link href="/review">{(userType && EMPTY_CTA[userType]) ?? "Review deductions"}</Link>
+        </Button>
       </main>
     );
   }

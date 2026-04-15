@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ExportButton } from "./ExportButton";
+import { Button } from "@/components/ui/button";
 
 type Item = {
   id:       string;
@@ -175,13 +176,9 @@ export function PaywallGate({ allItems, categoryGroups, total }: Props) {
           </span>
         </div>
 
-        <button
-          onClick={unlock}
-          className="w-full rounded-xl py-3.5 text-base font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
-          style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
-        >
+        <Button onClick={unlock} className="w-full">
           Unlock report
-        </button>
+        </Button>
       </div>
     </>
   );

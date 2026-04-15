@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "../../../lib/supabase";
+import { Button } from "@/components/ui/button";
 
 const OPTIONS = [
   { id: "employee",    label: "Employee" },
@@ -93,14 +94,13 @@ export default function OnboardingPage() {
 
         {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
 
-        <button
+        <Button
           onClick={handleContinue}
           disabled={!selected || loading}
-          className="mt-6 w-full rounded-xl py-3 text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98] disabled:opacity-40"
-          style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
+          className="mt-6 w-full"
         >
           {loading ? "Saving…" : "Continue"}
-        </button>
+        </Button>
 
       </div>
     </main>

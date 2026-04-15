@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { confirmCandidate, rejectCandidate, resetCandidate, saveEvidence } from "./actions";
+import { Button } from "@/components/ui/button";
 
 type Status     = "NEEDS_REVIEW" | "CONFIRMED" | "REJECTED";
 type Confidence = "LOW" | "MEDIUM" | "HIGH";
@@ -137,48 +138,25 @@ export function CandidateCard({
                 {status === "CONFIRMED" ? "✓ Deductible" : "✗ Not deductible"}
               </span>
               <div className="flex items-center gap-3 shrink-0">
-                <button
-                  onClick={() => setExpanded((v) => !v)}
-                  className="text-xs"
-                  style={{ color: "var(--text-muted)" }}
-                >
+                <Button variant="ghost" size="xs" onClick={() => setExpanded((v) => !v)}>
                   {expanded ? "Less" : "Details"}
-                </button>
-                <button
-                  onClick={handleReset}
-                  disabled={isSaving}
-                  className="text-xs disabled:opacity-40"
-                  style={{ color: "var(--text-muted)" }}
-                >
+                </Button>
+                <Button variant="ghost" size="xs" onClick={handleReset} disabled={isSaving}>
                   {isSaving ? "…" : "Undo"}
-                </button>
+                </Button>
               </div>
             </div>
           ) : (
             <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={handleConfirm}
-                disabled={isSaving}
-                className="rounded-lg px-4 py-2 text-sm font-semibold text-white transition-all duration-150 active:scale-95 disabled:opacity-40"
-                style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
-              >
+              <Button size="sm" onClick={handleConfirm} disabled={isSaving}>
                 {isSaving ? "Saving…" : "Deductible"}
-              </button>
-              <button
-                onClick={handleReject}
-                disabled={isSaving}
-                className="rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-150 active:scale-95 disabled:opacity-40"
-                style={{ border: "1px solid var(--bg-border)", color: "var(--text-muted)" }}
-              >
+              </Button>
+              <Button variant="secondary" size="sm" onClick={handleReject} disabled={isSaving}>
                 Not deductible
-              </button>
-              <button
-                onClick={() => setExpanded((v) => !v)}
-                className="ml-auto text-xs transition-colors duration-150"
-                style={{ color: "var(--text-muted)" }}
-              >
+              </Button>
+              <Button variant="ghost" size="xs" className="ml-auto" onClick={() => setExpanded((v) => !v)}>
                 {expanded ? "Less" : "Details"}
-              </button>
+              </Button>
             </div>
           )}
         </div>

@@ -1,9 +1,11 @@
+import Link from "next/link";
 import { db } from "../../../lib/db";
 import { requireUserWithType } from "../../../lib/auth";
 import { ACTIVE_CATEGORIES, CATEGORIES_BY_USER_TYPE, CATEGORY_PRIORITY_BY_USER_TYPE } from "../../../lib/rules/categories";
 import { ReviewFilters } from "./ReviewFilters";
 import { ReviewList } from "./ReviewList";
 import type { CandidateCardProps } from "./CandidateCard";
+import { Button } from "@/components/ui/button";
 
 const HEADING: Record<string, string> = {
   employee:    "Work-related deductions",
@@ -142,16 +144,9 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
           )}
         </div>
         {totalConfirmed > 0 && (
-          <a
-            href="/export"
-            className="shrink-0 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
-            style={{
-              background: "linear-gradient(to right, var(--violet-from), var(--violet-to))",
-              boxShadow:  "0 0 16px rgba(124,58,237,0.4)",
-            }}
-          >
-            Export →
-          </a>
+          <Button asChild size="sm">
+            <Link href="/export">Export →</Link>
+          </Button>
         )}
       </div>
 
@@ -195,13 +190,9 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
               Your full breakdown and downloadable report are in Export.
             </p>
-            <a
-              href="/export"
-              className="block w-full rounded-xl py-3.5 text-[15px] font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
-              style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))", boxShadow: "0 2px 12px rgba(124,58,237,0.3)" }}
-            >
-              View your tax summary →
-            </a>
+            <Button asChild className="w-full">
+              <Link href="/export">View your tax summary →</Link>
+            </Button>
           </div>
         );
 

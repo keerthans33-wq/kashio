@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { addWfhEntry } from "./actions";
+import { Button } from "@/components/ui/button";
 
 export function WfhForm() {
   const today = new Date().toLocaleDateString("en-CA");
@@ -101,14 +102,9 @@ export function WfhForm() {
       {saveError && <p className="text-sm text-red-400">{saveError}</p>}
       {success && <p className="text-sm" style={{ color: "#22C55E" }}>Entry saved.</p>}
 
-      <button
-        type="submit"
-        disabled={saving}
-        className="w-full rounded-xl py-3.5 text-[15px] font-semibold text-white transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
-        style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
-      >
+      <Button type="submit" disabled={saving} className="w-full">
         {saving ? "Saving…" : "Add entry"}
-      </button>
+      </Button>
     </form>
   );
 }

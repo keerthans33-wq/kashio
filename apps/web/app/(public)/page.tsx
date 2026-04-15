@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import { getUserWithType } from "../../lib/auth";
+import { Button } from "@/components/ui/button";
 
 const steps = [
   { n: "1", label: "Import your transactions" },
@@ -60,13 +62,9 @@ export default async function Home({
       </div>
 
       {/* CTA */}
-      <a
-        href="/login"
-        className="mt-12 inline-block rounded-xl px-8 py-3.5 text-base font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
-        style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
-      >
-        Get started
-      </a>
+      <Button asChild className="mt-12 px-10">
+        <Link href="/login">Get started</Link>
+      </Button>
 
       {/* Disclaimer */}
       <p className="mt-8 text-xs max-w-xs" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
