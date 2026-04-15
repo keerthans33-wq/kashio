@@ -58,26 +58,19 @@ export function PaywallGate({ allItems, categoryGroups, total, confirmedCount }:
         transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
       >
 
-        {/* Category breakdown — single consolidated list */}
+        {/* Category breakdown */}
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[11px] font-semibold uppercase tracking-widest mb-5" style={{ color: "var(--text-muted)" }}>
             Breakdown
           </p>
-          <div
-            className="rounded-2xl overflow-hidden"
-            style={{
-              backgroundColor: "var(--bg-card)",
-              border:          "1px solid var(--bg-border)",
-              boxShadow:       "var(--shadow-card)",
-            }}
-          >
-            {categoryGroups.map(({ cat, catTotal, items }, groupIdx) => (
-              <div
-                key={cat}
-                style={{ borderTop: groupIdx > 0 ? "1px solid var(--bg-border)" : "none" }}
-              >
-                {/* Category header row */}
-                <div className="flex items-center justify-between px-5 py-3">
+          <div className="space-y-6">
+            {categoryGroups.map(({ cat, catTotal, items }) => (
+              <div key={cat}>
+                {/* Category header — name + total with ledger rule */}
+                <div
+                  className="flex items-baseline justify-between pb-2.5 mb-1"
+                  style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
+                >
                   <span
                     className="text-[11px] font-semibold uppercase tracking-widest"
                     style={{ color: "var(--text-muted)" }}
@@ -85,31 +78,30 @@ export function PaywallGate({ allItems, categoryGroups, total, confirmedCount }:
                     {cat}
                   </span>
                   <span
-                    className="text-[14px] font-bold tabular-nums"
-                    style={{ color: "var(--text-primary)" }}
+                    className="text-[14px] font-semibold tabular-nums"
+                    style={{ color: "var(--text-secondary)" }}
                   >
                     {fmtRound(catTotal)}
                   </span>
                 </div>
 
-                {/* Line items */}
-                {items.map((item) => (
+                {/* Line items — single line, no date */}
+                {items.map((item, idx) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between gap-4 px-5 py-2.5"
-                    style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
+                    className="flex items-baseline justify-between gap-4 py-2.5"
+                    style={{
+                      borderBottom: idx < items.length - 1
+                        ? "1px solid rgba(255,255,255,0.04)"
+                        : "none",
+                    }}
                   >
-                    <div className="min-w-0 pl-2">
-                      <p className="truncate text-[13px]" style={{ color: "var(--text-secondary)" }}>
-                        {item.merchant}
-                      </p>
-                      <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
-                        {item.date}
-                      </p>
-                    </div>
+                    <p className="truncate text-[13px]" style={{ color: "var(--text-primary)" }}>
+                      {item.merchant}
+                    </p>
                     <span
                       className="shrink-0 text-[13px] tabular-nums"
-                      style={{ color: "var(--text-muted)" }}
+                      style={{ color: "var(--text-secondary)" }}
                     >
                       {fmt(item.amount)}
                     </span>
