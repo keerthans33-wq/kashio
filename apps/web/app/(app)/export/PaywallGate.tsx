@@ -117,7 +117,7 @@ export function PaywallGate({ allItems, categoryGroups, total, confirmedCount }:
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
-          className="relative overflow-hidden rounded-2xl px-6 py-6"
+          className="relative overflow-hidden rounded-2xl px-6 py-8"
           style={{
             backgroundColor: "rgba(13, 20, 33, 0.92)",
             border:          "1px solid rgba(34,197,94,0.18)",
@@ -137,10 +137,11 @@ export function PaywallGate({ allItems, categoryGroups, total, confirmedCount }:
           <p className="text-[16px] font-semibold leading-snug mb-1" style={{ color: "var(--text-primary)" }}>
             Your report is ready
           </p>
-          <p className="text-[13px] mb-5" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[13px] mb-8" style={{ color: "var(--text-muted)" }}>
             Download your XLSX summary — share it with your accountant or use it to lodge your return.
           </p>
           <ExportButton />
+          <div className="mt-1" />
         </motion.div>
 
       </motion.div>
