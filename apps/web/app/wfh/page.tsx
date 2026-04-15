@@ -6,6 +6,7 @@ import { calcWfhSummary } from "../../lib/wfhSummary";
 import { WfhForm } from "./WfhForm";
 import { deleteWfhEntry } from "./actions";
 import { Button } from "@/components/ui/button";
+import { FadeIn } from "@/components/motion/FadeIn";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +34,7 @@ export default async function WfhLog() {
     >
 
       {/* 1. Title */}
-      <div className="flex items-start justify-between gap-4">
+      <FadeIn className="flex items-start justify-between gap-4">
         <h1 className="text-[30px] font-bold leading-tight tracking-tight" style={{ color: "var(--text-primary)" }}>
           Work from home
         </h1>
@@ -42,16 +43,18 @@ export default async function WfhLog() {
             <Link href="/export">Export →</Link>
           </Button>
         )}
-      </div>
+      </FadeIn>
 
       {/* 2. Subtitle */}
+      <FadeIn delay={0.06}>
       <p className="mt-2 text-[15px]" style={{ color: "var(--text-muted)" }}>
         Track hours you work from home. The ATO's 67c fixed-rate method requires a log of actual hours.
       </p>
+      </FadeIn>
 
       {/* 3. Monthly summary */}
       {monthHours > 0 ? (
-        <div className="mt-6">
+        <FadeIn delay={0.1} className="mt-6">
           <div className="grid grid-cols-2 gap-4">
 
             {/* Hours */}
@@ -94,7 +97,7 @@ export default async function WfhLog() {
               Year to date: {ytdHours} hr{ytdHours !== 1 ? "s" : ""} · ~${ytdEst.toFixed(2)}
             </p>
           )}
-        </div>
+        </FadeIn>
       ) : entries.length > 0 ? (
         <p className="mt-6 text-sm" style={{ color: "var(--text-muted)" }}>
           No hours logged for {monthName} yet.

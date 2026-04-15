@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion } from "motion/react";
 import { supabase } from "../../../lib/supabase";
 import { Button } from "@/components/ui/button";
 
@@ -50,23 +51,32 @@ export default function OnboardingPage() {
     >
       <div className="w-full max-w-[360px]">
 
-        <div className="mb-8">
+        <motion.div
+          className="mb-8"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+        >
           <h1 className="text-[30px] font-bold leading-tight tracking-tight" style={{ color: "var(--text-primary)" }}>
             Who is this for?
           </h1>
           <p className="mt-2 text-[15px]" style={{ color: "var(--text-muted)" }}>
             This helps Kashio find the right deductions for you.
           </p>
-        </div>
+        </motion.div>
 
         <div className="space-y-3">
-          {OPTIONS.map((option) => {
+          {OPTIONS.map((option, i) => {
             const isSelected = selected === option.id;
             return (
-              <button
+              <motion.button
                 key={option.id}
                 onClick={() => setSelected(option.id)}
-                className="flex w-full items-center gap-4 rounded-2xl px-5 py-4 text-left transition-all duration-150 active:scale-[0.98]"
+                className="flex w-full items-center gap-4 rounded-2xl px-5 py-4 text-left"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1], delay: 0.1 + i * 0.07 }}
+                whileTap={{ scale: 0.98 }}
                 style={{
                   backgroundColor: isSelected ? "rgba(124,58,237,0.10)" : "var(--bg-card)",
                   border: isSelected ? "1px solid rgba(124,58,237,0.5)" : "1px solid var(--bg-border)",
@@ -88,7 +98,7 @@ export default function OnboardingPage() {
                 >
                   {option.label}
                 </span>
-              </button>
+              </motion.button>
             );
           })}
         </div>

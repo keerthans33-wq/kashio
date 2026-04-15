@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "motion/react";
 import { supabase } from "../../lib/supabase";
 import { Button } from "@/components/ui/button";
 
@@ -65,13 +66,24 @@ export default function LoginPage() {
       <div className="w-full max-w-[360px]">
 
         {/* Logo + tagline */}
-        <div className="text-center mb-10">
+        <motion.div
+          className="text-center mb-10"
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+        >
           <p className="text-[32px] font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>Kashio</p>
           <p className="mt-1 text-[15px]" style={{ color: "var(--text-muted)" }}>Your tax deductions, sorted.</p>
-        </div>
+        </motion.div>
 
         {/* Card */}
-        <div className="rounded-2xl p-6 space-y-5" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "var(--shadow-card-lg)" }}>
+        <motion.div
+          className="rounded-2xl p-6 space-y-5"
+          style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "var(--shadow-card-lg)" }}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1], delay: 0.08 }}
+        >
 
           {/* Mode tabs */}
           <div className="flex rounded-xl p-1 gap-1" style={{ backgroundColor: "var(--bg-elevated)" }}>
@@ -167,7 +179,7 @@ export default function LoginPage() {
             {loading ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
           </Button>
 
-        </div>
+        </motion.div>
 
         {/* Disclaimer */}
         <p className="mt-8 text-center text-xs" style={{ color: "var(--text-muted)", opacity: 0.6 }}>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "motion/react";
 import { confirmCandidate, rejectCandidate, resetCandidate, saveEvidence } from "./actions";
 import { Button } from "@/components/ui/button";
 
@@ -84,9 +85,11 @@ export function CandidateCard({
   const dimmed      = { opacity: status === "REJECTED" ? 0.5 : 1 };
 
   return (
-    <div
-      className="rounded-2xl transition-all duration-200"
+    <motion.div
+      className="rounded-2xl"
       style={{ backgroundColor: bgColor, border: `1px solid ${borderColor}`, boxShadow: "var(--shadow-card)" }}
+      whileHover={{ y: -1, boxShadow: "0 6px 24px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.5)" }}
+      transition={{ duration: 0.15, ease: "easeOut" }}
     >
       <div className="px-4 py-5">
 
@@ -236,6 +239,6 @@ export function CandidateCard({
           )}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

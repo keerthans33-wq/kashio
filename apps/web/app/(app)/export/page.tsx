@@ -6,6 +6,7 @@ import { ACTIVE_CATEGORIES, CATEGORIES_BY_USER_TYPE } from "../../../lib/rules/c
 import { calcWfhSummary } from "../../../lib/wfhSummary";
 import { PaywallGate } from "./PaywallGate";
 import { Button } from "@/components/ui/button";
+import { FadeIn } from "@/components/motion/FadeIn";
 
 export const dynamic = "force-dynamic";
 
@@ -107,17 +108,17 @@ export default async function Export() {
     <main className="mx-auto max-w-lg px-4 sm:px-6 py-8 sm:py-12">
 
       {/* 1. Title + subtitle */}
-      <div className="mb-8">
+      <FadeIn className="mb-8">
         <h1 className="text-[30px] font-bold leading-tight tracking-tight" style={{ color: "var(--text-primary)" }}>
           Your tax summary
         </h1>
         <p className="mt-2 text-[15px]" style={{ color: "var(--text-muted)" }}>
           {(userType && SUBTITLE[userType]) ?? "Everything you've confirmed this financial year."}
         </p>
-      </div>
+      </FadeIn>
 
       {/* 2. Summary cards — always visible */}
-      <div className={`mb-10 ${wfhYtdHours > 0 ? "grid grid-cols-2 gap-4" : ""}`}>
+      <FadeIn delay={0.08} className={`mb-10 ${wfhYtdHours > 0 ? "grid grid-cols-2 gap-4" : ""}`}>
 
         {/* Total deductions */}
         <div
@@ -165,7 +166,7 @@ export default async function Export() {
             </p>
           </div>
         )}
-      </div>
+      </FadeIn>
 
       <PaywallGate
         allItems={allItems.map((i) => ({ id: i.id, merchant: i.row.merchant, date: i.row.date, amount: i.row.amount, category: i.row.category }))}

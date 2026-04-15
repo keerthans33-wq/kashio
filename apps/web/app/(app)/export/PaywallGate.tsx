@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion } from "motion/react";
 import { ExportButton } from "./ExportButton";
 import { Button } from "@/components/ui/button";
 
@@ -50,7 +51,12 @@ export function PaywallGate({ allItems, categoryGroups, total }: Props) {
     return (
       <>
         {/* Category breakdown */}
-        <div className="mb-10">
+        <motion.div
+          className="mb-10"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+        >
           <p className={sectionLabel} style={{ color: "var(--text-muted)" }}>Breakdown</p>
           <div className="space-y-6">
             {categoryGroups.map(({ cat, catTotal, items }) => (
@@ -93,10 +99,16 @@ export function PaywallGate({ allItems, categoryGroups, total }: Props) {
               </span>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Download */}
-        <ExportButton />
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+        >
+          <ExportButton />
+        </motion.div>
       </>
     );
   }
@@ -104,7 +116,13 @@ export function PaywallGate({ allItems, categoryGroups, total }: Props) {
   return (
     <>
       {/* Blurred breakdown preview */}
-      <div className="mb-6 relative overflow-hidden rounded-2xl" style={{ pointerEvents: "none", userSelect: "none" }}>
+      <motion.div
+        className="mb-6 relative overflow-hidden rounded-2xl"
+        style={{ pointerEvents: "none", userSelect: "none" }}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+      >
         <div style={{ filter: "blur(5px)", opacity: 0.45 }}>
           <p className={sectionLabel} style={{ color: "var(--text-muted)" }}>Breakdown</p>
           <div className="rounded-2xl px-5 py-5" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}>
@@ -128,11 +146,14 @@ export function PaywallGate({ allItems, categoryGroups, total }: Props) {
           className="absolute inset-x-0 bottom-0 h-16"
           style={{ background: "linear-gradient(to bottom, transparent, var(--bg-app))" }}
         />
-      </div>
+      </motion.div>
 
       {/* Paywall card */}
-      <div
+      <motion.div
         className="mb-8 rounded-2xl px-6 py-7"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
         style={{ backgroundColor: "var(--bg-card)", border: "1px solid rgba(124,58,237,0.4)", boxShadow: "var(--shadow-card-lg), 0 0 40px rgba(124,58,237,0.08)" }}
       >
         <div
@@ -179,7 +200,7 @@ export function PaywallGate({ allItems, categoryGroups, total }: Props) {
         <Button onClick={unlock} className="w-full">
           Unlock report
         </Button>
-      </div>
+      </motion.div>
     </>
   );
 }

@@ -6,6 +6,7 @@ import { ReviewFilters } from "./ReviewFilters";
 import { ReviewList } from "./ReviewList";
 import type { CandidateCardProps } from "./CandidateCard";
 import { Button } from "@/components/ui/button";
+import { FadeIn } from "@/components/motion/FadeIn";
 
 const HEADING: Record<string, string> = {
   employee:    "Work-related deductions",
@@ -118,7 +119,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
     <main className="mx-auto max-w-3xl px-5 py-8 sm:py-10">
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <FadeIn className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-[30px] font-bold leading-tight tracking-tight" style={{ color: "var(--text-primary)" }}>
             {userType ? HEADING[userType] ?? "Possible deductions" : "Possible deductions"}
@@ -148,9 +149,10 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
             <Link href="/export">Export →</Link>
           </Button>
         )}
-      </div>
+      </FadeIn>
 
       {/* Next action — hidden when filtered */}
+      <FadeIn delay={0.08}>
       {all.length > 0 && !isFiltered && (() => {
         if (totalNeedsReview > 0) return (
           <div className="mt-5 space-y-2">
@@ -198,6 +200,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
         return null;
       })()}
+      </FadeIn>
 
       {/* Divider + filters */}
       <div className="mt-6 border-t" style={{ borderColor: "var(--bg-border)" }} />

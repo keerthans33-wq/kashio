@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { CandidateCard, type CandidateCardProps } from "./CandidateCard";
 import { bulkConfirmCandidates, bulkRejectCandidates, bulkResetCandidates } from "./actions";
 import { Button } from "@/components/ui/button";
@@ -152,8 +153,14 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
             </div>
           )}
           <div className="space-y-3">
-            {needsReview.map((c) => (
-              <div key={c.id} className="flex items-start gap-3">
+            {needsReview.map((c, i) => (
+              <motion.div
+                key={c.id}
+                className="flex items-start gap-3"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1], delay: Math.min(i * 0.05, 0.3) }}
+              >
                 {needsReviewIds.length > 1 ? (
                   <input
                     type="checkbox"
@@ -167,7 +174,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
                 <div className="min-w-0 flex-1">
                   <CandidateCard {...c} />
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </>
@@ -184,11 +191,20 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
             <span className="flex h-4 w-4 items-center justify-center rounded-full text-xs" style={{ backgroundColor: "rgba(34,197,94,0.15)", color: "#22C55E" }}>✓</span>
             {showConfirmed ? "Hide" : "Show"} confirmed ({confirmed.length})
           </button>
-          {showConfirmed && (
-            <div className="mt-4 space-y-3">
-              {confirmed.map((c) => <CandidateCard key={c.id} {...c} />)}
-            </div>
-          )}
+          <AnimatePresence>
+            {showConfirmed && (
+              <motion.div
+                className="mt-4 space-y-3"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                style={{ overflow: "hidden" }}
+              >
+                {confirmed.map((c) => <CandidateCard key={c.id} {...c} />)}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
 
@@ -203,11 +219,20 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
             <span className="flex h-4 w-4 items-center justify-center rounded-full text-xs" style={{ backgroundColor: "var(--bg-border)", color: "var(--text-muted)" }}>✗</span>
             {showRejected ? "Hide" : "Show"} not deductible ({rejected.length})
           </button>
-          {showRejected && (
-            <div className="mt-4 space-y-3">
-              {rejected.map((c) => <CandidateCard key={c.id} {...c} />)}
-            </div>
-          )}
+          <AnimatePresence>
+            {showRejected && (
+              <motion.div
+                className="mt-4 space-y-3"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                style={{ overflow: "hidden" }}
+              >
+                {rejected.map((c) => <CandidateCard key={c.id} {...c} />)}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
 
