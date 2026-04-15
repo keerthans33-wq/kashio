@@ -165,7 +165,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1], delay: Math.min(i * 0.05, 0.3) }}
               >
-                {needsReviewIds.length > 1 ? (
+                {needsReviewIds.length > 1 && (
                   <input
                     type="checkbox"
                     checked={selected.has(c.id)}
@@ -173,8 +173,6 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
                     className="mt-4 h-4 w-4 shrink-0 cursor-pointer rounded"
                     style={{ accentColor: "#22C55E" }}
                   />
-                ) : (
-                  <div className="mt-4 h-4 w-4 shrink-0" />
                 )}
                 <div className="min-w-0 flex-1">
                   <CandidateCard {...c} />
@@ -223,7 +221,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
           >
             <span className="flex items-center gap-2 text-sm">
               <span className="flex h-4 w-4 items-center justify-center rounded-full text-xs" style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}>✕</span>
-              Not deductible ({rejected.length})
+              Skipped ({rejected.length})
             </span>
           </button>
           <AnimatePresence>

@@ -174,7 +174,7 @@ export function CandidateCard({
         )}
 
         {/* Actions */}
-        <div className="mt-3.5">
+        <div className="mt-3">
           {error && <p className="mb-2 text-xs text-red-400">{error}</p>}
 
           {settled ? (

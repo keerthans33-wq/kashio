@@ -111,27 +111,14 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
           <h1 className="text-[30px] font-bold leading-tight tracking-tight" style={{ color: "var(--text-primary)" }}>
             {userType ? HEADING[userType] ?? "Possible deductions" : "Possible deductions"}
           </h1>
-          {all.length > 0 && !isFiltered && (() => {
-            const parts: React.ReactNode[] = [
-              totalNeedsReview > 0 && <span key="review">{totalNeedsReview} to review</span>,
-              totalConfirmed   > 0 && <span key="confirmed">{totalConfirmed} confirmed</span>,
-            ].filter(Boolean);
-            return parts.length > 0 ? (
-              <p className="mt-2 text-[14px]" style={{ color: "var(--text-muted)" }}>
-                {parts.map((part, i) => (
-                  <span key={i}>{i > 0 && " · "}{part}</span>
-                ))}
-              </p>
-            ) : null;
-          })()}
           {all.length === 0 && (
-            <p className="mt-2 text-[15px]" style={{ color: "var(--text-secondary)" }}>
-              {(userType && EMPTY_STATE[userType]) ?? "Import your bank transactions and Kashio will flag what looks deductible."}
+            <p className="mt-2 text-[14px]" style={{ color: "var(--text-muted)" }}>
+              {(userType && EMPTY_STATE[userType]) ?? "Import your bank CSV to get started."}
             </p>
           )}
         </div>
         {totalConfirmed > 0 && (
-          <Button asChild size="sm">
+          <Button asChild variant="secondary" size="xs">
             <Link href="/export">Export →</Link>
           </Button>
         )}
