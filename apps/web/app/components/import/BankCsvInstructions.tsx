@@ -97,21 +97,21 @@ export default function BankCsvInstructions() {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {BANKS.map((bank) => {
         const isOpen = expanded === bank.name;
 
         return (
           <div
             key={bank.name}
-            className="rounded-xl overflow-hidden"
+            className="rounded-2xl overflow-hidden"
             style={{ border: "1px solid var(--bg-border)" }}
           >
             {/* Header row — entire row is the toggle button */}
             <button
               type="button"
               onClick={() => toggle(bank.name)}
-              className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-150"
+              className="w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors duration-150"
               style={{ backgroundColor: "var(--bg-card)" }}
             >
               {/* Logo */}
@@ -122,9 +122,9 @@ export default function BankCsvInstructions() {
                 <Image
                   src={bank.logo}
                   alt={`${bank.name} logo`}
-                  width={28}
-                  height={28}
-                  className="h-7 w-7 object-contain"
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 object-contain"
                 />
               </div>
 
@@ -135,14 +135,6 @@ export default function BankCsvInstructions() {
               >
                 {bank.name}
               </p>
-
-              {/* Toggle label */}
-              <span
-                className="shrink-0 text-xs font-medium"
-                style={{ color: "var(--text-muted)" }}
-              >
-                {isOpen ? "Close steps" : "View steps"}
-              </span>
 
               {/* Chevron */}
               <svg
@@ -164,13 +156,13 @@ export default function BankCsvInstructions() {
             {/* Steps — visible only when expanded */}
             {isOpen && (
               <div
-                className="px-4 pt-3 pb-4"
+                className="px-4 py-4"
                 style={{
                   borderTop:       "1px solid var(--bg-border)",
                   backgroundColor: "var(--bg-card)",
                 }}
               >
-                <ol className="space-y-1">
+                <ol className="space-y-2">
                   {bank.steps.map((step, i) => (
                     <li
                       key={i}

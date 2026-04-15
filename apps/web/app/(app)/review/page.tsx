@@ -155,8 +155,8 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
       <FadeIn delay={0.08}>
       {all.length > 0 && !isFiltered && (() => {
         if (totalNeedsReview > 0) return (
-          <div className="mt-5 space-y-2">
-            <div className="rounded-2xl px-4 py-3.5 flex items-center justify-between gap-4" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "var(--shadow-card)" }}>
+          <div className="mt-6 space-y-2">
+            <div className="rounded-2xl px-5 py-4 flex items-center justify-between gap-4" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "var(--shadow-card)" }}>
               <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
                 {totalNeedsReview} item{totalNeedsReview !== 1 ? "s" : ""} left
                 {pendingValue > 0 && <> · <span className="font-semibold" style={{ color: "var(--text-primary)" }}>~{fmt(pendingValue)}</span></>}
@@ -177,19 +177,19 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         );
 
         if (totalConfirmed > 0) return (
-          <div className="mt-5 rounded-2xl px-6 py-6 text-center space-y-3" style={{ backgroundColor: "var(--bg-card)", border: "1px solid rgba(124,58,237,0.3)", boxShadow: "var(--shadow-card-lg), 0 0 32px rgba(124,58,237,0.1)" }}>
-            <div>
+          <div className="mt-6 rounded-2xl px-5 py-7 text-center space-y-4" style={{ backgroundColor: "var(--bg-card)", border: "1px solid rgba(124,58,237,0.3)", boxShadow: "var(--shadow-card-lg), 0 0 32px rgba(124,58,237,0.1)" }}>
+            <div className="space-y-1.5">
               <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
                 Review complete
               </p>
-              <p className="mt-3 text-[38px] font-bold tabular-nums leading-none tracking-tight" style={{ color: "var(--text-primary)" }}>
+              <p className="text-[38px] font-bold tabular-nums leading-none tracking-tight" style={{ color: "var(--text-primary)" }}>
                 ~{fmt(confirmedValue)}
               </p>
-              <p className="mt-2 text-[15px]" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>
                 {totalConfirmed} confirmed {totalConfirmed === 1 ? "deduction" : "deductions"}
               </p>
             </div>
-            <p className="text-[15px]" style={{ color: "var(--text-secondary)" }}>
+            <p className="text-[14px]" style={{ color: "var(--text-secondary)" }}>
               Your full breakdown and downloadable report are in Export.
             </p>
             <Button asChild className="w-full">

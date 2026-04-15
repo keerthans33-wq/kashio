@@ -26,7 +26,7 @@ export function ReviewFilters({ categories = ACTIVE_CATEGORIES }: { categories?:
   const chipIdle   = { borderColor: "var(--bg-border)", color: "var(--text-muted)", background: "transparent" };
 
   return (
-    <div className="mt-4">
+    <div className="mt-5">
       <div className="flex items-center gap-3">
         <button
           onClick={() => setOpen((v) => !v)}
@@ -50,9 +50,9 @@ export function ReviewFilters({ categories = ACTIVE_CATEGORIES }: { categories?:
       </div>
 
       {open && (
-        <div className="mt-3 space-y-3">
+        <div className="mt-4 space-y-4">
           <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-xs" style={{ color: "var(--text-muted)" }}>Category</span>
+            <span className="text-xs font-medium w-14 shrink-0" style={{ color: "var(--text-muted)" }}>Category</span>
             {["", ...categories].map((c) => (
               <button key={c} onClick={() => update("category", c)} className={chipBase} style={category === c ? chipActive : chipIdle}>
                 {c === "" ? "All" : c}
@@ -61,7 +61,7 @@ export function ReviewFilters({ categories = ACTIVE_CATEGORIES }: { categories?:
           </div>
 
           <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-xs" style={{ color: "var(--text-muted)" }}>Match</span>
+            <span className="text-xs font-medium w-14 shrink-0" style={{ color: "var(--text-muted)" }}>Match</span>
             {[
               { value: "",       label: "All" },
               { value: "HIGH",   label: "Strong" },
@@ -75,7 +75,7 @@ export function ReviewFilters({ categories = ACTIVE_CATEGORIES }: { categories?:
           </div>
 
           <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-xs" style={{ color: "var(--text-muted)" }}>Sort</span>
+            <span className="text-xs font-medium w-14 shrink-0" style={{ color: "var(--text-muted)" }}>Sort</span>
             {[
               { value: "",           label: "Date" },
               { value: "amount",     label: "Amount" },

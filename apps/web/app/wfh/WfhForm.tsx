@@ -40,7 +40,7 @@ export function WfhForm() {
     }
   }
 
-  const inputClass = "h-11 w-full rounded-xl px-3 text-sm focus:outline-none focus:ring-1 transition-colors";
+  const inputClass = "h-11 w-full rounded-xl px-4 text-sm focus:outline-none focus:ring-1 transition-colors";
   const inputStyle = {
     backgroundColor: "var(--bg-elevated)",
     border: "1px solid var(--bg-border)",
@@ -48,8 +48,8 @@ export function WfhForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-      <div className="grid grid-cols-2 gap-4">
+    <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="wfh-date" className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
             Date
@@ -99,8 +99,16 @@ export function WfhForm() {
         />
       </div>
 
-      {saveError && <p className="text-sm text-red-400">{saveError}</p>}
-      {success && <p className="text-sm" style={{ color: "#22C55E" }}>Entry saved.</p>}
+      {saveError && (
+        <div className="rounded-xl px-4 py-3" style={{ backgroundColor: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.18)" }}>
+          <p className="text-sm text-red-400">{saveError}</p>
+        </div>
+      )}
+      {success && (
+        <div className="rounded-xl px-4 py-3" style={{ backgroundColor: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)" }}>
+          <p className="text-sm" style={{ color: "#22C55E" }}>Entry saved.</p>
+        </div>
+      )}
 
       <Button type="submit" disabled={saving} className="w-full">
         {saving ? "Saving…" : "Add entry"}

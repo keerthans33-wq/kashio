@@ -36,15 +36,15 @@ export function ExportButton() {
       </Button>
 
       {state === "done" && (
-        <div className="mt-4 rounded-xl px-5 py-4 text-center space-y-1 animate-[fadeIn_0.2s_ease-out]" style={{ backgroundColor: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)" }}>
+        <div className="mt-4 rounded-2xl px-5 py-5 text-center space-y-1" style={{ backgroundColor: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)" }}>
           <p className="text-sm font-semibold" style={{ color: "#22C55E" }}>You're ready to lodge.</p>
           <p className="text-xs" style={{ color: "#22C55E", opacity: 0.8 }}>Your report is saved. Take it to your accountant or use it to complete your return.</p>
         </div>
       )}
       {state === "error" && (
-        <p className="mt-3 text-center text-sm text-red-400">
-          Something went wrong. Please try again.
-        </p>
+        <div className="mt-4 rounded-2xl px-5 py-4 text-center" style={{ backgroundColor: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.18)" }}>
+          <p className="text-sm text-red-400">Something went wrong. Please try again.</p>
+        </div>
       )}
     </div>
   );

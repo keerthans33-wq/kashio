@@ -96,7 +96,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
 
       {/* Bulk action bar */}
       {selected.size > 0 && (
-        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl px-4 py-3" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "var(--shadow-card)" }}>
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl px-4 py-3.5" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "var(--shadow-card)" }}>
           <span className="text-sm" style={{ color: "var(--text-secondary)" }}>{selected.size} selected</span>
           <Button
             size="sm"
@@ -182,7 +182,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
 
       {/* Confirmed — collapsible */}
       {confirmed.length > 0 && (
-        <div id="confirmed" className="mt-8 border-t pt-6" style={{ borderColor: "var(--bg-border)" }}>
+        <div id="confirmed" className="mt-6 border-t pt-5" style={{ borderColor: "var(--bg-border)" }}>
           <button
             onClick={() => setShowConfirmed((v) => !v)}
             className="flex items-center gap-2 text-sm transition-colors duration-150"
@@ -210,7 +210,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
 
       {/* Rejected — collapsible */}
       {rejected.length > 0 && (
-        <div className="mt-4 border-t pt-6" style={{ borderColor: "var(--bg-border)" }}>
+        <div className="mt-6 border-t pt-5" style={{ borderColor: "var(--bg-border)" }}>
           <button
             onClick={() => setShowRejected((v) => !v)}
             className="flex items-center gap-2 text-sm transition-colors duration-150"

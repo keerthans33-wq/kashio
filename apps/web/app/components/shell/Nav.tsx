@@ -30,8 +30,8 @@ export default function Nav() {
                 href={link.href}
                 className="shrink-0 flex items-center px-4 text-[13px] font-medium whitespace-nowrap transition-all duration-150"
                 style={{
-                  color:        active ? "#FFFFFF" : "#6B7280",
-                  borderBottom: active ? "2px solid #7C3AED" : "2px solid transparent",
+                  color:        active ? "var(--text-primary)" : "var(--text-muted)",
+                  borderBottom: active ? "2px solid var(--violet-from)" : "2px solid transparent",
                   marginBottom: "-1px",
                 }}
               >
@@ -47,8 +47,8 @@ export default function Nav() {
             await supabase.auth.signOut();
             window.location.href = "/login";
           }}
-          className="shrink-0 flex items-center px-4 text-[13px] font-medium transition-colors duration-150 whitespace-nowrap"
-          style={{ color: "#6B7280" }}
+          className="shrink-0 flex items-center px-4 text-[13px] font-medium transition-colors duration-150 whitespace-nowrap hover:text-white"
+          style={{ color: "var(--text-muted)" }}
         >
           Sign out
         </button>
