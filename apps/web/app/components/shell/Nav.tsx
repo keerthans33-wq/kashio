@@ -17,7 +17,12 @@ export default function Nav() {
   return (
     <nav
       className="sticky top-0 z-50"
-      style={{ backgroundColor: "#111827", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+      style={{
+        backgroundColor:     "rgba(5, 7, 14, 0.88)",
+        borderBottom:        "1px solid var(--bg-border)",
+        backdropFilter:      "blur(16px)",
+        WebkitBackdropFilter:"blur(16px)",
+      }}
     >
       <div className="flex items-stretch h-12 px-2">
         {/* Nav links */}
