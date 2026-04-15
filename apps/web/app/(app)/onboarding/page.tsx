@@ -51,10 +51,10 @@ export default function OnboardingPage() {
       <div className="w-full max-w-[360px]">
 
         <div className="mb-8">
-          <h1 className="text-[28px] font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
+          <h1 className="text-[30px] font-bold leading-tight tracking-tight" style={{ color: "var(--text-primary)" }}>
             Who is this for?
           </h1>
-          <p className="mt-2 text-sm" style={{ color: "var(--text-muted)" }}>
+          <p className="mt-2 text-[15px]" style={{ color: "var(--text-muted)" }}>
             This helps Kashio find the right deductions for you.
           </p>
         </div>

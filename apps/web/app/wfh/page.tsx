@@ -34,7 +34,7 @@ export default async function WfhLog() {
 
       {/* 1. Title */}
       <div className="flex items-start justify-between gap-4">
-        <h1 className="text-[28px] font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
+        <h1 className="text-[30px] font-bold leading-tight tracking-tight" style={{ color: "var(--text-primary)" }}>
           Work from home
         </h1>
         {entries.length > 0 && (
@@ -45,7 +45,7 @@ export default async function WfhLog() {
       </div>
 
       {/* 2. Subtitle */}
-      <p className="mt-2 text-sm" style={{ color: "var(--text-muted)" }}>
+      <p className="mt-2 text-[15px]" style={{ color: "var(--text-muted)" }}>
         Track hours you work from home. The ATO's 67c fixed-rate method requires a log of actual hours.
       </p>
 
@@ -126,11 +126,11 @@ export default async function WfhLog() {
                 style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "0 1px 2px rgba(0,0,0,0.4)" }}
               >
                 <div className="flex items-center gap-4 min-w-0">
-                  <span className="shrink-0 text-sm tabular-nums" style={{ color: "var(--text-primary)" }}>
+                  <span className="shrink-0 text-[14px] font-medium tabular-nums" style={{ color: "var(--text-primary)" }}>
                     {new Date(entry.date + "T12:00:00").toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}
                   </span>
                   {entry.note && (
-                    <span className="truncate text-sm" style={{ color: "var(--text-muted)" }}>{entry.note}</span>
+                    <span className="truncate text-[13px]" style={{ color: "var(--text-muted)" }}>{entry.note}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-3 shrink-0">

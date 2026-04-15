@@ -88,21 +88,21 @@ export function CandidateCard({
       className="rounded-2xl transition-all duration-200"
       style={{ backgroundColor: bgColor, border: `1px solid ${borderColor}`, boxShadow: "var(--shadow-card)" }}
     >
-      <div className="px-4 py-4">
+      <div className="px-4 py-5">
 
         {/* Merchant + amount */}
         <div className="flex items-baseline justify-between gap-4">
-          <p className="truncate text-[15px] font-semibold" style={{ color: "var(--text-primary)", ...dimmed }}>
+          <p className="truncate text-[16px] font-semibold" style={{ color: "var(--text-primary)", ...dimmed }}>
             {transaction.normalizedMerchant}
           </p>
-          <p className="shrink-0 text-[18px] font-bold tabular-nums" style={{ color: "var(--text-primary)", ...dimmed }}>
+          <p className="shrink-0 text-[20px] font-bold tabular-nums tracking-tight" style={{ color: "var(--text-primary)", ...dimmed }}>
             −${Math.abs(amount).toFixed(2)}
           </p>
         </div>
 
         {/* Date + confidence badge */}
-        <div className="mt-1.5 flex items-center gap-2 flex-wrap">
-          <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+        <div className="mt-2 flex items-center gap-2 flex-wrap">
+          <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>
             {transaction.date}
           </span>
           {!settled && (
@@ -121,7 +121,7 @@ export function CandidateCard({
         {/* Short reason — clamped to 2 lines, only when unreviewed */}
         {!settled && (
           <p
-            className="mt-2 text-sm line-clamp-2"
+            className="mt-2.5 text-[14px] leading-snug line-clamp-2"
             style={{ color: "var(--text-secondary)" }}
           >
             {reason}
@@ -129,7 +129,7 @@ export function CandidateCard({
         )}
 
         {/* Actions */}
-        <div className="mt-3">
+        <div className="mt-4">
           {error && <p className="mb-2 text-xs text-red-400">{error}</p>}
 
           {settled ? (

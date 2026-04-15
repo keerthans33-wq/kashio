@@ -66,8 +66,8 @@ export default function LoginPage() {
 
         {/* Logo + tagline */}
         <div className="text-center mb-10">
-          <p className="text-[28px] font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>Kashio</p>
-          <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>Your tax deductions, sorted.</p>
+          <p className="text-[32px] font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>Kashio</p>
+          <p className="mt-1 text-[15px]" style={{ color: "var(--text-muted)" }}>Your tax deductions, sorted.</p>
         </div>
 
         {/* Card */}

@@ -59,7 +59,7 @@ export function PaywallGate({ allItems, categoryGroups, total }: Props) {
                   <span className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
                     {cat}
                   </span>
-                  <span className="text-sm font-semibold tabular-nums" style={{ color: "var(--text-secondary)" }}>
+                  <span className="text-[15px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
                     {fmt(catTotal)}
                   </span>
                 </div>
@@ -78,7 +78,7 @@ export function PaywallGate({ allItems, categoryGroups, total }: Props) {
                           {item.date}
                         </p>
                       </div>
-                      <span className="shrink-0 text-sm tabular-nums font-medium" style={{ color: "var(--text-primary)" }}>
+                      <span className="shrink-0 text-[14px] tabular-nums font-semibold" style={{ color: "var(--text-primary)" }}>
                         {fmt(item.amount)}
                       </span>
                     </div>
@@ -86,9 +86,9 @@ export function PaywallGate({ allItems, categoryGroups, total }: Props) {
                 </div>
               </div>
             ))}
-            <div className="flex items-baseline justify-between pt-2">
-              <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Total</span>
-              <span className="text-[17px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
+            <div className="flex items-baseline justify-between pt-3">
+              <span className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>Total</span>
+              <span className="text-[22px] font-bold tabular-nums tracking-tight" style={{ color: "var(--text-primary)" }}>
                 {fmt(total)}
               </span>
             </div>
@@ -144,7 +144,7 @@ export function PaywallGate({ allItems, categoryGroups, total }: Props) {
           </svg>
         </div>
 
-        <h2 className="text-[20px] font-bold mb-2" style={{ color: "var(--text-primary)" }}>
+        <h2 className="text-[22px] font-bold mb-2" style={{ color: "var(--text-primary)" }}>
           Unlock your tax summary
         </h2>
         <p className="text-sm mb-5" style={{ color: "var(--text-secondary)" }}>

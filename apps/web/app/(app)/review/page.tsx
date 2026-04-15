@@ -120,7 +120,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-[28px] font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
+          <h1 className="text-[30px] font-bold leading-tight tracking-tight" style={{ color: "var(--text-primary)" }}>
             {userType ? HEADING[userType] ?? "Possible deductions" : "Possible deductions"}
           </h1>
           {all.length > 0 && !isFiltered && (() => {
@@ -130,7 +130,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
               confirmedValue > 0 && <span key="value" className="font-semibold" style={{ color: "var(--text-secondary)" }}>~{fmt(confirmedValue)}</span>,
             ].filter(Boolean);
             return parts.length > 0 ? (
-              <p className="mt-1.5 text-sm" style={{ color: "var(--text-muted)" }}>
+              <p className="mt-2 text-[15px]" style={{ color: "var(--text-muted)" }}>
                 {parts.map((part, i) => (
                   <span key={i}>{i > 0 && " · "}{part}</span>
                 ))}
@@ -180,14 +180,14 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
               <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
                 Review complete
               </p>
-              <p className="mt-2 text-[32px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
+              <p className="mt-3 text-[38px] font-bold tabular-nums leading-none tracking-tight" style={{ color: "var(--text-primary)" }}>
                 ~{fmt(confirmedValue)}
               </p>
-              <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
+              <p className="mt-2 text-[15px]" style={{ color: "var(--text-muted)" }}>
                 {totalConfirmed} confirmed {totalConfirmed === 1 ? "deduction" : "deductions"}
               </p>
             </div>
-            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+            <p className="text-[15px]" style={{ color: "var(--text-secondary)" }}>
               Your full breakdown and downloadable report are in Export.
             </p>
             <Button asChild className="w-full">

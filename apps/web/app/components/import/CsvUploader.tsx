@@ -215,7 +215,7 @@ export default function CsvUploader() {
             ✓
           </span>
           <div>
-            <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+            <p className="text-[16px] font-semibold" style={{ color: "var(--text-primary)" }}>
               {noneAdded ? "Already up to date" : "Import complete"}
             </p>
             <p className="mt-0.5 text-sm" style={{ color: "var(--text-muted)" }}>
@@ -236,7 +236,7 @@ export default function CsvUploader() {
             <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
               Potential deductions found
             </p>
-            <p className="mt-1.5 text-[28px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
+            <p className="mt-1.5 text-[34px] font-bold tabular-nums leading-none tracking-tight" style={{ color: "var(--text-primary)" }}>
               {importResult.totalValue > 0 ? fmt(importResult.totalValue) : `${importResult.flagged} items`}
             </p>
             <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>

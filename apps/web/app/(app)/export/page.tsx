@@ -85,7 +85,7 @@ export default async function Export() {
     return (
       <main className="mx-auto max-w-lg px-4 sm:px-6 py-12 text-center space-y-5">
         <div>
-          <h1 className="text-[28px] font-bold" style={{ color: "var(--text-primary)" }}>
+          <h1 className="text-[30px] font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
             Your tax summary is empty
           </h1>
           <p className="mt-2 text-[15px]" style={{ color: "var(--text-secondary)" }}>
@@ -108,10 +108,10 @@ export default async function Export() {
 
       {/* 1. Title + subtitle */}
       <div className="mb-8">
-        <h1 className="text-[28px] font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
+        <h1 className="text-[30px] font-bold leading-tight tracking-tight" style={{ color: "var(--text-primary)" }}>
           Your tax summary
         </h1>
-        <p className="mt-1.5 text-sm" style={{ color: "var(--text-muted)" }}>
+        <p className="mt-2 text-[15px]" style={{ color: "var(--text-muted)" }}>
           {(userType && SUBTITLE[userType]) ?? "Everything you've confirmed this financial year."}
         </p>
       </div>
@@ -127,18 +127,18 @@ export default async function Export() {
           <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
             {(userType && TOTAL_LABEL[userType]) ?? "Total deductions"}
           </p>
-          <div className="flex-1 flex flex-col justify-end gap-1">
+          <div className="flex-1 flex flex-col justify-end gap-1.5">
             <p
-              className={`font-bold tabular-nums leading-none ${wfhYtdHours > 0 ? "text-[28px]" : "text-[42px]"}`}
+              className={`font-bold tabular-nums leading-none tracking-tight ${wfhYtdHours > 0 ? "text-[32px]" : "text-[44px]"}`}
               style={{ color: "var(--text-primary)" }}
             >
               {fmtRound(total)}
             </p>
-            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+            <p className="text-[14px]" style={{ color: "var(--text-secondary)" }}>
               {confirmed.length} item{confirmed.length !== 1 ? "s" : ""}
             </p>
           </div>
-          <p className="text-sm font-semibold" style={{ color: "var(--success)" }}>
+          <p className="text-[15px] font-semibold" style={{ color: "var(--success)" }}>
             ~{fmtRound(estimatedSaving)} tax saving
           </p>
         </div>
@@ -152,15 +152,15 @@ export default async function Export() {
             <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
               {(userType && WFH_LABEL[userType]) ?? "Home office"}
             </p>
-            <div className="flex-1 flex flex-col justify-end gap-1">
-              <p className="text-[28px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
+            <div className="flex-1 flex flex-col justify-end gap-1.5">
+              <p className="text-[32px] font-bold tabular-nums leading-none tracking-tight" style={{ color: "var(--text-primary)" }}>
                 ~{fmtRound(wfhYtdEst)}
               </p>
-              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+              <p className="text-[14px]" style={{ color: "var(--text-secondary)" }}>
                 {wfhYtdHours} hr{wfhYtdHours !== 1 ? "s" : ""} logged
               </p>
             </div>
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
               67c/hr fixed rate
             </p>
           </div>
