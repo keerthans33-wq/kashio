@@ -1,98 +1,77 @@
-# Kashio — Web App
+# Kashio
 
-Kashio is an Australian tax deduction tracker for employees.
-
-It helps you find work-related tax deductions in your bank transactions, review them, attach evidence, and export a summary at the end of the financial year (EOFY).
+Kashio is an Australian tax deduction tracker for employees. You upload your bank CSV, review your transactions, and export a deduction report for your accountant.
 
 ---
 
-## MVP scope
-
-The current MVP covers three things:
-
-1. **Import** — upload a CSV of bank transactions
-2. **Review** — mark each flagged transaction as Claim, Skip, or Unsure
-3. **Export** — download a CSV summary of your claimed deductions
-
-That's it. Everything else is deferred until the core flow is working.
-
----
-
-## Routes
-
-| URL | What it is |
-|---|---|
-| `/` | Landing page — no nav, links to Import |
-| `/import` | Upload a CSV file |
-| `/review` | Review flagged deduction candidates |
-| `/export` | Download your EOFY deduction summary |
-
----
-
-## Running locally
+## Getting started
 
 ```bash
 cd apps/web
-npm install
-npm run dev
+cp .env.example .env        # add your DATABASE_URL
+npx prisma migrate dev       # create the database tables
+npm run dev                  # start the app at localhost:3000
 ```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## Scripts
+## CSV import
 
-| Command | What it does |
+### Supported columns
+
+Your CSV must contain these three columns (case-insensitive):
+
+| Column | Required | Description |
+|---|---|---|
+| `date` | Yes | Transaction date |
+| `description` | Yes | Raw bank description |
+| `amount` | Yes | Transaction amount |
+
+Any other columns in the file are ignored.
+
+If your CSV does not have headers — or has different header names — Kashio shows a column mapper so you can select which column is which manually.
+
+### Date formats
+
+Two formats are accepted:
+
+| Format | Example |
 |---|---|
-| `npm run dev` | Start the development server |
-| `npm run build` | Build for production |
-| `npm run start` | Run the production build |
-| `npm run typecheck` | Check TypeScript types without building |
-| `npm run lint` | Run ESLint |
-| `npm run test` | Run tests (placeholder — no tests yet) |
-| `npm run verify` | Run typecheck + lint + build (full health check) |
+| `DD/MM/YYYY` | `15/07/2025` |
+| `YYYY-MM-DD` | `2025-07-15` |
 
----
+Dates are validated as real calendar dates — `31/02/2025` will be rejected. All dates are stored as `YYYY-MM-DD` internally.
 
-## Folder structure
+### Amount parsing
+
+Kashio strips `$` and `,` before parsing, so all of these are valid:
 
 ```
-app/
-  (public)/           ← public pages (no nav)
-    page.tsx          ← landing page at /
-  (app)/              ← in-app pages (nav is shown)
-    import/           ← /import
-    review/           ← /review
-    export/           ← /export
-    layout.tsx        ← app shell: renders Nav
-  components/
-    shell/            ← layout components (Nav)
-  layout.tsx          ← root layout: html/body only
-  globals.css         ← Tailwind + base styles
-lib/                  ← non-UI logic (CSV parsing, rules, formatting — to be added)
-public/               ← static assets
+-42.50
+$120.00
+-$99.00
+1,234.56
 ```
 
-**Rule of thumb:** pages stay thin — no business logic in route files.
+Debits (money out) should be negative. Credits (money in) should be positive.
+
+Strings that cannot be fully parsed as a number — like `12abc` or `(45.00)` — are rejected.
+
+### Duplicates
+
+A transaction is a duplicate if another row with the same `date + description + amount` already exists in the database. Duplicates are skipped on insert and reported in the import summary — they are not counted as successful imports.
+
+### Invalid rows
+
+If a row fails validation, it is skipped and the reason is shown in the UI (e.g. "Row 4: Invalid date '32/01/2025'"). Valid rows in the same file are still imported. The import summary shows exactly how many rows were inserted, skipped as duplicates, and rejected as invalid.
 
 ---
 
-## Stack
+## Project structure
 
-- [Next.js](https://nextjs.org) — React framework (App Router, server components by default)
-- [TypeScript](https://www.typescriptlang.org) — type safety
-- [Tailwind CSS](https://tailwindcss.com) — styling
-
----
-
-## Out of scope (for now)
-
-These are intentionally not built yet:
-
-- Authentication and user accounts
-- Database or backend API
-- Bank integrations (CSV only for now)
-- AI-generated explanations
-- Working-from-home hours log
-- Mobile app
+```
+apps/
+  web/          Next.js app (import, review, export)
+docs/           Product and architecture docs
+packages/       Shared packages (future use)
+```
