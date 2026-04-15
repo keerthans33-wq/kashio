@@ -7,6 +7,7 @@ import { WfhForm } from "./WfhForm";
 import { deleteWfhEntry } from "./actions";
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/motion/FadeIn";
+import { MobileScreen } from "@/components/layout/mobile-screen";
 
 export const dynamic = "force-dynamic";
 
@@ -28,10 +29,7 @@ export default async function WfhLog() {
   const totalEst = (totalHours * 0.67).toFixed(2);
 
   return (
-    <main
-      className="mx-auto max-w-lg px-5 py-10 sm:py-14"
-      style={{ backgroundColor: "var(--bg-app)" }}
-    >
+    <MobileScreen maxWidth="md" as="main">
 
       {/* 1. Title */}
       <FadeIn className="flex items-start justify-between gap-4">
@@ -161,6 +159,6 @@ export default async function WfhLog() {
         The ATO requires a record of actual hours worked from home to use the 67c fixed-rate method.
       </p>
 
-    </main>
+    </MobileScreen>
   );
 }

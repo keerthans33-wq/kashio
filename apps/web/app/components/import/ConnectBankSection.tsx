@@ -317,7 +317,7 @@ export default function ConnectBankSection() {
           placeholder="Mobile number"
           value={mobile}
           onChange={(e) => setMobile(e.target.value)}
-          className="h-11 w-full rounded-xl px-3 text-sm focus:outline-none focus:ring-1 focus:ring-violet-500 transition-colors"
+          className="h-11 w-full rounded-xl px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#22C55E] transition-colors"
           style={{
             backgroundColor: "var(--bg-elevated)",
             border: "1px solid transparent",

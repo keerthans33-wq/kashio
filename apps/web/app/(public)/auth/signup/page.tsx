@@ -98,7 +98,7 @@ export default function SignUpPage() {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-violet-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
+            className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-[#22C55E] focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
           />
           <input
             type="password"
@@ -106,7 +106,7 @@ export default function SignUpPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSignUp()}
-            className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-violet-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
+            className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-[#22C55E] focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
           />
         </div>
 
@@ -121,14 +121,14 @@ export default function SignUpPage() {
         <button
           onClick={handleSignUp}
           disabled={loading}
-          className="mt-4 w-full rounded-lg bg-violet-600 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
+          className="mt-4 w-full rounded-lg bg-[#22C55E] py-2.5 text-sm font-semibold text-[#0A1F12] hover:bg-[#1db954] disabled:opacity-50"
         >
           {loading ? "Please wait…" : "Create account"}
         </button>
 
         <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
           Already have an account?{" "}
-          <a href="/auth" className="font-medium text-violet-600 hover:text-violet-700 dark:text-violet-400">
+          <a href="/auth" className="font-medium hover:underline">
             Sign in
           </a>
         </p>

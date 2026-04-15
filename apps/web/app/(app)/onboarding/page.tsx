@@ -78,9 +78,9 @@ export default function OnboardingPage() {
                 transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1], delay: 0.1 + i * 0.07 }}
                 whileTap={{ scale: 0.98 }}
                 style={{
-                  backgroundColor: isSelected ? "rgba(124,58,237,0.10)" : "var(--bg-card)",
-                  border: isSelected ? "1px solid rgba(124,58,237,0.5)" : "1px solid var(--bg-border)",
-                  boxShadow: isSelected ? "0 0 16px rgba(124,58,237,0.12)" : "var(--shadow-card)",
+                  backgroundColor: isSelected ? "rgba(34,197,94,0.08)" : "var(--bg-card)",
+                  border: isSelected ? "1px solid rgba(34,197,94,0.35)" : "1px solid var(--bg-border)",
+                  boxShadow: isSelected ? "0 0 16px rgba(34,197,94,0.08)" : "var(--shadow-card)",
                 }}
               >
                 <span

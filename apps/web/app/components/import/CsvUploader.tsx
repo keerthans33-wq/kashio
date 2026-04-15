@@ -275,14 +275,14 @@ export default function CsvUploader() {
         onDrop={handleDrop}
         className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed cursor-pointer transition-all duration-150 px-6 py-14 text-center select-none"
         style={{
-          borderColor:     isDragging ? "var(--violet-from)" : "rgba(124,58,237,0.25)",
-          backgroundColor: isDragging ? "rgba(124,58,237,0.06)" : "rgba(124,58,237,0.03)",
+          borderColor:     isDragging ? "rgba(34,197,94,0.6)" : "rgba(34,197,94,0.18)",
+          backgroundColor: isDragging ? "rgba(34,197,94,0.06)" : "rgba(34,197,94,0.02)",
         }}
       >
         {/* Icon */}
         <div
           className="flex h-11 w-11 items-center justify-center rounded-full transition-colors duration-150"
-          style={{ backgroundColor: isDragging ? "rgba(124,58,237,0.15)" : "rgba(124,58,237,0.08)" }}
+          style={{ backgroundColor: isDragging ? "rgba(34,197,94,0.15)" : "rgba(34,197,94,0.07)" }}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} style={{ color: "var(--violet-from)" }}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />

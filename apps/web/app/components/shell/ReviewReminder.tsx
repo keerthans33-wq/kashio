@@ -75,7 +75,7 @@ export async function ReviewReminder() {
         <p className="text-sm text-gray-500 dark:text-gray-400">{message}</p>
         <a
           href={href}
-          className="shrink-0 text-sm font-medium text-violet-600 dark:text-violet-400 hover:underline"
+          className="shrink-0 text-sm font-medium hover:underline" style={{ color: "#22C55E" }}
         >
           {cta} →
         </a>
@@ -134,7 +134,7 @@ export async function ReviewReminderInline() {
   return (
     <p className="mt-6 text-sm text-gray-400 dark:text-gray-500">
       {message}{" "}
-      <a href={href} className="text-violet-600 dark:text-violet-400 hover:underline">
+      <a href={href} className="hover:underline" style={{ color: "#22C55E" }}>
         {href === "/wfh" ? "Log hours" : href === "/export" ? "Go to Export" : "Go to Review"} →
       </a>
     </p>

@@ -137,7 +137,7 @@ export default function LoginPage() {
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); reset(); }}
-                className="h-11 w-full rounded-xl px-3 text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-violet-500"
+                className="h-11 w-full rounded-xl px-3 text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-[#22C55E]"
                 style={{
                   backgroundColor: "var(--bg-elevated)",
                   border: "1px solid transparent",
@@ -156,7 +156,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); reset(); }}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-                className="h-11 w-full rounded-xl px-3 text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-violet-500"
+                className="h-11 w-full rounded-xl px-3 text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-[#22C55E]"
                 style={{
                   backgroundColor: "var(--bg-elevated)",
                   border: "1px solid transparent",
