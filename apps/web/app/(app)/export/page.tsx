@@ -169,7 +169,7 @@ export default async function Export() {
         {/* WFH — same surface family as deductions, clearly secondary */}
         {wfhYtdHours > 0 && (
           <div
-            className="rounded-2xl px-6 py-5"
+            className="rounded-2xl px-6 py-6"
             style={{
               backgroundColor: "rgba(13, 20, 33, 0.88)",
               border:          "1px solid rgba(255,255,255,0.08)",

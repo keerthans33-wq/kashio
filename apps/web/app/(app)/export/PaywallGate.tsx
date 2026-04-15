@@ -52,7 +52,7 @@ export function PaywallGate({ allItems, categoryGroups, total, confirmedCount }:
   if (isPaid) {
     return (
       <motion.div
-        className="space-y-5"
+        className="space-y-8"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
@@ -68,7 +68,7 @@ export function PaywallGate({ allItems, categoryGroups, total, confirmedCount }:
               <div key={cat}>
                 {/* Category header — name + total with ledger rule */}
                 <div
-                  className="flex items-baseline justify-between pb-2.5 mb-1"
+                  className="flex items-baseline justify-between pb-2.5 mb-2"
                   style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
                 >
                   <span
@@ -134,14 +134,13 @@ export function PaywallGate({ allItems, categoryGroups, total, confirmedCount }:
           >
             Ready to lodge
           </p>
-          <p className="text-[16px] font-semibold leading-snug mb-1" style={{ color: "var(--text-primary)" }}>
+          <p className="text-[18px] font-semibold leading-snug mb-1" style={{ color: "var(--text-primary)" }}>
             Your report is ready
           </p>
           <p className="text-[13px] mb-8" style={{ color: "var(--text-muted)" }}>
             Download your XLSX summary — share it with your accountant or use it to lodge your return.
           </p>
           <ExportButton />
-          <div className="mt-1" />
         </motion.div>
 
       </motion.div>

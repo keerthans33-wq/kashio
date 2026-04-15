@@ -44,7 +44,7 @@ export default async function WfhLog() {
       {monthHours > 0 && (
         <FadeIn delay={0.06}>
           <div
-            className="mt-5 rounded-2xl px-5 py-4"
+            className="mt-5 rounded-2xl px-5 py-5"
             style={{
               backgroundColor: "var(--bg-card)",
               border:          "1px solid var(--bg-border)",
