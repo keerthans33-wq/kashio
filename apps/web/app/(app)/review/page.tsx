@@ -154,7 +154,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
       {all.length > 0 && !isFiltered && (() => {
         if (totalNeedsReview > 0) return (
           <div className="mt-5 space-y-2">
-            <div className="rounded-xl px-4 py-3.5 flex items-center justify-between gap-4" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}>
+            <div className="rounded-2xl px-4 py-3.5 flex items-center justify-between gap-4" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "var(--shadow-card)" }}>
               <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
                 {totalNeedsReview} item{totalNeedsReview !== 1 ? "s" : ""} left
                 {pendingValue > 0 && <> · <span className="font-semibold" style={{ color: "var(--text-primary)" }}>~{fmt(pendingValue)}</span></>}
@@ -175,7 +175,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         );
 
         if (totalConfirmed > 0) return (
-          <div className="mt-5 rounded-2xl px-6 py-6 text-center space-y-3" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "0 0 0 1px rgba(124,58,237,0.2), 0 0 24px rgba(124,58,237,0.08)" }}>
+          <div className="mt-5 rounded-2xl px-6 py-6 text-center space-y-3" style={{ backgroundColor: "var(--bg-card)", border: "1px solid rgba(124,58,237,0.3)", boxShadow: "var(--shadow-card-lg), 0 0 32px rgba(124,58,237,0.1)" }}>
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
                 Review complete

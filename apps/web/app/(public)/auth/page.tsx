@@ -80,7 +80,7 @@ export default function AuthPage() {
     >
       <div
         className="w-full max-w-sm rounded-2xl px-7 py-8"
-        style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}
+        style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "var(--shadow-card-lg)" }}
       >
 
         {/* Logo / heading */}

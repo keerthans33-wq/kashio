@@ -85,8 +85,8 @@ export function CandidateCard({
 
   return (
     <div
-      className="rounded-xl transition-all duration-200"
-      style={{ borderColor, backgroundColor: bgColor, border: `1px solid ${borderColor}` }}
+      className="rounded-2xl transition-all duration-200"
+      style={{ backgroundColor: bgColor, border: `1px solid ${borderColor}`, boxShadow: "var(--shadow-card)" }}
     >
       <div className="px-4 py-4">
 

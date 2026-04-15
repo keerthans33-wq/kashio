@@ -71,7 +71,7 @@ export default function LoginPage() {
         </div>
 
         {/* Card */}
-        <div className="rounded-2xl p-6 space-y-5" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}>
+        <div className="rounded-2xl p-6 space-y-5" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "var(--shadow-card-lg)" }}>
 
           {/* Mode tabs */}
           <div className="flex rounded-xl p-1 gap-1" style={{ backgroundColor: "var(--bg-elevated)" }}>

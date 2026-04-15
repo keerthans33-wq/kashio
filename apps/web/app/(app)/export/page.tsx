@@ -121,8 +121,8 @@ export default async function Export() {
 
         {/* Total deductions */}
         <div
-          className="rounded-xl px-5 py-5 flex flex-col gap-3"
-          style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", minHeight: 190 }}
+          className="rounded-2xl px-5 py-5 flex flex-col gap-3"
+          style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "var(--shadow-card)", minHeight: 190 }}
         >
           <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
             {(userType && TOTAL_LABEL[userType]) ?? "Total deductions"}
@@ -146,8 +146,8 @@ export default async function Export() {
         {/* Home office — only when hours exist */}
         {wfhYtdHours > 0 && (
           <div
-            className="rounded-xl px-5 py-5 flex flex-col gap-3"
-            style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", minHeight: 190 }}
+            className="rounded-2xl px-5 py-5 flex flex-col gap-3"
+            style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "var(--shadow-card)", minHeight: 190 }}
           >
             <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
               {(userType && WFH_LABEL[userType]) ?? "Home office"}

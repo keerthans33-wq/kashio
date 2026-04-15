@@ -95,7 +95,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
 
       {/* Bulk action bar */}
       {selected.size > 0 && (
-        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3" style={{ borderColor: "var(--bg-border)", backgroundColor: "var(--bg-card)" }}>
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl px-4 py-3" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "var(--shadow-card)" }}>
           <span className="text-sm" style={{ color: "var(--text-secondary)" }}>{selected.size} selected</span>
           <Button
             size="sm"

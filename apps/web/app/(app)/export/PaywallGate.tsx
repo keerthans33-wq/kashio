@@ -104,10 +104,10 @@ export function PaywallGate({ allItems, categoryGroups, total }: Props) {
   return (
     <>
       {/* Blurred breakdown preview */}
-      <div className="mb-6 relative overflow-hidden rounded-xl" style={{ pointerEvents: "none", userSelect: "none" }}>
+      <div className="mb-6 relative overflow-hidden rounded-2xl" style={{ pointerEvents: "none", userSelect: "none" }}>
         <div style={{ filter: "blur(5px)", opacity: 0.45 }}>
           <p className={sectionLabel} style={{ color: "var(--text-muted)" }}>Breakdown</p>
-          <div className="rounded-xl px-5 py-5" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}>
+          <div className="rounded-2xl px-5 py-5" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}>
             {allItems.slice(0, 5).map((item, i) => (
               <div
                 key={item.id}
@@ -133,7 +133,7 @@ export function PaywallGate({ allItems, categoryGroups, total }: Props) {
       {/* Paywall card */}
       <div
         className="mb-8 rounded-2xl px-6 py-7"
-        style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--violet-from)" }}
+        style={{ backgroundColor: "var(--bg-card)", border: "1px solid rgba(124,58,237,0.4)", boxShadow: "var(--shadow-card-lg), 0 0 40px rgba(124,58,237,0.08)" }}
       >
         <div
           className="mb-5 flex h-10 w-10 items-center justify-center rounded-full"

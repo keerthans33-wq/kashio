@@ -66,10 +66,11 @@ export default function OnboardingPage() {
               <button
                 key={option.id}
                 onClick={() => setSelected(option.id)}
-                className="flex w-full items-center gap-4 rounded-xl px-5 py-4 text-left transition-all duration-150 active:scale-[0.98]"
+                className="flex w-full items-center gap-4 rounded-2xl px-5 py-4 text-left transition-all duration-150 active:scale-[0.98]"
                 style={{
                   backgroundColor: isSelected ? "rgba(124,58,237,0.10)" : "var(--bg-card)",
-                  border: isSelected ? "1px solid var(--violet-from)" : "1px solid var(--bg-border)",
+                  border: isSelected ? "1px solid rgba(124,58,237,0.5)" : "1px solid var(--bg-border)",
+                  boxShadow: isSelected ? "0 0 16px rgba(124,58,237,0.12)" : "var(--shadow-card)",
                 }}
               >
                 <span
