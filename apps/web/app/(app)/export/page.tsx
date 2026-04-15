@@ -166,30 +166,25 @@ export default async function Export() {
           </p>
         </div>
 
-        {/* WFH — secondary, compact horizontal */}
+        {/* WFH — same surface family as deductions, clearly secondary */}
         {wfhYtdHours > 0 && (
           <div
-            className="rounded-2xl px-5 py-4 flex items-center justify-between gap-4"
+            className="rounded-2xl px-6 py-5"
             style={{
-              backgroundColor: "var(--bg-card)",
-              border:          "1px solid var(--bg-border)",
-              boxShadow:       "var(--shadow-card)",
+              backgroundColor: "rgba(13, 20, 33, 0.88)",
+              border:          "1px solid rgba(255,255,255,0.08)",
+              boxShadow:       "0 2px 8px rgba(0,0,0,0.3)",
             }}
           >
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-muted)" }}>
-                {(userType && WFH_LABEL[userType]) ?? "Home office"}
-              </p>
-              <p className="text-[26px] font-bold tabular-nums leading-none tracking-tight" style={{ color: "var(--text-primary)" }}>
-                ~{fmtRound(wfhYtdEst)}
-              </p>
-            </div>
-            <div className="text-right shrink-0">
-              <p className="text-[13px] font-semibold" style={{ color: "var(--text-secondary)" }}>
-                {wfhYtdHours} hrs logged
-              </p>
-              <p className="mt-0.5 text-[11px]" style={{ color: "var(--text-muted)" }}>67c/hr ATO rate</p>
-            </div>
+            <p className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>
+              {(userType && WFH_LABEL[userType]) ?? "Home office"}
+            </p>
+            <p className="text-[28px] font-bold tabular-nums leading-none tracking-tight" style={{ color: "var(--text-primary)" }}>
+              ~{fmtRound(wfhYtdEst)}
+            </p>
+            <p className="mt-3 text-[12px]" style={{ color: "var(--text-muted)" }}>
+              {wfhYtdHours} hrs logged · 67¢/hr ATO rate
+            </p>
           </div>
         )}
 
