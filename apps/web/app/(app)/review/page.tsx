@@ -7,6 +7,7 @@ import { ReviewList } from "./ReviewList";
 import type { CandidateCardProps } from "./CandidateCard";
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/motion/FadeIn";
+import { MobileScreen } from "@/components/layout/mobile-screen";
 
 const HEADING: Record<string, string> = {
   employee:    "Work-related deductions",
@@ -116,7 +117,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
   const isFiltered = category || confidence;
 
   return (
-    <main className="mx-auto max-w-3xl px-5 py-8 sm:py-10">
+    <MobileScreen maxWidth="lg" as="main" padY={false} className="py-8 sm:py-10">
 
       {/* Header */}
       <FadeIn className="flex items-start justify-between gap-4">
@@ -177,7 +178,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         );
 
         if (totalConfirmed > 0) return (
-          <div className="mt-6 rounded-2xl px-5 py-7 text-center space-y-4" style={{ backgroundColor: "var(--bg-card)", border: "1px solid rgba(124,58,237,0.3)", boxShadow: "var(--shadow-card-lg), 0 0 32px rgba(124,58,237,0.1)" }}>
+          <div className="mt-6 rounded-2xl px-5 py-7 text-center space-y-4" style={{ backgroundColor: "var(--bg-card)", border: "1px solid rgba(34,197,94,0.15)", boxShadow: "var(--shadow-card-lg), 0 0 24px rgba(34,197,94,0.06)" }}>
             <div className="space-y-1.5">
               <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
                 Review complete
@@ -208,19 +209,19 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
       {/* List */}
       {all.length === 0 ? (
-        <div className="mt-10 text-center space-y-2">
-          <p style={{ color: "var(--text-secondary)" }}>Nothing to review yet.</p>
-          <p className="text-sm">
-            <a href="/import" className="underline" style={{ color: "var(--text-muted)" }}>Import your transactions</a>
-            {" "}and Kashio will find your possible {termPlural(userType)}.
+        <div className="mt-10 rounded-2xl px-6 py-10 text-center space-y-3" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}>
+          <p className="text-[15px] font-medium" style={{ color: "var(--text-secondary)" }}>Nothing to review yet</p>
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+            <Link href="/import" className="underline underline-offset-2">Import your transactions</Link>
+            {" "}and Kashio will flag your possible {termPlural(userType)}.
           </p>
         </div>
       ) : candidates.length === 0 ? (
-        <div className="mt-10 text-center space-y-2">
-          <p style={{ color: "var(--text-secondary)" }}>No possible {termPlural(userType)} match your filters.</p>
-          <p className="text-sm">
-            <a href="/review" className="underline" style={{ color: "var(--text-muted)" }}>Clear all filters</a>{" "}
-            to see everything.
+        <div className="mt-10 rounded-2xl px-6 py-10 text-center space-y-3" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}>
+          <p className="text-[15px] font-medium" style={{ color: "var(--text-secondary)" }}>No {termPlural(userType)} match these filters</p>
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+            <Link href="/review" className="underline underline-offset-2">Clear filters</Link>
+            {" "}to see everything.
           </p>
         </div>
       ) : (
@@ -239,6 +240,6 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
           {(userType && DISCLAIMER[userType]) ?? "Kashio helps you spot possible deductions. It's not a tax adviser."}
         </p>
       )}
-    </main>
+    </MobileScreen>
   );
 }

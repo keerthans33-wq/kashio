@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { confirmCandidate, rejectCandidate, resetCandidate, saveEvidence } from "./actions";
 import { Button } from "@/components/ui/button";
+
+// ── Types ──────────────────────────────────────────────────────────────────────
 
 type Status     = "NEEDS_REVIEW" | "CONFIRMED" | "REJECTED";
 type Confidence = "LOW" | "MEDIUM" | "HIGH";
@@ -22,27 +24,52 @@ export type CandidateCardProps = {
   userType?:         string | null;
 };
 
+// ── Visual constants ───────────────────────────────────────────────────────────
+
+/** Left accent bar color — 3px strip on the card's left edge */
+const ACCENT_BY_CONFIDENCE: Record<Confidence, string> = {
+  HIGH:   "#22C55E",
+  MEDIUM: "#14B8A6",
+  LOW:    "rgba(255,255,255,0.08)",
+};
+
+/** Card surface per status */
+const CARD_BG: Record<Status, string> = {
+  CONFIRMED:    "rgba(17, 33, 24, 0.78)",
+  REJECTED:     "rgba(17, 24, 39, 0.38)",
+  NEEDS_REVIEW: "rgba(17, 24, 39, 0.72)",
+};
+
+const CARD_BORDER: Record<Status, string> = {
+  CONFIRMED:    "rgba(34, 197, 94, 0.18)",
+  REJECTED:     "rgba(255, 255, 255, 0.03)",
+  NEEDS_REVIEW: "rgba(255, 255, 255, 0.06)",
+};
+
+/** Confidence label + dot color */
 const CONFIDENCE_LABEL: Record<Confidence, string> = {
-  HIGH:   "Likely deductible",
+  HIGH:   "Strong match",
   MEDIUM: "Possible match",
   LOW:    "Review carefully",
 };
 
-const CONFIDENCE_LABEL_LONG: Record<Confidence, string> = {
-  HIGH:   "Likely deductible",
+const CONFIDENCE_LONG: Record<Confidence, string> = {
+  HIGH:   "Strong match",
   MEDIUM: "Possible match",
   LOW:    "Review carefully — check before claiming",
 };
 
 const CONFIDENCE_COLOR: Record<Confidence, string> = {
   HIGH:   "#22C55E",
-  MEDIUM: "#F59E0B",
+  MEDIUM: "#14B8A6",
   LOW:    "#6B7280",
 };
 
+// ── Component ──────────────────────────────────────────────────────────────────
+
 export function CandidateCard({
-  id, status: initialStatus, confidence, category, reason, confidenceReason, mixedUse,
-  hasEvidence, evidenceNote, transaction, userType,
+  id, status: initialStatus, confidence, category, reason, confidenceReason,
+  mixedUse, hasEvidence, evidenceNote, transaction,
 }: CandidateCardProps) {
   const [status, setStatus]                 = useState<Status>(initialStatus);
   const [expanded, setExpanded]             = useState(false);
@@ -58,19 +85,18 @@ export function CandidateCard({
     setTimeout(() => setEvidenceSaved(null), 2500);
   }
 
-  const amount  = transaction.amount;
   const settled = status !== "NEEDS_REVIEW";
 
   async function save(action: () => Promise<void>, next: Status) {
     const prev = status;
-    setStatus(next);   // update UI instantly
+    setStatus(next);
     setIsSaving(true);
     setError(null);
     try {
       await action();
     } catch {
-      setStatus(prev); // revert if server fails
-      setError("Could not save. Please try again.");
+      setStatus(prev);
+      setError("Could not save. Try again.");
     } finally {
       setIsSaving(false);
     }
@@ -80,51 +106,76 @@ export function CandidateCard({
   const handleReject  = () => save(() => rejectCandidate(id),  "REJECTED");
   const handleReset   = () => save(() => resetCandidate(id),   "NEEDS_REVIEW");
 
-  const borderColor = status === "CONFIRMED" ? "#22C55E33" : "var(--bg-border)";
-  const bgColor     = status === "CONFIRMED" ? "rgba(34,197,94,0.06)" : "var(--bg-card)";
-  const dimmed      = { opacity: status === "REJECTED" ? 0.5 : 1 };
+  const accentColor = settled
+    ? (status === "CONFIRMED" ? "#22C55E" : "transparent")
+    : ACCENT_BY_CONFIDENCE[confidence];
 
   return (
     <motion.div
-      className="rounded-2xl"
-      style={{ backgroundColor: bgColor, border: `1px solid ${borderColor}`, boxShadow: "var(--shadow-card)" }}
-      whileHover={{ y: -1, boxShadow: "0 6px 24px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.5)" }}
+      className="relative rounded-2xl overflow-hidden"
+      style={{
+        backgroundColor: CARD_BG[status],
+        border:          `1px solid ${CARD_BORDER[status]}`,
+        boxShadow:       "0 1px 3px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.2)",
+      }}
+      whileHover={!settled ? { y: -1, boxShadow: "0 4px 20px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.5)" } : {}}
       transition={{ duration: 0.15, ease: "easeOut" }}
     >
-      <div className="px-4 py-5">
+      {/* Left confidence/status accent */}
+      <div
+        className="absolute inset-y-0 left-0 w-[3px]"
+        style={{ backgroundColor: accentColor }}
+      />
+
+      {/* Main content */}
+      <div
+        className="px-5 py-4"
+        style={{ opacity: status === "REJECTED" ? 0.55 : 1 }}
+      >
 
         {/* Merchant + amount */}
-        <div className="flex items-baseline justify-between gap-4">
-          <p className="truncate text-[16px] font-semibold" style={{ color: "var(--text-primary)", ...dimmed }}>
+        <div className="flex items-baseline justify-between gap-3">
+          <p
+            className="truncate text-[15px] font-semibold"
+            style={{ color: "var(--text-primary)" }}
+          >
             {transaction.normalizedMerchant}
           </p>
-          <p className="shrink-0 text-[20px] font-bold tabular-nums tracking-tight" style={{ color: "var(--text-primary)", ...dimmed }}>
-            −${Math.abs(amount).toFixed(2)}
+          <p
+            className="shrink-0 text-[18px] font-bold tabular-nums tracking-tight"
+            style={{ color: status === "CONFIRMED" ? "#22C55E" : "var(--text-primary)" }}
+          >
+            −${Math.abs(transaction.amount).toFixed(2)}
           </p>
         </div>
 
-        {/* Date + confidence badge */}
-        <div className="mt-2 flex items-center gap-2 flex-wrap">
-          <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+        {/* Date + category + confidence indicator */}
+        <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+          <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
             {transaction.date}
+          </span>
+          <span className="text-[12px]" style={{ color: "var(--bg-border)" }}>·</span>
+          <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+            {category}
           </span>
           {!settled && (
             <span
-              className="text-xs font-semibold rounded-full px-2 py-0.5"
-              style={{
-                color: CONFIDENCE_COLOR[confidence],
-                backgroundColor: CONFIDENCE_COLOR[confidence] + "1A",
-              }}
+              className="flex items-center gap-1 text-[11px] font-medium"
+              style={{ color: CONFIDENCE_COLOR[confidence] }}
             >
+              <span
+                className="inline-block h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: CONFIDENCE_COLOR[confidence] }}
+              />
               {CONFIDENCE_LABEL[confidence]}
             </span>
           )}
         </div>
 
-        {/* Short reason — clamped to 2 lines, only when unreviewed */}
+        {/* Reason — 2 lines, only when unreviewed */}
         {!settled && (
           <p
-            className="mt-2.5 text-[14px] leading-snug line-clamp-2"
+            className="mt-2.5 text-[13px] leading-relaxed line-clamp-2"
             style={{ color: "var(--text-secondary)" }}
           >
             {reason}
@@ -132,13 +183,19 @@ export function CandidateCard({
         )}
 
         {/* Actions */}
-        <div className="mt-4">
-          {error && <p className="mb-2 text-xs text-red-400">{error}</p>}
+        <div className="mt-3.5">
+          {error && (
+            <p className="mb-2 text-xs text-red-400">{error}</p>
+          )}
 
           {settled ? (
+            /* Settled state: compact status + controls */
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-medium" style={{ color: status === "CONFIRMED" ? "#22C55E" : "var(--text-muted)" }}>
-                {status === "CONFIRMED" ? "✓ Deductible" : "✗ Not deductible"}
+              <span
+                className="text-[12px] font-medium"
+                style={{ color: status === "CONFIRMED" ? "#22C55E" : "var(--text-muted)" }}
+              >
+                {status === "CONFIRMED" ? "✓ Confirmed" : "Skipped"}
               </span>
               <div className="flex items-center gap-3 shrink-0">
                 <Button variant="ghost" size="xs" onClick={() => setExpanded((v) => !v)}>
@@ -150,14 +207,20 @@ export function CandidateCard({
               </div>
             </div>
           ) : (
-            <div className="flex flex-wrap items-center gap-2">
+            /* Unreviewed state: confirm / reject / details */
+            <div className="flex items-center gap-2">
               <Button size="sm" onClick={handleConfirm} disabled={isSaving}>
-                {isSaving ? "Saving…" : "Deductible"}
+                {isSaving ? "Saving…" : "Confirm"}
               </Button>
               <Button variant="secondary" size="sm" onClick={handleReject} disabled={isSaving}>
                 Not deductible
               </Button>
-              <Button variant="ghost" size="xs" className="ml-auto" onClick={() => setExpanded((v) => !v)}>
+              <Button
+                variant="ghost"
+                size="xs"
+                className="ml-auto"
+                onClick={() => setExpanded((v) => !v)}
+              >
                 {expanded ? "Less" : "Details"}
               </Button>
             </div>
@@ -165,80 +228,132 @@ export function CandidateCard({
         </div>
       </div>
 
-      {/* Expanded details */}
-      {expanded && (
-        <div className="border-t px-4 py-4 space-y-3" style={{ borderColor: "var(--bg-border)" }}>
+      {/* Expandable details */}
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            style={{ overflow: "hidden" }}
+          >
+            <div
+              className="px-5 py-4 space-y-4"
+              style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+            >
 
-          <div>
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>Category</p>
-            <p className="mt-0.5 text-sm" style={{ color: "var(--text-secondary)" }}>{category}</p>
-          </div>
+              {/* Why Kashio flagged this */}
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-muted)" }}>
+                  Why Kashio flagged this
+                </p>
+                <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                  {reason}
+                </p>
+                {mixedUse && (
+                  <p className="mt-1.5 text-[12px]" style={{ color: "#F59E0B" }}>
+                    May include personal use — review before claiming.
+                  </p>
+                )}
+              </div>
 
-          <div>
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>Why Kashio flagged this</p>
-            <p className="mt-0.5 text-sm" style={{ color: "var(--text-secondary)" }}>{reason}</p>
-            {mixedUse && (
-              <p className="mt-1 text-xs" style={{ color: "#F59E0B" }}>
-                May include personal use. Review before claiming.
-              </p>
-            )}
-          </div>
-
-          {confidenceReason && (
-            <div>
-              <p className="text-xs font-medium" style={{ color: CONFIDENCE_COLOR[confidence] }}>
-                {CONFIDENCE_LABEL_LONG[confidence]}
-              </p>
-              <p className="mt-0.5 text-sm" style={{ color: "var(--text-secondary)" }}>{confidenceReason}</p>
-            </div>
-          )}
-
-          <div>
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>Transaction</p>
-            <p className="mt-0.5 text-sm break-words" style={{ color: "var(--text-secondary)" }}>{transaction.description}</p>
-          </div>
-
-          {status === "CONFIRMED" && (
-            <div>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={evidence}
-                  disabled={evidenceSaving}
-                  onChange={async (e) => {
-                    const next = e.target.checked;
-                    setEvidence(next);
-                    setEvidenceSaving(true);
-                    try { await saveEvidence(id, next, note); flashSaved(next ? "Saved" : "Removed"); } finally { setEvidenceSaving(false); }
-                  }}
-                  className="h-4 w-4 rounded accent-violet-600"
-                />
-                <span className="text-sm" style={{ color: "var(--text-secondary)" }}>I have a receipt or invoice</span>
-              </label>
-              {evidence && (
-                <input
-                  type="text"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  onBlur={async () => {
-                    setEvidenceSaving(true);
-                    try { await saveEvidence(id, evidence, note); flashSaved("Note saved"); } finally { setEvidenceSaving(false); }
-                  }}
-                  placeholder="e.g. Bunnings receipt Feb 2025"
-                  className="mt-2 w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1"
-                  style={{
-                    backgroundColor: "var(--bg-elevated)",
-                    border: "1px solid var(--bg-border)",
-                    color: "var(--text-primary)",
-                  }}
-                />
+              {/* Confidence reasoning */}
+              {confidenceReason && (
+                <div>
+                  <p
+                    className="text-[11px] font-semibold uppercase tracking-widest mb-1.5"
+                    style={{ color: CONFIDENCE_COLOR[confidence] }}
+                  >
+                    {CONFIDENCE_LONG[confidence]}
+                  </p>
+                  <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                    {confidenceReason}
+                  </p>
+                </div>
               )}
-              {evidenceSaving && <p className="mt-1 text-xs" style={{ color: "var(--text-muted)" }}>Saving…</p>}
-              {evidenceSaved && !evidenceSaving && <p className="mt-1 text-xs" style={{ color: "#22C55E" }}>{evidenceSaved}</p>}
+
+              {/* Raw transaction */}
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-muted)" }}>
+                  Bank description
+                </p>
+                <p
+                  className="text-[12px] leading-relaxed break-words font-mono"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  {transaction.description}
+                </p>
+              </div>
+
+              {/* Evidence — only when confirmed */}
+              {status === "CONFIRMED" && (
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--text-muted)" }}>
+                    Receipt / invoice
+                  </p>
+                  <label className="flex items-center gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={evidence}
+                      disabled={evidenceSaving}
+                      onChange={async (e) => {
+                        const next = e.target.checked;
+                        setEvidence(next);
+                        setEvidenceSaving(true);
+                        try {
+                          await saveEvidence(id, next, note);
+                          flashSaved(next ? "Saved" : "Removed");
+                        } finally {
+                          setEvidenceSaving(false);
+                        }
+                      }}
+                      className="h-4 w-4 rounded"
+                      style={{ accentColor: "#22C55E" }}
+                    />
+                    <span className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
+                      I have a receipt or invoice
+                    </span>
+                  </label>
+
+                  {evidence && (
+                    <input
+                      type="text"
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      onBlur={async () => {
+                        setEvidenceSaving(true);
+                        try {
+                          await saveEvidence(id, evidence, note);
+                          flashSaved("Note saved");
+                        } finally {
+                          setEvidenceSaving(false);
+                        }
+                      }}
+                      placeholder="e.g. Bunnings receipt Feb 2025"
+                      className="mt-2.5 w-full rounded-xl px-4 py-2.5 text-[13px] focus:outline-none focus:ring-1"
+                      style={{
+                        backgroundColor: "rgba(255,255,255,0.05)",
+                        border:          "1px solid rgba(255,255,255,0.08)",
+                        color:           "var(--text-primary)",
+                        focusRingColor:  "#22C55E",
+                      }}
+                    />
+                  )}
+
+                  {evidenceSaving && (
+                    <p className="mt-1.5 text-[12px]" style={{ color: "var(--text-muted)" }}>Saving…</p>
+                  )}
+                  {evidenceSaved && !evidenceSaving && (
+                    <p className="mt-1.5 text-[12px]" style={{ color: "#22C55E" }}>{evidenceSaved}</p>
+                  )}
+                </div>
+              )}
+
             </div>
-          )}
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

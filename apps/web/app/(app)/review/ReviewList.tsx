@@ -145,7 +145,8 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
                 type="checkbox"
                 checked={selected.size === needsReviewIds.length}
                 onChange={toggleAll}
-                className="h-4 w-4 cursor-pointer rounded accent-violet-600"
+                className="h-4 w-4 cursor-pointer rounded"
+                style={{ accentColor: "#22C55E" }}
               />
               <span className="text-xs" style={{ color: "var(--text-muted)" }}>
                 {selected.size === needsReviewIds.length ? "Deselect all" : "Select all"}
@@ -166,7 +167,8 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
                     type="checkbox"
                     checked={selected.has(c.id)}
                     onChange={() => toggle(c.id)}
-                    className="mt-4 h-4 w-4 shrink-0 cursor-pointer rounded accent-violet-600"
+                    className="mt-4 h-4 w-4 shrink-0 cursor-pointer rounded"
+                    style={{ accentColor: "#22C55E" }}
                   />
                 ) : (
                   <div className="mt-4 h-4 w-4 shrink-0" />
@@ -185,11 +187,16 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
         <div id="confirmed" className="mt-6 border-t pt-5" style={{ borderColor: "var(--bg-border)" }}>
           <button
             onClick={() => setShowConfirmed((v) => !v)}
-            className="flex items-center gap-2 text-sm transition-colors duration-150"
+            className="flex w-full items-center justify-between gap-2 transition-colors duration-150"
             style={{ color: "var(--text-muted)" }}
           >
-            <span className="flex h-4 w-4 items-center justify-center rounded-full text-xs" style={{ backgroundColor: "rgba(34,197,94,0.15)", color: "#22C55E" }}>✓</span>
-            {showConfirmed ? "Hide" : "Show"} confirmed ({confirmed.length})
+            <span className="flex items-center gap-2 text-sm">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full text-xs" style={{ backgroundColor: "rgba(34,197,94,0.15)", color: "#22C55E" }}>✓</span>
+              Confirmed ({confirmed.length})
+            </span>
+            <span className="text-sm font-semibold tabular-nums" style={{ color: "#22C55E" }}>
+              {fmt(confirmed.reduce((s, c) => s + Math.abs(c.transaction.amount), 0))}
+            </span>
           </button>
           <AnimatePresence>
             {showConfirmed && (
