@@ -59,9 +59,24 @@ export function ExportButton() {
       </Button>
 
       {state === "done" && (
-        <p className="text-center text-[13px]" style={{ color: "var(--text-muted)" }}>
-          Your report is saved — take it to your accountant or lodge your return.
-        </p>
+        <div className="mt-5 rounded-2xl px-5 py-5 text-center space-y-2"
+          style={{ backgroundColor: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.18)" }}
+        >
+          <div
+            className="mx-auto flex h-9 w-9 items-center justify-center rounded-full"
+            style={{ backgroundColor: "rgba(34,197,94,0.15)" }}
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} style={{ color: "#22C55E" }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+          </div>
+          <p className="text-[15px] font-semibold" style={{ color: "#22C55E" }}>
+            You&apos;re ready to lodge
+          </p>
+          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+            Share your report with your accountant or use it to lodge your return.
+          </p>
+        </div>
       )}
       {state === "error" && (
         <div
