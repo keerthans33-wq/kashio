@@ -22,6 +22,7 @@ export type CandidateCardProps = {
   evidenceNote:      string | null;
   transaction:       { normalizedMerchant: string; amount: number; date: string; description: string };
   userType?:         string | null;
+  onStatusChange?:   (id: string, next: Status) => void;
 };
 
 // ── Visual constants ───────────────────────────────────────────────────────────
@@ -61,7 +62,7 @@ const CONFIDENCE_COLOR: Record<Confidence, string> = {
 
 export function CandidateCard({
   id, status: initialStatus, confidence, category, reason, confidenceReason,
-  mixedUse, hasEvidence, evidenceNote, transaction,
+  mixedUse, hasEvidence, evidenceNote, transaction, onStatusChange,
 }: CandidateCardProps) {
   const [status, setStatus]                 = useState<Status>(initialStatus);
   const [expanded, setExpanded]             = useState(false);
@@ -82,12 +83,14 @@ export function CandidateCard({
   async function save(action: () => Promise<void>, next: Status) {
     const prev = status;
     setStatus(next);
+    onStatusChange?.(id, next);
     setIsSaving(true);
     setError(null);
     try {
       await action();
     } catch {
       setStatus(prev);
+      onStatusChange?.(id, prev);
       setError("Could not save. Try again.");
     } finally {
       setIsSaving(false);

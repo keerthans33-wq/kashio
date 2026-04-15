@@ -6,6 +6,8 @@ import { CandidateCard, type CandidateCardProps } from "./CandidateCard";
 import { bulkConfirmCandidates, bulkRejectCandidates, bulkResetCandidates } from "./actions";
 import { Button } from "@/components/ui/button";
 
+type Status = "NEEDS_REVIEW" | "CONFIRMED" | "REJECTED";
+
 type Props = {
   needsReview:     CandidateCardProps[];
   confirmed:       CandidateCardProps[];
@@ -22,8 +24,25 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
   const [lastIds, setLastIds]       = useState<string[]>([]);
   const [showConfirmed, setShowConfirmed] = useState(missingEvidence > 0);
   const [showRejected, setShowRejected]   = useState(false);
+  const [statusOverrides, setStatusOverrides] = useState<Map<string, Status>>(new Map());
 
-  const needsReviewIds = needsReview.map((c) => c.id);
+  // Immediate optimistic repositioning — apply client-side overrides to all items
+  const allItems = [...needsReview, ...confirmed, ...rejected];
+  const effectiveItems = allItems.map((item) => ({
+    ...item,
+    status: (statusOverrides.get(item.id) ?? item.status) as Status,
+  }));
+  const effectiveNeeds    = effectiveItems.filter((c) => c.status === "NEEDS_REVIEW");
+  const effectiveConfirmed = effectiveItems.filter((c) => c.status === "CONFIRMED");
+  const effectiveRejected  = effectiveItems.filter((c) => c.status === "REJECTED");
+
+  function handleCardStatusChange(id: string, next: Status) {
+    setStatusOverrides((prev) => new Map(prev).set(id, next));
+    if (next === "CONFIRMED") setShowConfirmed(true);
+    if (next === "REJECTED")  setShowRejected(true);
+  }
+
+  const needsReviewIds = effectiveNeeds.map((c) => c.id);
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -136,9 +155,9 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
 
       {/* Needs review */}
       <div id="needs-review" />
-      {needsReview.length === 0 ? (
+      {effectiveNeeds.length === 0 ? (
         <p className="py-8 text-center text-sm" style={{ color: "var(--text-muted)" }}>
-          {confirmed.length + rejected.length > 0 ? "All items reviewed." : "Nothing to review yet."}
+          {effectiveConfirmed.length + effectiveRejected.length > 0 ? "All items reviewed." : "Nothing to review yet."}
         </p>
       ) : (
         <>
@@ -157,7 +176,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
             </div>
           )}
           <div className="space-y-3">
-            {needsReview.map((c, i) => (
+            {effectiveNeeds.map((c, i) => (
               <motion.div
                 key={c.id}
                 className="flex items-start gap-3"
@@ -175,7 +194,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
                   />
                 )}
                 <div className="min-w-0 flex-1">
-                  <CandidateCard {...c} />
+                  <CandidateCard {...c} onStatusChange={handleCardStatusChange} />
                 </div>
               </motion.div>
             ))}
@@ -184,7 +203,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
       )}
 
       {/* Confirmed — collapsible */}
-      {confirmed.length > 0 && (
+      {effectiveConfirmed.length > 0 && (
         <div id="confirmed" className="mt-6 border-t pt-5" style={{ borderColor: "var(--bg-border)" }}>
           <button
             onClick={() => setShowConfirmed((v) => !v)}
@@ -192,7 +211,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
             style={{ color: "var(--text-muted)" }}
           >
             <span className="flex h-4 w-4 items-center justify-center rounded-full text-xs" style={{ backgroundColor: "rgba(34,197,94,0.15)", color: "#22C55E" }}>✓</span>
-            Confirmed ({confirmed.length})
+            Confirmed ({effectiveConfirmed.length})
           </button>
           <AnimatePresence>
             {showConfirmed && (
@@ -204,7 +223,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
                 transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                 style={{ overflow: "hidden" }}
               >
-                {confirmed.map((c) => <CandidateCard key={c.id} {...c} />)}
+                {effectiveConfirmed.map((c) => <CandidateCard key={c.id} {...c} onStatusChange={handleCardStatusChange} />)}
               </motion.div>
             )}
           </AnimatePresence>
@@ -212,7 +231,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
       )}
 
       {/* Rejected — collapsible */}
-      {rejected.length > 0 && (
+      {effectiveRejected.length > 0 && (
         <div className="mt-6 border-t pt-5" style={{ borderColor: "var(--bg-border)" }}>
           <button
             onClick={() => setShowRejected((v) => !v)}
@@ -221,7 +240,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
           >
             <span className="flex items-center gap-2 text-sm">
               <span className="flex h-4 w-4 items-center justify-center rounded-full text-xs" style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}>✕</span>
-              Skipped ({rejected.length})
+              Skipped ({effectiveRejected.length})
             </span>
           </button>
           <AnimatePresence>
@@ -234,7 +253,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
                 transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                 style={{ overflow: "hidden" }}
               >
-                {rejected.map((c) => <CandidateCard key={c.id} {...c} />)}
+                {effectiveRejected.map((c) => <CandidateCard key={c.id} {...c} onStatusChange={handleCardStatusChange} />)}
               </motion.div>
             )}
           </AnimatePresence>

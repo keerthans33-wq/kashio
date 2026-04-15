@@ -24,7 +24,7 @@ export default async function Home({
   if (user) redirect(user.userType ? "/import" : "/onboarding");
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-6 py-16 text-center" style={{ backgroundColor: "var(--bg-app)" }}>
+    <main className="min-h-screen flex flex-col items-center justify-center px-6 py-16 text-center">
 
       {/* Logo */}
       <Image
@@ -47,7 +47,7 @@ export default async function Home({
       </p>
 
       {/* Steps */}
-      <div className="mt-12 grid grid-cols-2 sm:flex sm:flex-row items-center sm:items-start gap-6 sm:gap-8">
+      <div className="mt-12 grid grid-cols-2 sm:flex sm:flex-row items-start gap-6 sm:gap-8">
         {steps.map((step) => (
           <div key={step.n} className="flex flex-col items-center gap-2">
             <span
