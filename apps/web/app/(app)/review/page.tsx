@@ -104,16 +104,6 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
   const totalConfirmed   = all.filter((c) => c.status === "CONFIRMED").length;
   const missingEvidence  = all.filter((c) => c.status === "CONFIRMED" && !c.hasEvidence).length;
 
-  const confirmedValue = all
-    .filter((c) => c.status === "CONFIRMED")
-    .reduce((s, c) => s + Math.abs(c.transaction.amount), 0);
-
-  const pendingValue = all
-    .filter((c) => c.status === "NEEDS_REVIEW")
-    .reduce((s, c) => s + Math.abs(c.transaction.amount), 0);
-
-  const fmt = (n: number) => n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
-
   const isFiltered = category || confidence;
 
   return (
@@ -128,11 +118,10 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
           {all.length > 0 && !isFiltered && (() => {
             const parts: React.ReactNode[] = [
               totalNeedsReview > 0 && <span key="review">{totalNeedsReview} to review</span>,
-              totalConfirmed > 0 && <span key="confirmed">{totalConfirmed} confirmed</span>,
-              confirmedValue > 0 && <span key="value" className="font-semibold" style={{ color: "var(--text-secondary)" }}>~{fmt(confirmedValue)}</span>,
+              totalConfirmed   > 0 && <span key="confirmed">{totalConfirmed} confirmed</span>,
             ].filter(Boolean);
             return parts.length > 0 ? (
-              <p className="mt-2 text-[15px]" style={{ color: "var(--text-muted)" }}>
+              <p className="mt-2 text-[14px]" style={{ color: "var(--text-muted)" }}>
                 {parts.map((part, i) => (
                   <span key={i}>{i > 0 && " · "}{part}</span>
                 ))}
@@ -152,56 +141,42 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         )}
       </FadeIn>
 
-      {/* Next action — hidden when filtered */}
-      <FadeIn delay={0.08}>
+      {/* Progress prompt — hidden when filtered */}
       {all.length > 0 && !isFiltered && (() => {
         if (totalNeedsReview > 0) return (
-          <div className="mt-6 space-y-2">
-            <div className="rounded-2xl px-5 py-4 flex items-center justify-between gap-4" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "var(--shadow-card)" }}>
+          <FadeIn delay={0.08}>
+            <div
+              className="mt-5 rounded-2xl px-5 py-3.5 flex items-center justify-between gap-4"
+              style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "var(--shadow-card)" }}
+            >
               <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                {totalNeedsReview} item{totalNeedsReview !== 1 ? "s" : ""} left
-                {pendingValue > 0 && <> · <span className="font-semibold" style={{ color: "var(--text-primary)" }}>~{fmt(pendingValue)}</span></>}
+                {totalNeedsReview} item{totalNeedsReview !== 1 ? "s" : ""} to review
               </p>
-              <a href="#needs-review" className="shrink-0 text-sm font-semibold" style={{ color: "var(--violet-from)" }}>
-                Continue →
+              <a href="#needs-review" className="shrink-0 text-sm font-semibold" style={{ color: "#22C55E" }}>
+                {totalConfirmed > 0 ? "Continue →" : "Start →"}
               </a>
             </div>
-            {totalConfirmed > 0 && (
-              <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
-                or{" "}
-                <a href="/export" className="font-medium underline underline-offset-2" style={{ color: "var(--violet-from)" }}>
-                  view your tax summary in Export
-                </a>
-              </p>
-            )}
-          </div>
+          </FadeIn>
         );
 
         if (totalConfirmed > 0) return (
-          <div className="mt-6 rounded-2xl px-5 py-7 text-center space-y-4" style={{ backgroundColor: "var(--bg-card)", border: "1px solid rgba(34,197,94,0.15)", boxShadow: "var(--shadow-card-lg), 0 0 24px rgba(34,197,94,0.06)" }}>
-            <div className="space-y-1.5">
-              <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
-                Review complete
+          <FadeIn delay={0.08}>
+            <div
+              className="mt-5 rounded-2xl px-5 py-3.5 flex items-center justify-between gap-4"
+              style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "var(--shadow-card)" }}
+            >
+              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                All {totalConfirmed} {totalConfirmed === 1 ? term(userType) : termPlural(userType)} reviewed.
               </p>
-              <p className="text-[38px] font-bold tabular-nums leading-none tracking-tight" style={{ color: "var(--text-primary)" }}>
-                ~{fmt(confirmedValue)}
-              </p>
-              <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>
-                {totalConfirmed} confirmed {totalConfirmed === 1 ? "deduction" : "deductions"}
-              </p>
+              <Link href="/export" className="shrink-0 text-sm font-semibold" style={{ color: "#22C55E" }}>
+                Go to Export →
+              </Link>
             </div>
-            <p className="text-[14px]" style={{ color: "var(--text-secondary)" }}>
-              Your full breakdown and downloadable report are in Export.
-            </p>
-            <Button asChild className="w-full">
-              <Link href="/export">View your tax summary →</Link>
-            </Button>
-          </div>
+          </FadeIn>
         );
 
         return null;
       })()}
-      </FadeIn>
 
       {/* Divider + filters */}
       <div className="mt-6 border-t" style={{ borderColor: "var(--bg-border)" }} />

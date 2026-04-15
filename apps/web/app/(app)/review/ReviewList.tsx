@@ -187,16 +187,11 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
         <div id="confirmed" className="mt-6 border-t pt-5" style={{ borderColor: "var(--bg-border)" }}>
           <button
             onClick={() => setShowConfirmed((v) => !v)}
-            className="flex w-full items-center justify-between gap-2 transition-colors duration-150"
+            className="flex items-center gap-2 text-sm transition-colors duration-150"
             style={{ color: "var(--text-muted)" }}
           >
-            <span className="flex items-center gap-2 text-sm">
-              <span className="flex h-4 w-4 items-center justify-center rounded-full text-xs" style={{ backgroundColor: "rgba(34,197,94,0.15)", color: "#22C55E" }}>✓</span>
-              Confirmed ({confirmed.length})
-            </span>
-            <span className="text-sm font-semibold tabular-nums" style={{ color: "#22C55E" }}>
-              {fmt(confirmed.reduce((s, c) => s + Math.abs(c.transaction.amount), 0))}
-            </span>
+            <span className="flex h-4 w-4 items-center justify-center rounded-full text-xs" style={{ backgroundColor: "rgba(34,197,94,0.15)", color: "#22C55E" }}>✓</span>
+            Confirmed ({confirmed.length})
           </button>
           <AnimatePresence>
             {showConfirmed && (
