@@ -26,14 +26,12 @@ export type CandidateCardProps = {
 
 // ── Visual constants ───────────────────────────────────────────────────────────
 
-/** Left accent bar color — 3px strip on the card's left edge */
 const ACCENT_BY_CONFIDENCE: Record<Confidence, string> = {
   HIGH:   "#22C55E",
   MEDIUM: "#14B8A6",
   LOW:    "rgba(255,255,255,0.08)",
 };
 
-/** Card surface per status */
 const CARD_BG: Record<Status, string> = {
   CONFIRMED:    "rgba(17, 33, 24, 0.78)",
   REJECTED:     "rgba(17, 24, 39, 0.38)",
@@ -46,17 +44,11 @@ const CARD_BORDER: Record<Status, string> = {
   NEEDS_REVIEW: "rgba(255, 255, 255, 0.06)",
 };
 
-/** Confidence label + dot color */
+/** Short single-word labels — fast to scan */
 const CONFIDENCE_LABEL: Record<Confidence, string> = {
-  HIGH:   "Strong match",
-  MEDIUM: "Possible match",
-  LOW:    "Review carefully",
-};
-
-const CONFIDENCE_LONG: Record<Confidence, string> = {
-  HIGH:   "Strong match",
-  MEDIUM: "Possible match",
-  LOW:    "Review carefully — check before claiming",
+  HIGH:   "Likely",
+  MEDIUM: "Possible",
+  LOW:    "Uncertain",
 };
 
 const CONFIDENCE_COLOR: Record<Confidence, string> = {
@@ -121,7 +113,7 @@ export function CandidateCard({
       whileHover={!settled ? { y: -1, boxShadow: "0 4px 20px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.5)" } : {}}
       transition={{ duration: 0.15, ease: "easeOut" }}
     >
-      {/* Left confidence/status accent */}
+      {/* Left accent bar */}
       <div
         className="absolute inset-y-0 left-0 w-[3px]"
         style={{ backgroundColor: accentColor }}
@@ -130,10 +122,10 @@ export function CandidateCard({
       {/* Main content */}
       <div
         className="px-5 py-4"
-        style={{ opacity: status === "REJECTED" ? 0.55 : 1 }}
+        style={{ opacity: status === "REJECTED" ? 0.5 : 1 }}
       >
 
-        {/* Merchant + amount */}
+        {/* Row 1: merchant + amount */}
         <div className="flex items-baseline justify-between gap-3">
           <p
             className="truncate text-[15px] font-semibold"
@@ -142,40 +134,39 @@ export function CandidateCard({
             {transaction.normalizedMerchant}
           </p>
           <p
-            className="shrink-0 text-[18px] font-bold tabular-nums tracking-tight"
+            className="shrink-0 text-[20px] font-bold tabular-nums tracking-tight"
             style={{ color: status === "CONFIRMED" ? "#22C55E" : "var(--text-primary)" }}
           >
-            −${Math.abs(transaction.amount).toFixed(2)}
+            ${Math.abs(transaction.amount).toFixed(2)}
           </p>
         </div>
 
-        {/* Date + category + confidence indicator */}
-        <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+        {/* Row 2: date · confidence */}
+        <div className="mt-1.5 flex items-center gap-2">
           <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
             {transaction.date}
           </span>
-          <span className="text-[12px]" style={{ color: "var(--bg-border)" }}>·</span>
-          <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-            {category}
-          </span>
           {!settled && (
-            <span
-              className="flex items-center gap-1 text-[11px] font-medium"
-              style={{ color: CONFIDENCE_COLOR[confidence] }}
-            >
+            <>
+              <span className="text-[12px]" style={{ color: "rgba(255,255,255,0.12)" }}>·</span>
               <span
-                className="inline-block h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: CONFIDENCE_COLOR[confidence] }}
-              />
-              {CONFIDENCE_LABEL[confidence]}
-            </span>
+                className="flex items-center gap-1 text-[12px] font-medium"
+                style={{ color: CONFIDENCE_COLOR[confidence] }}
+              >
+                <span
+                  className="inline-block h-1.5 w-1.5 rounded-full shrink-0"
+                  style={{ backgroundColor: CONFIDENCE_COLOR[confidence] }}
+                />
+                {CONFIDENCE_LABEL[confidence]}
+              </span>
+            </>
           )}
         </div>
 
-        {/* Reason — 2 lines, only when unreviewed */}
+        {/* Row 3: short reason — default, max 2 lines */}
         {!settled && (
           <p
-            className="mt-2.5 text-[13px] leading-relaxed line-clamp-2"
+            className="mt-2.5 text-[13px] leading-snug line-clamp-2"
             style={{ color: "var(--text-secondary)" }}
           >
             {reason}
@@ -184,12 +175,9 @@ export function CandidateCard({
 
         {/* Actions */}
         <div className="mt-3.5">
-          {error && (
-            <p className="mb-2 text-xs text-red-400">{error}</p>
-          )}
+          {error && <p className="mb-2 text-xs text-red-400">{error}</p>}
 
           {settled ? (
-            /* Settled state: compact status + controls */
             <div className="flex items-center justify-between gap-2">
               <span
                 className="text-[12px] font-medium"
@@ -207,22 +195,20 @@ export function CandidateCard({
               </div>
             </div>
           ) : (
-            /* Unreviewed state: confirm / reject / details */
             <div className="flex items-center gap-2">
               <Button size="sm" onClick={handleConfirm} disabled={isSaving}>
-                {isSaving ? "Saving…" : "Confirm"}
+                {isSaving ? "Saving…" : "Looks deductible"}
               </Button>
               <Button variant="secondary" size="sm" onClick={handleReject} disabled={isSaving}>
                 Not deductible
               </Button>
-              <Button
-                variant="ghost"
-                size="xs"
-                className="ml-auto"
+              <button
+                className="ml-auto text-[12px] transition-colors duration-150"
+                style={{ color: "var(--text-muted)" }}
                 onClick={() => setExpanded((v) => !v)}
               >
-                {expanded ? "Less" : "Details"}
-              </Button>
+                {expanded ? "Less" : "More"}
+              </button>
             </div>
           )}
         </div>
@@ -235,7 +221,7 @@ export function CandidateCard({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
             style={{ overflow: "hidden" }}
           >
             <div
@@ -243,10 +229,26 @@ export function CandidateCard({
               style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
             >
 
-              {/* Why Kashio flagged this */}
+              {/* Category */}
+              <div className="flex items-center gap-2">
+                <span
+                  className="text-[11px] font-semibold uppercase tracking-widest"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  Category
+                </span>
+                <span className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
+                  {category}
+                </span>
+              </div>
+
+              {/* Full reason */}
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-muted)" }}>
-                  Why Kashio flagged this
+                <p
+                  className="text-[11px] font-semibold uppercase tracking-widest mb-1.5"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  Why this was flagged
                 </p>
                 <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
                   {reason}
@@ -265,7 +267,7 @@ export function CandidateCard({
                     className="text-[11px] font-semibold uppercase tracking-widest mb-1.5"
                     style={{ color: CONFIDENCE_COLOR[confidence] }}
                   >
-                    {CONFIDENCE_LONG[confidence]}
+                    {CONFIDENCE_LABEL[confidence]}
                   </p>
                   <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
                     {confidenceReason}
@@ -273,9 +275,12 @@ export function CandidateCard({
                 </div>
               )}
 
-              {/* Raw transaction */}
+              {/* Bank description */}
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-muted)" }}>
+                <p
+                  className="text-[11px] font-semibold uppercase tracking-widest mb-1.5"
+                  style={{ color: "var(--text-muted)" }}
+                >
                   Bank description
                 </p>
                 <p
@@ -289,7 +294,10 @@ export function CandidateCard({
               {/* Evidence — only when confirmed */}
               {status === "CONFIRMED" && (
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--text-muted)" }}>
+                  <p
+                    className="text-[11px] font-semibold uppercase tracking-widest mb-2"
+                    style={{ color: "var(--text-muted)" }}
+                  >
                     Receipt / invoice
                   </p>
                   <label className="flex items-center gap-2.5 cursor-pointer">
