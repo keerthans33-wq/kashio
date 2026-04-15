@@ -48,120 +48,109 @@ export function PaywallGate({ allItems, categoryGroups, total, confirmedCount }:
     try { localStorage.setItem(DEV_KEY, "true"); } catch {}
   }
 
-  // ── Unlocked: full breakdown + download ───────────────────────────────────
+  // ── Unlocked: breakdown + download ────────────────────────────────────────
   if (isPaid) {
     return (
       <motion.div
-        className="space-y-8"
+        className="space-y-5"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
       >
-        {/* Section label */}
+
+        {/* Category breakdown — single consolidated list */}
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest mb-5" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--text-muted)" }}>
             Breakdown
           </p>
-
-          {/* Category cards */}
-          <div className="space-y-3">
-            {categoryGroups.map(({ cat, catTotal, items }) => (
+          <div
+            className="rounded-2xl overflow-hidden"
+            style={{
+              backgroundColor: "var(--bg-card)",
+              border:          "1px solid var(--bg-border)",
+              boxShadow:       "var(--shadow-card)",
+            }}
+          >
+            {categoryGroups.map(({ cat, catTotal, items }, groupIdx) => (
               <div
                 key={cat}
-                className="rounded-2xl overflow-hidden"
-                style={{
-                  backgroundColor: "var(--bg-card)",
-                  border:          "1px solid var(--bg-border)",
-                  boxShadow:       "var(--shadow-card)",
-                }}
+                style={{ borderTop: groupIdx > 0 ? "1px solid var(--bg-border)" : "none" }}
               >
-                {/* Category header */}
-                <div
-                  className="flex items-center justify-between px-5 py-3.5"
-                  style={{ borderBottom: "1px solid var(--bg-border)" }}
-                >
-                  <span className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
+                {/* Category header row */}
+                <div className="flex items-center justify-between px-5 py-3">
+                  <span
+                    className="text-[11px] font-semibold uppercase tracking-widest"
+                    style={{ color: "var(--text-muted)" }}
+                  >
                     {cat}
                   </span>
-                  <span className="text-[14px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
+                  <span
+                    className="text-[14px] font-bold tabular-nums"
+                    style={{ color: "var(--text-primary)" }}
+                  >
                     {fmtRound(catTotal)}
                   </span>
                 </div>
 
                 {/* Line items */}
-                <div className="px-5">
-                  {items.map((item, idx) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between gap-4 py-3"
-                      style={{
-                        borderBottom: idx < items.length - 1
-                          ? "1px solid rgba(255,255,255,0.04)"
-                          : "none",
-                      }}
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-[13px]" style={{ color: "var(--text-primary)" }}>
-                          {item.merchant}
-                        </p>
-                        <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
-                          {item.date}
-                        </p>
-                      </div>
-                      <span className="shrink-0 text-[13px] tabular-nums font-semibold" style={{ color: "var(--text-secondary)" }}>
-                        {fmt(item.amount)}
-                      </span>
+                {items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between gap-4 px-5 py-2.5"
+                    style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
+                  >
+                    <div className="min-w-0 pl-2">
+                      <p className="truncate text-[13px]" style={{ color: "var(--text-secondary)" }}>
+                        {item.merchant}
+                      </p>
+                      <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                        {item.date}
+                      </p>
                     </div>
-                  ))}
-                </div>
+                    <span
+                      className="shrink-0 text-[13px] tabular-nums"
+                      style={{ color: "var(--text-muted)" }}
+                    >
+                      {fmt(item.amount)}
+                    </span>
+                  </div>
+                ))}
               </div>
             ))}
           </div>
-
-          {/* Grand total */}
-          <div
-            className="mt-4 flex items-baseline justify-between px-1 py-3"
-            style={{ borderTop: "1px solid var(--bg-border)" }}
-          >
-            <span className="text-[14px] font-semibold" style={{ color: "var(--text-secondary)" }}>
-              Total
-            </span>
-            <span className="text-[26px] font-bold tabular-nums tracking-tight" style={{ color: "var(--text-primary)" }}>
-              {fmt(total)}
-            </span>
-          </div>
         </div>
 
-        {/* Download section — the final payoff */}
+        {/* Download — readiness section */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1], delay: 0.12 }}
-          className="relative overflow-hidden rounded-2xl px-6 py-6 space-y-4"
+          transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+          className="relative overflow-hidden rounded-2xl px-6 py-6"
           style={{
-            backgroundColor: "rgba(13, 20, 33, 0.88)",
+            backgroundColor: "rgba(13, 20, 33, 0.92)",
             border:          "1px solid rgba(34,197,94,0.18)",
             boxShadow:       "0 2px 8px rgba(0,0,0,0.4), 0 0 40px rgba(34,197,94,0.06)",
           }}
         >
-          {/* Inner glow */}
           <div
             className="pointer-events-none absolute inset-0"
-            style={{ background: "radial-gradient(ellipse 80% 40% at 50% 100%, rgba(34,197,94,0.05) 0%, transparent 100%)" }}
+            style={{ background: "radial-gradient(ellipse 80% 50% at 50% 100%, rgba(34,197,94,0.06) 0%, transparent 100%)" }}
           />
-          <div className="space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#22C55E" }}>
-              Ready to lodge
-            </p>
-            <p className="text-[16px] font-semibold" style={{ color: "var(--text-primary)" }}>
-              Your report is ready
-            </p>
-            <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
-              Download your XLSX report — share it with your accountant or use it to lodge your return.
-            </p>
-          </div>
+          <p
+            className="text-[11px] font-semibold uppercase tracking-widest mb-1"
+            style={{ color: "#22C55E" }}
+          >
+            Ready to lodge
+          </p>
+          <p className="text-[16px] font-semibold leading-snug mb-1" style={{ color: "var(--text-primary)" }}>
+            Your report is ready
+          </p>
+          <p className="text-[13px] mb-5" style={{ color: "var(--text-muted)" }}>
+            Download your XLSX summary — share it with your accountant or use it to lodge your return.
+          </p>
           <ExportButton />
         </motion.div>
+
       </motion.div>
     );
   }
@@ -171,7 +160,7 @@ export function PaywallGate({ allItems, categoryGroups, total, confirmedCount }:
     <>
       {/* Blurred breakdown preview */}
       <motion.div
-        className="mb-6 relative overflow-hidden rounded-2xl"
+        className="mb-5 relative overflow-hidden rounded-2xl"
         style={{ pointerEvents: "none", userSelect: "none" }}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -185,7 +174,10 @@ export function PaywallGate({ allItems, categoryGroups, total, confirmedCount }:
             className="rounded-2xl overflow-hidden"
             style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}
           >
-            <div className="px-5 py-3.5 flex items-center justify-between" style={{ borderBottom: "1px solid var(--bg-border)" }}>
+            <div
+              className="px-5 py-3 flex items-center justify-between"
+              style={{ borderBottom: "1px solid var(--bg-border)" }}
+            >
               <span className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
                 {allItems[0]?.category ?? "Category"}
               </span>
@@ -193,23 +185,21 @@ export function PaywallGate({ allItems, categoryGroups, total, confirmedCount }:
                 $—
               </span>
             </div>
-            <div className="px-5">
-              {allItems.slice(0, 4).map((item, i) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between gap-4 py-3"
-                  style={{ borderBottom: i < 3 ? "1px solid rgba(255,255,255,0.04)" : "none" }}
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-[13px]" style={{ color: "var(--text-primary)" }}>{item.merchant}</p>
-                    <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>{item.date}</p>
-                  </div>
-                  <span className="shrink-0 text-[13px] tabular-nums font-semibold" style={{ color: "var(--text-secondary)" }}>
-                    {fmt(item.amount)}
-                  </span>
+            {allItems.slice(0, 4).map((item, i) => (
+              <div
+                key={item.id}
+                className="flex items-center justify-between gap-4 px-5 py-2.5"
+                style={{ borderTop: i > 0 ? "1px solid rgba(255,255,255,0.04)" : "none" }}
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-[13px]" style={{ color: "var(--text-primary)" }}>{item.merchant}</p>
+                  <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>{item.date}</p>
                 </div>
-              ))}
-            </div>
+                <span className="shrink-0 text-[13px] tabular-nums" style={{ color: "var(--text-secondary)" }}>
+                  {fmt(item.amount)}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
         <div
@@ -230,7 +220,6 @@ export function PaywallGate({ allItems, categoryGroups, total, confirmedCount }:
           boxShadow:       "0 2px 8px rgba(0,0,0,0.5), 0 0 48px rgba(34,197,94,0.07)",
         }}
       >
-        {/* Icon */}
         <div
           className="mb-5 flex h-10 w-10 items-center justify-center rounded-full"
           style={{ backgroundColor: "rgba(34,197,94,0.10)", border: "1px solid rgba(34,197,94,0.20)" }}
