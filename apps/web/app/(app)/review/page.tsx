@@ -137,20 +137,41 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         )}
       </FadeIn>
 
-      {/* Progress prompt — hidden when filtered */}
+      {/* Progress card — hidden when filtered */}
       {all.length > 0 && !isFiltered && (() => {
+        const total    = all.length;
+        const reviewed = all.filter((c) => c.status !== "NEEDS_REVIEW").length;
+        const pct      = total > 0 ? Math.round((reviewed / total) * 100) : 0;
+
+        const pendingValue  = all
+          .filter((c) => c.status === "NEEDS_REVIEW")
+          .reduce((s, c) => s + Math.abs(c.transaction.amount), 0);
+        const approxValue = Math.round(pendingValue / 10) * 10;
+
         if (totalNeedsReview > 0) return (
           <FadeIn delay={0.08}>
             <div
-              className="mt-5 rounded-2xl px-5 py-3.5 flex items-center justify-between gap-4"
+              className="mt-5 rounded-2xl overflow-hidden"
               style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "var(--shadow-card)" }}
             >
-              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                {totalNeedsReview} item{totalNeedsReview !== 1 ? "s" : ""} to review
-              </p>
-              <a href="#needs-review" className="shrink-0 text-sm font-semibold" style={{ color: "#22C55E" }}>
-                {totalConfirmed > 0 ? "Continue →" : "Start →"}
-              </a>
+              {/* thin progress bar */}
+              <div className="h-[3px] w-full" style={{ backgroundColor: "rgba(255,255,255,0.06)" }}>
+                <div
+                  className="h-full"
+                  style={{ width: `${pct}%`, backgroundColor: "#22C55E", transition: "width 0.4s ease" }}
+                />
+              </div>
+              <div className="px-5 py-3.5 flex items-center justify-between gap-4">
+                <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                  {reviewed} of {total} reviewed
+                  {approxValue > 0 && (
+                    <span style={{ color: "var(--text-muted)" }}> · ~${approxValue} still to check</span>
+                  )}
+                </p>
+                <a href="#needs-review" className="shrink-0 text-sm font-semibold" style={{ color: "#22C55E" }}>
+                  {reviewed > 0 ? "Continue →" : "Start →"}
+                </a>
+              </div>
             </div>
           </FadeIn>
         );
@@ -158,15 +179,18 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         if (totalConfirmed > 0) return (
           <FadeIn delay={0.08}>
             <div
-              className="mt-5 rounded-2xl px-5 py-3.5 flex items-center justify-between gap-4"
+              className="mt-5 rounded-2xl overflow-hidden"
               style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "var(--shadow-card)" }}
             >
-              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                All {totalConfirmed} {totalConfirmed === 1 ? term(userType) : termPlural(userType)} reviewed.
-              </p>
-              <Link href="/export" className="shrink-0 text-sm font-semibold" style={{ color: "#22C55E" }}>
-                Go to Export →
-              </Link>
+              <div className="h-[3px] w-full" style={{ backgroundColor: "#22C55E", opacity: 0.35 }} />
+              <div className="px-5 py-3.5 flex items-center justify-between gap-4">
+                <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                  All {total} reviewed
+                </p>
+                <Link href="/export" className="shrink-0 text-sm font-semibold" style={{ color: "#22C55E" }}>
+                  Export →
+                </Link>
+              </div>
             </div>
           </FadeIn>
         );
