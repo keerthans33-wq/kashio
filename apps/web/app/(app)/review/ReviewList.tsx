@@ -76,20 +76,23 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
 
       {/* Success banner */}
       {successMsg && !isSaving && (
-        <div className="mb-4 flex items-start justify-between gap-3 rounded-xl px-4 py-3" style={{ borderColor: "#22C55E33", backgroundColor: "rgba(34,197,94,0.06)", border: "1px solid #22C55E33" }}>
-          <div>
-            <p className="text-sm font-semibold" style={{ color: "#22C55E" }}>{successMsg}</p>
-            {successSub && <p className="mt-0.5 text-xs" style={{ color: "#22C55E", opacity: 0.7 }}>{successSub}</p>}
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            {lastIds.length > 0 && (
-              <button onClick={handleBulkUndo} className="text-xs font-medium underline" style={{ color: "#22C55E" }}>
-                Undo
+        <div className="mb-4 rounded-2xl overflow-hidden" style={{ backgroundColor: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.14)" }}>
+          <div className="h-[2px] w-full" style={{ backgroundColor: "rgba(34,197,94,0.35)" }} />
+          <div className="px-4 py-3 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[16px] font-bold leading-tight" style={{ color: "#22C55E" }}>{successMsg}</p>
+              {successSub && <p className="mt-0.5 text-[12px]" style={{ color: "var(--text-muted)" }}>{successSub}</p>}
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              {lastIds.length > 0 && (
+                <button onClick={handleBulkUndo} className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
+                  Undo
+                </button>
+              )}
+              <button onClick={() => { setSuccessMsg(null); setSuccessSub(null); setLastIds([]); }} className="text-[11px]" style={{ color: "rgba(255,255,255,0.2)" }}>
+                ✕
               </button>
-            )}
-            <button onClick={() => { setSuccessMsg(null); setSuccessSub(null); setLastIds([]); }} className="text-xs" style={{ color: "var(--text-muted)" }}>
-              Dismiss
-            </button>
+            </div>
           </div>
         </div>
       )}
@@ -101,13 +104,13 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
           <Button
             size="sm"
             onClick={() => bulkAction(bulkConfirmCandidates, (ids) => {
-              const total = needsReview
+              const value = needsReview
                 .filter((c) => ids.includes(c.id))
                 .reduce((s, c) => s + Math.abs(c.transaction.amount), 0);
               const count = ids.length;
               return {
-                primary: total > 0 ? `${fmt(total)} confirmed deductions` : `${count} item${count !== 1 ? "s" : ""} confirmed`,
-                sub: total > 0 ? `${count} item${count !== 1 ? "s" : ""}` : undefined,
+                primary: value > 0 ? `${fmt(value)} confirmed` : `${count} item${count !== 1 ? "s" : ""} confirmed`,
+                sub:     value > 0 ? `${count} item${count !== 1 ? "s" : ""}` : undefined,
               };
             })}
             disabled={isSaving}
@@ -118,7 +121,7 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
             variant="secondary"
             size="sm"
             onClick={() => bulkAction(bulkRejectCandidates, (ids) => ({
-              primary: `${ids.length} item${ids.length !== 1 ? "s" : ""} marked not deductible`,
+              primary: `${ids.length} item${ids.length !== 1 ? "s" : ""} skipped`,
             }))}
             disabled={isSaving}
           >
