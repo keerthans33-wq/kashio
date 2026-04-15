@@ -59,10 +59,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main
-      className="min-h-screen flex flex-col items-center justify-center px-5 py-12"
-      style={{ backgroundColor: "var(--bg-app)" }}
-    >
+    <main className="min-h-screen flex flex-col items-center justify-center px-5 py-12">
       <div className="w-full max-w-[360px]">
 
         {/* Logo + tagline */}
@@ -140,7 +137,7 @@ export default function LoginPage() {
                 className="h-11 w-full rounded-xl px-3 text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-[#22C55E]"
                 style={{
                   backgroundColor: "var(--bg-elevated)",
-                  border: "1px solid transparent",
+                  border: "1px solid var(--bg-border)",
                   color: "var(--text-primary)",
                 }}
               />
@@ -159,7 +156,7 @@ export default function LoginPage() {
                 className="h-11 w-full rounded-xl px-3 text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-[#22C55E]"
                 style={{
                   backgroundColor: "var(--bg-elevated)",
-                  border: "1px solid transparent",
+                  border: "1px solid var(--bg-border)",
                   color: "var(--text-primary)",
                 }}
               />

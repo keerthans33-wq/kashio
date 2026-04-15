@@ -94,7 +94,7 @@ export default function ImportedBatches() {
         </button>
       </div>
 
-      <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--bg-border)" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--bg-border)" }}>
         {batches.map((batch, i) => (
           <div
             key={batch.id}

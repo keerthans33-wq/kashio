@@ -220,11 +220,13 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
         <div className="mt-6 border-t pt-5" style={{ borderColor: "var(--bg-border)" }}>
           <button
             onClick={() => setShowRejected((v) => !v)}
-            className="flex items-center gap-2 text-sm transition-colors duration-150"
+            className="flex w-full items-center justify-between gap-2 transition-colors duration-150"
             style={{ color: "var(--text-muted)" }}
           >
-            <span className="flex h-4 w-4 items-center justify-center rounded-full text-xs" style={{ backgroundColor: "var(--bg-border)", color: "var(--text-muted)" }}>✗</span>
-            {showRejected ? "Hide" : "Show"} not deductible ({rejected.length})
+            <span className="flex items-center gap-2 text-sm">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full text-xs" style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}>✕</span>
+              Not deductible ({rejected.length})
+            </span>
           </button>
           <AnimatePresence>
             {showRejected && (

@@ -70,9 +70,9 @@ export async function ReviewReminder() {
   }
 
   return (
-    <div className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
+    <div style={{ borderBottom: "1px solid var(--bg-border)", backgroundColor: "rgba(5,7,14,0.6)" }}>
       <div className="mx-auto max-w-5xl px-6 py-2 flex items-center justify-between gap-4">
-        <p className="text-sm text-gray-500 dark:text-gray-400">{message}</p>
+        <p className="text-sm" style={{ color: "var(--text-muted)" }}>{message}</p>
         <a
           href={href}
           className="shrink-0 text-sm font-medium hover:underline" style={{ color: "#22C55E" }}
@@ -132,7 +132,7 @@ export async function ReviewReminderInline() {
   }
 
   return (
-    <p className="mt-6 text-sm text-gray-400 dark:text-gray-500">
+    <p className="mt-6 text-sm" style={{ color: "var(--text-muted)" }}>
       {message}{" "}
       <a href={href} className="hover:underline" style={{ color: "#22C55E" }}>
         {href === "/wfh" ? "Log hours" : href === "/export" ? "Go to Export" : "Go to Review"} →

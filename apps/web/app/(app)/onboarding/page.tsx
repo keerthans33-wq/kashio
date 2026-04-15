@@ -45,10 +45,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <main
-      className="flex min-h-screen items-center justify-center px-5 py-12"
-      style={{ backgroundColor: "var(--bg-app)" }}
-    >
+    <main className="flex min-h-screen items-center justify-center px-5 py-12">
       <div className="w-full max-w-[360px]">
 
         <motion.div

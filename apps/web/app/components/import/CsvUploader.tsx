@@ -209,7 +209,7 @@ export default function CsvUploader() {
   if (importResult !== null) {
     const noneAdded = importResult.inserted === 0 && importResult.duplicates > 0;
     return (
-      <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "var(--shadow-card)" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "var(--shadow-card-lg)" }}>
         <div className="flex items-start gap-3 px-5 py-5">
           <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold" style={{ backgroundColor: "rgba(34,197,94,0.12)", color: "#22C55E" }}>
             ✓
