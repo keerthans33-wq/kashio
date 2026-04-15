@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm ls:*)",
+      "Bash(npx --prefix apps/web tsc --noEmit)",
+      "Bash(grep -v \"^Version\\\\|^tsc:\\\\|COMMON\\\\|  tsc\\\\|Ignoring\\\\|Build a\\\\|Creates\\\\|Compiles\\\\|An expanded\\\\|Print this\\\\|Watch input\\\\|Show all\\\\|compiled\\\\|error TS\\\\|^$\")",
+      "Bash(node -e \"const pdf = require\\(''''@react-pdf/renderer''''\\); console.log\\(Object.keys\\(pdf\\)\\);\")",
+      "Bash(ls /Users/momo/Documents/GitHub/kashio/apps/web/next.config*)"
+    ]
+  }
+}
