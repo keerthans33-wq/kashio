@@ -331,12 +331,11 @@ export function CandidateCard({
                         }
                       }}
                       placeholder="e.g. Bunnings receipt Feb 2025"
-                      className="mt-2.5 w-full rounded-xl px-4 py-2.5 text-[13px] focus:outline-none focus:ring-1"
+                      className="mt-2.5 w-full rounded-xl px-4 py-2.5 text-[13px] focus:outline-none focus:ring-1 focus:ring-[#22C55E]"
                       style={{
                         backgroundColor: "rgba(255,255,255,0.05)",
                         border:          "1px solid rgba(255,255,255,0.08)",
                         color:           "var(--text-primary)",
-                        focusRingColor:  "#22C55E",
                       }}
                     />
                   )}
