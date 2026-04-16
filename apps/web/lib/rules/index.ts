@@ -45,7 +45,7 @@ export function detectDeduction(transaction: TransactionInput, userType?: string
     .map((rule) => {
       const rawMatch = rule.detect(transaction, userType);
       if (!rawMatch) return null;
-      const adjusted = adjustConfidence(rawMatch.confidence, rawMatch.category, userType);
+      const adjusted = adjustConfidence(rawMatch.confidence, rawMatch.category, userType, rawMatch.canUpgrade);
       if (adjusted === null) return null;
       const match: RawMatch = adjusted === rawMatch.confidence
         ? rawMatch
@@ -71,14 +71,21 @@ export function detectDeduction(transaction: TransactionInput, userType?: string
   });
 
   // Personal-use keywords reduce confidence by one step.
+  let personalUseDowngrade = false;
   if (isPersonalUse(transaction)) {
     const degraded = downgradeConfidence(match.confidence);
     if (degraded === null) return null;
     match = { ...match, confidence: degraded };
+    personalUseDowngrade = true;
   }
 
   // Generate explanation from the winning rule.
   const explanation = rule.explain(match, transaction, userType);
+
+  // If personal-use wording triggered a downgrade, surface it in the confidence note.
+  if (personalUseDowngrade && explanation.confidenceReason !== undefined) {
+    explanation.confidenceReason += " Description includes personal-use wording, so confidence was reduced.";
+  }
 
   return { ...match, ...explanation };
 }

@@ -57,20 +57,14 @@ function detect(
 function explain(
   match: RawMatch,
   _tx: { normalizedMerchant: string },
-  userType?: string | null,
+  _userType?: string | null,
 ): Explanation {
-  const keyword     = match.signals.keyword as string;
-  const isSoleTrader = userType === "sole_trader";
+  const keyword = match.signals.keyword as string;
 
-  const reason = isSoleTrader
-    ? `"${keyword}" suggests a business-related meal. Sole traders can deduct meals in limited circumstances — client meetings, work functions, or travel away overnight. Keep a record of who attended and the business purpose of the meal.`
-    : `"${keyword}" suggests a business-related meal. Contractors can claim meal costs in limited circumstances — entertaining clients, work functions, or travel away overnight. Keep a record of who attended and the business purpose.`;
-
-  const confidenceReason = isSoleTrader
-    ? "Explicit business-meal language is a strong signal. Deductible with a clear business purpose and good records — personal meals never qualify."
-    : "Explicit business-meal language. Deductible in genuine business contexts — confirm this was a real business expense before claiming.";
-
-  return { reason, confidenceReason };
+  return {
+    reason:           `"${keyword}" suggests a business-related meal. Deductible in limited circumstances — client meetings, work functions, or travel away overnight. Keep a record of who attended and the business purpose.`,
+    confidenceReason: "Explicit business-meal language. Deductible with a clear business purpose and good records — personal meals never qualify.",
+  };
 }
 
 // Priority 2: below most specific rules, above fallback.

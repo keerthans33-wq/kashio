@@ -6,7 +6,7 @@ import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
 import { merchantText, combinedText, matchesMerchant } from "./shared";
 import { getMerchantsForCategory, getMerchantInfo } from "../merchants";
-import { useContext, userTypeNote } from "./userTypeLayer";
+import { useContext } from "./userTypeLayer";
 
 // Merchant lists computed per-call so forUserTypes filtering applies.
 
@@ -42,9 +42,14 @@ function detect(tx: { normalizedMerchant: string; description: string }, userTyp
   // Specific merchant alone is not enough — require a keyword to confirm it's a paid work account.
   const confidence = isSpecific && keyword ? "MEDIUM" : "LOW";
 
+  // Only allow the business-user +1 bump when both signals are present;
+  // a lone merchant or lone keyword is too weak to promote.
+  const canUpgrade = isSpecific && !!keyword;
+
   return {
     category:   CATEGORIES.SOFTWARE,
     confidence,
+    canUpgrade,
     signals:    { tier: isSpecific ? "specific" : "broad", keyword },
   };
 }
@@ -70,14 +75,6 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?:
     return first.charAt(0).toLowerCase() + first.slice(1);
   })() : null;
 
-  const baseConfidenceReason = isSpecific && hasKeyword
-    ? "Recognised work tool and a subscription keyword — two signals pointing to a paid work account."
-    : isSpecific
-    ? "Recognised work tool, but no subscription keyword. Could be a free or personal plan rather than a paid work account."
-    : "A subscription keyword supports this, but this tool has personal plans too. Confirm it's a work account before claiming.";
-
-  const tn = userTypeNote(CATEGORIES.SOFTWARE, userType);
-
   return {
     reason: isSpecific && hasKeyword
       ? what
@@ -90,7 +87,11 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?:
       : what
         ? `${tx.normalizedMerchant} is ${/^[aeiou]/i.test(what) ? "an" : "a"} ${what}. Paid subscriptions ${qualifier}. Confirm this is your work account — personal plans don't qualify.`
         : `Paid ${tx.normalizedMerchant} subscriptions ${qualifier}. Confirm this is your work account. Personal plans don't qualify.`,
-    confidenceReason: tn ? `${baseConfidenceReason} ${tn}` : baseConfidenceReason,
+    confidenceReason: isSpecific && hasKeyword
+      ? "Recognised work tool and a subscription keyword — two signals pointing to a paid work account."
+      : isSpecific
+      ? "Recognised work tool, but no subscription keyword. Could be a free or personal plan rather than a paid work account."
+      : "A subscription keyword supports this, but this tool has personal plans too. Confirm it's a work account before claiming.",
     mixedUse: true,
   };
 }

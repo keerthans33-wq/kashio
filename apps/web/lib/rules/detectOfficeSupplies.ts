@@ -9,7 +9,6 @@ import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
 import { merchantText, combinedText, matchesMerchant } from "./shared";
 import { getMerchantsForCategory, getMerchantInfo } from "../merchants";
-import { userTypeNote } from "./userTypeLayer";
 
 // Merchant list computed per-call so forUserTypes filtering applies.
 
@@ -34,28 +33,23 @@ function detect(tx: { normalizedMerchant: string; description: string }, userTyp
   const merchantMatch = specialistMerchants.some((m) => matchesMerchant(merchantText(tx), m));
 
   return {
-    category:   CATEGORIES.OFFICE_SUPPLIES,
-    confidence: merchantMatch ? "MEDIUM" : "LOW",
-    signals:    { merchantMatch, keyword },
+    category:    CATEGORIES.OFFICE_SUPPLIES,
+    confidence:  merchantMatch ? "MEDIUM" : "LOW",
+    // Keyword-only matches are too common in personal contexts to promote;
+    // require the specialist merchant before allowing the business-user bump.
+    canUpgrade:  merchantMatch,
+    signals:     { merchantMatch, keyword },
   };
 }
 
 function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?: string | null): Explanation {
   const { merchantMatch, keyword } = match.signals;
 
-  // Framing shifts by user type: employees need the "not reimbursed" caveat;
-  // sole traders get the most direct "business expense" language.
-  const context  = userType === "sole_trader" ? "your business" : "your work";
-  const supplies = userType === "sole_trader"
-    ? "Business supplies"
-    : userType === "contractor"
-    ? "Business supplies"
-    : "Office supplies";
+  const context   = userType === "sole_trader" ? "your business" : "your work";
+  const supplies  = userType === "employee" ? "Office supplies" : "Business supplies";
   const qualifier = userType === "employee"
     ? "are deductible if not reimbursed by your employer"
     : "are a deductible business expense";
-
-  const tn = userTypeNote(CATEGORIES.OFFICE_SUPPLIES, userType);
 
   if (merchantMatch) {
     const info = getMerchantInfo(tx.normalizedMerchant);
@@ -64,18 +58,14 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?:
       : "office supplies and stationery";
     return {
       reason:           `${tx.normalizedMerchant} sells ${what}. ${supplies} bought for ${context} ${qualifier} — if this ${keyword} was for home rather than ${context}, it won't qualify.`,
-      confidenceReason: tn
-        ? `Recognised office retailer and a matching supply keyword. Two signals pointing to a work purchase. ${tn}`
-        : "Recognised office retailer and a matching supply keyword. Two signals pointing to a work purchase.",
+      confidenceReason: "Recognised office retailer and a matching supply keyword. Two signals pointing to a work purchase.",
       mixedUse: true,
     };
   }
 
   return {
     reason:           `${typeof keyword === "string" ? keyword.charAt(0).toUpperCase() + keyword.slice(1) : "This item"} bought for ${context} ${qualifier}, but without a recognised office store this is harder to confirm. Check before claiming.`,
-    confidenceReason: tn
-      ? `Supply keyword matched, but not from a recognised office retailer. Could be from a non-work purchase. ${tn}`
-      : "Supply keyword matched, but not from a recognised office retailer. Could be from a non-work purchase.",
+    confidenceReason: "Supply keyword matched, but not from a recognised office retailer. Could be from a non-work purchase.",
   };
 }
 

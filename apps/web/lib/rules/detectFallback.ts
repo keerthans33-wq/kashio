@@ -14,7 +14,6 @@ import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
 import { combinedText } from "./shared";
 import { getMerchantInfo } from "../merchants";
-import { userTypeNote } from "./userTypeLayer";
 
 // Keywords grouped by the category they most strongly suggest.
 // Only include keywords that are unambiguous enough to be worth surfacing at LOW confidence.
@@ -139,29 +138,23 @@ function detect(tx: { normalizedMerchant: string; description: string }, userTyp
 function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?: string | null): Explanation {
   const isBusiness = userType === "contractor" || userType === "sole_trader";
   const context    = isBusiness ? "your business" : "your work";
-  const tn         = userTypeNote(match.category, userType);
-
   if (match.signals.merchantMatch) {
     const info = getMerchantInfo(tx.normalizedMerchant);
     const what = info
       ? info.description.split(". ")[0].replace(/\.$/, "").toLowerCase()
       : null;
-    const baseConfidenceReason = `Recognised ${match.category.toLowerCase()} provider, but we can't confirm this was a work expense from the transaction alone.`;
     return {
       reason: what
         ? `${tx.normalizedMerchant} is ${/^[aeiou]/i.test(what) ? "an" : "a"} ${what}. If this was for ${context}, it may be deductible — check your statement before claiming.`
         : `${tx.normalizedMerchant} looks like a ${match.category.toLowerCase()} provider. If this was for ${context}, it may be deductible — confirm before claiming.`,
-      confidenceReason: tn ? `${baseConfidenceReason} ${tn}` : baseConfidenceReason,
-      mixedUse: true,
+      confidenceReason: `Recognised ${match.category.toLowerCase()} provider, but we can't confirm this was a work expense from the transaction alone.`,
     };
   }
 
   const keyword = match.signals.keyword as string;
-  const baseConfidenceReason = `Keyword matched, but ${tx.normalizedMerchant} isn't a merchant we recognise. Low confidence until you can confirm it was a work expense.`;
   return {
     reason:           `"${keyword}" suggests this could be a ${match.category.toLowerCase()} expense for ${context}. We don't have ${tx.normalizedMerchant} in our database — check your statement and confirm this was a work purchase before claiming.`,
-    confidenceReason: tn ? `${baseConfidenceReason} ${tn}` : baseConfidenceReason,
-    mixedUse:         true,
+    confidenceReason: `Keyword matched, but ${tx.normalizedMerchant} isn't a merchant we recognise. Low confidence until you can confirm it was a work expense.`,
   };
 }
 

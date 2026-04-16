@@ -9,10 +9,15 @@ export type Confidence = "LOW" | "MEDIUM" | "HIGH";
 
 // What detect() returns: category, confidence, and structured signals
 // that explain() can use to generate text.
+//
+// canUpgrade: when false, the user-type +1 confidence bump is skipped.
+// Set to false on lone-signal / ambiguous branches so weak evidence stays LOW
+// for business users rather than being inflated to MEDIUM.
 export type RawMatch = {
-  category:   string;
-  confidence: Confidence;
-  signals:    Record<string, string | boolean | undefined>;
+  category:    string;
+  confidence:  Confidence;
+  signals:     Record<string, string | boolean | undefined>;
+  canUpgrade?: boolean;
 };
 
 // What explain() returns: human-readable text for the UI.

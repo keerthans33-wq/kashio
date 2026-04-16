@@ -1,5 +1,6 @@
 import { db } from "./db";
 import { detectDeduction } from "./rules";
+import { refineTransaction, applyRefinement } from "./ollama/refineTransaction";
 import type { IngestionRow } from "./ingestion/types";
 
 export type TransactionSource = "CSV" | "DEMO_BANK" | "BASIQ";
@@ -69,24 +70,34 @@ export async function runImportPipeline(
     where: { importBatchId: batch.id },
   });
 
-  const candidates = savedTransactions
-    .map((t) => {
-      const match = detectDeduction({
-        description: t.description,
-        normalizedMerchant: t.normalizedMerchant,
-        amount: t.amount,
-      }, userType);
-      if (!match) return null;
-      return {
-        transactionId: t.id,
-        category:         match.category,
-        confidence:       match.confidence,
-        reason:           match.reason,
-        confidenceReason: match.confidenceReason,
-        mixedUse:         match.mixedUse ?? false,
-      };
-    })
-    .filter((c): c is NonNullable<typeof c> => c !== null);
+  const candidates = (
+    await Promise.all(
+      savedTransactions.map(async (t) => {
+        const tx = {
+          description:        t.description,
+          normalizedMerchant: t.normalizedMerchant,
+          amount:             t.amount,
+        };
+
+        let match = detectDeduction(tx, userType);
+        if (!match) return null;
+
+        // Optional Ollama refinement — only fires for LOW-confidence matches
+        // when OLLAMA_ENABLED=true. Falls back silently if unavailable.
+        const refinement = await refineTransaction(match, tx, userType);
+        match = applyRefinement(match, refinement);
+
+        return {
+          transactionId:    t.id,
+          category:         match.category,
+          confidence:       match.confidence,
+          reason:           match.reason,
+          confidenceReason: match.confidenceReason,
+          mixedUse:         match.mixedUse ?? false,
+        };
+      }),
+    )
+  ).filter((c): c is NonNullable<typeof c> => c !== null);
 
   // Check which transactions already have a candidate to avoid duplicates
   const existingCandidateTxIds = new Set(

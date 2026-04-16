@@ -10,7 +10,7 @@ import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
 import { merchantText, combinedText, matchesMerchant } from "./shared";
 import { getMerchantsForCategory, getMerchantInfo } from "../merchants";
-import { userTypeNote } from "./userTypeLayer";
+import { useContext } from "./userTypeLayer";
 
 // Merchant lists are computed per-call using userType so forUserTypes filtering applies.
 
@@ -55,20 +55,15 @@ function detect(tx: { normalizedMerchant: string; description: string }, userTyp
   return {
     category:   CATEGORIES.EQUIPMENT,
     confidence: isTradeOnly ? "HIGH" : merchantMatch ? "MEDIUM" : "LOW",
+    // Keyword-only matches are too ambiguous to promote; require a merchant match.
+    canUpgrade: merchantMatch,
     signals:    { isTradeOnly, isGeneral, merchantMatch, keyword },
   };
 }
 
 function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?: string | null): Explanation {
   const { isTradeOnly, merchantMatch, keyword } = match.signals;
-  const tn = userTypeNote(CATEGORIES.EQUIPMENT, userType);
-
-  // "for your trade" for employees/contractors, "for your business" for sole traders.
-  const forWork = userType === "sole_trader"
-    ? "for your business"
-    : userType === "contractor"
-    ? "for your work"
-    : "for your trade";
+  const forWork = `for ${useContext(userType)}`;
 
   if (isTradeOnly) {
     const info = getMerchantInfo(tx.normalizedMerchant);
@@ -77,27 +72,21 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?:
       : "trade tools and equipment";
     return {
       reason:           `${tx.normalizedMerchant} sells ${storeContext}. If this ${keyword} was purchased ${forWork}, it's deductible — tools $300 or under can be claimed in full; over $300 must be depreciated over the asset's life. Check your receipt to confirm it was a work purchase.`,
-      confidenceReason: tn
-        ? `Trade-only retailer and a matching tool. A strong signal this was a work purchase. ${tn}`
-        : "Trade-only retailer and a matching tool. A strong signal this was a work purchase.",
+      confidenceReason: "Trade-only retailer and a matching tool. A strong signal this was a work purchase.",
     };
   }
 
   if (merchantMatch) {
     return {
       reason:           `${tx.normalizedMerchant} serves both tradespeople and home renovators. If this ${keyword} was bought ${forWork} rather than for a home project, it's deductible. Tools under $300 can be claimed in full; over $300 must be depreciated. Check before claiming.`,
-      confidenceReason: tn
-        ? `Hardware store and a matching tool type. Reasonable, but these stores also serve homeowners and DIY buyers. ${tn}`
-        : "Hardware store and a matching tool type. Reasonable, but these stores also serve homeowners and DIY buyers.",
+      confidenceReason: "Hardware store and a matching tool type. Reasonable, but these stores also serve homeowners and DIY buyers.",
       mixedUse: true,
     };
   }
 
   return {
     reason:           `If this ${keyword} was bought ${forWork}, it's deductible. Tools $300 or under can be claimed immediately; over $300 must be depreciated over time. We can only see the description — check your receipt to confirm.`,
-    confidenceReason: tn
-      ? `Tool type matched, but without a recognised trade store it's harder to confirm this was a work purchase. ${tn}`
-      : "Tool type matched, but without a recognised trade store it's harder to confirm this was a work purchase.",
+    confidenceReason: "Tool type matched, but without a recognised trade store it's harder to confirm this was a work purchase.",
   };
 }
 

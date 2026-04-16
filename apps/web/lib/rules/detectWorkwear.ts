@@ -9,6 +9,7 @@ import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
 import { merchantText, combinedText, matchesMerchant } from "./shared";
 import { getMerchantsForCategory, getMerchantInfo } from "../merchants";
+import { useContext } from "./userTypeLayer";
 
 const KEYWORDS = [
   "uniform",
@@ -46,8 +47,9 @@ function detect(tx: { normalizedMerchant: string; description: string }, userTyp
 
 function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?: string | null): Explanation {
   const { merchantMatch, keyword } = match.signals;
-  const forWork = userType === "sole_trader" ? "required for your work" : "required for your job";
-  const context = userType === "sole_trader" ? "your work" : "your job";
+  const ctx     = useContext(userType);
+  const forWork = `required for ${ctx}`;
+  const context = ctx;
 
   if (merchantMatch && keyword) {
     // Use merchant knowledge to name what the store specialises in.

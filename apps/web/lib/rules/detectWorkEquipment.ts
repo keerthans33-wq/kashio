@@ -9,7 +9,7 @@ import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
 import { merchantText, combinedText, matchesMerchant } from "./shared";
 import { getMerchantsForCategory, getMerchantInfo } from "../merchants";
-import { useContext, forPurpose, userTypeNote } from "./userTypeLayer";
+import { useContext } from "./userTypeLayer";
 
 // Rarely bought for personal use — stronger work signal
 const STRONG_KEYWORDS = [
@@ -47,17 +47,19 @@ function detect(tx: { normalizedMerchant: string; description: string }, userTyp
   return {
     category:   CATEGORIES.EQUIPMENT,
     confidence: isStrong ? "MEDIUM" : "LOW",
+    // Only promote strong specialist items; weak keywords are common in personal/gaming
+    // contexts even from a tech retailer, so keep them LOW for all user types.
+    canUpgrade: isStrong,
     signals:    { keyword, inDesc, isStrong, techMerchant },
   };
 }
 
 function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?: string | null): Explanation {
   const { keyword, isStrong, techMerchant } = match.signals;
-  const ctx    = useContext(userType);
-  const forW   = forPurpose(userType);
-  const tn     = userTypeNote(CATEGORIES.EQUIPMENT, userType);
-
-  // Employee-specific caveat: check it isn't employer-supplied.
+  const ctx          = useContext(userType);
+  const forWork      = userType === "sole_trader" ? "for your business"
+                     : userType === "contractor"  ? "for your work"
+                     : "for work";
   const employerNote = userType === "employee"
     ? " Check that this isn't supplied or reimbursed by your employer."
     : "";
@@ -67,28 +69,25 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?:
     const what = info
       ? info.description.split(". ")[0].replace(/\.$/, "").toLowerCase()
       : "electronics and computers";
-    const baseConfidence = isStrong
-      ? "Specialist item from a tech retailer. A strong signal for a work purchase."
-      : "Tech retailer and matching item type. Reasonable, but this item is also commonly bought for personal or gaming use.";
     return {
       reason: isStrong
-        ? `${tx.normalizedMerchant} sells ${what}. If this ${keyword} is used ${forW}, it's deductible — if you also use it personally, only the work-use proportion can be claimed.${employerNote}`
+        ? `${tx.normalizedMerchant} sells ${what}. If this ${keyword} is used ${forWork}, it's deductible — if you also use it personally, only the work-use proportion can be claimed.${employerNote}`
         : `${tx.normalizedMerchant} sells ${what}. If this ${keyword} is mainly used for ${ctx}, the cost is deductible. Personal or gaming use means only the work proportion counts.${employerNote}`,
-      confidenceReason: tn ? `${baseConfidence} ${tn}` : baseConfidence,
+      confidenceReason: isStrong
+        ? "Specialist item from a tech retailer. A strong signal for a work purchase."
+        : "Tech retailer and matching item type. Reasonable, but this item is also commonly bought for personal or gaming use.",
       mixedUse: true,
     };
   }
-
-  const baseConfidence = isStrong
-    ? "This item is rarely bought for personal use. A reasonably strong work signal."
-    : "Matches a work keyword, but also commonly bought for personal or gaming use. Confirm it's primarily for work.";
 
   return {
     reason: isStrong
       ? `A ${keyword} used for ${ctx} is deductible. If you also use it personally, only the work-use proportion can be claimed.${employerNote}`
       : `If this ${keyword} is used primarily for ${ctx}, the cost is deductible. Personal or gaming use means you can only claim the work-use portion.${employerNote}`,
-    confidenceReason: tn ? `${baseConfidence} ${tn}` : baseConfidence,
-    mixedUse: !isStrong,
+    confidenceReason: isStrong
+      ? "This item is rarely bought for personal use. A reasonably strong work signal."
+      : "Matches a work keyword, but also commonly bought for personal or gaming use. Confirm it's primarily for work.",
+    mixedUse: true,
   };
 }
 
