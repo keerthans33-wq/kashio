@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { detectDeduction } from "./rules";
-import { refineTransaction, applyRefinement } from "./ollama/refineTransaction";
+import { refineTransaction } from "./ollama/refineTransaction";
 import type { IngestionRow } from "./ingestion/types";
 
 export type TransactionSource = "CSV" | "DEMO_BANK" | "BASIQ";
@@ -79,13 +79,12 @@ export async function runImportPipeline(
           amount:             t.amount,
         };
 
-        let match = detectDeduction(tx, userType);
-        if (!match) return null;
+        const rawMatch = detectDeduction(tx, userType);
+        if (!rawMatch) return null;
 
         // Optional Ollama refinement — only fires for LOW-confidence matches
-        // when OLLAMA_ENABLED=true. Falls back silently if unavailable.
-        const refinement = await refineTransaction(match, tx, userType);
-        match = applyRefinement(match, refinement);
+        // when OLLAMA_ENABLED=true. Falls back to the original match silently.
+        const match = await refineTransaction(rawMatch, tx, userType);
 
         return {
           transactionId:    t.id,

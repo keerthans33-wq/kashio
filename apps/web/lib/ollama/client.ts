@@ -3,29 +3,21 @@
 // Configuration (set in .env.local):
 //   OLLAMA_BASE_URL   Base URL for the Ollama server   (default: http://localhost:11434)
 //   OLLAMA_MODEL      Model name to use                 (default: mistral)
-//   OLLAMA_ENABLED    Set to "false" to disable layer   (default: true)
+//   OLLAMA_ENABLED    Set to "true" to enable           (default: false)
 //
-// The layer is opt-in: if OLLAMA_ENABLED is anything other than "true",
-// or if the server is unreachable, all calls return null and the app continues normally.
+// Returns null on any failure — timeout, connection error, or bad response.
+// The rest of the app never sees an exception from this module.
 
 const BASE_URL   = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434";
 const MODEL      = process.env.OLLAMA_MODEL    ?? "mistral";
 const ENABLED    = process.env.OLLAMA_ENABLED  === "true";
 const TIMEOUT_MS = 8_000;
 
-export function isOllamaEnabled(): boolean {
-  return ENABLED;
-}
-
-type GenerateResponse = {
-  response?: string;
-  error?:    string;
-};
+type GenerateResponse = { response?: string; error?: string };
 
 /**
- * Send a prompt to the local Ollama server and return the raw text response.
- * Returns null on any failure: timeout, connection error, bad status, or missing response.
- * Never throws.
+ * Send a prompt to Ollama and return the raw response string.
+ * Returns null if disabled, unavailable, timed out, or on any error.
  */
 export async function ollamaGenerate(prompt: string): Promise<string | null> {
   if (!ENABLED) return null;
@@ -47,7 +39,6 @@ export async function ollamaGenerate(prompt: string): Promise<string | null> {
     }
 
     const data = (await res.json()) as GenerateResponse;
-
     if (data.error) {
       console.warn(`[ollama] Model error: ${data.error}`);
       return null;
@@ -55,11 +46,10 @@ export async function ollamaGenerate(prompt: string): Promise<string | null> {
 
     return data.response ?? null;
   } catch (err) {
-    const msg = (err as Error).message ?? String(err);
     if ((err as Error).name === "AbortError") {
-      console.warn("[ollama] Request timed out after 8s — skipping refinement");
+      console.warn("[ollama] Timed out after 8s — skipping refinement");
     } else {
-      console.warn(`[ollama] Unavailable (${msg}) — skipping refinement`);
+      console.warn(`[ollama] Unavailable (${(err as Error).message}) — skipping refinement`);
     }
     return null;
   } finally {

@@ -1,209 +1,121 @@
-// Ollama refinement layer — secondary pass over rule-engine matches.
+// Ollama refinement layer — optional secondary pass over LOW-confidence rule matches.
 //
-// Only fires when the rules engine produced a LOW-confidence match, or when the
-// transaction description is too messy for the rules to interpret reliably.
-// All other matches are left untouched.
-//
-// Returns the original match unchanged if Ollama is disabled, unavailable,
-// times out, or returns unparseable output.
+// Only fires when confidence is LOW. Falls back silently if Ollama is disabled,
+// unavailable, or returns unusable output — the original match is always preserved.
 
-import { ollamaGenerate, isOllamaEnabled } from "./client";
+import { ollamaGenerate } from "./client";
 import { CATEGORIES } from "../rules/categories";
 import type { DeductionMatch } from "../rules/types";
 
-export type RefinementInput = {
-  normalizedMerchant: string;
-  description:        string;
-  amount:             number;
-  category:           string;
-  confidence:         string;
-  reason:             string;
-  userType?:          string | null;
-};
-
-export type RefinementResult = {
-  refinedExplanation?:   string;
-  refinedCategory?:      string;
-  mixedUseWarning?:      boolean;
-  confidenceAdjustment?: "UP" | "DOWN" | null;
-  llmUsed:               boolean;
-};
-
-// Categories the LLM is allowed to suggest — guards against hallucinated values.
 const VALID_CATEGORIES = new Set<string>(Object.values(CATEGORIES));
 
-// User-type framing phrases used in the prompt.
 const USER_TYPE_DESC: Record<string, string> = {
-  employee:    "an employee — deductions require the expense is work-related and unreimbursed",
-  contractor:  "a contractor — most genuine business expenses are deductible",
-  sole_trader: "a sole trader — genuine business expenses are deductible",
+  employee:    "employee (work-related, unreimbursed expenses only)",
+  contractor:  "contractor (genuine business expenses)",
+  sole_trader: "sole trader (genuine business expenses)",
 };
 
-/**
- * Returns true when the match is worth sending to Ollama.
- * Keep this tight — we only want to pay the LLM cost on genuinely ambiguous cases.
- */
-function shouldRefine(match: Pick<DeductionMatch, "confidence" | "reason">): boolean {
-  if (!isOllamaEnabled()) return false;
-
-  // Primary gate: only LOW-confidence matches benefit from refinement.
-  if (match.confidence !== "LOW") return false;
-
-  // Skip if the explanation is already rich (rule engine did a good job).
-  // A short reason (< 80 chars) suggests the rule fell back to a generic template.
-  if (match.reason.length < 80) return true;
-
-  return true;
-}
-
-function buildPrompt(input: RefinementInput): string {
-  const userTypeKey = input.userType ?? "employee";
-  const userDesc    = USER_TYPE_DESC[userTypeKey] ?? USER_TYPE_DESC.employee;
-
-  // Format amount as positive (debit shown as positive spend in AUD).
-  const amountStr = Math.abs(input.amount).toFixed(2);
-
+function buildPrompt(
+  tx:       { normalizedMerchant: string; description: string; amount: number },
+  match:    Pick<DeductionMatch, "category" | "confidence" | "reason">,
+  userType: string | null | undefined,
+): string {
+  const userDesc  = USER_TYPE_DESC[userType ?? ""] ?? USER_TYPE_DESC.employee;
   const validCats = Object.values(CATEGORIES).join(", ");
 
-  return `You are a conservative Australian tax assistant helping classify bank transactions.
+  return `You are a conservative Australian tax assistant.
 
-Transaction details:
-- Merchant: ${input.normalizedMerchant}
-- Description: ${input.description}
-- Amount: $${amountStr} AUD
-- Detected category: ${input.category}
-- Confidence: ${input.confidence}
+Transaction:
+- Merchant: ${tx.normalizedMerchant}
+- Description: ${tx.description}
+- Amount: $${Math.abs(tx.amount).toFixed(2)} AUD
+- Detected category: ${match.category}
 - User type: ${userDesc}
-- Current explanation: "${input.reason}"
+- Current explanation: "${match.reason}"
 
-Respond ONLY with a JSON object using exactly these fields:
+Respond with JSON only:
 {
-  "refinedExplanation": "1-2 sentences max, plain language, hedged and conservative",
-  "refinedCategory": "only include if the detected category is clearly wrong; must be one of the valid categories below",
+  "refinedExplanation": "1-2 plain sentences, hedged and under 35 words",
+  "refinedCategory": null,
   "mixedUseWarning": false,
   "confidenceAdjustment": null
 }
-
 Valid categories: ${validCats}
-Valid confidenceAdjustment values: "UP", "DOWN", null
-
-Rules:
-- refinedExplanation must be under 35 words
-- Only include refinedCategory if you are confident the category is wrong
-- Set mixedUseWarning to true only if personal and business use are likely mixed
-- confidenceAdjustment "UP" only if evidence is strong; "DOWN" if clearly personal; otherwise null
-- Never overclaim deductibility
-- Match the tone to the user type`;
+Set refinedCategory only if the detected category is clearly wrong.
+Set confidenceAdjustment to "UP" if strongly work-related, "DOWN" if clearly personal, otherwise null.`;
 }
 
-/**
- * Safely parse the LLM response. Returns null if the output is not usable.
- * The LLM response may have extra wrapper keys — we extract only what we need.
- */
-function parseResponse(raw: string): Omit<RefinementResult, "llmUsed"> | null {
+function adjustedConfidence(
+  base:       DeductionMatch["confidence"],
+  adjustment: "UP" | "DOWN" | undefined,
+): DeductionMatch["confidence"] {
+  if (adjustment === "UP"   && base === "LOW")    return "MEDIUM";
+  if (adjustment === "DOWN" && base === "MEDIUM") return "LOW";
+  return base;
+}
+
+function parseResponse(raw: string): Partial<{
+  refinedExplanation:   string;
+  refinedCategory:      string;
+  mixedUseWarning:      boolean;
+  confidenceAdjustment: "UP" | "DOWN";
+}> | null {
   try {
-    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const p = JSON.parse(raw) as Record<string, unknown>;
+    const result: ReturnType<typeof parseResponse> = {};
 
-    const result: Omit<RefinementResult, "llmUsed"> = {};
-
-    if (typeof parsed.refinedExplanation === "string" && parsed.refinedExplanation.trim().length > 0) {
-      result.refinedExplanation = parsed.refinedExplanation.trim();
+    if (typeof p.refinedExplanation === "string" && p.refinedExplanation.trim()) {
+      result!.refinedExplanation = p.refinedExplanation.trim();
     }
-
-    if (typeof parsed.refinedCategory === "string" && VALID_CATEGORIES.has(parsed.refinedCategory)) {
-      result.refinedCategory = parsed.refinedCategory;
+    if (typeof p.refinedCategory === "string" && VALID_CATEGORIES.has(p.refinedCategory)) {
+      result!.refinedCategory = p.refinedCategory;
     }
-
-    if (parsed.mixedUseWarning === true) {
-      result.mixedUseWarning = true;
+    if (p.mixedUseWarning === true) {
+      result!.mixedUseWarning = true;
     }
-
-    if (parsed.confidenceAdjustment === "UP" || parsed.confidenceAdjustment === "DOWN") {
-      result.confidenceAdjustment = parsed.confidenceAdjustment;
+    if (p.confidenceAdjustment === "UP" || p.confidenceAdjustment === "DOWN") {
+      result!.confidenceAdjustment = p.confidenceAdjustment;
     }
 
     return result;
   } catch {
-    console.warn("[ollama] Failed to parse response JSON — using original match");
+    console.warn("[ollama] Failed to parse JSON response — keeping original match");
     return null;
   }
 }
 
 /**
- * Run the Ollama refinement pass on a LOW-confidence match.
+ * Run the Ollama refinement pass and return the (possibly updated) match.
+ * Only fires for LOW-confidence matches. Always returns the original match on failure.
  *
- * Safe: always returns a result. If anything fails, `llmUsed` is false and
- * the caller keeps the original rules-engine output unchanged.
+ * Merge rules:
+ *   - confidenceAdjustment "UP"   only promotes LOW → MEDIUM (never higher)
+ *   - confidenceAdjustment "DOWN" only demotes MEDIUM → LOW (never suppresses)
+ *   - mixedUseWarning can only set true, never clear an existing true
  */
 export async function refineTransaction(
   match:    DeductionMatch,
   tx:       { normalizedMerchant: string; description: string; amount: number },
   userType?: string | null,
-): Promise<RefinementResult> {
-  const fallback: RefinementResult = { llmUsed: false };
+): Promise<DeductionMatch> {
+  if (match.confidence !== "LOW") return match;
 
-  if (!shouldRefine(match)) return fallback;
+  const raw = await ollamaGenerate(buildPrompt(tx, match, userType));
+  if (!raw) return match;
 
-  const input: RefinementInput = {
-    normalizedMerchant: tx.normalizedMerchant,
-    description:        tx.description,
-    amount:             tx.amount,
-    category:           match.category,
-    confidence:         match.confidence,
-    reason:             match.reason,
-    userType,
-  };
-
-  const prompt = buildPrompt(input);
-  const raw    = await ollamaGenerate(prompt);
-
-  if (!raw) return fallback;
-
-  const parsed = parseResponse(raw);
-  if (!parsed) return fallback;
+  const refined = parseResponse(raw);
+  if (!refined) return match;
 
   console.log(
-    `[ollama] Refined "${tx.normalizedMerchant}" ` +
-    `(${match.category} ${match.confidence}` +
-    `${parsed.confidenceAdjustment ? ` → ${parsed.confidenceAdjustment}` : ""})`,
+    `[ollama] Refined "${tx.normalizedMerchant}" (${match.category} ${match.confidence}` +
+    `${refined.confidenceAdjustment ? ` → ${refined.confidenceAdjustment}` : ""})`,
   );
 
-  return { ...parsed, llmUsed: true };
-}
-
-/**
- * Apply a RefinementResult onto a DeductionMatch, returning the merged match.
- * Conservative rules:
- *   - confidenceAdjustment "UP"   only promotes LOW → MEDIUM (never higher)
- *   - confidenceAdjustment "DOWN" only demotes MEDIUM → LOW (never suppresses)
- *   - mixedUseWarning only sets to true, never clears an existing true
- */
-export function applyRefinement(
-  match:  DeductionMatch,
-  result: RefinementResult,
-): DeductionMatch {
-  if (!result.llmUsed) return match;
-
-  let { confidence, category, reason, mixedUse } = match;
-
-  if (result.refinedExplanation) {
-    reason = result.refinedExplanation;
-  }
-
-  if (result.refinedCategory) {
-    category = result.refinedCategory;
-  }
-
-  if (result.mixedUseWarning) {
-    mixedUse = true;
-  }
-
-  if (result.confidenceAdjustment === "UP" && confidence === "LOW") {
-    confidence = "MEDIUM";
-  }
-  if (result.confidenceAdjustment === "DOWN" && confidence === "MEDIUM") {
-    confidence = "LOW";
-  }
-
-  return { ...match, confidence, category, reason, mixedUse };
+  return {
+    ...match,
+    reason:     refined.refinedExplanation ?? match.reason,
+    category:   refined.refinedCategory    ?? match.category,
+    mixedUse:   refined.mixedUseWarning    ? true : match.mixedUse,
+    confidence: adjustedConfidence(match.confidence, refined.confidenceAdjustment),
+  };
 }
