@@ -8,9 +8,10 @@ export const CATEGORIES = {
   PHONE_INTERNET:          "Phone & Internet",
   WORK_CLOTHING:           "Work Clothing",
   PROFESSIONAL_DEVELOPMENT:"Professional Development",
+  MEALS:                   "Meals",
 } as const;
 
-// Only categories that at least one active rule can produce.
+// All categories that at least one active rule can produce.
 // Update this when new rules are added or removed.
 export const ACTIVE_CATEGORIES: string[] = [
   CATEGORIES.WORK_TRAVEL,
@@ -20,6 +21,7 @@ export const ACTIVE_CATEGORIES: string[] = [
   CATEGORIES.PHONE_INTERNET,
   CATEGORIES.WORK_CLOTHING,
   CATEGORIES.PROFESSIONAL_DEVELOPMENT,
+  CATEGORIES.MEALS,
 ];
 
 // Category priority order for sorting within a confidence band.
@@ -33,15 +35,17 @@ export const CATEGORY_PRIORITY_BY_USER_TYPE: Record<string, string[]> = {
     CATEGORIES.OFFICE_SUPPLIES,
     CATEGORIES.PHONE_INTERNET,
     CATEGORIES.SOFTWARE,
+    // MEALS intentionally omitted — not surfaced for employees
   ],
   contractor: [
     CATEGORIES.EQUIPMENT,
     CATEGORIES.WORK_TRAVEL,
     CATEGORIES.PROFESSIONAL_DEVELOPMENT,
-    CATEGORIES.WORK_CLOTHING,
+    CATEGORIES.SOFTWARE,
     CATEGORIES.OFFICE_SUPPLIES,
     CATEGORIES.PHONE_INTERNET,
-    CATEGORIES.SOFTWARE,
+    CATEGORIES.MEALS,
+    CATEGORIES.WORK_CLOTHING,
   ],
   sole_trader: [
     CATEGORIES.EQUIPMENT,
@@ -50,16 +54,17 @@ export const CATEGORY_PRIORITY_BY_USER_TYPE: Record<string, string[]> = {
     CATEGORIES.OFFICE_SUPPLIES,
     CATEGORIES.SOFTWARE,
     CATEGORIES.PHONE_INTERNET,
+    CATEGORIES.MEALS,
     CATEGORIES.WORK_CLOTHING,
   ],
 };
 
-// Categories visible in the review stage per user type.
-// employee    — standard PAYG work deductions (no office supplies)
-// contractor  — broader business expenses (no work clothing)
-// sole_trader — full set
+// Categories shown in Review and Export per user type.
+// Meals are visible to contractors and sole_traders only — the detection
+// rule already suppresses meals for employees, but this acts as a safety net
+// so a historical meal record never appears in an employee's export.
 export const CATEGORIES_BY_USER_TYPE: Record<string, string[]> = {
-  employee:    ACTIVE_CATEGORIES,
+  employee: ACTIVE_CATEGORIES.filter((c) => c !== CATEGORIES.MEALS),
   contractor:  ACTIVE_CATEGORIES,
   sole_trader: ACTIVE_CATEGORIES,
 };

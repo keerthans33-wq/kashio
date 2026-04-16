@@ -1,5 +1,6 @@
 import type { TransactionInput, DeductionMatch, RawMatch, Rule } from "./types";
 import { isExcluded, isPersonalUse, downgradeConfidence } from "./shared";
+import { adjustConfidence } from "./userTypeLayer";
 import { detectSoftware } from "./detectSoftware";
 import { detectOfficeSupplies } from "./detectOfficeSupplies";
 import { detectWorkEquipment } from "./detectWorkEquipment";
@@ -7,6 +8,7 @@ import { detectWorkwear } from "./detectWorkwear";
 import { detectTravel } from "./detectTravel";
 import { detectTools } from "./detectTools";
 import { detectPhoneInternet } from "./detectPhoneInternet";
+import { detectMeals } from "./detectMeals";
 import { detectFallback } from "./detectFallback";
 
 const ALL_RULES: Rule[] = [
@@ -17,6 +19,7 @@ const ALL_RULES: Rule[] = [
   detectTravel,
   detectTools,
   detectPhoneInternet,
+  detectMeals,
   detectFallback,
 ];
 
@@ -36,11 +39,18 @@ export function detectDeduction(transaction: TransactionInput, userType?: string
   // Skip refunds, reversals, reimbursements, and cashback.
   if (isExcluded(transaction)) return null;
 
-  // Run detection on all rules, keep the rule alongside its match.
+  // Run detection on all rules, apply user-type confidence adjustment immediately.
+  // If adjustConfidence returns null the match is suppressed for this user type.
   const candidates = rules
     .map((rule) => {
-      const match = rule.detect(transaction, userType);
-      return match ? { rule, match } : null;
+      const rawMatch = rule.detect(transaction, userType);
+      if (!rawMatch) return null;
+      const adjusted = adjustConfidence(rawMatch.confidence, rawMatch.category, userType);
+      if (adjusted === null) return null;
+      const match: RawMatch = adjusted === rawMatch.confidence
+        ? rawMatch
+        : { ...rawMatch, confidence: adjusted };
+      return { rule, match };
     })
     .filter((c): c is { rule: Rule; match: RawMatch } => c !== null);
 

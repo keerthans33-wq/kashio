@@ -7,6 +7,7 @@ import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
 import { merchantText, combinedText, matchesMerchant } from "./shared";
 import { getMerchantsForCategory, getMerchantInfo } from "../merchants";
+import { userTypeNote } from "./userTypeLayer";
 
 const KEYWORDS = [
   "phone bill",
@@ -40,35 +41,46 @@ function detect(tx: { normalizedMerchant: string; description: string }, userTyp
 
 function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?: string | null): Explanation {
   const { merchantMatch, keyword } = match.signals;
-  const both       = merchantMatch && keyword;
-  const isBusiness = userType === "contractor" || userType === "sole_trader";
-  const useLabel   = isBusiness ? "business-use" : "work-use";
+  const both         = merchantMatch && keyword;
+  const isBusiness   = userType === "contractor" || userType === "sole_trader";
+  const useLabel     = isBusiness ? "business-use" : "work-use";
+  const tn           = userTypeNote(CATEGORIES.PHONE_INTERNET, userType);
+
+  // Sole traders can claim full cost if used exclusively for business — make that explicit.
+  const proportionNote = userType === "sole_trader"
+    ? "If you use it exclusively for business you can claim the full cost; otherwise claim the business-use proportion."
+    : `You'll need to estimate what percentage you use for ${isBusiness ? "business" : "work"}. The ATO suggests a 4-week representative log to work out the split.`;
 
   if (both) {
     return {
-      reason:           `Your ${tx.normalizedMerchant} ${keyword} has a ${useLabel} portion that's deductible. You'll need to estimate what percentage you use for ${isBusiness ? "business" : "work"}. The ATO suggests a 4-week representative log to work out the split.`,
-      confidenceReason: "Recognised telco and a billing keyword. Two signals pointing to a recurring phone or internet charge.",
-      mixedUse:         true,
+      reason:           `Your ${tx.normalizedMerchant} ${keyword} has a ${useLabel} portion that's deductible. ${proportionNote}`,
+      confidenceReason: tn
+        ? `Recognised telco and a billing keyword. Two signals pointing to a recurring phone or internet charge. ${tn}`
+        : "Recognised telco and a billing keyword. Two signals pointing to a recurring phone or internet charge.",
+      mixedUse: true,
     };
   }
 
   if (merchantMatch) {
-    // Use merchant knowledge to describe what this provider offers, so users can identify the charge.
     const info = getMerchantInfo(tx.normalizedMerchant);
     const what = info
       ? info.description.split(". ")[0].replace(/\.$/, "").toLowerCase()
       : "mobile and internet services";
     return {
       reason:           `${tx.normalizedMerchant} offers ${what}. We can see this is from ${tx.normalizedMerchant} but not what the charge is for — check your statement. If it's a plan or service you use for ${isBusiness ? "your business" : "work"}, the ${useLabel} portion is deductible. If it's a device or accessory, that would be an equipment claim instead.`,
-      confidenceReason: "Recognised telco, but no billing keyword. Could be a device or accessory purchase rather than a recurring service bill.",
-      mixedUse:         true,
+      confidenceReason: tn
+        ? `Recognised telco, but no billing keyword. Could be a device or accessory purchase rather than a recurring service bill. ${tn}`
+        : "Recognised telco, but no billing keyword. Could be a device or accessory purchase rather than a recurring service bill.",
+      mixedUse: true,
     };
   }
 
   return {
     reason:           `This looks like it could be a phone or internet charge, but we can't confirm — the provider isn't one we recognise. If it is a plan or service used for ${isBusiness ? "your business" : "work"}, the ${useLabel} portion would be claimable. Check your statement before confirming.`,
-    confidenceReason: "Billing keyword matched, but without a recognised telco it's hard to confirm this is a phone or internet bill.",
-    mixedUse:         true,
+    confidenceReason: tn
+      ? `Billing keyword matched, but without a recognised telco it's hard to confirm this is a phone or internet bill. ${tn}`
+      : "Billing keyword matched, but without a recognised telco it's hard to confirm this is a phone or internet bill.",
+    mixedUse: true,
   };
 }
 

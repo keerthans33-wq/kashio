@@ -9,6 +9,7 @@ import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
 import { merchantText, combinedText, matchesMerchant } from "./shared";
 import { getMerchantsForCategory, getMerchantInfo } from "../merchants";
+import { userTypeNote } from "./userTypeLayer";
 
 // Merchant list computed per-call so forUserTypes filtering applies.
 
@@ -41,25 +42,40 @@ function detect(tx: { normalizedMerchant: string; description: string }, userTyp
 
 function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?: string | null): Explanation {
   const { merchantMatch, keyword } = match.signals;
+
+  // Framing shifts by user type: employees need the "not reimbursed" caveat;
+  // sole traders get the most direct "business expense" language.
   const context  = userType === "sole_trader" ? "your business" : "your work";
-  const supplies = userType === "sole_trader" ? "Business supplies" : "Office supplies";
+  const supplies = userType === "sole_trader"
+    ? "Business supplies"
+    : userType === "contractor"
+    ? "Business supplies"
+    : "Office supplies";
+  const qualifier = userType === "employee"
+    ? "are deductible if not reimbursed by your employer"
+    : "are a deductible business expense";
+
+  const tn = userTypeNote(CATEGORIES.OFFICE_SUPPLIES, userType);
 
   if (merchantMatch) {
-    // Use merchant knowledge to describe what the store carries.
     const info = getMerchantInfo(tx.normalizedMerchant);
     const what = info
       ? info.description.split(". ")[0].replace(/\.$/, "").toLowerCase()
       : "office supplies and stationery";
     return {
-      reason:           `${tx.normalizedMerchant} sells ${what}. ${supplies} bought for ${context} are deductible — if this ${keyword} was for home rather than ${context}, it won't qualify.`,
-      confidenceReason: "Recognised office retailer and a matching supply keyword. Two signals pointing to a work purchase.",
-      mixedUse:         true,
+      reason:           `${tx.normalizedMerchant} sells ${what}. ${supplies} bought for ${context} ${qualifier} — if this ${keyword} was for home rather than ${context}, it won't qualify.`,
+      confidenceReason: tn
+        ? `Recognised office retailer and a matching supply keyword. Two signals pointing to a work purchase. ${tn}`
+        : "Recognised office retailer and a matching supply keyword. Two signals pointing to a work purchase.",
+      mixedUse: true,
     };
   }
 
   return {
-    reason:           `${typeof keyword === "string" ? keyword.charAt(0).toUpperCase() + keyword.slice(1) : "This item"} bought for ${context} is deductible, but without a recognised office store this is harder to confirm. Check before claiming.`,
-    confidenceReason: "Supply keyword matched, but not from a recognised office retailer. Could be from a non-work purchase.",
+    reason:           `${typeof keyword === "string" ? keyword.charAt(0).toUpperCase() + keyword.slice(1) : "This item"} bought for ${context} ${qualifier}, but without a recognised office store this is harder to confirm. Check before claiming.`,
+    confidenceReason: tn
+      ? `Supply keyword matched, but not from a recognised office retailer. Could be from a non-work purchase. ${tn}`
+      : "Supply keyword matched, but not from a recognised office retailer. Could be from a non-work purchase.",
   };
 }
 
