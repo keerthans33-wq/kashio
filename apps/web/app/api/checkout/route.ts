@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     mode:       "payment",
     line_items: [{ price: priceId, quantity: 1 }],
     metadata:   { userId },
-    success_url: `${origin}/export?unlocked=1`,
+    success_url: `${origin}/export/success`,
     cancel_url:  `${origin}/export`,
   });
 
