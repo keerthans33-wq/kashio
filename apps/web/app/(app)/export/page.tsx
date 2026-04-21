@@ -47,7 +47,11 @@ const EMPTY_BODY: Record<string, string> = {
   sole_trader: "Confirm your deductions in Review and they'll appear here.",
 };
 
-export default async function Export() {
+export default async function Export({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string>>;
+}) {
   const { id: userId, userType } = await requireUserWithType();
   const allowedCategories = (userType && CATEGORIES_BY_USER_TYPE[userType]) ?? ACTIVE_CATEGORIES;
 
@@ -61,7 +65,10 @@ export default async function Export() {
     db.userProfile.findUnique({ where: { userId }, select: { reportUnlocked: true } }),
   ]);
 
-  const reportUnlocked = userProfile?.reportUnlocked ?? false;
+  const params = await searchParams;
+  // DEV ONLY — visit /export?dev_unlock=1 to simulate a paid user. Remove before launch.
+  const devOverride = process.env.NODE_ENV === "development" && params.dev_unlock === "1";
+  const reportUnlocked = devOverride || (userProfile?.reportUnlocked ?? false);
 
   const { ytdHours: wfhYtdHours, ytdEst: wfhYtdEst } = calcWfhSummary(wfhEntries);
 
