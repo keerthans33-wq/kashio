@@ -8,6 +8,13 @@ datasource db {
 }
 
 // Stores the Basiq user ID created when a user connects their bank.
+model UserProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique              // Supabase user ID
+  reportUnlocked Boolean  @default(false)
+  createdAt      DateTime @default(now())
+}
+
 model BasiqConnection {
   id          String   @id @default(cuid())
   userId      String   @unique   // one connection per Supabase user

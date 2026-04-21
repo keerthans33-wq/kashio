@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { ExportButton } from "./ExportButton";
 import { Button } from "@/components/ui/button";
@@ -20,13 +19,12 @@ type CategoryGroup = {
 };
 
 type Props = {
+  reportUnlocked: boolean;
   allItems:       Item[];
   categoryGroups: CategoryGroup[];
   total:          number;
   confirmedCount: number;
 };
-
-const DEV_KEY = "kashio_dev_unlocked";
 
 const fmt = (n: number) =>
   n.toLocaleString("en-AU", { style: "currency", currency: "AUD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -34,22 +32,9 @@ const fmt = (n: number) =>
 const fmtRound = (n: number) =>
   n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 
-export function PaywallGate({ allItems, categoryGroups, total, confirmedCount }: Props) {
-  const [isPaid, setIsPaid] = useState(false);
-
-  useEffect(() => {
-    try {
-      if (localStorage.getItem(DEV_KEY) === "true") setIsPaid(true);
-    } catch {}
-  }, []);
-
-  function unlock() {
-    setIsPaid(true);
-    try { localStorage.setItem(DEV_KEY, "true"); } catch {}
-  }
-
+export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, confirmedCount }: Props) {
   // ── Unlocked: breakdown + download ────────────────────────────────────────
-  if (isPaid) {
+  if (reportUnlocked) {
     return (
       <motion.div
         className="space-y-8"
@@ -225,15 +210,15 @@ export function PaywallGate({ allItems, categoryGroups, total, confirmedCount }:
           Unlock your tax summary
         </h2>
         <p className="text-[13px] mb-5" style={{ color: "var(--text-secondary)" }}>
-          Get your full itemised breakdown across {confirmedCount} confirmed {confirmedCount === 1 ? "item" : "items"} plus a downloadable report ready to share with your accountant.
+          Get your full breakdown of deductions, ready for tax time.
         </p>
 
         <ul className="mb-6 space-y-2.5">
           {[
-            "Full itemised category breakdown",
-            "Downloadable XLSX tax report",
-            "Work from home hours summary",
-            "Ready for your accountant",
+            "Clean tax summary",
+            "Category totals",
+            "Work from home included",
+            "Downloadable report",
           ].map((item) => (
             <li key={item} className="flex items-center gap-2.5 text-[13px]" style={{ color: "var(--text-secondary)" }}>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" style={{ color: "#22C55E" }}>
@@ -249,13 +234,17 @@ export function PaywallGate({ allItems, categoryGroups, total, confirmedCount }:
             $19.99
           </span>
           <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>
-            one-time · this financial year
+            AUD · one-time
           </span>
         </div>
 
-        <Button onClick={unlock} className="w-full">
+        <Button className="w-full mb-3">
           Unlock report
         </Button>
+
+        <p className="text-center text-[12px]" style={{ color: "var(--text-muted)" }}>
+          Only pay when you're ready to export
+        </p>
       </motion.div>
     </>
   );

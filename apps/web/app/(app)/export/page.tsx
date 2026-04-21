@@ -51,14 +51,17 @@ export default async function Export() {
   const { id: userId, userType } = await requireUserWithType();
   const allowedCategories = (userType && CATEGORIES_BY_USER_TYPE[userType]) ?? ACTIVE_CATEGORIES;
 
-  const [confirmedRaw, wfhEntries] = await Promise.all([
+  const [confirmedRaw, wfhEntries, userProfile] = await Promise.all([
     db.deductionCandidate.findMany({
       where:   { status: "CONFIRMED", userId },
       include: { transaction: true },
       orderBy: { transaction: { date: "asc" } },
     }),
     db.wfhLog.findMany({ where: { userId }, select: { date: true, hours: true } }),
+    db.userProfile.findUnique({ where: { userId }, select: { reportUnlocked: true } }),
   ]);
+
+  const reportUnlocked = userProfile?.reportUnlocked ?? false;
 
   const { ytdHours: wfhYtdHours, ytdEst: wfhYtdEst } = calcWfhSummary(wfhEntries);
 
@@ -192,6 +195,7 @@ export default async function Export() {
 
       {/* 3 — Breakdown + download (paywalled) */}
       <PaywallGate
+        reportUnlocked={reportUnlocked}
         allItems={allItems.map((i) => ({ id: i.id, merchant: i.row.merchant, date: i.row.date, amount: i.row.amount, category: i.row.category }))}
         categoryGroups={categoryGroups.map((g) => ({ cat: g.cat, catTotal: g.catTotal, items: g.items.map((i) => ({ id: i.id, merchant: i.row.merchant, date: i.row.date, amount: i.row.amount, category: i.row.category })) }))}
         total={total}
