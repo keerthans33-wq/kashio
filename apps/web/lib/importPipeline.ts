@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { detectDeduction } from "./rules";
-import { refineTransaction } from "./ollama/refineTransaction";
+import { refineTransaction } from "./gemini/refineTransaction";
 import type { IngestionRow } from "./ingestion/types";
 
 export type TransactionSource = "CSV" | "DEMO_BANK" | "BASIQ";
@@ -82,8 +82,8 @@ export async function runImportPipeline(
         const rawMatch = detectDeduction(tx, userType);
         if (!rawMatch) return null;
 
-        // Optional Ollama refinement — only fires for LOW-confidence matches
-        // when OLLAMA_ENABLED=true. Falls back to the original match silently.
+        // Optional Gemini refinement — only fires for LOW-confidence matches
+        // when GEMINI_ENABLED=true. Falls back to rawMatch silently on any failure.
         const match = await refineTransaction(rawMatch, tx, userType);
 
         return {
