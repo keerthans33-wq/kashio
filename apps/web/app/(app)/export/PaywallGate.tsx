@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "motion/react";
 import { ExportButton } from "./ExportButton";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,19 @@ const fmtRound = (n: number) =>
   n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 
 export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, confirmedCount }: Props) {
+  const [loading, setLoading] = useState(false);
+
+  async function handleUnlock() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/checkout", { method: "POST" });
+      const { url } = await res.json();
+      if (url) window.location.href = url;
+    } finally {
+      setLoading(false);
+    }
+  }
+
   // ── Unlocked: breakdown + download ────────────────────────────────────────
   if (reportUnlocked) {
     return (
@@ -238,8 +252,8 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
           </span>
         </div>
 
-        <Button className="w-full mb-3">
-          Unlock report
+        <Button className="w-full mb-3" onClick={handleUnlock} disabled={loading}>
+          {loading ? "Redirecting…" : "Unlock report"}
         </Button>
 
         <p className="text-center text-[12px]" style={{ color: "var(--text-muted)" }}>
