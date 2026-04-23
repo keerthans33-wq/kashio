@@ -36,6 +36,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${origin}/login`);
     }
 
+    // Allow internal next-redirect (e.g. password reset). Only allow paths starting with /.
+    const next = searchParams.get("next");
+    if (next?.startsWith("/")) {
+      return NextResponse.redirect(`${origin}${next}`);
+    }
+
     const userType = data.user.user_metadata?.user_type;
     return NextResponse.redirect(
       `${origin}${isValidUserType(userType) ? "/import" : "/onboarding"}`

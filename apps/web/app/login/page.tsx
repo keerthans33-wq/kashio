@@ -17,17 +17,22 @@ function friendlyError(msg: string): string {
 }
 
 export default function LoginPage() {
-  const [mode, setMode]         = useState<Mode>("signin");
-  const [email, setEmail]       = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState<string | null>(null);
-  const [message, setMessage]   = useState<string | null>(null);
+  const [mode,      setMode]      = useState<Mode>("signin");
+  const [firstName, setFirstName] = useState("");
+  const [lastName,  setLastName]  = useState("");
+  const [email,     setEmail]     = useState("");
+  const [password,  setPassword]  = useState("");
+  const [loading,   setLoading]   = useState(false);
+  const [error,     setError]     = useState<string | null>(null);
+  const [message,   setMessage]   = useState<string | null>(null);
 
   function reset() { setError(null); setMessage(null); }
 
   async function handleSubmit() {
     reset();
+    if (mode === "signup" && (!firstName.trim() || !lastName.trim())) {
+      setError("Enter your first and last name."); return;
+    }
     if (!email || !password) { setError("Enter your email and password."); return; }
     setLoading(true);
 
@@ -37,7 +42,11 @@ export default function LoginPage() {
       const userType = data.user?.user_metadata?.user_type;
       window.location.href = userType ? "/import" : "/onboarding";
     } else {
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { first_name: firstName.trim(), last_name: lastName.trim() } },
+      });
       if (error) { setError(friendlyError(error.message)); setLoading(false); return; }
       if (!data.session) {
         setMessage("Check your email for a confirmation link, then sign in.");
@@ -127,6 +136,35 @@ export default function LoginPage() {
 
           {/* Fields */}
           <div className="space-y-3">
+            {/* Name fields — signup only */}
+            {mode === "signup" && (
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>First name</label>
+                  <input
+                    type="text"
+                    autoComplete="given-name"
+                    placeholder="Jane"
+                    value={firstName}
+                    onChange={(e) => { setFirstName(e.target.value); reset(); }}
+                    className="h-11 w-full rounded-xl px-3 text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-[#22C55E]"
+                    style={{ backgroundColor: "var(--bg-elevated)", border: "1px solid var(--bg-border)", color: "var(--text-primary)" }}
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Last name</label>
+                  <input
+                    type="text"
+                    autoComplete="family-name"
+                    placeholder="Smith"
+                    value={lastName}
+                    onChange={(e) => { setLastName(e.target.value); reset(); }}
+                    className="h-11 w-full rounded-xl px-3 text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-[#22C55E]"
+                    style={{ backgroundColor: "var(--bg-elevated)", border: "1px solid var(--bg-border)", color: "var(--text-primary)" }}
+                  />
+                </div>
+              </div>
+            )}
             <div>
               <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
                 Email
@@ -165,6 +203,15 @@ export default function LoginPage() {
               />
             </div>
           </div>
+
+          {/* Forgot password — signin only */}
+          {mode === "signin" && (
+            <div className="text-right -mt-1">
+              <a href="/auth/forgot-password" className="text-xs" style={{ color: "var(--text-muted)" }}>
+                Forgot password?
+              </a>
+            </div>
+          )}
 
           {/* Feedback */}
           {error && <p className="text-sm text-red-400">{error}</p>}

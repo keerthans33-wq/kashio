@@ -144,6 +144,13 @@ export default function AuthPage() {
           />
         </div>
 
+        {/* Forgot password */}
+        <div className="mt-1 text-right">
+          <a href="/auth/forgot-password" className="text-xs" style={{ color: "var(--text-muted)" }}>
+            Forgot password?
+          </a>
+        </div>
+
         {/* Message */}
         {message && (
           <p className={`mt-3 text-sm ${message.error ? "text-red-400" : "text-green-500"}`}>
@@ -158,7 +165,7 @@ export default function AuthPage() {
 
         <p className="mt-5 text-center text-sm" style={{ color: "var(--text-muted)" }}>
           Don&apos;t have an account?{" "}
-          <a href="/auth/signup" className="font-medium" style={{ color: "var(--violet-from)" }}>
+          <a href="/auth/signup" className="font-medium" style={{ color: "var(--accent-green)" }}>
             Create one
           </a>
         </p>
