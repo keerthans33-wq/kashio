@@ -144,60 +144,61 @@ export default async function Export({
       </FadeIn>
 
       {/* 2 — Summary cards */}
-      <FadeIn delay={0.06} className="mb-6 space-y-3">
+      <FadeIn delay={0.06} className="mb-6">
+        <div className={`grid gap-3 ${wfhYtdHours > 0 ? "grid-cols-2" : "grid-cols-1"}`}>
 
-        {/* Deductions — hero, full-width, dominant */}
-        <div
-          className="relative rounded-2xl overflow-hidden px-6 py-6"
-          style={{
-            backgroundColor: "rgba(13, 20, 33, 0.92)",
-            border:          "1px solid rgba(34,197,94,0.22)",
-            boxShadow:       "0 0 48px rgba(34,197,94,0.07), 0 2px 8px rgba(0,0,0,0.5)",
-          }}
-        >
-          <div className="absolute inset-x-0 top-0 h-[3px]" style={{ backgroundColor: "#22C55E", opacity: 0.6 }} />
-          <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--text-muted)" }}>
-            {(userType && TOTAL_LABEL[userType]) ?? "Total deductions"}
-          </p>
-          <p className="text-[44px] font-bold tabular-nums leading-none tracking-tight" style={{ color: "#FFFFFF" }}>
-            {fmtRound(total)}
-          </p>
-          {/* Tax saving — green pill */}
+          {/* Deductions */}
           <div
-            className="mt-4 inline-flex items-center rounded-lg px-2.5 py-1"
-            style={{ backgroundColor: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.18)" }}
+            className="relative rounded-2xl overflow-hidden px-5 py-5 flex flex-col"
+            style={{
+              backgroundColor: "rgba(13, 20, 33, 0.92)",
+              border:          "1px solid rgba(34,197,94,0.22)",
+              boxShadow:       "0 0 48px rgba(34,197,94,0.07), 0 2px 8px rgba(0,0,0,0.5)",
+            }}
           >
-            <span className="text-[12px] font-semibold" style={{ color: "#22C55E" }}>
-              ~{fmtRound(estimatedSaving)} est. tax saving
-            </span>
+            <div className="absolute inset-x-0 top-0 h-[3px]" style={{ backgroundColor: "#22C55E", opacity: 0.6 }} />
+            <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>
+              {(userType && TOTAL_LABEL[userType]) ?? "Total deductions"}
+            </p>
+            <p className="text-[28px] font-bold tabular-nums leading-none tracking-tight" style={{ color: "#FFFFFF" }}>
+              {fmtRound(total)}
+            </p>
+            <div
+              className="mt-3 inline-flex items-center self-start rounded-lg px-2 py-0.5"
+              style={{ backgroundColor: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.18)" }}
+            >
+              <span className="text-[11px] font-semibold" style={{ color: "#22C55E" }}>
+                ~{fmtRound(estimatedSaving)} saved
+              </span>
+            </div>
+            <p className="mt-2 text-[11px]" style={{ color: "var(--text-muted)" }}>
+              {confirmed.length} item{confirmed.length !== 1 ? "s" : ""} confirmed
+            </p>
           </div>
-          <p className="mt-2 text-[11px]" style={{ color: "var(--text-muted)" }}>
-            {confirmed.length} item{confirmed.length !== 1 ? "s" : ""} confirmed
-          </p>
-        </div>
 
-        {/* WFH — same surface family as deductions, clearly secondary */}
-        {wfhYtdHours > 0 && (
+          {/* WFH — same surface family, same size */}
+          {wfhYtdHours > 0 && (
           <div
-            className="rounded-2xl px-6 py-6"
+            className="rounded-2xl px-5 py-5 flex flex-col"
             style={{
               backgroundColor: "rgba(13, 20, 33, 0.88)",
               border:          "1px solid rgba(255,255,255,0.08)",
               boxShadow:       "0 2px 8px rgba(0,0,0,0.3)",
             }}
           >
-            <p className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>
               {(userType && WFH_LABEL[userType]) ?? "Home office"}
             </p>
             <p className="text-[28px] font-bold tabular-nums leading-none tracking-tight" style={{ color: "var(--text-primary)" }}>
               ~{fmtRound(wfhYtdEst)}
             </p>
-            <p className="mt-3 text-[12px]" style={{ color: "var(--text-muted)" }}>
-              {wfhYtdHours} hrs logged · 67¢/hr ATO rate
+            <p className="mt-3 text-[11px]" style={{ color: "var(--text-muted)" }}>
+              {wfhYtdHours} hrs · 67¢/hr ATO
             </p>
           </div>
-        )}
+          )}
 
+        </div>
       </FadeIn>
 
       {/* 3 — Breakdown + download (paywalled) */}
