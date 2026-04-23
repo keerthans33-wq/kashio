@@ -35,13 +35,31 @@ const fmtRound = (n: number) =>
 
 export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, confirmedCount }: Props) {
   const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState<string | null>(null);
 
   async function handleUnlock() {
     setLoading(true);
+    setError(null);
     try {
-      const res = await fetch("/api/checkout", { method: "POST" });
-      const { url } = await res.json();
-      if (url) window.location.href = url;
+      const res  = await fetch("/api/checkout", { method: "POST" });
+      const body = await res.json();
+
+      if (!res.ok) {
+        console.error("[PaywallGate] checkout error:", body);
+        setError("Something went wrong. Please try again.");
+        return;
+      }
+
+      if (!body.url) {
+        console.error("[PaywallGate] no url in response:", body);
+        setError("Something went wrong. Please try again.");
+        return;
+      }
+
+      window.location.href = body.url;
+    } catch (err) {
+      console.error("[PaywallGate] fetch failed:", err);
+      setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -255,6 +273,12 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
         <Button className="w-full mb-3" onClick={handleUnlock} disabled={loading}>
           {loading ? "Redirecting…" : "Unlock report"}
         </Button>
+
+        {error && (
+          <p className="text-center text-[12px] mb-1" style={{ color: "#f87171" }}>
+            {error}
+          </p>
+        )}
 
         <p className="text-center text-[12px]" style={{ color: "var(--text-muted)" }}>
           Only pay when you're ready to export
