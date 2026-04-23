@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../../lib/supabase";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/shared/Logo";
 
 // Maps Supabase error messages to plain, friendly language.
 function friendlyError(message: string): string {
@@ -88,7 +89,7 @@ export default function AuthPage() {
 
         {/* Logo / heading */}
         <div className="mb-8 text-center">
-          <h1 className="text-[22px] font-bold" style={{ color: "var(--text-primary)" }}>Kashio</h1>
+          <div className="flex justify-center mb-2"><Logo height={28} /></div>
           <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>Sign in to your account</p>
         </div>
 

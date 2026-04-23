@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { supabase } from "../../../../lib/supabase";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/shared/Logo";
 
 function friendlyError(message: string): string {
   if (message.includes("User already registered"))
@@ -87,7 +88,7 @@ export default function SignUpPage() {
         style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "var(--shadow-card-lg)" }}
       >
         <div className="mb-7 text-center">
-          <h1 className="text-[22px] font-bold" style={{ color: "var(--text-primary)" }}>Kashio</h1>
+          <div className="flex justify-center mb-2"><Logo height={28} /></div>
           <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>Create your account</p>
         </div>
 

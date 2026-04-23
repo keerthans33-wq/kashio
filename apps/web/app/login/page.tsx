@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { supabase } from "../../lib/supabase";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/shared/Logo";
 
 type Mode = "signin" | "signup";
 
@@ -81,7 +82,7 @@ export default function LoginPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
         >
-          <p className="text-[32px] font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>Kashio</p>
+          <div className="flex justify-center mb-1"><Logo height={32} /></div>
           <p className="mt-1 text-[15px]" style={{ color: "var(--text-muted)" }}>Your tax deductions, sorted.</p>
         </motion.div>
 
