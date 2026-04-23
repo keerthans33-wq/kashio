@@ -161,6 +161,29 @@ export default async function WfhLog() {
         The ATO requires a record of actual hours to use the 67¢/hr fixed rate.
       </p>
 
+      {/* Export shortcut */}
+      <div className="mt-5 pt-5" style={{ borderTop: "1px solid var(--bg-border)" }}>
+        <a
+          href="/export"
+          className="flex items-center justify-between gap-3 group"
+        >
+          <span className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
+            Export your tax summary
+          </span>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1.75}
+            style={{ color: "var(--text-muted)" }}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+      </div>
+
     </MobileScreen>
   );
 }
