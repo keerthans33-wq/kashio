@@ -89,7 +89,7 @@ export default function AuthPage() {
 
         {/* Logo / heading */}
         <div className="mb-8 text-center">
-          <div className="flex justify-center mb-2"><Logo height={28} /></div>
+          <div className="flex justify-center mb-2"><Logo height={80} /></div>
           <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>Sign in to your account</p>
         </div>
 
