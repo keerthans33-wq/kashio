@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import Image from "next/image";
 import { getUserWithType } from "../../lib/auth";
+import { Logo } from "@/components/shared/Logo";
 import { Button } from "@/components/ui/button";
 
 const steps = [
@@ -27,14 +27,9 @@ export default async function Home({
     <main className="min-h-screen flex flex-col items-center justify-center px-6 py-16 text-center">
 
       {/* Logo */}
-      <Image
-        src="/kashio - 2.PNG"
-        alt="Kashio"
-        height={32}
-        width={110}
-        className="h-8 w-auto mb-10"
-        priority
-      />
+      <div className="mb-10">
+        <Logo height={64} />
+      </div>
 
       {/* Headline */}
       <h1 className="text-[32px] sm:text-[40px] font-bold leading-tight max-w-sm sm:max-w-lg" style={{ color: "var(--text-primary)" }}>
