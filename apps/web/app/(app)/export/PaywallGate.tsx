@@ -280,8 +280,17 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
           </p>
         )}
 
+        {/* TODO: Create Refund Policy page at kashio.com.au/legal/refund-policy and link it below */}
+        <p className="text-center text-[11px] leading-relaxed mb-3" style={{ color: "var(--text-muted)" }}>
+          By subscribing, you agree to Kashio&apos;s{" "}
+          <a href="https://kashio.com.au/legal/terms" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:opacity-70">Terms and Conditions</a>,{" "}
+          <a href="https://kashio.com.au/legal/privacy" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:opacity-70">Privacy Policy</a>,{" "}
+          <a href="https://kashio.com.au/legal/disclaimer" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:opacity-70">Disclaimer</a>,{" "}
+          and Refund Policy.
+        </p>
+
         <p className="text-center text-[12px]" style={{ color: "var(--text-muted)" }}>
-          Only pay when you're ready to export
+          Only pay when you&apos;re ready to export
         </p>
       </motion.div>
     </>

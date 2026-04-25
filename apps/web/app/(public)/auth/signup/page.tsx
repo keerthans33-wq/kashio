@@ -24,19 +24,23 @@ const inputStyle = {
   color: "var(--text-primary)",
 } as const;
 
+const LEGAL_VERSION = "2026-04-25";
+
 export default function SignUpPage() {
-  const [firstName, setFirstName] = useState("");
-  const [lastName,  setLastName]  = useState("");
-  const [email,     setEmail]     = useState("");
-  const [password,  setPassword]  = useState("");
-  const [loading,   setLoading]   = useState(false);
-  const [message,   setMessage]   = useState<{ text: string; error: boolean } | null>(null);
+  const [firstName,     setFirstName]     = useState("");
+  const [lastName,      setLastName]      = useState("");
+  const [email,         setEmail]         = useState("");
+  const [password,      setPassword]      = useState("");
+  const [legalAccepted, setLegalAccepted] = useState(false);
+  const [loading,       setLoading]       = useState(false);
+  const [message,       setMessage]       = useState<{ text: string; error: boolean } | null>(null);
 
   function validate(): string | null {
     if (!firstName.trim()) return "Please enter your first name.";
     if (!lastName.trim())  return "Please enter your last name.";
     if (!email)            return "Please enter your email.";
     if (!password)         return "Please enter your password.";
+    if (!legalAccepted)    return "Please agree to the Terms and Conditions and Privacy Policy.";
     return null;
   }
 
@@ -51,7 +55,13 @@ export default function SignUpPage() {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
-        data: { first_name: firstName.trim(), last_name: lastName.trim() },
+        data: {
+          first_name:              firstName.trim(),
+          last_name:               lastName.trim(),
+          legal_terms_accepted:    true,
+          legal_terms_accepted_at: new Date().toISOString(),
+          legal_terms_version:     LEGAL_VERSION,
+        },
       },
     });
     if (error) {
@@ -63,8 +73,14 @@ export default function SignUpPage() {
   }
 
   async function handleGoogle() {
+    if (!legalAccepted) {
+      setMessage({ text: "Please agree to the Terms and Conditions and Privacy Policy.", error: true });
+      return;
+    }
     setLoading(true);
     setMessage(null);
+    // TODO: Save legal_terms_accepted metadata for Google OAuth users after callback completes
+    // (Supabase OAuth does not support passing user_metadata at sign-in time)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options:  {
@@ -166,13 +182,46 @@ export default function SignUpPage() {
           </div>
         </div>
 
+        {/* Legal acceptance checkbox */}
+        <div className="flex items-start gap-2.5 mt-4">
+          <input
+            type="checkbox"
+            id="legal-accept"
+            checked={legalAccepted}
+            onChange={(e) => setLegalAccepted(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded accent-[#22C55E]"
+          />
+          <label htmlFor="legal-accept" className="text-xs leading-relaxed cursor-pointer" style={{ color: "var(--text-muted)" }}>
+            I agree to the{" "}
+            <a
+              href="https://kashio.com.au/legal/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 hover:opacity-70"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              Terms and Conditions
+            </a>{" "}
+            and{" "}
+            <a
+              href="https://kashio.com.au/legal/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 hover:opacity-70"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              Privacy Policy
+            </a>.
+          </label>
+        </div>
+
         {message && (
           <p className={`mt-3 text-sm ${message.error ? "text-red-400" : "text-green-500"}`}>
             {message.text}
           </p>
         )}
 
-        <Button onClick={handleSignUp} disabled={loading} className="mt-4 w-full">
+        <Button onClick={handleSignUp} disabled={loading || !legalAccepted} className="mt-4 w-full">
           {loading ? "Please wait…" : "Create account"}
         </Button>
 

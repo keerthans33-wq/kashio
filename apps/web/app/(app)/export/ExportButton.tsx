@@ -28,6 +28,10 @@ export function ExportButton() {
 
   return (
     <div className="space-y-3">
+      <p className="text-[11px] text-center leading-relaxed" style={{ color: "var(--text-muted)" }}>
+        Kashio provides AI-generated insights only. Always verify with a qualified accountant before submitting tax claims.
+      </p>
+
       <Button
         onClick={handleExport}
         disabled={state === "loading" || state === "done"}
