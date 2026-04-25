@@ -25,14 +25,14 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
             <ThemeToggle />
             <div className="flex items-center gap-4">
               <a
-                href="mailto:feedback@kashio.app?subject=Kashio%20issue&body=Page%3A%20%0A%0AWhat%20happened%3A%20%0A%0AWhat%20I%20expected%3A%20"
+                href="mailto:support@kashio.com.au?subject=Kashio%20issue&body=Page%3A%20%0A%0AWhat%20happened%3A%20%0A%0AWhat%20I%20expected%3A%20"
                 className="text-xs transition-opacity hover:opacity-100"
                 style={{ color: "var(--text-muted)" }}
               >
                 Report an issue
               </a>
               <a
-                href="mailto:feedback@kashio.app?subject=Kashio%20feedback"
+                href="mailto:info@kashio.com.au?subject=Kashio%20feedback"
                 className="text-xs transition-opacity hover:opacity-100"
                 style={{ color: "var(--text-muted)" }}
               >
