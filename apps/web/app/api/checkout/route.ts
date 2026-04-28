@@ -21,6 +21,8 @@ export async function POST(req: Request) {
       metadata:   { userId },
       success_url: `${origin}/export/success`,
       cancel_url:  `${origin}/export`,
+      automatic_tax:              { enabled: true },
+      billing_address_collection: "required",
     });
 
     console.log("[checkout] session created:", session.id, "url:", session.url);
