@@ -41,7 +41,7 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
     setLoading(true);
     setError(null);
     try {
-      const res  = await fetch("/api/checkout", { method: "POST" });
+      const res  = await fetch("/api/stripe/create-checkout-session", { method: "POST" });
       const body = await res.json();
 
       if (!res.ok) {

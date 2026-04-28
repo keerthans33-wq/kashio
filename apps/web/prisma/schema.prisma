@@ -81,6 +81,31 @@ model WfhLog {
   @@unique([userId, date])
 }
 
+model Payment {
+  id                    String   @id @default(cuid())
+  userId                String
+  stripeSessionId       String   @unique
+  stripePaymentIntentId String?
+  amountTotal           Int
+  currency              String   @default("aud")
+  paymentStatus         String   @default("paid")
+  createdAt             DateTime @default(now())
+
+  @@index([userId])
+}
+
+model UserEntitlement {
+  id         String   @id @default(cuid())
+  userId     String
+  productKey String
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, productKey])
+  @@index([userId])
+}
+
 model DeductionCandidate {
   id            String          @id @default(cuid())
   userId        String                           // Supabase user ID — scopes this candidate to one user

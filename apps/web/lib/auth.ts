@@ -34,6 +34,14 @@ export async function requireUserWithType(): Promise<{ id: string; userType: str
   return { id: user.id, userType: isValidUserType(raw) ? raw : null };
 }
 
+// For API routes: returns user ID + email, or null if not signed in.
+export async function getUserWithEmail(): Promise<{ id: string; email: string | null } | null> {
+  const supabase = await makeServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  return { id: user.id, email: user.email ?? null };
+}
+
 // For API routes: returns the user ID or null (caller handles the 401).
 export async function getUser(): Promise<string | null> {
   const supabase = await makeServerClient();
