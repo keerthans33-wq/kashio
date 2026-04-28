@@ -17,12 +17,6 @@ export async function POST(req: Request) {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin;
 
-  // Resolve the email to pre-fill in Stripe Checkout.
-  // UserProfile has no separate billing_email field, so we use the Supabase auth email.
-  // If you later add a billing_email column to UserProfile, look it up here first and
-  // fall back to user.email only when it's null.
-  const customerEmail = user.email ?? undefined;
-
   try {
     const session = await getStripe().checkout.sessions.create({
       mode:                 "payment",
@@ -31,11 +25,12 @@ export async function POST(req: Request) {
       payment_method_types: ["card"],
       line_items:           [{ price: priceId, quantity: 1 }],
 
-      // Pre-filling customer_email lets Stripe associate the payment with this address
-      // and is required for automatic receipt/invoice delivery.
-      // NOTE: Stripe only sends the receipt email automatically if
-      // "Successful payments" is enabled in Dashboard → Settings → Customer emails.
-      customer_email: customerEmail,
+      // Do NOT pre-fill customer_email here — Stripe uses it to look up saved Link accounts
+      // and redirects the user through Link auth before showing the card form.
+      // Instead, Stripe captures the email the customer types during checkout and uses
+      // that for receipt/invoice delivery automatically.
+      // NOTE: enable "Successful payments" in Dashboard → Settings → Customer emails
+      // for Stripe to actually send the receipt.
 
       metadata: {
         user_id: user.id,
