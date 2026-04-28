@@ -22,7 +22,6 @@ export async function POST(req: Request) {
       mode:                 "payment",
       payment_method_types: ["card"],
       line_items:           [{ price: priceId, quantity: 1 }],
-      customer_email: user.email ?? undefined,
       metadata: {
         user_id: user.id,
         product: PRODUCT_KEY,
