@@ -19,8 +19,9 @@ export async function POST(req: Request) {
 
   try {
     const session = await getStripe().checkout.sessions.create({
-      mode:           "payment",
-      line_items:     [{ price: priceId, quantity: 1 }],
+      mode:                 "payment",
+      payment_method_types: ["card"],
+      line_items:           [{ price: priceId, quantity: 1 }],
       customer_email: user.email ?? undefined,
       metadata: {
         user_id: user.id,
