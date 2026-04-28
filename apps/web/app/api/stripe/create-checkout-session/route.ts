@@ -28,8 +28,7 @@ export async function POST(req: Request) {
       },
       success_url: `${appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url:  `${appUrl}/export`,
-      automatic_tax:              { enabled: true },
-      billing_address_collection: "required",
+      automatic_tax: { enabled: true },
     });
 
     if (!session.url) {
