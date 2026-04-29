@@ -1,20 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 
 // ── Bank data ─────────────────────────────────────────────────────────────────
 
 type Bank = {
-  name:  string;
-  logo:  string;
-  steps: string[];
+  name:    string;
+  initials: string;
+  color:   string;
+  steps:   string[];
 };
 
 const BANKS: Bank[] = [
   {
-    name:  "Commonwealth Bank",
-    logo:  "/banks/commbank.png",
+    name:     "Commonwealth Bank",
+    initials: "CBA",
+    color:    "#FFD200",
     steps: [
       "Log in to NetBank or the CommBank app",
       "Select your account",
@@ -25,8 +26,9 @@ const BANKS: Bank[] = [
     ],
   },
   {
-    name:  "Westpac",
-    logo:  "/banks/westpac.png",
+    name:     "Westpac",
+    initials: "WBC",
+    color:    "#DA1710",
     steps: [
       "Log in to Westpac Online Banking",
       "Open your account",
@@ -37,8 +39,9 @@ const BANKS: Bank[] = [
     ],
   },
   {
-    name:  "ANZ",
-    logo:  "/banks/anz.png",
+    name:     "ANZ",
+    initials: "ANZ",
+    color:    "#007DBA",
     steps: [
       "Log in to ANZ Internet Banking",
       "Open your account",
@@ -49,8 +52,9 @@ const BANKS: Bank[] = [
     ],
   },
   {
-    name:  "NAB",
-    logo:  "/banks/nab.png",
+    name:     "NAB",
+    initials: "NAB",
+    color:    "#CF001C",
     steps: [
       "Log in to NAB Internet Banking",
       "Select your account",
@@ -61,8 +65,9 @@ const BANKS: Bank[] = [
     ],
   },
   {
-    name:  "ING",
-    logo:  "/banks/ing.png",
+    name:     "ING",
+    initials: "ING",
+    color:    "#FF6200",
     steps: [
       "Log in to ING Online Banking",
       "Select your account",
@@ -73,8 +78,9 @@ const BANKS: Bank[] = [
     ],
   },
   {
-    name:  "Macquarie",
-    logo:  "/banks/macquarie.png",
+    name:     "Macquarie",
+    initials: "MQG",
+    color:    "#000000",
     steps: [
       "Log in to Macquarie Online Banking",
       "Go to your account",
@@ -114,18 +120,14 @@ export default function BankCsvInstructions() {
               className="w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors duration-150"
               style={{ backgroundColor: "var(--bg-card)" }}
             >
-              {/* Logo */}
+              {/* Bank initials badge */}
               <div
-                className="shrink-0 flex h-8 w-8 items-center justify-center rounded-lg overflow-hidden"
-                style={{ backgroundColor: "var(--bg-elevated)" }}
+                className="shrink-0 flex h-8 w-8 items-center justify-center rounded-lg"
+                style={{ backgroundColor: bank.color }}
               >
-                <Image
-                  src={bank.logo}
-                  alt={`${bank.name} logo`}
-                  width={32}
-                  height={32}
-                  className="h-8 w-8 object-contain"
-                />
+                <span className="text-[9px] font-bold tracking-tight text-white leading-none">
+                  {bank.initials}
+                </span>
               </div>
 
               {/* Bank name */}

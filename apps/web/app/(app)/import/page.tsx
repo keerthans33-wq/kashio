@@ -1,10 +1,8 @@
 import { Suspense } from "react";
 import CsvUploader from "../../components/import/CsvUploader";
 import ImportedBatches from "../../components/import/ImportedBatches";
-import ConnectBankSection from "../../components/import/ConnectBankSection";
 import { MobileScreen } from "@/components/layout/mobile-screen";
 import { SectionHeader } from "@/components/ui/section-header";
-import { GlassCard } from "@/components/ui/glass-card";
 
 export default function Import() {
   return (
@@ -30,25 +28,42 @@ export default function Import() {
       {/* Previously imported batches */}
       <ImportedBatches />
 
-      {/* ── Alternative: Connect your bank ───────────────────────────────
-          TODO (3/3 — Open Banking): Remove the opacity wrapper below when
-          the live Basiq integration is ready.
+      {/* ── Alternative: Connect your bank (coming soon) ─────────────────
+          TODO: Replace this card with <ConnectBankSection /> when the
+          live Basiq Open Banking integration is ready.
       ──────────────────────────────────────────────────────────────────── */}
       <div className="mt-10 pt-6" style={{ borderTop: "1px solid var(--bg-border)" }}>
-
-        <p className="mb-4 text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
-          Or connect your bank
-        </p>
-
-        <div style={{ opacity: 0.5, pointerEvents: "none" }} aria-hidden="true">
-          <Suspense fallback={null}>
-            <ConnectBankSection />
-          </Suspense>
+        <div
+          className="flex items-center justify-between rounded-2xl px-4 py-4"
+          style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}
+        >
+          <div className="flex items-center gap-3">
+            {/* Bank icon */}
+            <div
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+              style={{ backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid var(--bg-border)" }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} style={{ color: "var(--text-muted)" }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 6l9-3 9 3M3 6v14a1 1 0 001 1h16a1 1 0 001-1V6M3 6h18M9 10h.01M15 10h.01M9 14h.01M15 14h.01" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                Connect your bank
+              </p>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                Automatic import via Open Banking
+              </p>
+            </div>
+          </div>
+          {/* Coming soon badge */}
+          <span
+            className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+            style={{ backgroundColor: "rgba(34,197,94,0.10)", color: "#22C55E", border: "1px solid rgba(34,197,94,0.20)" }}
+          >
+            Coming soon
+          </span>
         </div>
-
-        <p className="mt-3 text-xs" style={{ color: "var(--text-muted)" }}>
-          Automatic import via Open Banking — coming soon.
-        </p>
       </div>
 
     </MobileScreen>
