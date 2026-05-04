@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"No tests yet. Add a test runner when ready.\" && exit 0",
+    "test": "vitest run",
     "verify": "npm run typecheck && npm run lint && npm run build",
     "seed:empty": "tsx prisma/seed.ts --state empty",
     "seed:imported": "tsx prisma/seed.ts --state imported",
@@ -55,6 +55,7 @@
     "eslint-config-next": "16.2.1",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.5"
   }
 }
