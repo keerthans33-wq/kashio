@@ -4,11 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 
-const links = [
-  { href: "/import", label: "Import" },
-  { href: "/review", label: "Review" },
-  { href: "/export", label: "Export" },
-  { href: "/wfh",    label: "WFH" },
+const links: { href: string; label: string; exact?: boolean }[] = [
+  { href: "/dashboard", label: "Dashboard", exact: true },
+  { href: "/import",    label: "Import" },
+  { href: "/review",    label: "Review" },
+  { href: "/export",    label: "Export" },
+  { href: "/wfh",       label: "WFH" },
 ];
 
 export default function Nav() {
@@ -28,7 +29,7 @@ export default function Nav() {
         {/* Nav links */}
         <div className="flex flex-1 items-stretch overflow-x-auto scrollbar-none">
           {links.map((link) => {
-            const active = pathname.startsWith(link.href);
+            const active = link.exact ? pathname === link.href : pathname.startsWith(link.href);
             return (
               <Link
                 key={link.href}
