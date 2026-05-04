@@ -33,7 +33,9 @@ type Props = {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-const ACCEPTED_TYPES = "image/jpeg,image/png,image/webp,application/pdf";
+const ACCEPTED_TYPES  = "image/jpeg,image/png,image/webp,application/pdf";
+const ALLOWED_MIMES   = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
+const MAX_FILE_BYTES  = 5 * 1024 * 1024;
 
 function typeLabel(mime: string): string {
   const map: Record<string, string> = {
@@ -80,6 +82,15 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
+
+    if (!ALLOWED_MIMES.has(file.type)) {
+      onToast({ type: "error", message: "Only JPEG, PNG, WebP, and PDF files are accepted." });
+      return;
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      onToast({ type: "error", message: "File must be 5 MB or smaller." });
+      return;
+    }
 
     setUploading(true);
     try {

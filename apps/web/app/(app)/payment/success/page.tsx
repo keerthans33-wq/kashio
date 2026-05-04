@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { PRODUCT_KEY } from "@/lib/plan";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export default async function PaymentSuccessPage({
     : null;
 
   const entitlement = await db.userEntitlement.findUnique({
-    where:  { userId_productKey: { userId, productKey: "kashio_tax_summary_report" } },
+    where:  { userId_productKey: { userId, productKey: PRODUCT_KEY } },
     select: { isActive: true },
   });
 

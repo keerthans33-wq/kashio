@@ -132,7 +132,8 @@ export async function uploadReceipt(
     };
   }
 
-  const { data: { publicUrl } } = storage.storage.from(BUCKET).getPublicUrl(storagePath);
+  // Private bucket — no public URL exists. Store the path; use createSignedUrl() when displaying.
+  const fileUrl = storagePath;
 
   // ── 4. Persist to DB + increment counter ─────────────────────────────────────
 
@@ -141,7 +142,7 @@ export async function uploadReceipt(
       db.receipt.create({
         data: {
           userId,
-          fileUrl:  publicUrl,
+          fileUrl,
           filePath: storagePath,
           fileName: file.name,
           fileSize: file.size,
