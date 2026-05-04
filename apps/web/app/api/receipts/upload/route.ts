@@ -5,30 +5,39 @@ import { uploadReceipt } from "@/lib/receipts/uploadReceipt";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  const userId = await getUser();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  let formData: FormData;
   try {
-    formData = await req.formData();
-  } catch {
-    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
-  }
+    const userId = await getUser();
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const file = formData.get("file");
-  if (!(file instanceof File)) {
-    return NextResponse.json({ error: "No file provided" }, { status: 400 });
-  }
+    let formData: FormData;
+    try {
+      formData = await req.formData();
+    } catch {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    }
 
-  const result = await uploadReceipt(file, userId);
+    const file = formData.get("file");
+    if (!(file instanceof File)) {
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    }
 
-  if (!result.ok) {
-    const status = result.error === "PAYWALL_REQUIRED" ? 402 : 400;
+    const result = await uploadReceipt(file, userId);
+
+    if (!result.ok) {
+      const status = result.error === "PAYWALL_REQUIRED" ? 402 : 400;
+      return NextResponse.json(
+        { error: result.error, message: result.message },
+        { status },
+      );
+    }
+
+    return NextResponse.json({ receipt: result.receipt });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unexpected server error";
+    console.error("[receipts/upload] unhandled error:", msg);
     return NextResponse.json(
-      { error: result.error, message: result.message },
-      { status },
+      { error: "SERVER_ERROR", message: msg },
+      { status: 500 },
     );
   }
-
-  return NextResponse.json({ receipt: result.receipt });
 }

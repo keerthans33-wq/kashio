@@ -118,11 +118,7 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
       }
 
       if (!res.ok) {
-        const msg =
-          data.error === "INVALID_TYPE" || data.error === "FILE_TOO_LARGE"
-            ? (data.message ?? "Invalid file.")
-            : "Could not upload receipt. Please try again.";
-        onToast({ type: "error", message: msg });
+        onToast({ type: "error", message: data.message ?? "Could not upload receipt. Please try again." });
         return;
       }
 
