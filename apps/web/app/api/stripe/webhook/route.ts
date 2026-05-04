@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
-import { PRODUCT_KEY } from "../create-checkout-session/route";
+import { PRODUCT_KEY } from "@/lib/plan";
 
 export const dynamic = "force-dynamic";
 
@@ -52,21 +52,27 @@ export async function POST(req: Request) {
         },
       });
 
-      // 2. Grant entitlement
+      // 2. Grant Pro entitlement.
+      //    Writing UserEntitlement { isActive: true } is the single action that
+      //    unlocks BOTH Export and full Receipt storage for this user.
+      //    isProUser() in lib/plan.ts reads this row — no other write is needed
+      //    to open either feature gate.
       await db.userEntitlement.upsert({
         where:  { userId_productKey: { userId, productKey: PRODUCT_KEY } },
         create: { userId, productKey: PRODUCT_KEY, isActive: true },
         update: { isActive: true },
       });
 
-      // 3. Keep legacy reportUnlocked flag for backward compat
+      // 3. Mirror to legacy UserProfile.reportUnlocked for backward compat.
+      //    Users who paid before the UserEntitlement table existed have only this
+      //    flag set. isProUser() checks both, so either source grants Pro access.
       await db.userProfile.upsert({
         where:  { userId },
         create: { userId, reportUnlocked: true },
         update: { reportUnlocked: true },
       });
 
-      console.log("[webhook] report unlocked for user:", userId);
+      console.log("[webhook] Pro unlocked for user:", userId);
     } catch (err) {
       console.error("[webhook] DB error for session", session.id, ":", err instanceof Error ? err.message : err);
       // Return 500 so Stripe retries

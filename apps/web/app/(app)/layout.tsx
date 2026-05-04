@@ -3,6 +3,7 @@
 import Nav from "../components/shell/Nav";
 import { ThemeToggle } from "../components/shell/ThemeToggle";
 import { UserContext, useUserContext } from "../../lib/user-context";
+import { ReceiptUploadFab } from "../../components/shared/ReceiptUploadFab";
 
 function AppLayoutInner({ children }: { children: React.ReactNode }) {
   const userState = useUserContext();
@@ -20,6 +21,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen flex-col">
         <Nav />
         <div className="flex-1">{children}</div>
+        <ReceiptUploadFab />
         <footer style={{ borderTop: "1px solid var(--bg-border)" }}>
           <div className="mx-auto max-w-5xl px-5 py-3 flex items-center justify-between gap-4" style={{ opacity: 0.45 }}>
             <ThemeToggle />

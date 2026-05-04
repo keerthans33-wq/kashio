@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { db } from "../../../lib/db";
 import { requireUserWithType } from "../../../lib/auth";
+import { fetchUserPlan, shouldShowExportPaywall } from "../../../lib/plan";
 import { mapExportRow } from "../../../lib/export/mapExportRow";
 import { ACTIVE_CATEGORIES, CATEGORIES_BY_USER_TYPE } from "../../../lib/rules/categories";
 import { calcWfhSummary } from "../../../lib/wfhSummary";
@@ -55,27 +56,20 @@ export default async function Export({
   const { id: userId, userType } = await requireUserWithType();
   const allowedCategories = (userType && CATEGORIES_BY_USER_TYPE[userType]) ?? ACTIVE_CATEGORIES;
 
-  const [confirmedRaw, wfhEntries, userProfile, entitlement] = await Promise.all([
+  const [confirmedRaw, wfhEntries, plan] = await Promise.all([
     db.deductionCandidate.findMany({
       where:   { status: "CONFIRMED", userId },
       include: { transaction: true },
       orderBy: { transaction: { date: "asc" } },
     }),
     db.wfhLog.findMany({ where: { userId }, select: { date: true, hours: true } }),
-    db.userProfile.findUnique({ where: { userId }, select: { reportUnlocked: true } }),
-    db.userEntitlement.findUnique({
-      where:  { userId_productKey: { userId, productKey: "kashio_tax_summary_report" } },
-      select: { isActive: true },
-    }),
+    fetchUserPlan(userId),
   ]);
 
   const params = await searchParams;
   // DEV ONLY — visit /export?dev_unlock=1 to simulate a paid user. Remove before launch.
   const devOverride = process.env.NODE_ENV === "development" && params.dev_unlock === "1";
-  const reportUnlocked =
-    devOverride ||
-    (entitlement?.isActive === true) ||
-    (userProfile?.reportUnlocked ?? false);
+  const reportUnlocked = devOverride || !shouldShowExportPaywall(plan);
 
   const { ytdHours: wfhYtdHours, ytdEst: wfhYtdEst } = calcWfhSummary(wfhEntries);
 

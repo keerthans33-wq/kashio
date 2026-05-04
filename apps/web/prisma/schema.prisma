@@ -12,7 +12,22 @@ model UserProfile {
   id             String   @id @default(cuid())
   userId         String   @unique              // Supabase user ID
   reportUnlocked Boolean  @default(false)
+  receiptCount   Int      @default(0)
   createdAt      DateTime @default(now())
+}
+
+model Receipt {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @db.Uuid                 @map("user_id")
+  fileUrl   String   @map("file_url")
+  filePath  String   @map("file_path")
+  fileName  String   @map("file_name")
+  fileSize  Int      @map("file_size")
+  mimeType  String   @map("mime_type")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([userId])
+  @@map("receipts")
 }
 
 model BasiqConnection {

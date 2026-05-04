@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { getUserWithEmail } from "@/lib/auth";
+import { PRODUCT_KEY } from "@/lib/plan";
 
-export const PRODUCT_KEY = "kashio_tax_summary_report";
+export { PRODUCT_KEY };
 
+// This is the single checkout endpoint for Kashio Pro.
+// It is called by both the Export paywall (PaywallGate) and the Receipt paywall
+// (ProPaywallModal) — there is only one Pro plan and one Stripe price.
+// On success, the webhook writes UserEntitlement { productKey: PRODUCT_KEY, isActive: true },
+// which simultaneously unlocks Export and full Receipt storage via isProUser() in lib/plan.ts.
 export async function POST(req: Request) {
   // All Stripe logic runs server-side only — the secret key never reaches the client.
   const user = await getUserWithEmail();
