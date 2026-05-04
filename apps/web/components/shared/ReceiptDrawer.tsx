@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { FileImage, FileText, Trash2, Upload, Receipt } from "lucide-react";
+import { FileImage, FileText, Trash2, Upload, Receipt, AlertCircle } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -26,16 +26,16 @@ export type DrawerToast = { type: "success" | "error"; message: string } | null;
 type Props = {
   open:          boolean;
   onOpenChange:  (open: boolean) => void;
-  usageLabel?:   string;           // e.g. "3 of 5 free receipts used" — shown in header
-  onToast:       (t: DrawerToast) => void;  // bubble toasts up to the FAB
-  onCountChange: () => void;       // tells the FAB to re-fetch usage after upload/delete
+  usageLabel?:   string;
+  onToast:       (t: DrawerToast) => void;
+  onCountChange: () => void;
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-const ACCEPTED_TYPES  = "image/jpeg,image/png,image/webp,application/pdf";
-const ALLOWED_MIMES   = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
-const MAX_FILE_BYTES  = 5 * 1024 * 1024;
+const ACCEPTED_TYPES = "image/jpeg,image/png,image/webp,application/pdf";
+const ALLOWED_MIMES  = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
 function typeLabel(mime: string): string {
   const map: Record<string, string> = {
@@ -57,20 +57,32 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
   const inputRef                        = useRef<HTMLInputElement>(null);
   const [receipts,    setReceipts]      = useState<ReceiptRow[]>([]);
   const [loading,     setLoading]       = useState(false);
+  const [fetchError,  setFetchError]    = useState(false);
   const [uploading,   setUploading]     = useState(false);
   const [deletingId,  setDeletingId]    = useState<string | null>(null);
   const [paywallOpen, setPaywallOpen]   = useState(false);
 
-  // Fetch list whenever the drawer opens.
-  useEffect(() => {
-    if (!open) return;
+  // ── Fetch list ──────────────────────────────────────────────────────────────
+
+  const fetchReceipts = useCallback(() => {
     setLoading(true);
+    setFetchError(false);
     fetch("/api/receipts")
-      .then((r) => (r.ok ? r.json() : { receipts: [] }))
-      .then(({ receipts: rows }: { receipts: ReceiptRow[] }) => setReceipts(rows))
-      .catch(() => setReceipts([]))
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json() as Promise<{ receipts: ReceiptRow[] }>;
+      })
+      .then(({ receipts: rows }) => setReceipts(rows))
+      .catch(() => {
+        setFetchError(true);
+        setReceipts([]);
+      })
       .finally(() => setLoading(false));
-  }, [open]);
+  }, []);
+
+  useEffect(() => {
+    if (open) fetchReceipts();
+  }, [open, fetchReceipts]);
 
   // ── Upload ──────────────────────────────────────────────────────────────────
 
@@ -98,7 +110,7 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
       body.append("file", file);
 
       const res  = await fetch("/api/receipts/upload", { method: "POST", body });
-      const data = await res.json() as { error?: string; message?: string; receipt?: ReceiptRow };
+      const data = await res.json() as { error?: string; message?: string };
 
       if (res.status === 402) {
         setPaywallOpen(true);
@@ -115,10 +127,8 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
       }
 
       onToast({ type: "success", message: "Receipt uploaded" });
-      // Prepend the new receipt to the list without a re-fetch.
-      if (data.receipt) {
-        setReceipts((prev) => [data.receipt as ReceiptRow, ...prev]);
-      }
+      // Re-fetch from the server so the list reflects actual DB state.
+      fetchReceipts();
       onCountChange();
     } catch {
       onToast({ type: "error", message: "Could not upload receipt. Please try again." });
@@ -216,6 +226,20 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/10 border-t-[#22C55E]" />
+              </div>
+            ) : fetchError ? (
+              <div className="flex flex-col items-center justify-center gap-3 py-12">
+                <AlertCircle size={22} strokeWidth={1.5} style={{ color: "var(--text-muted)" }} />
+                <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+                  Couldn&apos;t load receipts
+                </p>
+                <button
+                  onClick={fetchReceipts}
+                  className="text-[12px] underline underline-offset-2"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  Try again
+                </button>
               </div>
             ) : receipts.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-3 py-12">
