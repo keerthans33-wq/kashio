@@ -10,7 +10,7 @@ export async function GET() {
 
   const receipts = await db.receipt.findMany({
     where:   { userId },
-    select:  { id: true, fileName: true, mimeType: true, createdAt: true },
+    select:  { id: true, fileName: true, mimeType: true, comment: true, createdAt: true },
     orderBy: { createdAt: "desc" },
   });
 

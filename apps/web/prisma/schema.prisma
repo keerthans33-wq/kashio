@@ -24,6 +24,7 @@ model Receipt {
   fileName  String   @map("file_name")
   fileSize  Int      @map("file_size")
   mimeType  String   @map("mime_type")
+  comment   String?  @map("comment")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   @@index([userId])

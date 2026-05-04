@@ -18,6 +18,7 @@ type ReceiptRow = {
   id:        string;
   fileName:  string;
   mimeType:  string;
+  comment:   string | null;
   createdAt: string;
 };
 
@@ -51,7 +52,176 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "2-digit" });
 }
 
-// ── Component ──────────────────────────────────────────────────────────────────
+// ── Per-row component ──────────────────────────────────────────────────────────
+
+function ReceiptListItem({
+  receipt,
+  deleting,
+  onDelete,
+  onUpdate,
+}: {
+  receipt:  ReceiptRow;
+  deleting: boolean;
+  onDelete: () => void;
+  onUpdate: (data: { fileName?: string; comment?: string }) => Promise<void>;
+}) {
+  const [editingName,   setEditingName]   = useState(false);
+  const [nameValue,     setNameValue]     = useState(receipt.fileName);
+  const [commentValue,  setCommentValue]  = useState(receipt.comment ?? "");
+  const [savingName,    setSavingName]    = useState(false);
+  const [savingComment, setSavingComment] = useState(false);
+
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  // Keep local state in sync if parent re-fetches the list.
+  useEffect(() => { setNameValue(receipt.fileName); }, [receipt.fileName]);
+  useEffect(() => { setCommentValue(receipt.comment ?? ""); }, [receipt.comment]);
+
+  function startEditingName() {
+    setEditingName(true);
+    // Focus on the next tick after the input renders.
+    setTimeout(() => nameInputRef.current?.select(), 0);
+  }
+
+  async function commitName() {
+    const trimmed = nameValue.trim();
+    if (!trimmed) { setNameValue(receipt.fileName); setEditingName(false); return; }
+    if (trimmed === receipt.fileName) { setEditingName(false); return; }
+    setSavingName(true);
+    try {
+      await onUpdate({ fileName: trimmed });
+    } finally {
+      setSavingName(false);
+      setEditingName(false);
+    }
+  }
+
+  function cancelName() {
+    setNameValue(receipt.fileName);
+    setEditingName(false);
+  }
+
+  async function commitComment() {
+    const trimmed = commentValue.trim();
+    const current = receipt.comment ?? "";
+    if (trimmed === current) return;
+    setSavingComment(true);
+    try {
+      await onUpdate({ comment: trimmed });
+    } finally {
+      setSavingComment(false);
+    }
+  }
+
+  return (
+    <motion.li
+      layout
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{    opacity: 0, height: 0     }}
+      transition={{ duration: 0.18 }}
+      className="rounded-xl px-3 py-2.5"
+      style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
+    >
+      <div className="flex items-start gap-3">
+        {/* File type icon */}
+        <span
+          className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+          style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
+        >
+          {receipt.mimeType === "application/pdf"
+            ? <FileText  size={15} strokeWidth={1.75} style={{ color: "#22C55E"            }} />
+            : <FileImage size={15} strokeWidth={1.75} style={{ color: "rgba(96,165,250,0.9)" }} />
+          }
+        </span>
+
+        {/* Name + meta + comment */}
+        <div className="min-w-0 flex-1">
+          {/* Filename — click to rename */}
+          {editingName ? (
+            <input
+              ref={nameInputRef}
+              value={nameValue}
+              onChange={(e) => setNameValue(e.target.value)}
+              onBlur={commitName}
+              onKeyDown={(e) => {
+                if (e.key === "Enter")  { e.preventDefault(); nameInputRef.current?.blur(); }
+                if (e.key === "Escape") { e.preventDefault(); cancelName(); }
+              }}
+              maxLength={255}
+              disabled={savingName}
+              className="w-full rounded-md px-1.5 py-0.5 text-[13px] font-medium leading-tight outline-none"
+              style={{
+                color:           "var(--text-primary)",
+                backgroundColor: "rgba(255,255,255,0.06)",
+                border:          "1px solid rgba(34,197,94,0.35)",
+              }}
+            />
+          ) : (
+            <button
+              onClick={startEditingName}
+              title="Click to rename"
+              className="block w-full truncate text-left text-[13px] font-medium leading-tight transition-opacity hover:opacity-70"
+              style={{ color: "var(--text-primary)" }}
+            >
+              {nameValue}
+            </button>
+          )}
+
+          {/* Date · type */}
+          <p className="mt-0.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
+            {formatDate(receipt.createdAt)}
+            <span className="mx-1.5 opacity-40">·</span>
+            {typeLabel(receipt.mimeType)}
+            {editingName && (
+              <span className="ml-2 opacity-60">Enter to save · Esc to cancel</span>
+            )}
+          </p>
+
+          {/* Comment field */}
+          <div className="relative mt-1.5">
+            <input
+              value={commentValue}
+              onChange={(e) => setCommentValue(e.target.value)}
+              onBlur={commitComment}
+              onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+              placeholder="Add a note…"
+              maxLength={500}
+              disabled={savingComment}
+              className="w-full rounded-md px-2 py-1 text-[12px] outline-none placeholder:opacity-30 disabled:opacity-50"
+              style={{
+                color:           "var(--text-secondary)",
+                backgroundColor: "rgba(255,255,255,0.04)",
+                border:          "1px solid rgba(255,255,255,0.07)",
+              }}
+            />
+            {savingComment && (
+              <span
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 animate-spin rounded-full border border-white/20 border-t-white/60"
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Delete */}
+        <button
+          onClick={onDelete}
+          disabled={deleting}
+          aria-label={`Delete ${receipt.fileName}`}
+          className="mt-0.5 shrink-0 flex h-7 w-7 items-center justify-center rounded-lg transition-colors hover:bg-red-500/10 disabled:opacity-40"
+          style={{ color: "var(--text-muted)" }}
+        >
+          {deleting
+            ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/10 border-t-red-400/60" />
+            : <Trash2 size={14} strokeWidth={1.75} />
+          }
+        </button>
+      </div>
+    </motion.li>
+  );
+}
+
+// ── Main drawer ────────────────────────────────────────────────────────────────
 
 export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCountChange }: Props) {
   const inputRef                        = useRef<HTMLInputElement>(null);
@@ -86,9 +256,7 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
 
   // ── Upload ──────────────────────────────────────────────────────────────────
 
-  function handleUploadClick() {
-    inputRef.current?.click();
-  }
+  function handleUploadClick() { inputRef.current?.click(); }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -112,10 +280,7 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
       const res  = await fetch("/api/receipts/upload", { method: "POST", body });
       const data = await res.json() as { error?: string; message?: string };
 
-      if (res.status === 402) {
-        setPaywallOpen(true);
-        return;
-      }
+      if (res.status === 402) { setPaywallOpen(true); return; }
 
       if (!res.ok) {
         onToast({ type: "error", message: data.message ?? "Could not upload receipt. Please try again." });
@@ -123,7 +288,6 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
       }
 
       onToast({ type: "success", message: "Receipt uploaded" });
-      // Re-fetch from the server so the list reflects actual DB state.
       fetchReceipts();
       onCountChange();
     } catch {
@@ -131,6 +295,27 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
     } finally {
       setUploading(false);
     }
+  }
+
+  // ── Update (rename / comment) ───────────────────────────────────────────────
+
+  async function handleUpdate(id: string, data: { fileName?: string; comment?: string }) {
+    const res = await fetch(`/api/receipts/${id}`, {
+      method:  "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(data),
+    });
+    if (!res.ok) {
+      onToast({ type: "error", message: "Could not save changes. Please try again." });
+      return;
+    }
+    const { receipt: updated } = await res.json() as {
+      receipt: { id: string; fileName: string; comment: string | null };
+    };
+    // Patch just this row in local state.
+    setReceipts((prev) =>
+      prev.map((r) => r.id === updated.id ? { ...r, ...updated } : r)
+    );
   }
 
   // ── Delete ──────────────────────────────────────────────────────────────────
@@ -170,7 +355,7 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
         <SheetContent
           side="bottom"
           showCloseButton={true}
-          className="rounded-t-2xl p-0 max-h-[75vh] flex flex-col"
+          className="rounded-t-2xl p-0 max-h-[80vh] flex flex-col"
           style={{
             background:  "rgba(11, 17, 29, 0.98)",
             borderTop:   "1px solid rgba(34,197,94,0.14)",
@@ -250,59 +435,16 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
                 </p>
               </div>
             ) : (
-              <ul className="space-y-0.5">
+              <ul className="space-y-1">
                 <AnimatePresence initial={false}>
                   {receipts.map((r) => (
-                    <motion.li
+                    <ReceiptListItem
                       key={r.id}
-                      layout
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{    opacity: 0, height: 0     }}
-                      transition={{ duration: 0.18 }}
-                      className="flex items-center gap-3 rounded-xl px-3 py-2.5"
-                      style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
-                    >
-                      {/* File type icon */}
-                      <span
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                        style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
-                      >
-                        {r.mimeType === "application/pdf"
-                          ? <FileText  size={15} strokeWidth={1.75} style={{ color: "#22C55E"          }} />
-                          : <FileImage size={15} strokeWidth={1.75} style={{ color: "rgba(96,165,250,0.9)" }} />
-                        }
-                      </span>
-
-                      {/* Name + meta */}
-                      <div className="min-w-0 flex-1">
-                        <p
-                          className="truncate text-[13px] font-medium leading-tight"
-                          style={{ color: "var(--text-primary)" }}
-                        >
-                          {r.fileName}
-                        </p>
-                        <p className="mt-0.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
-                          {formatDate(r.createdAt)}
-                          <span className="mx-1.5 opacity-40">·</span>
-                          {typeLabel(r.mimeType)}
-                        </p>
-                      </div>
-
-                      {/* Delete */}
-                      <button
-                        onClick={() => handleDelete(r.id)}
-                        disabled={deletingId === r.id}
-                        aria-label={`Delete ${r.fileName}`}
-                        className="shrink-0 flex h-7 w-7 items-center justify-center rounded-lg transition-colors hover:bg-red-500/10 disabled:opacity-40"
-                        style={{ color: "var(--text-muted)" }}
-                      >
-                        {deletingId === r.id
-                          ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/10 border-t-red-400/60" />
-                          : <Trash2 size={14} strokeWidth={1.75} />
-                        }
-                      </button>
-                    </motion.li>
+                      receipt={r}
+                      deleting={deletingId === r.id}
+                      onDelete={() => handleDelete(r.id)}
+                      onUpdate={(data) => handleUpdate(r.id, data)}
+                    />
                   ))}
                 </AnimatePresence>
               </ul>

@@ -12,6 +12,55 @@ function makeStorageClient() {
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
+// ── PATCH — update comment and/or display name ─────────────────────────────────
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const userId = await getUser();
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { id } = await params;
+
+  const receipt = await db.receipt.findUnique({
+    where:  { id },
+    select: { userId: true },
+  });
+
+  if (!receipt)                  return NextResponse.json({ error: "Not found"  }, { status: 404 });
+  if (receipt.userId !== userId) return NextResponse.json({ error: "Forbidden"  }, { status: 403 });
+
+  let body: { fileName?: string; comment?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  const data: { fileName?: string; comment?: string } = {};
+  if (typeof body.fileName === "string" && body.fileName.trim()) {
+    data.fileName = body.fileName.trim().slice(0, 255);
+  }
+  if (typeof body.comment === "string") {
+    data.comment = body.comment.slice(0, 500) || null as unknown as string;
+  }
+
+  if (Object.keys(data).length === 0) {
+    return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
+  }
+
+  const updated = await db.receipt.update({
+    where:  { id },
+    data,
+    select: { id: true, fileName: true, comment: true },
+  });
+
+  return NextResponse.json({ receipt: updated });
+}
+
+// ── DELETE ─────────────────────────────────────────────────────────────────────
+
 export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -26,8 +75,8 @@ export async function DELETE(
     select: { userId: true, filePath: true },
   });
 
-  if (!receipt)              return NextResponse.json({ error: "Not found"  }, { status: 404 });
-  if (receipt.userId !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!receipt)                  return NextResponse.json({ error: "Not found"  }, { status: 404 });
+  if (receipt.userId !== userId) return NextResponse.json({ error: "Forbidden"  }, { status: 403 });
 
   // Remove from storage first — if this fails we bail before touching the DB.
   const storage = makeStorageClient();
