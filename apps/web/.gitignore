@@ -13,6 +13,12 @@ out/
 # misc
 .DS_Store
 
+# iOS / Capacitor build artifacts
+ios/App/Pods/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/DerivedData/
+ios/.xcode.env.local
+
 /lib/generated/prisma
 tsconfig.tsbuildinfo
 .vercel
