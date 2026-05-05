@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,12 @@ export const metadata: Metadata = {
   description: "Australian tax deduction tracker",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
@@ -20,7 +26,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body
         className="relative min-h-full flex flex-col antialiased"
-        style={{ backgroundColor: "var(--bg-app)", color: "var(--text-primary)" }}
+        style={{
+          backgroundColor: "var(--bg-app)",
+          color: "var(--text-primary)",
+          paddingTop: "env(safe-area-inset-top)",
+          paddingBottom: "env(safe-area-inset-bottom)",
+        }}
       >
         {/* Atmospheric aurora layer — sits behind all page content */}
         <AuroraBackground intensity="medium" />
