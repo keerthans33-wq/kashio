@@ -14,25 +14,35 @@ type Props = {
   onOpenChange: (open: boolean) => void;
 };
 
+type Interval = "month" | "year";
+
+const MONTHLY_PRICE = "$4.99";
+const ANNUAL_PRICE  = "$39.99";
+const ANNUAL_SAVING = "Save 33%";
+
 const BULLETS = [
+  "Review all detected deductions",
   "Upload up to 100 receipts",
-  "Unlock export-ready reports",
-  "Keep deduction proof in one place",
+  "Full tax summary — downloadable report",
+  "Open Banking access when available",
 ];
 
 export function ProPaywallModal({ open, onOpenChange }: Props) {
-  const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState<string | null>(null);
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState<string | null>(null);
+  const [interval, setInterval] = useState<Interval>("month");
 
-  // Calls the shared Pro checkout endpoint — the same one used by the Export
-  // paywall. There is only one Stripe product ($19.99). On success, the webhook
-  // sets UserEntitlement.isActive = true, which unlocks both Export and full
-  // Receipt storage through isProUser() in lib/plan.ts.
+  // Calls the shared Pro checkout endpoint. One subscription unlocks all features
+  // (export, receipts, review, dashboard) via isProUser() in lib/plan.ts.
   async function handleUpgrade() {
     setLoading(true);
     setError(null);
     try {
-      const res  = await fetch("/api/stripe/create-checkout-session", { method: "POST" });
+      const res  = await fetch("/api/stripe/create-checkout-session", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ interval, cancelPath: "/receipts" }),
+      });
       const body = await res.json() as { url?: string };
       if (!res.ok || !body.url) {
         setError("Something went wrong. Please try again.");
@@ -48,10 +58,6 @@ export function ProPaywallModal({ open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {/*
-        Override DialogContent defaults so our own card provides all the visual chrome.
-        style overrides bg/border/shadow reliably without fighting Tailwind specificity.
-      */}
       <DialogContent
         showCloseButton={false}
         className="p-0 sm:max-w-sm"
@@ -68,18 +74,13 @@ export function ProPaywallModal({ open, onOpenChange }: Props) {
           {/* Ambient glow */}
           <div
             className="pointer-events-none absolute inset-0"
-            style={{
-              background: "radial-gradient(ellipse 80% 50% at 50% 100%, rgba(34,197,94,0.06) 0%, transparent 100%)",
-            }}
+            style={{ background: "radial-gradient(ellipse 80% 50% at 50% 100%, rgba(34,197,94,0.06) 0%, transparent 100%)" }}
           />
 
           {/* Lock icon */}
           <div
             className="mb-5 flex h-10 w-10 items-center justify-center rounded-full"
-            style={{
-              backgroundColor: "rgba(34,197,94,0.10)",
-              border:          "1px solid rgba(34,197,94,0.20)",
-            }}
+            style={{ backgroundColor: "rgba(34,197,94,0.10)", border: "1px solid rgba(34,197,94,0.20)" }}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -98,23 +99,22 @@ export function ProPaywallModal({ open, onOpenChange }: Props) {
             </svg>
           </div>
 
-          {/* Title + body */}
           <DialogTitle
             className="text-[22px] font-bold mb-2 leading-snug"
             style={{ color: "var(--text-primary)" }}
           >
-            Unlock full receipt storage
+            Unlock Kashio Pro
           </DialogTitle>
 
           <DialogDescription
             className="text-[13px] mb-5"
             style={{ color: "var(--text-secondary)" }}
           >
-            Store more receipts and unlock export-ready reports for tax time.
+            Upload more receipts and unlock the full Kashio experience for tax time.
           </DialogDescription>
 
           {/* Feature bullets */}
-          <ul className="mb-6 space-y-2.5">
+          <ul className="mb-5 space-y-2.5">
             {BULLETS.map((item) => (
               <li
                 key={item}
@@ -139,16 +139,45 @@ export function ProPaywallModal({ open, onOpenChange }: Props) {
             ))}
           </ul>
 
+          {/* Billing interval toggle */}
+          <div
+            className="mb-4 flex rounded-xl p-1"
+            style={{ backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)" }}
+          >
+            {(["month", "year"] as Interval[]).map((i) => (
+              <button
+                key={i}
+                onClick={() => setInterval(i)}
+                className="relative flex-1 rounded-lg py-2 text-[13px] font-medium transition-all duration-150"
+                style={{
+                  backgroundColor: interval === i ? "rgba(34,197,94,0.15)" : "transparent",
+                  border:          interval === i ? "1px solid rgba(34,197,94,0.25)" : "1px solid transparent",
+                  color:           interval === i ? "#22C55E" : "var(--text-muted)",
+                }}
+              >
+                {i === "month" ? "Monthly" : "Annual"}
+                {i === "year" && (
+                  <span
+                    className="ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold"
+                    style={{ backgroundColor: "rgba(34,197,94,0.20)", color: "#22C55E" }}
+                  >
+                    {ANNUAL_SAVING}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
           {/* Price */}
-          <div className="mb-5 flex items-baseline gap-2.5">
+          <div className="mb-5 flex items-baseline gap-2">
             <span
               className="text-[34px] font-bold tabular-nums leading-none"
               style={{ color: "var(--text-primary)" }}
             >
-              $19.99
+              {interval === "month" ? MONTHLY_PRICE : ANNUAL_PRICE}
             </span>
             <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>
-              AUD · one-time
+              AUD / {interval === "month" ? "month" : "year"}
             </span>
           </div>
 
@@ -159,7 +188,9 @@ export function ProPaywallModal({ open, onOpenChange }: Props) {
             onClick={handleUpgrade}
             disabled={loading}
           >
-            {loading ? "Redirecting…" : "Upgrade to Pro – $19.99"}
+            {loading
+              ? "Redirecting…"
+              : `Start ${interval === "month" ? "monthly" : "annual"} plan`}
           </Button>
 
           {error && (
@@ -183,34 +214,11 @@ export function ProPaywallModal({ open, onOpenChange }: Props) {
             className="text-center text-[11px] leading-relaxed"
             style={{ color: "var(--text-muted)" }}
           >
-            By upgrading, you agree to Kashio&apos;s{" "}
-            <a
-              href="https://kashio.com.au/legal/terms"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline underline-offset-2 hover:opacity-70"
-            >
-              Terms
-            </a>
-            ,{" "}
-            <a
-              href="https://kashio.com.au/legal/privacy"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline underline-offset-2 hover:opacity-70"
-            >
-              Privacy Policy
-            </a>
-            , and{" "}
-            <a
-              href="https://kashio.com.au/legal/disclaimer"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline underline-offset-2 hover:opacity-70"
-            >
-              Disclaimer
-            </a>
-            .
+            By subscribing, you agree to Kashio&apos;s{" "}
+            <a href="https://kashio.com.au/legal/terms" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:opacity-70">Terms</a>,{" "}
+            <a href="https://kashio.com.au/legal/privacy" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:opacity-70">Privacy Policy</a>, and{" "}
+            <a href="https://kashio.com.au/legal/disclaimer" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:opacity-70">Disclaimer</a>.
+            Cancel anytime.
           </p>
         </div>
       </DialogContent>

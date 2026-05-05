@@ -1,22 +1,25 @@
 import { db } from "@/lib/db";
 
-// ── Kashio Pro — shared plan ───────────────────────────────────────────────────
+// ── Kashio Pro — shared subscription plan ─────────────────────────────────────
 //
-// There is exactly one Pro plan. A single $19.99 payment unlocks BOTH features:
+// There is exactly one Pro plan. A single subscription unlocks ALL features:
 //
 //   • Export      — full tax summary download (PaywallGate on /export)
-//   • Receipts    — upload up to 100 receipts (ProPaywallModal via receipt FAB)
+//   • Receipts    — upload up to PRO_RECEIPT_LIMIT receipts
+//   • Review      — see all deduction candidates (free tier capped at FREE_DEDUCTION_LIMIT)
+//   • Dashboard   — full tax readiness breakdown and insights
 //
-// Payment flow:
-//   1. User clicks "Upgrade to Pro" in either paywall UI.
-//   2. Both UIs call the same endpoint: POST /api/stripe/create-checkout-session.
-//   3. Stripe redirects the user to checkout for the single price (STRIPE_PRICE_ID).
+// Subscription flow:
+//   1. User clicks "Start monthly/annual plan" in any paywall UI.
+//   2. All UIs call POST /api/stripe/create-checkout-session with { interval, cancelPath }.
+//   3. Stripe redirects to checkout for STRIPE_MONTHLY_PRICE_ID or STRIPE_ANNUAL_PRICE_ID.
 //   4. On success, Stripe fires checkout.session.completed to /api/stripe/webhook.
-//   5. The webhook writes UserEntitlement { productKey: PRODUCT_KEY, isActive: true }.
-//   6. isProUser() returns true and both feature gates open simultaneously.
+//   5. Webhook writes UserEntitlement { productKey: PRODUCT_KEY, isActive: true }.
+//   6. isProUser() returns true and all feature gates open simultaneously.
+//   7. On cancellation, customer.subscription.deleted fires and sets isActive: false.
 //
-// To add a new gated feature: import isProUser/shouldShowExportPaywall from this
-// file and derive the gate from the same UserPlan. Do not add a second product key.
+// To add a new gated feature: import isProUser from this file and derive the gate
+// from the same UserPlan. Do not add a second product key.
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -27,6 +30,10 @@ export const PRODUCT_KEY = "kashio_tax_summary_report";
 // Receipt upload limits per tier.
 export const FREE_RECEIPT_LIMIT = 5;
 export const PRO_RECEIPT_LIMIT  = 100;
+
+// How many NEEDS_REVIEW deduction candidates a free user can see.
+// Beyond this, a paywall card is shown in place of the remaining items.
+export const FREE_DEDUCTION_LIMIT = 10;
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -77,9 +84,9 @@ export async function fetchUserPlan(userId: string): Promise<UserPlan> {
 /**
  * Returns true if the user has an active Pro subscription.
  *
- * This is the single source of truth for Pro status. Both the Export paywall
- * (shouldShowExportPaywall) and the receipt upload gate (shouldShowReceiptPaywall)
- * derive their answer from this function — so one payment always unlocks both.
+ * This is the single source of truth for Pro status. All feature gates
+ * (export, receipts, review, dashboard) derive their answer from this function —
+ * so one subscription always unlocks everything simultaneously.
  */
 export function isProUser(plan: UserPlan): boolean {
   return plan.entitlementActive || plan.reportUnlocked;
@@ -90,7 +97,6 @@ export function isProUser(plan: UserPlan): boolean {
  *
  * Free users are blocked after FREE_RECEIPT_LIMIT (5) uploads.
  * Pro users are blocked after PRO_RECEIPT_LIMIT (100) uploads.
- * The receipt count must be fetched by the caller (db.receipt.count).
  */
 export function shouldShowReceiptPaywall(plan: UserPlan, receiptCount: number): boolean {
   const limit = isProUser(plan) ? PRO_RECEIPT_LIMIT : FREE_RECEIPT_LIMIT;
@@ -99,11 +105,19 @@ export function shouldShowReceiptPaywall(plan: UserPlan, receiptCount: number): 
 
 /**
  * Returns true if the user should see the Export paywall.
- *
- * Export requires Pro. Upgrading from the Export paywall also unlocks Receipts,
- * and upgrading from the Receipt paywall also unlocks Export — same plan, same
- * Stripe product, same webhook write.
+ * Upgrading from any paywall unlocks all features simultaneously.
  */
 export function shouldShowExportPaywall(plan: UserPlan): boolean {
   return !isProUser(plan);
+}
+
+/**
+ * Returns the number of NEEDS_REVIEW candidates to show a free user,
+ * and whether a paywall card should be shown for the remainder.
+ *
+ * Pro users see all candidates. Free users see up to FREE_DEDUCTION_LIMIT,
+ * with an upgrade prompt for anything beyond that.
+ */
+export function getReviewLimit(plan: UserPlan): number {
+  return isProUser(plan) ? Infinity : FREE_DEDUCTION_LIMIT;
 }

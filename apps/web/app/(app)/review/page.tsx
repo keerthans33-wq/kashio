@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { db } from "../../../lib/db";
 import { requireUserWithType } from "../../../lib/auth";
+import { fetchUserPlan, isProUser, getReviewLimit } from "../../../lib/plan";
 import { ACTIVE_CATEGORIES, CATEGORIES_BY_USER_TYPE, CATEGORY_PRIORITY_BY_USER_TYPE } from "../../../lib/rules/categories";
 import { getCategoryMeta, categoryToSlug } from "../../../lib/categorySlug";
 import { ReviewFilters } from "./ReviewFilters";
 import { ReviewList } from "./ReviewList";
+import { ReviewPaywallCard } from "./ReviewPaywallCard";
 import type { CandidateCardProps } from "./CandidateCard";
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/motion/FadeIn";
@@ -70,11 +72,18 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
   const allowedCategories = (userType ? CATEGORIES_BY_USER_TYPE[userType] : undefined) ?? ACTIVE_CATEGORIES;
 
-  const all = (await db.deductionCandidate.findMany({
-    where:   { userId },
-    include: { transaction: true },
-    orderBy: { transaction: { date: "desc" } },
-  })).filter((c) => allowedCategories.includes(c.category));
+  const [plan, rawAll] = await Promise.all([
+    fetchUserPlan(userId),
+    db.deductionCandidate.findMany({
+      where:   { userId },
+      include: { transaction: true },
+      orderBy: { transaction: { date: "desc" } },
+    }),
+  ]);
+
+  const isPro = isProUser(plan);
+  const reviewLimit = getReviewLimit(plan);
+  const all = rawAll.filter((c) => allowedCategories.includes(c.category));
 
   const filtered = all.filter((c) => {
     if (category   && c.category   !== category)   return false;
@@ -94,9 +103,16 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
     return new Date(b.transaction.date).getTime() - new Date(a.transaction.date).getTime();
   });
 
-  const needsReview = candidates.filter((c) => c.status === "NEEDS_REVIEW");
-  const confirmed   = candidates.filter((c) => c.status === "CONFIRMED");
-  const rejected    = candidates.filter((c) => c.status === "REJECTED");
+  const allNeedsReview = candidates.filter((c) => c.status === "NEEDS_REVIEW");
+  const confirmed      = candidates.filter((c) => c.status === "CONFIRMED");
+  const rejected       = candidates.filter((c) => c.status === "REJECTED");
+
+  // Free users see up to reviewLimit NEEDS_REVIEW items; the rest are hidden behind a paywall card.
+  const needsReview  = isPro ? allNeedsReview : allNeedsReview.slice(0, reviewLimit);
+  const hiddenCount  = isPro ? 0 : Math.max(0, allNeedsReview.length - reviewLimit);
+  const hiddenValue  = isPro ? 0 : allNeedsReview
+    .slice(reviewLimit)
+    .reduce((s, c) => s + Math.abs(c.transaction.amount), 0);
 
   const totalNeedsReview = all.filter((c) => c.status === "NEEDS_REVIEW").length;
   const totalConfirmed   = all.filter((c) => c.status === "CONFIRMED").length;
@@ -268,6 +284,9 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
             rejected={rejected.map((c) => toCardProps(c, userType))}
             missingEvidence={missingEvidence}
           />
+          {hiddenCount > 0 && (
+            <ReviewPaywallCard hiddenCount={hiddenCount} hiddenValue={hiddenValue} />
+          )}
         </div>
       )}
 

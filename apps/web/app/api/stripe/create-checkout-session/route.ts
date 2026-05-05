@@ -5,19 +5,32 @@ import { PRODUCT_KEY } from "@/lib/plan";
 
 export { PRODUCT_KEY };
 
-// This is the single checkout endpoint for Kashio Pro.
-// It is called by both the Export paywall (PaywallGate) and the Receipt paywall
-// (ProPaywallModal) — there is only one Pro plan and one Stripe price.
-// On success, the webhook writes UserEntitlement { productKey: PRODUCT_KEY, isActive: true },
-// which simultaneously unlocks Export and full Receipt storage via isProUser() in lib/plan.ts.
+// Single checkout endpoint for Kashio Pro subscriptions.
+// Called by all paywall UIs: PaywallGate (/export), ProPaywallModal (receipts),
+// ReviewPaywallCard (/review). One subscription unlocks all features via isProUser().
+//
+// Body: { interval?: "month" | "year", cancelPath?: string }
+//   interval   — defaults to "month"; selects the Stripe price to charge
+//   cancelPath — the path to return to if the user cancels checkout (default: "/export")
 export async function POST(req: Request) {
-  // All Stripe logic runs server-side only — the secret key never reaches the client.
   const user = await getUserWithEmail();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const priceId = process.env.STRIPE_PRICE_ID ?? process.env.STRIPE_PRICE_ID_TAX_SUMMARY;
+  const body = await req.json().catch(() => ({})) as {
+    interval?:   "month" | "year";
+    cancelPath?: string;
+  };
+  const interval   = body.interval   === "year" ? "year" : "month";
+  const cancelPath = body.cancelPath ?? "/export";
+
+  // Resolve price ID for the requested billing interval.
+  // Falls back to the legacy STRIPE_PRICE_ID for existing deployments.
+  const monthlyPriceId = process.env.STRIPE_MONTHLY_PRICE_ID ?? process.env.STRIPE_PRICE_ID;
+  const annualPriceId  = process.env.STRIPE_ANNUAL_PRICE_ID  ?? process.env.STRIPE_PRICE_ID;
+  const priceId = interval === "year" ? annualPriceId : monthlyPriceId;
+
   if (!priceId || priceId.startsWith("price_xxx")) {
-    console.error("[checkout] STRIPE_PRICE_ID is not configured");
+    console.error("[checkout] Stripe price ID not configured for interval:", interval);
     return NextResponse.json({ error: "Price not configured" }, { status: 500 });
   }
 
@@ -25,34 +38,30 @@ export async function POST(req: Request) {
 
   try {
     const session = await getStripe().checkout.sessions.create({
-      mode:                 "payment",
-      // Explicitly restrict to card only — prevents Stripe Link from intercepting the flow
-      // when customer_email matches a saved Link account.
+      mode:                 "subscription",
+      // Card only — prevents Stripe Link from intercepting with a saved account.
       payment_method_types: ["card"],
       line_items:           [{ price: priceId, quantity: 1 }],
-
-      // Do NOT pre-fill customer_email here — Stripe uses it to look up saved Link accounts
-      // and redirects the user through Link auth before showing the card form.
-      // Instead, Stripe captures the email the customer types during checkout and uses
-      // that for receipt/invoice delivery automatically.
-      // NOTE: enable "Successful payments" in Dashboard → Settings → Customer emails
-      // for Stripe to actually send the receipt.
 
       metadata: {
         user_id: user.id,
         product: PRODUCT_KEY,
       },
 
+      // Store user_id on the subscription itself so customer.subscription.deleted
+      // can look up the right entitlement row without a separate customer lookup.
+      subscription_data: {
+        metadata: {
+          user_id: user.id,
+          product: PRODUCT_KEY,
+        },
+      },
+
       success_url: `${appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url:  `${appUrl}/export`,
+      cancel_url:  `${appUrl}${cancelPath}`,
 
-      // Applies Australian GST automatically based on the customer's location.
-      // Requires: price tax_behavior = "exclusive" + AU tax registration in Stripe Tax.
+      // Australian GST — requires price tax_behavior="exclusive" + AU tax registration.
       automatic_tax: { enabled: true },
-
-      // Stripe creates a proper invoice PDF for each payment and emails it
-      // to customer_email once the payment succeeds.
-      invoice_creation: { enabled: true },
     });
 
     if (!session.url) {
@@ -60,7 +69,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No checkout URL returned" }, { status: 500 });
     }
 
-    console.log("[checkout] session created:", session.id);
+    console.log("[checkout] subscription session created:", session.id, "interval:", interval);
     return NextResponse.json({ url: session.url });
   } catch (err) {
     console.error("[checkout] Stripe error:", err instanceof Error ? err.message : err);

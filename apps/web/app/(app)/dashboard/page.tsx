@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireUserWithType } from "@/lib/auth";
+import { fetchUserPlan, isProUser } from "@/lib/plan";
 import {
   CATEGORIES,
   CATEGORIES_BY_USER_TYPE,
@@ -16,6 +17,7 @@ import { calculateTaxReadiness, readinessColor } from "@/lib/taxReadiness";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { MobileScreen } from "@/components/layout/mobile-screen";
 import { TaxFeed, type FeedItem } from "./TaxFeed";
+import { DashboardProUpsell } from "./DashboardProUpsell";
 
 export const dynamic = "force-dynamic";
 
@@ -84,7 +86,7 @@ const CATEGORY_GROUPS: CategoryGroup[] = [
 export default async function Dashboard() {
   const { id: userId, userType } = await requireUserWithType();
 
-  const [candidates, receiptsCount, wfhEntries] = await Promise.all([
+  const [candidates, receiptsCount, wfhEntries, plan] = await Promise.all([
     db.deductionCandidate.findMany({
       where:   { userId },
       include: {
@@ -95,7 +97,10 @@ export default async function Dashboard() {
     }),
     db.receipt.count({ where: { userId } }),
     db.wfhLog.findMany({ where: { userId }, select: { date: true, hours: true } }),
+    fetchUserPlan(userId),
   ]);
+
+  const isPro = isProUser(plan);
 
   const allowed  = (userType ? CATEGORIES_BY_USER_TYPE[userType] : null) ?? ACTIVE_CATEGORIES;
   const active   = candidates.filter((c) => allowed.includes(c.category) && c.status !== "REJECTED");
@@ -121,7 +126,8 @@ export default async function Dashboard() {
   const arcColor = readinessColor(readiness);
   const hasData  = active.length > 0 || receiptsCount > 0 || wfhHours > 0;
 
-  // Feed items — NEEDS_REVIEW first, then CONFIRMED; exclude REJECTED
+  // Feed items — NEEDS_REVIEW first, then CONFIRMED; exclude REJECTED. Free users see 3 max.
+  const FEED_LIMIT = isPro ? 10 : 3;
   const feedItems: FeedItem[] = active.map((c) => ({
     id:          c.id,
     merchant:    c.transaction.normalizedMerchant,
@@ -332,72 +338,76 @@ export default async function Dashboard() {
         </div>
       </FadeIn>
 
-      {/* ── Score breakdown ─────────────────────────────────────────────────── */}
+      {/* ── Score breakdown (Pro) / upsell (free) ──────────────────────────── */}
       <FadeIn delay={0.11} className="mb-8">
-        <div
-          className="rounded-2xl px-5 py-4"
-          style={{
-            backgroundColor: "rgba(13,20,33,0.88)",
-            border:          "1px solid rgba(255,255,255,0.07)",
-          }}
-        >
-          <p
-            className="text-[10px] font-semibold uppercase tracking-widest mb-3"
-            style={{ color: "var(--text-muted)" }}
+        {isPro ? (
+          <div
+            className="rounded-2xl px-5 py-4"
+            style={{
+              backgroundColor: "rgba(13,20,33,0.88)",
+              border:          "1px solid rgba(255,255,255,0.07)",
+            }}
           >
-            Score breakdown
-          </p>
-          <div className="space-y-0">
-            {(
-              [
-                { label: "Transactions imported",   ...breakdown.imported   },
-                { label: "Transactions reviewed",   ...breakdown.reviewed   },
-                { label: "Receipts attached",       ...breakdown.receipts   },
-                { label: "Categories completed",    ...breakdown.categories },
-                { label: "Export ready",            ...breakdown.export     },
-              ] as const
-            ).map(({ label, score: s, max }, i, arr) => {
-              const pct      = max === 0 ? 0 : Math.round((s / max) * 100);
-              const complete = s === max;
-              const barColor = complete ? "#22C55E" : s > 0 ? "#60A5FA" : "rgba(255,255,255,0.10)";
-              return (
-                <div
-                  key={label}
-                  className="flex items-center gap-3 py-2.5"
-                  style={i < arr.length - 1 ? { borderBottom: "1px solid rgba(255,255,255,0.04)" } : undefined}
-                >
-                  <p
-                    className="flex-1 text-[12px]"
-                    style={{ color: complete ? "var(--text-secondary)" : "var(--text-muted)" }}
-                  >
-                    {label}
-                  </p>
+            <p
+              className="text-[10px] font-semibold uppercase tracking-widest mb-3"
+              style={{ color: "var(--text-muted)" }}
+            >
+              Score breakdown
+            </p>
+            <div className="space-y-0">
+              {(
+                [
+                  { label: "Transactions imported",   ...breakdown.imported   },
+                  { label: "Transactions reviewed",   ...breakdown.reviewed   },
+                  { label: "Receipts attached",       ...breakdown.receipts   },
+                  { label: "Categories completed",    ...breakdown.categories },
+                  { label: "Export ready",            ...breakdown.export     },
+                ] as const
+              ).map(({ label, score: s, max }, i, arr) => {
+                const pct      = max === 0 ? 0 : Math.round((s / max) * 100);
+                const complete = s === max;
+                const barColor = complete ? "#22C55E" : s > 0 ? "#60A5FA" : "rgba(255,255,255,0.10)";
+                return (
                   <div
-                    className="w-20 h-1 rounded-full overflow-hidden"
-                    style={{ backgroundColor: "rgba(255,255,255,0.06)" }}
+                    key={label}
+                    className="flex items-center gap-3 py-2.5"
+                    style={i < arr.length - 1 ? { borderBottom: "1px solid rgba(255,255,255,0.04)" } : undefined}
                   >
+                    <p
+                      className="flex-1 text-[12px]"
+                      style={{ color: complete ? "var(--text-secondary)" : "var(--text-muted)" }}
+                    >
+                      {label}
+                    </p>
                     <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{ width: `${pct}%`, backgroundColor: barColor }}
-                    />
+                      className="w-20 h-1 rounded-full overflow-hidden"
+                      style={{ backgroundColor: "rgba(255,255,255,0.06)" }}
+                    >
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${pct}%`, backgroundColor: barColor }}
+                      />
+                    </div>
+                    <p
+                      className="w-9 text-right text-[11px] tabular-nums font-medium"
+                      style={{ color: complete ? "#22C55E" : "var(--text-muted)" }}
+                    >
+                      {s}/{max}
+                    </p>
                   </div>
-                  <p
-                    className="w-9 text-right text-[11px] tabular-nums font-medium"
-                    style={{ color: complete ? "#22C55E" : "var(--text-muted)" }}
-                  >
-                    {s}/{max}
-                  </p>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        ) : (
+          <DashboardProUpsell />
+        )}
       </FadeIn>
 
       {/* ── Tax feed ───────────────────────────────────────────────────────── */}
       {feedItems.length > 0 && (
         <FadeIn delay={0.12}>
-          <TaxFeed items={feedItems} />
+          <TaxFeed items={feedItems.slice(0, FEED_LIMIT)} />
         </FadeIn>
       )}
 
