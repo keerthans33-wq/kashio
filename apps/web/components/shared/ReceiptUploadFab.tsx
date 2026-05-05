@@ -58,7 +58,7 @@ export function ReceiptUploadFab() {
             animate={{ opacity: 1, y: 0,  scale: 1    }}
             exit={{    opacity: 0, y: 8,  scale: 0.95 }}
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed bottom-28 right-5 z-50 flex items-center gap-2.5 rounded-2xl px-4 py-3 text-[13px] font-medium"
+            className="fixed bottom-48 sm:bottom-28 right-5 z-50 flex items-center gap-2.5 rounded-2xl px-4 py-3 text-[13px] font-medium"
             style={{
               backgroundColor: toast.type === "success"
                 ? "rgba(13, 20, 33, 0.97)"
@@ -81,11 +81,8 @@ export function ReceiptUploadFab() {
         )}
       </AnimatePresence>
 
-      {/* FAB container */}
-      <div
-        className="fixed right-5 z-40 flex flex-col items-end gap-2.5"
-        style={{ bottom: "max(1.5rem, calc(env(safe-area-inset-bottom) + 1rem))" }}
-      >
+      {/* FAB container — mobile: above bottom nav; sm+: standard position */}
+      <div className="fixed right-5 z-40 flex flex-col items-end gap-2.5 fab-position">
         {/* Usage label — mobile + desktop */}
         <AnimatePresence>
           {usage && (

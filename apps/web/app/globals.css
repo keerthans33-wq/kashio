@@ -201,3 +201,13 @@ input[type="date"] {
     @apply font-sans;
   }
 }
+
+/* FAB sits above bottom nav on mobile; standard position on sm+ */
+.fab-position {
+  bottom: max(5.5rem, calc(env(safe-area-inset-bottom) + 5.5rem));
+}
+@media (min-width: 640px) {
+  .fab-position {
+    bottom: max(1.5rem, calc(env(safe-area-inset-bottom) + 1rem));
+  }
+}

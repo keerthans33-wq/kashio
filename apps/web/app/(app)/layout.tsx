@@ -4,6 +4,7 @@ import Nav from "../components/shell/Nav";
 import { ThemeToggle } from "../components/shell/ThemeToggle";
 import { UserContext, useUserContext } from "../../lib/user-context";
 import { ReceiptUploadFab } from "../../components/shared/ReceiptUploadFab";
+import { BottomNav } from "../../components/ui/bottom-nav";
 
 function AppLayoutInner({ children }: { children: React.ReactNode }) {
   const userState = useUserContext();
@@ -20,9 +21,15 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
     <UserContext.Provider value={userState}>
       <div className="flex min-h-screen flex-col">
         <Nav />
-        <div className="flex-1">{children}</div>
+
+        {/* pb-24 clears the fixed bottom nav on mobile; removed on sm+ */}
+        <div className="flex-1 pb-24 sm:pb-0">{children}</div>
+
         <ReceiptUploadFab />
-        <footer style={{ borderTop: "1px solid var(--bg-border)" }}>
+        <BottomNav />
+
+        {/* Footer hidden on mobile — bottom nav takes its place */}
+        <footer className="hidden sm:block" style={{ borderTop: "1px solid var(--bg-border)" }}>
           <div className="mx-auto max-w-5xl px-5 py-3 flex items-center justify-between gap-4" style={{ opacity: 0.45 }}>
             <ThemeToggle />
             <div className="flex items-center gap-4">

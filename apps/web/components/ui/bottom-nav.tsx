@@ -1,32 +1,15 @@
 "use client";
 
-/**
- * BottomNav
- *
- * Mobile-first bottom navigation bar. Glass surface, green active accent.
- * Each item has an icon + label. The active item glows softly.
- *
- * Usage (future):
- *   <BottomNav />
- *   — placed inside a layout that removes the top Nav.
- *
- * Items match the current Kashio route structure.
- */
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Upload,
-  ClipboardList,
-  FileText,
-  Home,
-} from "lucide-react";
+import { LayoutDashboard, Upload, ClipboardList, FileText, Monitor } from "lucide-react";
 
 const ITEMS = [
-  { href: "/import", label: "Import",  Icon: Upload        },
-  { href: "/review", label: "Review",  Icon: ClipboardList },
-  { href: "/export", label: "Export",  Icon: FileText      },
-  { href: "/wfh",    label: "WFH",     Icon: Home          },
+  { href: "/dashboard", label: "Dashboard", Icon: LayoutDashboard, exact: true },
+  { href: "/import",    label: "Import",    Icon: Upload                       },
+  { href: "/review",    label: "Review",    Icon: ClipboardList                },
+  { href: "/export",    label: "Export",    Icon: FileText                     },
+  { href: "/wfh",       label: "WFH",       Icon: Monitor                      },
 ];
 
 export function BottomNav() {
@@ -34,39 +17,42 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 inset-x-0 z-50"
+      className="fixed bottom-0 inset-x-0 z-50 sm:hidden"
       style={{
-        backgroundColor:     "rgba(5, 7, 14, 0.88)",
-        borderTop:           "1px solid rgba(255,255,255,0.06)",
-        backdropFilter:      "blur(20px)",
-        WebkitBackdropFilter:"blur(20px)",
-        paddingBottom:       "env(safe-area-inset-bottom, 0px)",
+        backgroundColor:      "rgba(5, 7, 14, 0.92)",
+        borderTop:            "1px solid rgba(255,255,255,0.07)",
+        backdropFilter:       "blur(24px)",
+        WebkitBackdropFilter: "blur(24px)",
+        paddingBottom:        "env(safe-area-inset-bottom, 0px)",
       }}
     >
-      <div className="mx-auto flex max-w-[430px] items-stretch h-16">
-        {ITEMS.map(({ href, label, Icon }) => {
-          const active = pathname.startsWith(href);
+      <div className="flex items-stretch h-16" style={{ maxWidth: 430, margin: "0 auto" }}>
+        {ITEMS.map(({ href, label, Icon, exact }) => {
+          const active = exact ? pathname === href : pathname.startsWith(href);
           return (
             <Link
               key={href}
               href={href}
-              className="flex flex-1 flex-col items-center justify-center gap-1 transition-all duration-150 active:scale-95"
+              className="flex flex-1 flex-col items-center justify-center gap-[3px] transition-opacity duration-150 active:opacity-60"
+              style={{ minWidth: 44, minHeight: 44 }}
             >
               <span
-                className="flex h-7 w-7 items-center justify-center rounded-xl transition-colors duration-150"
+                className="flex items-center justify-center rounded-xl transition-all duration-150"
                 style={{
-                  backgroundColor: active ? "rgba(34,197,94,0.12)" : "transparent",
+                  width:           36,
+                  height:          28,
+                  backgroundColor: active ? "rgba(34,197,94,0.14)" : "transparent",
                 }}
               >
                 <Icon
-                  size={18}
-                  strokeWidth={active ? 2.5 : 1.75}
-                  style={{ color: active ? "#22C55E" : "#6B7280" }}
+                  size={active ? 20 : 19}
+                  strokeWidth={active ? 2.25 : 1.75}
+                  style={{ color: active ? "#22C55E" : "rgba(255,255,255,0.38)" }}
                 />
               </span>
               <span
-                className="text-[10px] font-medium tracking-wide"
-                style={{ color: active ? "#22C55E" : "#6B7280" }}
+                className="text-[9.5px] font-medium tracking-wide leading-none"
+                style={{ color: active ? "#22C55E" : "rgba(255,255,255,0.38)" }}
               >
                 {label}
               </span>

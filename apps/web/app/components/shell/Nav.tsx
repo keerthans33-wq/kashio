@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
-import { User } from "lucide-react";
+import { User, LogOut } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
 import { useUser } from "../../../lib/user-context";
 
@@ -16,14 +16,21 @@ const LINKS: { href: string; label: string; exact?: boolean }[] = [
   { href: "/wfh",       label: "WFH" },
 ];
 
+function usePageTitle(pathname: string): string {
+  const match = LINKS.find((l) =>
+    l.exact ? pathname === l.href : pathname.startsWith(l.href)
+  );
+  return match?.label ?? "Kashio";
+}
+
 export default function Nav() {
-  const pathname = usePathname();
-  const { user }  = useUser();
+  const pathname   = usePathname();
+  const { user }   = useUser();
+  const pageTitle  = usePageTitle(pathname);
 
-  const [open, setOpen] = useState(false);
-  const dropRef         = useRef<HTMLDivElement>(null);
+  const [open, setOpen]   = useState(false);
+  const dropRef           = useRef<HTMLDivElement>(null);
 
-  // Close dropdown on outside click
   useEffect(() => {
     if (!open) return;
     function handle(e: MouseEvent) {
@@ -35,7 +42,6 @@ export default function Nav() {
     return () => document.removeEventListener("mousedown", handle);
   }, [open]);
 
-  // Close dropdown on route change
   useEffect(() => { setOpen(false); }, [pathname]);
 
   const initial = user?.email?.[0]?.toUpperCase() ?? "";
@@ -54,12 +60,13 @@ export default function Nav() {
         borderBottom:         "1px solid var(--bg-border)",
         backdropFilter:       "blur(16px)",
         WebkitBackdropFilter: "blur(16px)",
+        paddingTop:           "env(safe-area-inset-top)",
       }}
     >
       <div className="flex items-stretch h-12 pl-1 pr-2">
 
-        {/* ── Tab links — scrollable, all 5 always visible ─────────────────── */}
-        <div className="flex flex-1 items-stretch overflow-x-auto scrollbar-none min-w-0">
+        {/* ── Desktop: tab links (hidden on mobile — bottom nav handles it) ── */}
+        <div className="hidden sm:flex flex-1 items-stretch overflow-x-auto scrollbar-none min-w-0">
           {LINKS.map((link) => {
             const active = link.exact
               ? pathname === link.href
@@ -68,7 +75,7 @@ export default function Nav() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="shrink-0 flex items-center whitespace-nowrap transition-colors duration-150 px-3 sm:px-4 text-xs sm:text-[13px] font-medium"
+                className="shrink-0 flex items-center whitespace-nowrap transition-colors duration-150 px-4 text-[13px] font-medium"
                 style={{
                   color:        active ? "#FFFFFF" : "rgba(255,255,255,0.45)",
                   borderBottom: active ? "2px solid #22C55E" : "2px solid transparent",
@@ -81,24 +88,36 @@ export default function Nav() {
           })}
         </div>
 
-        {/* ── Profile / account button ──────────────────────────────────────── */}
+        {/* ── Mobile: centered page title (hidden on sm+) ─────────────────── */}
+        <div className="flex sm:hidden flex-1 items-center justify-center">
+          <span
+            className="text-[15px] font-semibold tracking-[-0.01em]"
+            style={{ color: "rgba(255,255,255,0.92)" }}
+          >
+            {pageTitle}
+          </span>
+        </div>
+
+        {/* ── Profile / sign-out button (all sizes) ────────────────────────── */}
         <div ref={dropRef} className="relative flex items-center pl-1">
           <button
             onClick={() => setOpen((v) => !v)}
             aria-label="Account menu"
             aria-expanded={open}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-all duration-150"
+            className="flex items-center justify-center rounded-full transition-all duration-150"
             style={{
-              backgroundColor: open
-                ? "rgba(34,197,94,0.20)"
-                : "rgba(255,255,255,0.08)",
-              border: open
+              width:           40,
+              height:          40,
+              backgroundColor: open ? "rgba(34,197,94,0.20)" : "rgba(255,255,255,0.08)",
+              border:          open
                 ? "1px solid rgba(34,197,94,0.40)"
                 : "1px solid rgba(255,255,255,0.12)",
-              color: open ? "#22C55E" : "rgba(255,255,255,0.70)",
+              color:           open ? "#22C55E" : "rgba(255,255,255,0.70)",
+              fontSize:        "13px",
+              fontWeight:      700,
             }}
           >
-            {initial || <User size={13} strokeWidth={2} />}
+            {initial || <User size={15} strokeWidth={2} />}
           </button>
 
           {/* Dropdown */}
@@ -129,14 +148,18 @@ export default function Nav() {
                   </p>
                 </div>
 
-                {/* Sign out */}
+                {/* Sign out — large touch target */}
                 <button
                   onClick={handleSignOut}
-                  className="w-full text-left px-4 py-2.5 text-[13px] font-medium transition-colors duration-100"
-                  style={{ color: "rgba(255,255,255,0.55)" }}
+                  className="w-full flex items-center gap-3 px-4 text-[13px] font-medium transition-colors duration-100"
+                  style={{
+                    minHeight:  48,
+                    color:      "rgba(255,255,255,0.55)",
+                  }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = "#f87171")}
                   onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.55)")}
                 >
+                  <LogOut size={14} strokeWidth={2} style={{ opacity: 0.6 }} />
                   Sign out
                 </button>
               </motion.div>
