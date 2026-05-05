@@ -16,8 +16,8 @@ import { calcWfhSummary } from "@/lib/wfhSummary";
 import { calculateTaxReadiness, readinessColor } from "@/lib/taxReadiness";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { MobileScreen } from "@/components/layout/mobile-screen";
-import { TaxFeed, type FeedItem } from "./TaxFeed";
 import { DashboardProUpsell } from "./DashboardProUpsell";
+import { categoryToSlug } from "@/lib/categorySlug";
 
 export const dynamic = "force-dynamic";
 
@@ -86,7 +86,7 @@ const CATEGORY_GROUPS: CategoryGroup[] = [
 export default async function Dashboard() {
   const { id: userId, userType } = await requireUserWithType();
 
-  const [candidates, receiptsCount, wfhEntries, plan] = await Promise.all([
+  const [candidates, wfhEntries, plan] = await Promise.all([
     db.deductionCandidate.findMany({
       where:   { userId },
       include: {
@@ -95,7 +95,6 @@ export default async function Dashboard() {
         },
       },
     }),
-    db.receipt.count({ where: { userId } }),
     db.wfhLog.findMany({ where: { userId }, select: { date: true, hours: true } }),
     fetchUserPlan(userId),
   ]);
@@ -122,20 +121,7 @@ export default async function Dashboard() {
   });
 
   const arcColor = readinessColor(readiness);
-  const hasData  = active.length > 0 || receiptsCount > 0 || wfhHours > 0;
-
-  // Feed items — NEEDS_REVIEW first, then CONFIRMED; exclude REJECTED. Free users see 3 max.
-  const FEED_LIMIT = isPro ? 10 : 3;
-  const feedItems: FeedItem[] = active.map((c) => ({
-    id:          c.id,
-    merchant:    c.transaction.normalizedMerchant,
-    amount:      c.transaction.amount,
-    date:        c.transaction.date,
-    category:    c.category,
-    confidence:  c.confidence as "HIGH" | "MEDIUM" | "LOW",
-    status:      c.status    as "NEEDS_REVIEW" | "CONFIRMED" | "REJECTED",
-    hasEvidence: c.hasEvidence,
-  }));
+  const hasData  = active.length > 0 || wfhHours > 0;
 
   // Per-category totals
   const catData = CATEGORY_GROUPS.map((cat) => ({
@@ -144,6 +130,9 @@ export default async function Dashboard() {
       .filter((c) => cat.matches.includes(c.category))
       .reduce((s, c) => s + Math.abs(c.transaction.amount), 0),
     count: active.filter((c) => cat.matches.includes(c.category)).length,
+    href: cat.matches.length === 1
+      ? `/review/${categoryToSlug(cat.matches[0])}`
+      : "/review",
   }));
 
   return (
@@ -265,7 +254,7 @@ export default async function Dashboard() {
 
       {/* ── Three metric tiles ──────────────────────────────────────────────── */}
       <FadeIn delay={0.09} className="mb-8">
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           {/* Tax readiness */}
           <div
             className="rounded-2xl px-4 py-4 flex flex-col gap-1"
@@ -285,28 +274,6 @@ export default async function Dashboard() {
             </p>
             <p className="text-[10px] leading-tight" style={{ color: "var(--text-muted)" }}>
               {readinessLabel}
-            </p>
-          </div>
-
-          {/* Receipts — optional, not counted toward readiness */}
-          <div
-            className="rounded-2xl px-4 py-4 flex flex-col gap-1"
-            style={{
-              backgroundColor: "rgba(13,20,33,0.88)",
-              border:          "1px solid rgba(255,255,255,0.07)",
-            }}
-          >
-            <p className="text-[9px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
-              Receipts
-            </p>
-            <p
-              className="text-[22px] font-bold tabular-nums leading-none"
-              style={{ color: "var(--text-primary)" }}
-            >
-              {receiptsCount}
-            </p>
-            <p className="text-[10px] leading-tight" style={{ color: "var(--text-muted)" }}>
-              optional uploads
             </p>
           </div>
 
@@ -407,13 +374,6 @@ export default async function Dashboard() {
         )}
       </FadeIn>
 
-      {/* ── Tax feed ───────────────────────────────────────────────────────── */}
-      {feedItems.length > 0 && (
-        <FadeIn delay={0.12}>
-          <TaxFeed items={feedItems.slice(0, FEED_LIMIT)} />
-        </FadeIn>
-      )}
-
       {/* ── Category breakdown ──────────────────────────────────────────────── */}
       <FadeIn delay={0.13} className="mb-6">
         <p
@@ -426,7 +386,7 @@ export default async function Dashboard() {
           {catData.map((cat) => (
             <Link
               key={cat.label}
-              href="/review"
+              href={cat.href}
               className="group block rounded-2xl px-4 py-4 transition-opacity hover:opacity-80"
               style={{
                 backgroundColor: "rgba(13,20,33,0.88)",
