@@ -16,6 +16,9 @@ const STRONG_KEYWORDS = [
   "docking station",
   "standing desk",
   "usb hub",
+  // "ergonomic" intentionally excluded: it would win over detectOfficeSupplies (priority 4) when
+  // someone buys an "ergonomic chair" at Officeworks. Ergonomic peripherals are caught via the
+  // "mouse" and "keyboard" weak keywords below (which require a tech-merchant corroboration).
 ];
 
 // Common in gaming/personal contexts too — weaker signal
@@ -24,6 +27,7 @@ const WEAK_KEYWORDS = [
   "hard drive",
   "monitor",
   "keyboard",
+  "mouse",          // peripheral; common personally too, but worth surfacing
 ];
 
 const ALL_KEYWORDS = [...STRONG_KEYWORDS, ...WEAK_KEYWORDS];

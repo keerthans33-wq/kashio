@@ -83,6 +83,76 @@ export const MERCHANTS: Record<string, MerchantEntry> = {
     forUserTypes:  ["contractor", "sole_trader"],
     description:   "Furniture including desks, chairs, and shelving for home offices.",
   },
+  "aeron": {
+    category:      CATEGORIES.OFFICE_SUPPLIES,
+    tier:          "specialist",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Ergonomic office chairs.",
+  },
+  "herman miller": {
+    category:      CATEGORIES.OFFICE_SUPPLIES,
+    tier:          "specialist",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Ergonomic office chairs and furniture.",
+  },
+  "steelcase": {
+    category:      CATEGORIES.OFFICE_SUPPLIES,
+    tier:          "specialist",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Office furniture and ergonomic chairs.",
+  },
+  "jasonl": {
+    category:      CATEGORIES.OFFICE_SUPPLIES,
+    tier:          "specialist",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Office furniture including desks and chairs.",
+  },
+
+  // ── Home energy (home office running costs — contractor/sole trader only) ──
+  // Electricity used for a home office is deductible under the actual method.
+  // tier "utility" flags these for the energy-bill keyword gate in detectOfficeSupplies.
+  "agl": {
+    category:      CATEGORIES.OFFICE_SUPPLIES,
+    tier:          "utility",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Electricity and gas provider.",
+  },
+  "origin energy": {
+    category:      CATEGORIES.OFFICE_SUPPLIES,
+    tier:          "utility",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Electricity and gas provider.",
+  },
+  "energyaustralia": {
+    category:      CATEGORIES.OFFICE_SUPPLIES,
+    tier:          "utility",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Electricity and gas provider.",
+  },
+  "simply energy": {
+    category:      CATEGORIES.OFFICE_SUPPLIES,
+    tier:          "utility",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Electricity provider.",
+  },
+  "alinta energy": {
+    category:      CATEGORIES.OFFICE_SUPPLIES,
+    tier:          "utility",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Electricity and gas provider.",
+  },
+  "synergy": {
+    category:      CATEGORIES.OFFICE_SUPPLIES,
+    tier:          "utility",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Western Australian electricity provider.",
+  },
+  "ergon energy": {
+    category:      CATEGORIES.OFFICE_SUPPLIES,
+    tier:          "utility",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Queensland electricity provider.",
+  },
   "freedom furniture": {
     category:      CATEGORIES.OFFICE_SUPPLIES,
     forUserTypes:  ["contractor", "sole_trader"],
@@ -394,6 +464,11 @@ export const MERCHANTS: Record<string, MerchantEntry> = {
   },
 
   // ── Software — broad (significant personal-use overlap, require keyword) ──
+  "google": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "broad",
+    description: "Google services: Workspace, Cloud, Ads, and productivity tools.",
+  },
   "adobe": {
     category:    CATEGORIES.SOFTWARE,
     tier:        "broad",
@@ -429,7 +504,7 @@ export const MERCHANTS: Record<string, MerchantEntry> = {
     tier:        "broad",
     description: "AI writing assistant. Business plan required for work deduction.",
   },
-  "linkedin": {
+  "linkedin premium": {
     category:    CATEGORIES.SOFTWARE,
     tier:        "broad",
     description: "LinkedIn Premium — job search and professional networking subscription.",

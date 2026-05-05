@@ -87,7 +87,10 @@ export function detectDeduction(transaction: TransactionInput, userType?: string
     explanation.confidenceReason += " Description includes personal-use wording, so confidence was reduced.";
   }
 
-  return { ...match, ...explanation };
+  // ATO substantiation rule: claims over $82.50 require a receipt.
+  const needsReceipt = Math.abs(transaction.amount) > 82.50;
+
+  return { ...match, ...explanation, needsReceipt };
 }
 
 export type { TransactionInput, DeductionMatch };

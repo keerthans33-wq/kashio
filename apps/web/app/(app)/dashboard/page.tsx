@@ -12,8 +12,10 @@ import {
   ACTIVE_CATEGORIES,
 } from "@/lib/rules/categories";
 import { calcWfhSummary } from "@/lib/wfhSummary";
+import { calculateTaxReadiness, readinessColor } from "@/lib/taxReadiness";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { MobileScreen } from "@/components/layout/mobile-screen";
+import { TaxFeed, type FeedItem } from "./TaxFeed";
 
 export const dynamic = "force-dynamic";
 
@@ -21,22 +23,6 @@ export const dynamic = "force-dynamic";
 
 const fmtAUD = (n: number) =>
   n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
-
-function readinessLabel(score: number) {
-  if (score === 0)  return "Not started";
-  if (score < 30)   return "Getting started";
-  if (score < 60)   return "In progress";
-  if (score < 85)   return "Looking good";
-  if (score < 100)  return "Almost there";
-  return "Tax ready";
-}
-
-function readinessColor(score: number) {
-  if (score < 30)  return "#F59E0B";
-  if (score < 60)  return "#60A5FA";
-  if (score < 85)  return "#22C55E";
-  return "#22C55E";
-}
 
 // ── Category groups ────────────────────────────────────────────────────────────
 
@@ -101,7 +87,11 @@ export default async function Dashboard() {
   const [candidates, receiptsCount, wfhEntries] = await Promise.all([
     db.deductionCandidate.findMany({
       where:   { userId },
-      include: { transaction: { select: { amount: true } } },
+      include: {
+        transaction: {
+          select: { amount: true, normalizedMerchant: true, date: true },
+        },
+      },
     }),
     db.receipt.count({ where: { userId } }),
     db.wfhLog.findMany({ where: { userId }, select: { date: true, hours: true } }),
@@ -117,18 +107,31 @@ export default async function Dashboard() {
 
   const { ytdHours: wfhHours, ytdEst: wfhEst, fyLabel } = calcWfhSummary(wfhEntries);
 
-  // Tax readiness score (0–100)
-  let readiness = 0;
-  if (active.length > 0) {
-    readiness += Math.round((confirmed.length / active.length) * 60);
-    if (pending.length === 0 && confirmed.length > 0) readiness += 10;
-  }
-  if (receiptsCount > 0) readiness += 20;
-  if (wfhHours > 0)      readiness += 10;
-  readiness = Math.min(100, readiness);
+  const { score: readiness, label: readinessLabel, nextAction, breakdown } = calculateTaxReadiness({
+    candidates:    active.map((c) => ({
+      status:      c.status      as "NEEDS_REVIEW" | "CONFIRMED",
+      hasEvidence: c.hasEvidence,
+      amount:      c.transaction.amount,
+      category:    c.category,
+    })),
+    receiptsCount,
+    wfhHours,
+  });
 
   const arcColor = readinessColor(readiness);
   const hasData  = active.length > 0 || receiptsCount > 0 || wfhHours > 0;
+
+  // Feed items — NEEDS_REVIEW first, then CONFIRMED; exclude REJECTED
+  const feedItems: FeedItem[] = active.map((c) => ({
+    id:          c.id,
+    merchant:    c.transaction.normalizedMerchant,
+    amount:      c.transaction.amount,
+    date:        c.transaction.date,
+    category:    c.category,
+    confidence:  c.confidence as "HIGH" | "MEDIUM" | "LOW",
+    status:      c.status    as "NEEDS_REVIEW" | "CONFIRMED" | "REJECTED",
+    hasEvidence: c.hasEvidence,
+  }));
 
   // Per-category totals
   const catData = CATEGORY_GROUPS.map((cat) => ({
@@ -194,7 +197,7 @@ export default async function Dashboard() {
             className="text-[10px] font-medium whitespace-nowrap"
             style={{ color: "var(--text-muted)" }}
           >
-            {readinessLabel(readiness)}
+            {readinessLabel}
           </span>
         </div>
       </FadeIn>
@@ -277,7 +280,7 @@ export default async function Dashboard() {
               {readiness}%
             </p>
             <p className="text-[10px] leading-tight" style={{ color: "var(--text-muted)" }}>
-              {readinessLabel(readiness)}
+              {readinessLabel}
             </p>
           </div>
 
@@ -328,6 +331,75 @@ export default async function Dashboard() {
           </div>
         </div>
       </FadeIn>
+
+      {/* ── Score breakdown ─────────────────────────────────────────────────── */}
+      <FadeIn delay={0.11} className="mb-8">
+        <div
+          className="rounded-2xl px-5 py-4"
+          style={{
+            backgroundColor: "rgba(13,20,33,0.88)",
+            border:          "1px solid rgba(255,255,255,0.07)",
+          }}
+        >
+          <p
+            className="text-[10px] font-semibold uppercase tracking-widest mb-3"
+            style={{ color: "var(--text-muted)" }}
+          >
+            Score breakdown
+          </p>
+          <div className="space-y-0">
+            {(
+              [
+                { label: "Transactions imported",   ...breakdown.imported   },
+                { label: "Transactions reviewed",   ...breakdown.reviewed   },
+                { label: "Receipts attached",       ...breakdown.receipts   },
+                { label: "Categories completed",    ...breakdown.categories },
+                { label: "Export ready",            ...breakdown.export     },
+              ] as const
+            ).map(({ label, score: s, max }, i, arr) => {
+              const pct      = max === 0 ? 0 : Math.round((s / max) * 100);
+              const complete = s === max;
+              const barColor = complete ? "#22C55E" : s > 0 ? "#60A5FA" : "rgba(255,255,255,0.10)";
+              return (
+                <div
+                  key={label}
+                  className="flex items-center gap-3 py-2.5"
+                  style={i < arr.length - 1 ? { borderBottom: "1px solid rgba(255,255,255,0.04)" } : undefined}
+                >
+                  <p
+                    className="flex-1 text-[12px]"
+                    style={{ color: complete ? "var(--text-secondary)" : "var(--text-muted)" }}
+                  >
+                    {label}
+                  </p>
+                  <div
+                    className="w-20 h-1 rounded-full overflow-hidden"
+                    style={{ backgroundColor: "rgba(255,255,255,0.06)" }}
+                  >
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${pct}%`, backgroundColor: barColor }}
+                    />
+                  </div>
+                  <p
+                    className="w-9 text-right text-[11px] tabular-nums font-medium"
+                    style={{ color: complete ? "#22C55E" : "var(--text-muted)" }}
+                  >
+                    {s}/{max}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </FadeIn>
+
+      {/* ── Tax feed ───────────────────────────────────────────────────────── */}
+      {feedItems.length > 0 && (
+        <FadeIn delay={0.12}>
+          <TaxFeed items={feedItems} />
+        </FadeIn>
+      )}
 
       {/* ── Category breakdown ──────────────────────────────────────────────── */}
       <FadeIn delay={0.13} className="mb-6">
@@ -416,7 +488,7 @@ export default async function Dashboard() {
         </FadeIn>
       )}
 
-      {/* ── Quick actions ───────────────────────────────────────────────────── */}
+      {/* ── Next steps ──────────────────────────────────────────────────────── */}
       <FadeIn delay={0.18} className="mb-10">
         <p
           className="text-[10px] font-semibold uppercase tracking-widest mb-4"
@@ -425,24 +497,19 @@ export default async function Dashboard() {
           {hasData ? "Next steps" : "Get started"}
         </p>
         <div className="space-y-2.5">
-          {pending.length > 0 && (
+          {/* Primary — highest-priority action from the scoring utility */}
+          {nextAction && (
             <QuickAction
-              href="/review"
-              Icon={ClipboardCheck}
-              label="Review your deductions"
-              sub={`${pending.length} transaction${pending.length !== 1 ? "s" : ""} waiting`}
+              href={nextAction.href}
+              Icon={iconForHref(nextAction.href)}
+              label={nextAction.text}
+              sub={nextAction.sub}
               highlight
             />
           )}
-          {!hasData && (
-            <QuickAction
-              href="/import"
-              Icon={Upload}
-              label="Import transactions"
-              sub="Upload your bank CSV to find deductions"
-            />
-          )}
-          {hasData && confirmed.length > 0 && (
+
+          {/* Secondary — show export if it isn't already the primary action */}
+          {hasData && confirmed.length > 0 && nextAction?.href !== "/export" && (
             <QuickAction
               href="/export"
               Icon={FileDown}
@@ -450,7 +517,9 @@ export default async function Dashboard() {
               sub="Download a report for your accountant"
             />
           )}
-          {wfhHours === 0 && (
+
+          {/* Secondary — show WFH if not already the primary action */}
+          {wfhHours === 0 && nextAction?.href !== "/wfh" && (
             <QuickAction
               href="/wfh"
               Icon={Home}
@@ -470,7 +539,15 @@ export default async function Dashboard() {
   );
 }
 
-// ── QuickAction sub-component ──────────────────────────────────────────────────
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function iconForHref(href: string): LucideIcon {
+  if (href === "/import") return Upload;
+  if (href === "/review") return ClipboardCheck;
+  if (href === "/wfh")    return Home;
+  if (href === "/export") return FileDown;
+  return ArrowRight;
+}
 
 function QuickAction({
   href,

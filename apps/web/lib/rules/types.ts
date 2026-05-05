@@ -29,7 +29,10 @@ export type Explanation = {
 };
 
 // The full match surfaced to the rest of the app.
-export type DeductionMatch = RawMatch & Explanation;
+// needsReceipt follows the ATO substantiation threshold: claims over $82.50 require a receipt.
+export type DeductionMatch = RawMatch & Explanation & {
+  needsReceipt: boolean;
+};
 
 // A rule is an object with separate detection and explanation logic.
 // priority is used as a final tie-breaker when confidence and signal count are equal.

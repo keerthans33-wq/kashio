@@ -35,7 +35,7 @@ const WEAK_KEYWORDS = [
   "e-toll",
   "fuel",
   "petrol",
-  "train",
+  "train ticket",
   "bus ticket",
   "ferry",
   "taxi",
