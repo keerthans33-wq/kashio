@@ -47,5 +47,11 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Kashio needs camera access to photograph your receipts.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Kashio needs photo library access to upload your receipts.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Kashio may save processed receipt images to your photo library.</string>
 </dict>
 </plist>

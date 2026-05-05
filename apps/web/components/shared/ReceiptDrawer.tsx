@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { FileImage, FileText, Trash2, Upload, Receipt, AlertCircle } from "lucide-react";
+import { FileImage, FileText, Trash2, Upload, Receipt, AlertCircle, Camera, FolderOpen } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -231,6 +231,15 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
   const [uploading,   setUploading]     = useState(false);
   const [deletingId,  setDeletingId]    = useState<string | null>(null);
   const [paywallOpen, setPaywallOpen]   = useState(false);
+  const [isNative,    setIsNative]      = useState(false);
+
+  // Detect Capacitor iOS shell once on mount
+  useEffect(() => {
+    import("@/lib/native-upload")
+      .then(({ isNativePlatform }) => isNativePlatform())
+      .then(setIsNative)
+      .catch(() => {});
+  }, []);
 
   // ── Fetch list ──────────────────────────────────────────────────────────────
 
@@ -258,11 +267,8 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
 
   function handleUploadClick() { inputRef.current?.click(); }
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-
+  // Shared upload logic used by both web file input and native camera paths
+  async function uploadFile(file: File) {
     if (!ALLOWED_MIMES.has(file.type)) {
       onToast({ type: "error", message: "Only JPEG, PNG, WebP, and PDF files are accepted." });
       return;
@@ -294,6 +300,26 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
       onToast({ type: "error", message: "Could not upload receipt. Please try again." });
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (file) await uploadFile(file);
+  }
+
+  // Native iOS: open Camera / Photo Library via Capacitor then feed into shared upload
+  async function handleNativePhotoUpload() {
+    try {
+      const { pickPhotoNative } = await import("@/lib/native-upload");
+      const file = await pickPhotoNative();
+      if (file) await uploadFile(file);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message.toLowerCase() : "";
+      // Silently ignore user-cancelled picker
+      if (msg.includes("cancel") || msg.includes("no image")) return;
+      onToast({ type: "error", message: "Could not access camera. Please check permissions in Settings." });
     }
   }
 
@@ -386,20 +412,51 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
               )}
             </div>
 
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleUploadClick}
-              disabled={uploading}
-              className="gap-1.5 mr-8"
-            >
-              {uploading ? (
-                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
-              ) : (
-                <Upload size={13} strokeWidth={2} />
-              )}
-              Upload
-            </Button>
+            {isNative ? (
+              /* iOS: separate buttons for Camera/Photos and Files (PDF support) */
+              <div className="flex items-center gap-2 mr-8">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleNativePhotoUpload}
+                  disabled={uploading}
+                  className="gap-1.5"
+                >
+                  {uploading ? (
+                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
+                  ) : (
+                    <Camera size={13} strokeWidth={2} />
+                  )}
+                  Photo
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleUploadClick}
+                  disabled={uploading}
+                  className="gap-1.5"
+                >
+                  <FolderOpen size={13} strokeWidth={2} />
+                  File
+                </Button>
+              </div>
+            ) : (
+              /* Web: single upload button using file input */
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleUploadClick}
+                disabled={uploading}
+                className="gap-1.5 mr-8"
+              >
+                {uploading ? (
+                  <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
+                ) : (
+                  <Upload size={13} strokeWidth={2} />
+                )}
+                Upload
+              </Button>
+            )}
           </div>
 
           {/* Receipt list */}
