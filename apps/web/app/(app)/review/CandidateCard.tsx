@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { confirmCandidate, rejectCandidate, resetCandidate, saveEvidence } from "./actions";
+import { confirmCandidate, rejectCandidate, resetCandidate, saveEvidence, saveWorkPercent } from "./actions";
 import { Button } from "@/components/ui/button";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -20,6 +20,7 @@ export type CandidateCardProps = {
   mixedUse?:         boolean;
   hasEvidence:       boolean;
   evidenceNote:      string | null;
+  workPercent?:      number | null;
   transaction:       { normalizedMerchant: string; amount: number; date: string; description: string };
   userType?:         string | null;
   onStatusChange?:   (id: string, next: Status) => void;
@@ -62,7 +63,7 @@ const CONFIDENCE_COLOR: Record<Confidence, string> = {
 
 export function CandidateCard({
   id, status: initialStatus, confidence, category, reason, confidenceReason,
-  mixedUse, hasEvidence, evidenceNote, transaction, onStatusChange,
+  mixedUse, hasEvidence, evidenceNote, workPercent: initialWorkPercent, transaction, onStatusChange,
 }: CandidateCardProps) {
   const [status, setStatus]                 = useState<Status>(initialStatus);
   const [expanded, setExpanded]             = useState(false);
@@ -72,6 +73,9 @@ export function CandidateCard({
   const [note, setNote]                     = useState(evidenceNote ?? "");
   const [evidenceSaving, setEvidenceSaving] = useState(false);
   const [evidenceSaved, setEvidenceSaved]   = useState<string | null>(null);
+  const [workPct, setWorkPct]               = useState<string>(initialWorkPercent != null ? String(initialWorkPercent) : "");
+  const [pctSaving, setPctSaving]           = useState(false);
+  const [pctSaved, setPctSaved]             = useState(false);
 
   function flashSaved(msg: string) {
     setEvidenceSaved(msg);
@@ -293,6 +297,73 @@ export function CandidateCard({
                   {transaction.description}
                 </p>
               </div>
+
+              {/* Work-use split */}
+              {status === "CONFIRMED" && (
+                <div>
+                  <p
+                    className="text-[11px] font-semibold uppercase tracking-widest mb-2"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Work-use split
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className="relative flex-1 max-w-[140px]">
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={workPct}
+                        placeholder="100"
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (v === "" || (Number(v) >= 0 && Number(v) <= 100)) setWorkPct(v);
+                        }}
+                        onBlur={async () => {
+                          const parsed = workPct === "" ? null : Math.min(100, Math.max(0, Number(workPct)));
+                          setPctSaving(true);
+                          setPctSaved(false);
+                          try {
+                            await saveWorkPercent(id, parsed);
+                            setPctSaved(true);
+                            setTimeout(() => setPctSaved(false), 2000);
+                          } finally {
+                            setPctSaving(false);
+                          }
+                        }}
+                        className="w-full rounded-xl px-4 py-2.5 pr-8 text-[13px] focus:outline-none focus:ring-1 focus:ring-[#22C55E] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                        style={{
+                          backgroundColor: "rgba(255,255,255,0.05)",
+                          border:          "1px solid rgba(255,255,255,0.08)",
+                          color:           "var(--text-primary)",
+                        }}
+                      />
+                      <span
+                        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[13px]"
+                        style={{ color: "var(--text-muted)" }}
+                      >
+                        %
+                      </span>
+                    </div>
+                    <div className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
+                      {workPct !== "" && Number(workPct) > 0 ? (
+                        <>
+                          <span style={{ color: "#22C55E", fontWeight: 600 }}>
+                            ${(Math.abs(transaction.amount) * Number(workPct) / 100).toFixed(2)}
+                          </span>
+                          <span style={{ color: "var(--text-muted)" }}> claimable</span>
+                        </>
+                      ) : (
+                        <span style={{ color: "var(--text-muted)" }}>
+                          Leave blank for full amount
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {pctSaving && <p className="mt-1.5 text-[12px]" style={{ color: "var(--text-muted)" }}>Saving…</p>}
+                  {pctSaved && !pctSaving && <p className="mt-1.5 text-[12px]" style={{ color: "#22C55E" }}>Saved</p>}
+                </div>
+              )}
 
               {/* Evidence — only when confirmed */}
               {status === "CONFIRMED" && (

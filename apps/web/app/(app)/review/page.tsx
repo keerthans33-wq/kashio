@@ -2,6 +2,7 @@ import Link from "next/link";
 import { db } from "../../../lib/db";
 import { requireUserWithType } from "../../../lib/auth";
 import { ACTIVE_CATEGORIES, CATEGORIES_BY_USER_TYPE, CATEGORY_PRIORITY_BY_USER_TYPE } from "../../../lib/rules/categories";
+import { getCategoryMeta, categoryToSlug } from "../../../lib/categorySlug";
 import { ReviewFilters } from "./ReviewFilters";
 import { ReviewList } from "./ReviewList";
 import type { CandidateCardProps } from "./CandidateCard";
@@ -53,6 +54,7 @@ function toCardProps(c: Candidate, userType: string | null): CandidateCardProps 
     mixedUse:         c.mixedUse,
     hasEvidence:      c.hasEvidence,
     evidenceNote:     c.evidenceNote ?? null,
+    workPercent:      c.workPercent ?? null,
     transaction:      c.transaction,
     userType,
   };
@@ -183,6 +185,58 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
         );
 
         return null;
+      })()}
+
+      {/* Category chips — only when there are candidates */}
+      {all.length > 0 && (() => {
+        const catCounts = new Map<string, { total: number; pending: number }>();
+        for (const c of all) {
+          const prev = catCounts.get(c.category) ?? { total: 0, pending: 0 };
+          catCounts.set(c.category, {
+            total:   prev.total + 1,
+            pending: prev.pending + (c.status === "NEEDS_REVIEW" ? 1 : 0),
+          });
+        }
+        const cats = allowedCategories.filter((cat) => catCounts.has(cat));
+        if (cats.length === 0) return null;
+        return (
+          <FadeIn delay={0.12} className="mt-5">
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {cats.map((cat) => {
+                const meta    = getCategoryMeta(cat);
+                const counts  = catCounts.get(cat)!;
+                const slug    = meta?.slug ?? categoryToSlug(cat);
+                const Icon    = meta?.Icon;
+                const color   = meta?.color ?? "#22C55E";
+                const bg      = meta?.bg ?? "rgba(255,255,255,0.06)";
+                const isActive = category === cat;
+                return (
+                  <Link
+                    key={cat}
+                    href={`/review/${slug}`}
+                    className="flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-all duration-150"
+                    style={{
+                      backgroundColor: isActive ? bg : "rgba(255,255,255,0.04)",
+                      border:          `1px solid ${isActive ? color + "40" : "rgba(255,255,255,0.06)"}`,
+                      color:           isActive ? color : "var(--text-secondary)",
+                    }}
+                  >
+                    {Icon && <Icon size={13} style={{ color: isActive ? color : "var(--text-muted)" }} />}
+                    <span>{meta?.label ?? cat}</span>
+                    {counts.pending > 0 && (
+                      <span
+                        className="flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold"
+                        style={{ backgroundColor: color + "25", color }}
+                      >
+                        {counts.pending}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </FadeIn>
+        );
       })()}
 
       {/* Divider + filters */}

@@ -135,5 +135,6 @@ model DeductionCandidate {
   status        DeductionStatus @default(NEEDS_REVIEW)
   hasEvidence   Boolean         @default(false)
   evidenceNote  String?         // optional free text, e.g. "Bunnings receipt Feb 2025"
+  workPercent   Int?            // 0-100 work-use split; null = full amount; claimable = amount × (workPercent/100)
   createdAt     DateTime        @default(now())
 }

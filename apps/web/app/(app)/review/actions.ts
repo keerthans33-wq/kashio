@@ -49,3 +49,12 @@ export async function saveEvidence(id: string, hasEvidence: boolean, evidenceNot
   revalidatePath("/review");
   revalidatePath("/export");
 }
+
+export async function saveWorkPercent(id: string, workPercent: number | null) {
+  const userId = await requireUser();
+  await db.deductionCandidate.update({
+    where: { id, userId },
+    data:  { workPercent },
+  });
+  revalidatePath("/review");
+}
