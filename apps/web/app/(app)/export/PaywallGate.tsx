@@ -42,7 +42,7 @@ const fmtRound = (n: number) =>
 export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, confirmedCount }: Props) {
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
-  const [interval, setInterval] = useState<Interval>("month");
+  const [interval, setInterval] = useState<Interval>("year");
 
   async function handleUnlock() {
     setLoading(true);
@@ -237,11 +237,10 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
         {/* Feature list */}
         <ul className="mb-6 space-y-2.5">
           {[
-            "Full tax summary — downloadable report",
-            "Review all detected deductions",
-            "Upload up to 100 receipts",
-            "Work from home included",
-            "Open Banking access when available",
+            "Full deduction review",
+            "Export-ready tax summary",
+            "WFH deduction tools",
+            "Up to 100 receipt uploads",
           ].map((item) => (
             <li key={item} className="flex items-center gap-2.5 text-[13px]" style={{ color: "var(--text-secondary)" }}>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" style={{ color: "#22C55E" }}>
@@ -291,11 +290,13 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
           </span>
         </div>
 
-        <Button className="w-full mb-3" onClick={handleUnlock} disabled={loading}>
-          {loading
-            ? "Redirecting…"
-            : `Start ${interval === "month" ? "monthly" : "annual"} plan`}
+        <Button className="w-full mb-2" onClick={handleUnlock} disabled={loading}>
+          {loading ? "Redirecting…" : "Unlock Pro"}
         </Button>
+
+        <p className="mb-3 text-center text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+          Unlocks full deduction review, export reports, WFH tools, and up to 100 receipt uploads.
+        </p>
 
         {error && (
           <p className="text-center text-[12px] mb-1" style={{ color: "#f87171" }}>

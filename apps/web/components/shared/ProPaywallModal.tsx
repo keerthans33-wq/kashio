@@ -21,16 +21,16 @@ const ANNUAL_PRICE  = "$39.99";
 const ANNUAL_SAVING = "Save 33%";
 
 const BULLETS = [
-  "Review all detected deductions",
-  "Upload up to 100 receipts",
-  "Full tax summary — downloadable report",
-  "Open Banking access when available",
+  "Full deduction review",
+  "Export-ready tax summary",
+  "WFH deduction tools",
+  "Up to 100 receipt uploads",
 ];
 
 export function ProPaywallModal({ open, onOpenChange }: Props) {
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
-  const [interval, setInterval] = useState<Interval>("month");
+  const [interval, setInterval] = useState<Interval>("year");
 
   // Calls the shared Pro checkout endpoint. One subscription unlocks all features
   // (export, receipts, review, dashboard) via isProUser() in lib/plan.ts.
@@ -188,9 +188,7 @@ export function ProPaywallModal({ open, onOpenChange }: Props) {
             onClick={handleUpgrade}
             disabled={loading}
           >
-            {loading
-              ? "Redirecting…"
-              : `Start ${interval === "month" ? "monthly" : "annual"} plan`}
+            {loading ? "Redirecting…" : "Unlock Pro"}
           </Button>
 
           {error && (

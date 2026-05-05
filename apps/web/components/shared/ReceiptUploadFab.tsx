@@ -9,13 +9,8 @@ type ToastKind  = "success" | "error";
 type ToastState = { type: ToastKind; message: string } | null;
 type UsageData  = { count: number; limit: number; isPro: boolean };
 
-function usageLabel({ count, limit, isPro }: UsageData): string {
-  if (isPro) {
-    return count === 0 ? "Receipts unlocked" : `${count} of ${limit} receipts`;
-  }
-  return count === 0
-    ? `${limit} free receipts`
-    : `${count} of ${limit} free`;
+function usageLabel({ isPro }: UsageData): string {
+  return isPro ? "Receipts unlocked" : "Add receipts";
 }
 
 function usageLabelFull({ count, limit, isPro }: UsageData): string {

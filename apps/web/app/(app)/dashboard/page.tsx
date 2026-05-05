@@ -113,13 +113,11 @@ export default async function Dashboard() {
   const { ytdHours: wfhHours, ytdEst: wfhEst, fyLabel } = calcWfhSummary(wfhEntries);
 
   const { score: readiness, label: readinessLabel, nextAction, breakdown } = calculateTaxReadiness({
-    candidates:    active.map((c) => ({
-      status:      c.status      as "NEEDS_REVIEW" | "CONFIRMED",
-      hasEvidence: c.hasEvidence,
-      amount:      c.transaction.amount,
-      category:    c.category,
+    candidates: active.map((c) => ({
+      status:   c.status   as "NEEDS_REVIEW" | "CONFIRMED",
+      amount:   c.transaction.amount,
+      category: c.category,
     })),
-    receiptsCount,
     wfhHours,
   });
 
@@ -290,7 +288,7 @@ export default async function Dashboard() {
             </p>
           </div>
 
-          {/* Receipts */}
+          {/* Receipts — optional, not counted toward readiness */}
           <div
             className="rounded-2xl px-4 py-4 flex flex-col gap-1"
             style={{
@@ -308,7 +306,7 @@ export default async function Dashboard() {
               {receiptsCount}
             </p>
             <p className="text-[10px] leading-tight" style={{ color: "var(--text-muted)" }}>
-              uploaded
+              optional uploads
             </p>
           </div>
 
@@ -354,12 +352,17 @@ export default async function Dashboard() {
             >
               Score breakdown
             </p>
-            <div className="space-y-0">
+            <p
+              className="text-[10px] mb-3 leading-relaxed"
+              style={{ color: "rgba(255,255,255,0.25)" }}
+            >
+              Based on imported, reviewed, categorised, and export-ready transactions.
+            </p>
+          <div className="space-y-0">
               {(
                 [
                   { label: "Transactions imported",   ...breakdown.imported   },
                   { label: "Transactions reviewed",   ...breakdown.reviewed   },
-                  { label: "Receipts attached",       ...breakdown.receipts   },
                   { label: "Categories completed",    ...breakdown.categories },
                   { label: "Export ready",            ...breakdown.export     },
                 ] as const
