@@ -11,7 +11,16 @@ type UsageData  = { count: number; limit: number; isPro: boolean };
 
 function usageLabel({ count, limit, isPro }: UsageData): string {
   if (isPro) {
-    return count === 0 ? "Receipt storage unlocked" : `${count} of ${limit} receipts used`;
+    return count === 0 ? "Receipts unlocked" : `${count} of ${limit} receipts`;
+  }
+  return count === 0
+    ? `${limit} free receipts`
+    : `${count} of ${limit} free`;
+}
+
+function usageLabelFull({ count, limit, isPro }: UsageData): string {
+  if (isPro) {
+    return count === 0 ? "Receipts unlocked" : `${count} of ${limit} receipts used`;
   }
   return count === 0
     ? `${limit} free receipts included`
@@ -54,7 +63,7 @@ export function ReceiptUploadFab() {
             animate={{ opacity: 1, y: 0,  scale: 1    }}
             exit={{    opacity: 0, y: 8,  scale: 0.95 }}
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed bottom-24 right-4 z-50 flex items-center gap-2.5 rounded-2xl px-4 py-3 text-[13px] font-medium"
+            className="fixed bottom-28 right-5 z-50 flex items-center gap-2.5 rounded-2xl px-4 py-3 text-[13px] font-medium"
             style={{
               backgroundColor: toast.type === "success"
                 ? "rgba(13, 20, 33, 0.97)"
@@ -77,93 +86,61 @@ export function ReceiptUploadFab() {
         )}
       </AnimatePresence>
 
-      {/* FAB container — usage label stacks above the button */}
+      {/* FAB container */}
       <div
-        className="fixed right-4 z-40 flex flex-col items-end"
+        className="fixed right-5 z-40 flex flex-col items-end gap-2.5"
         style={{ bottom: "max(1.5rem, calc(env(safe-area-inset-bottom) + 1rem))" }}
       >
-        {/* Mobile usage indicator */}
+        {/* Usage label — mobile + desktop */}
         <AnimatePresence>
           {usage && (
-            <motion.span
-              key="usage-mobile"
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{    opacity: 0       }}
-              transition={{ duration: 0.25 }}
-              className="sm:hidden mb-2 rounded-xl px-2.5 py-1 text-[10px] font-medium whitespace-nowrap"
+            <motion.button
+              key="usage-label"
+              onClick={() => setDrawerOpen(true)}
+              initial={{ opacity: 0, y: 6, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1    }}
+              exit={{    opacity: 0, y: 4, scale: 0.95 }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              className="rounded-full whitespace-nowrap font-semibold backdrop-blur-xl transition-transform duration-150 hover:scale-[1.03]"
               style={{
-                backgroundColor: "rgba(13, 20, 33, 0.82)",
-                border:          "1px solid rgba(255,255,255,0.07)",
-                color:           "var(--text-muted)",
+                padding:    "8px 16px",
+                fontSize:   "13px",
+                color:      "#FFFFFF",
+                border:     "1px solid rgba(52,211,153,0.40)",
+                backgroundColor: "rgba(52,211,153,0.10)",
+                boxShadow:  "0 0 24px rgba(52,211,153,0.20), 0 2px 8px rgba(0,0,0,0.35)",
               }}
+              aria-label="View receipts"
             >
               {usageLabel(usage)}
-            </motion.span>
+            </motion.button>
           )}
         </AnimatePresence>
 
-        {/* FAB button — opens drawer */}
+        {/* FAB button */}
         <motion.button
           onClick={() => setDrawerOpen(true)}
-          aria-label="Open receipts"
+          aria-label="Upload receipt"
           className="flex items-center justify-center rounded-full"
           style={{
-            width:           56,
-            height:          56,
+            width:           64,
+            height:          64,
             backgroundColor: "#22C55E",
-            boxShadow:       "0 0 20px rgba(34,197,94,0.35), 0 4px 12px rgba(0,0,0,0.40)",
+            boxShadow:       "0 0 35px rgba(34,197,94,0.55), 0 4px 16px rgba(0,0,0,0.45)",
           }}
-          whileTap={{ scale: 0.93 }}
-          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.92 }}
+          whileHover={{ scale: 1.06 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
         >
-          <Receipt size={22} strokeWidth={2} style={{ color: "#0A1F12" }} />
+          <Receipt size={26} strokeWidth={2} style={{ color: "#0A1F12" }} />
         </motion.button>
-      </div>
-
-      {/* Desktop tooltip */}
-      <div
-        className="fixed z-40 hidden sm:flex flex-col items-end gap-1 pointer-events-none"
-        style={{
-          right:  76,
-          bottom: "max(calc(1.5rem + 10px), calc(env(safe-area-inset-bottom) + 1rem + 10px))",
-        }}
-      >
-        <span
-          className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-[12px] font-medium whitespace-nowrap"
-          style={{
-            backgroundColor: "rgba(13, 20, 33, 0.88)",
-            border:          "1px solid rgba(255,255,255,0.08)",
-            boxShadow:       "0 2px 8px rgba(0,0,0,0.35)",
-            color:           "var(--text-secondary)",
-          }}
-        >
-          Receipts
-        </span>
-
-        <AnimatePresence>
-          {usage && (
-            <motion.span
-              key="usage-desktop"
-              initial={{ opacity: 0, y: -3 }}
-              animate={{ opacity: 1, y: 0  }}
-              exit={{    opacity: 0        }}
-              transition={{ duration: 0.25, delay: 0.05 }}
-              className="pr-0.5 text-right text-[10px] font-medium whitespace-nowrap"
-              style={{ color: "var(--text-muted)" }}
-            >
-              {usageLabel(usage)}
-            </motion.span>
-          )}
-        </AnimatePresence>
       </div>
 
       {/* Bottom drawer */}
       <ReceiptDrawer
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
-        usageLabel={usage ? usageLabel(usage) : undefined}
+        usageLabel={usage ? usageLabelFull(usage) : undefined}
         onToast={handleDrawerToast}
         onCountChange={fetchUsage}
       />
