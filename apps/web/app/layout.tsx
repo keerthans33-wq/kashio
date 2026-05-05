@@ -29,7 +29,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         style={{
           backgroundColor: "var(--bg-app)",
           color: "var(--text-primary)",
-          paddingTop: "env(safe-area-inset-top)",
           paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >

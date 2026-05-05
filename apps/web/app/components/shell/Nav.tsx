@@ -54,6 +54,7 @@ export default function Nav() {
         borderBottom:         "1px solid var(--bg-border)",
         backdropFilter:       "blur(16px)",
         WebkitBackdropFilter: "blur(16px)",
+        paddingTop:           "env(safe-area-inset-top)",
       }}
     >
       <div className="flex items-stretch h-12 pl-1 pr-2">
