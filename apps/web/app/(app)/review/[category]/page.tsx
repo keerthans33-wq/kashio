@@ -67,7 +67,7 @@ export default async function CategoryReview({ params }: Props) {
   const { Icon, color, bg, label } = meta;
 
   return (
-    <MobileScreen maxWidth="lg" as="main" padY={false} className="py-8 sm:py-10">
+    <MobileScreen maxWidth="lg" as="main" padY={false} className="py-5 sm:py-10">
 
       {/* Back link */}
       <FadeIn>

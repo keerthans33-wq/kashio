@@ -104,7 +104,7 @@ export default async function Export({
   // ── Empty state ─────────────────────────────────────────────────────────────
   if (confirmed.length === 0) {
     return (
-      <MobileScreen maxWidth="md" as="main" padY={false} className="py-12 sm:py-16">
+      <MobileScreen maxWidth="md" as="main" padY={false} className="py-6 sm:py-16">
         <FadeIn className="text-center space-y-6 py-8">
           <div
             className="mx-auto flex h-16 w-16 items-center justify-center rounded-full"
@@ -132,7 +132,7 @@ export default async function Export({
 
   // ── Full export view ─────────────────────────────────────────────────────────
   return (
-    <MobileScreen maxWidth="md" as="main" padY={false} className="py-10 sm:py-14">
+    <MobileScreen maxWidth="md" as="main" padY={false} className="py-5 sm:py-14">
 
       {/* 1 — Header */}
       <FadeIn className="mb-7">

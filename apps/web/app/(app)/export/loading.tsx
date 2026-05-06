@@ -16,7 +16,7 @@ function Bone({ className, style }: { className?: string; style?: React.CSSPrope
 
 export default function ExportLoading() {
   return (
-    <MobileScreen maxWidth="md" as="main" padY={false} className="py-10 sm:py-14">
+    <MobileScreen maxWidth="md" as="main" padY={false} className="py-5 sm:py-14">
 
       {/* Heading */}
       <div className="mb-8 space-y-2.5">
