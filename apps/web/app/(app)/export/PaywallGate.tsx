@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { ExportButton } from "./ExportButton";
 import { Button } from "@/components/ui/button";
+import { IOSPaywall } from "@/components/shared/IOSPaywall";
+import { isCapacitorIOS } from "@/lib/capacitor";
 
 type Item = {
   id:       string;
@@ -43,6 +45,9 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
   const [interval, setInterval] = useState<Interval>("year");
+  const [isIOS,    setIsIOS]    = useState(false);
+
+  useEffect(() => { setIsIOS(isCapacitorIOS()); }, []);
 
   async function handleUnlock() {
     setLoading(true);
@@ -153,6 +158,24 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
   }
 
   // ── Locked: blurred preview + paywall card ────────────────────────────────
+  if (isIOS) {
+    return (
+      <motion.div
+        className="mb-8 rounded-2xl px-6 py-7"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        style={{
+          backgroundColor: "rgba(13, 20, 33, 0.92)",
+          border:          "1px solid rgba(34,197,94,0.22)",
+          boxShadow:       "0 2px 8px rgba(0,0,0,0.5), 0 0 48px rgba(34,197,94,0.07)",
+        }}
+      >
+        <IOSPaywall />
+      </motion.div>
+    );
+  }
+
   return (
     <>
       {/* Blurred preview */}

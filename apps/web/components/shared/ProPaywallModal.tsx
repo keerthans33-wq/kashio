@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,6 +8,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { IOSPaywall } from "@/components/shared/IOSPaywall";
+import { isCapacitorIOS } from "@/lib/capacitor";
 
 type Props = {
   open:         boolean;
@@ -31,6 +33,9 @@ export function ProPaywallModal({ open, onOpenChange }: Props) {
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
   const [interval, setInterval] = useState<Interval>("year");
+  const [isIOS,    setIsIOS]    = useState(false);
+
+  useEffect(() => { setIsIOS(isCapacitorIOS()); }, []);
 
   // Calls the shared Pro checkout endpoint. One subscription unlocks all features
   // (export, receipts, review, dashboard) via isProUser() in lib/plan.ts.
@@ -76,6 +81,10 @@ export function ProPaywallModal({ open, onOpenChange }: Props) {
             className="pointer-events-none absolute inset-0"
             style={{ background: "radial-gradient(ellipse 80% 50% at 50% 100%, rgba(34,197,94,0.06) 0%, transparent 100%)" }}
           />
+
+          {isIOS ? (
+            <IOSPaywall onSuccess={() => onOpenChange(false)} />
+          ) : (<>
 
           {/* Lock icon */}
           <div
@@ -218,6 +227,7 @@ export function ProPaywallModal({ open, onOpenChange }: Props) {
             <a href="https://kashio.com.au/legal/disclaimer" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:opacity-70">Disclaimer</a>.
             Cancel anytime.
           </p>
+          </>)}
         </div>
       </DialogContent>
     </Dialog>

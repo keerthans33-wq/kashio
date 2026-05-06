@@ -5,6 +5,7 @@ import { ThemeToggle } from "../components/shell/ThemeToggle";
 import { UserContext, useUserContext } from "../../lib/user-context";
 import { ReceiptUploadFab } from "../../components/shared/ReceiptUploadFab";
 import { BottomNav } from "../../components/ui/bottom-nav";
+import { RevenueCatProvider } from "../../components/providers/RevenueCatProvider";
 
 function AppLayoutInner({ children }: { children: React.ReactNode }) {
   const userState = useUserContext();
@@ -19,6 +20,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
 
   return (
     <UserContext.Provider value={userState}>
+      <RevenueCatProvider>
       <div className="flex min-h-screen flex-col">
         <Nav />
 
@@ -78,6 +80,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
           </div>
         </footer>
       </div>
+      </RevenueCatProvider>
     </UserContext.Provider>
   );
 }

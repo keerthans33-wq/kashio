@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { IOSPaywall } from "@/components/shared/IOSPaywall";
+import { isCapacitorIOS } from "@/lib/capacitor";
 
 type Interval = "month" | "year";
 
@@ -16,6 +18,9 @@ export function DashboardProUpsell() {
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
   const [interval, setInterval] = useState<Interval>("year");
+  const [isIOS,    setIsIOS]    = useState(false);
+
+  useEffect(() => { setIsIOS(isCapacitorIOS()); }, []);
 
   async function handleUpgrade() {
     setLoading(true);
@@ -37,6 +42,21 @@ export function DashboardProUpsell() {
       setError("Network error. Please check your connection.");
       setLoading(false);
     }
+  }
+
+  if (isIOS) {
+    return (
+      <div
+        className="rounded-2xl overflow-hidden px-5 py-6"
+        style={{
+          backgroundColor: "rgba(13,20,33,0.92)",
+          border:          "1px solid rgba(34,197,94,0.22)",
+          boxShadow:       "0 0 40px rgba(34,197,94,0.06), 0 2px 12px rgba(0,0,0,0.5)",
+        }}
+      >
+        <IOSPaywall />
+      </div>
+    );
   }
 
   return (

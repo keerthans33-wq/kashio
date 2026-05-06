@@ -26,6 +26,7 @@
     "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.5.0",
     "@react-pdf/renderer": "^4.3.2",
+    "@revenuecat/purchases-capacitor": "^13.0.1",
     "@supabase/ssr": "^0.10.0",
     "@supabase/supabase-js": "^2.101.1",
     "@types/react-pdf": "^6.2.0",

@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { IOSPaywall } from "@/components/shared/IOSPaywall";
+import { isCapacitorIOS } from "@/lib/capacitor";
 
 type Props = {
   hiddenCount: number;
@@ -14,6 +16,9 @@ export function ReviewPaywallCard({ hiddenCount, hiddenValue }: Props) {
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
   const [interval, setInterval] = useState<Interval>("month");
+  const [isIOS,    setIsIOS]    = useState(false);
+
+  useEffect(() => { setIsIOS(isCapacitorIOS()); }, []);
 
   const fmtValue = hiddenValue.toLocaleString("en-AU", {
     style:               "currency",
@@ -41,6 +46,21 @@ export function ReviewPaywallCard({ hiddenCount, hiddenValue }: Props) {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (isIOS) {
+    return (
+      <div
+        className="mt-4 rounded-2xl px-6 py-6"
+        style={{
+          backgroundColor: "rgba(13, 20, 33, 0.92)",
+          border:          "1px solid rgba(34,197,94,0.20)",
+          boxShadow:       "0 2px 8px rgba(0,0,0,0.4), 0 0 40px rgba(34,197,94,0.05)",
+        }}
+      >
+        <IOSPaywall />
+      </div>
+    );
   }
 
   return (
