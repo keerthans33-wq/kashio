@@ -143,10 +143,10 @@ export default async function Dashboard() {
   const confirmedCatCount = new Set(confirmed.map((c) => c.category)).size;
 
   return (
-    <MobileScreen maxWidth="md" as="main" padY={false} className="py-8 sm:py-12">
+    <MobileScreen maxWidth="md" as="main" padY={false} className="py-5 sm:py-12">
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <FadeIn className="mb-6 flex items-center justify-between gap-4">
+      <FadeIn className="mb-4 flex items-center justify-between gap-4">
         <div>
           <p
             className="text-[10px] font-semibold uppercase tracking-widest mb-1"
@@ -197,7 +197,7 @@ export default async function Dashboard() {
       {/* ── Hero deduction card ─────────────────────────────────────────────── */}
       <FadeIn delay={0.05} className="mb-3">
         <div
-          className="relative overflow-hidden rounded-2xl px-5 py-5"
+          className="relative overflow-hidden rounded-2xl px-5 py-6"
           style={{
             backgroundColor: "rgba(13, 20, 33, 0.92)",
             border:          "1px solid rgba(34,197,94,0.22)",
@@ -272,7 +272,7 @@ export default async function Dashboard() {
         <div className="grid grid-cols-2 gap-3">
           {/* Readiness */}
           <div
-            className="rounded-2xl px-4 py-3.5 flex flex-col gap-0.5"
+            className="rounded-2xl px-4 py-4 flex flex-col gap-0.5"
             style={{
               backgroundColor: "rgba(13,20,33,0.88)",
               border:          "1px solid rgba(255,255,255,0.07)",
@@ -294,7 +294,7 @@ export default async function Dashboard() {
 
           {/* To review */}
           <div
-            className="rounded-2xl px-4 py-3.5 flex flex-col gap-0.5"
+            className="rounded-2xl px-4 py-4 flex flex-col gap-0.5"
             style={{
               backgroundColor: "rgba(13,20,33,0.88)",
               border: pending.length > 0
