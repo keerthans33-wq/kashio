@@ -90,13 +90,13 @@ export function ReviewPaywallCard({ hiddenCount, hiddenValue }: Props) {
               color:           interval === i ? "#22C55E" : "var(--text-muted)",
             }}
           >
-            {i === "month" ? "Monthly · $4.99" : "Annual · $39.99"}
+            {i === "month" ? "Monthly · $5.99" : "Annual · $39.99"}
             {i === "year" && (
               <span
                 className="ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold"
                 style={{ backgroundColor: "rgba(34,197,94,0.20)", color: "#22C55E" }}
               >
-                Save 33%
+                Save 44%
               </span>
             )}
           </button>

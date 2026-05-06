@@ -128,13 +128,13 @@ export function DashboardProUpsell() {
                 className="text-[16px] font-bold tabular-nums leading-none"
                 style={{ color: interval === i ? "#22C55E" : "var(--text-secondary)" }}
               >
-                {i === "year" ? "$39.99" : "$4.99"}
+                {i === "year" ? "$39.99" : "$5.99"}
               </span>
               <span
                 className="mt-0.5 text-[10px]"
                 style={{ color: interval === i ? "rgba(34,197,94,0.70)" : "var(--text-muted)" }}
               >
-                {i === "year" ? "/ year · save 33%" : "/ month"}
+                {i === "year" ? "/ year · save 44%" : "/ month"}
               </span>
             </button>
           ))}
