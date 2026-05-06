@@ -25,8 +25,12 @@ export async function POST(req: Request) {
 
   // Resolve price ID for the requested billing interval.
   // Falls back to the legacy STRIPE_PRICE_ID for existing deployments.
-  const monthlyPriceId = process.env.STRIPE_MONTHLY_PRICE_ID ?? process.env.STRIPE_PRICE_ID;
-  const annualPriceId  = process.env.STRIPE_ANNUAL_PRICE_ID  ?? process.env.STRIPE_PRICE_ID;
+  const monthlyPriceId = process.env.STRIPE_MONTHLY_PRICE_ID
+    ?? process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID
+    ?? process.env.STRIPE_PRICE_ID;
+  const annualPriceId  = process.env.STRIPE_ANNUAL_PRICE_ID
+    ?? process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID
+    ?? process.env.STRIPE_PRICE_ID;
   const priceId = interval === "year" ? annualPriceId : monthlyPriceId;
 
   if (!priceId || priceId.startsWith("price_xxx")) {

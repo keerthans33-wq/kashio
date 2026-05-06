@@ -29,9 +29,9 @@ type Props = {
 
 type Interval = "month" | "year";
 
-const MONTHLY_PRICE = "$4.99";
+const MONTHLY_PRICE = "$5.99";
 const ANNUAL_PRICE  = "$39.99";
-const ANNUAL_SAVING = "Save 33%";
+const ANNUAL_SAVING = "Save 44%";
 
 const fmt = (n: number) =>
   n.toLocaleString("en-AU", { style: "currency", currency: "AUD", minimumFractionDigits: 2, maximumFractionDigits: 2 });

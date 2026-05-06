@@ -14,19 +14,27 @@ const PREVIEW_ROWS = [
 
 export function DashboardProUpsell() {
   const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState<string | null>(null);
   const [interval, setInterval] = useState<Interval>("year");
 
   async function handleUpgrade() {
     setLoading(true);
+    setError(null);
     try {
       const res  = await fetch("/api/stripe/create-checkout-session", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ interval, cancelPath: "/dashboard" }),
       });
-      const body = await res.json() as { url?: string };
-      if (res.ok && body.url) window.location.href = body.url;
-    } finally {
+      const body = await res.json() as { url?: string; error?: string };
+      if (res.ok && body.url) {
+        window.location.href = body.url;
+      } else {
+        setError(body.error ?? "Something went wrong. Please try again.");
+        setLoading(false);
+      }
+    } catch {
+      setError("Network error. Please check your connection.");
       setLoading(false);
     }
   }
@@ -120,18 +128,23 @@ export function DashboardProUpsell() {
                 className="text-[16px] font-bold tabular-nums leading-none"
                 style={{ color: interval === i ? "#22C55E" : "var(--text-secondary)" }}
               >
-                {i === "year" ? "$39.99" : "$4.99"}
+                {i === "year" ? "$39.99" : "$5.99"}
               </span>
               <span
                 className="mt-0.5 text-[10px]"
                 style={{ color: interval === i ? "rgba(34,197,94,0.70)" : "var(--text-muted)" }}
               >
-                {i === "year" ? "/ year · save 33%" : "/ month"}
+                {i === "year" ? "/ year · save 44%" : "/ month"}
               </span>
             </button>
           ))}
         </div>
 
+        {error && (
+          <p className="mb-2 text-center text-[11px]" style={{ color: "#f87171" }}>
+            {error}
+          </p>
+        )}
         <Button className="w-full" size="sm" onClick={handleUpgrade} disabled={loading}>
           {loading ? "Redirecting…" : "Unlock Pro"}
         </Button>
