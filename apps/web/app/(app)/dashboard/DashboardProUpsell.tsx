@@ -14,19 +14,27 @@ const PREVIEW_ROWS = [
 
 export function DashboardProUpsell() {
   const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState<string | null>(null);
   const [interval, setInterval] = useState<Interval>("year");
 
   async function handleUpgrade() {
     setLoading(true);
+    setError(null);
     try {
       const res  = await fetch("/api/stripe/create-checkout-session", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ interval, cancelPath: "/dashboard" }),
       });
-      const body = await res.json() as { url?: string };
-      if (res.ok && body.url) window.location.href = body.url;
-    } finally {
+      const body = await res.json() as { url?: string; error?: string };
+      if (res.ok && body.url) {
+        window.location.href = body.url;
+      } else {
+        setError(body.error ?? "Something went wrong. Please try again.");
+        setLoading(false);
+      }
+    } catch {
+      setError("Network error. Please check your connection.");
       setLoading(false);
     }
   }
@@ -132,6 +140,11 @@ export function DashboardProUpsell() {
           ))}
         </div>
 
+        {error && (
+          <p className="mb-2 text-center text-[11px]" style={{ color: "#f87171" }}>
+            {error}
+          </p>
+        )}
         <Button className="w-full" size="sm" onClick={handleUpgrade} disabled={loading}>
           {loading ? "Redirecting…" : "Unlock Pro"}
         </Button>
