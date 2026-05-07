@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+// Web: Stripe checkout. iOS: RevenueCat via IOSPaywall — Stripe must never open inside the iOS app.
+
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { IOSPaywall } from "@/components/shared/IOSPaywall";
-import { isCapacitorIOS } from "@/lib/capacitor";
+import { useRevenueCat } from "@/components/providers/RevenueCatProvider";
 
 type Interval = "month" | "year";
 
@@ -15,14 +17,14 @@ const PREVIEW_ROWS = [
 ];
 
 export function DashboardProUpsell() {
+  const { isIOS } = useRevenueCat();
+
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
   const [interval, setInterval] = useState<Interval>("year");
-  const [isIOS,    setIsIOS]    = useState(false);
-
-  useEffect(() => { setIsIOS(isCapacitorIOS()); }, []);
 
   async function handleUpgrade() {
+    if (isIOS) return; // hard guard — Stripe must never open inside the iOS app
     setLoading(true);
     setError(null);
     try {

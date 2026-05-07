@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+// Web: Stripe checkout. iOS: RevenueCat via IOSPaywall — Stripe must never open inside the iOS app.
+
+import { useState } from "react";
 import { motion } from "motion/react";
 import { ExportButton } from "./ExportButton";
 import { Button } from "@/components/ui/button";
 import { IOSPaywall } from "@/components/shared/IOSPaywall";
-import { isCapacitorIOS } from "@/lib/capacitor";
+import { useRevenueCat } from "@/components/providers/RevenueCatProvider";
 
 type Item = {
   id:       string;
@@ -42,14 +44,14 @@ const fmtRound = (n: number) =>
   n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 
 export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, confirmedCount }: Props) {
+  const { isIOS } = useRevenueCat();
+
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
   const [interval, setInterval] = useState<Interval>("year");
-  const [isIOS,    setIsIOS]    = useState(false);
-
-  useEffect(() => { setIsIOS(isCapacitorIOS()); }, []);
 
   async function handleUnlock() {
+    if (isIOS) return; // hard guard — Stripe must never open inside the iOS app
     setLoading(true);
     setError(null);
     try {

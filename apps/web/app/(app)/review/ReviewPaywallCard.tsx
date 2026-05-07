@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+// Web: Stripe checkout. iOS: RevenueCat via IOSPaywall — Stripe must never open inside the iOS app.
+
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { IOSPaywall } from "@/components/shared/IOSPaywall";
-import { isCapacitorIOS } from "@/lib/capacitor";
+import { useRevenueCat } from "@/components/providers/RevenueCatProvider";
 
 type Props = {
   hiddenCount: number;
@@ -13,12 +15,11 @@ type Props = {
 type Interval = "month" | "year";
 
 export function ReviewPaywallCard({ hiddenCount, hiddenValue }: Props) {
+  const { isIOS } = useRevenueCat();
+
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
   const [interval, setInterval] = useState<Interval>("month");
-  const [isIOS,    setIsIOS]    = useState(false);
-
-  useEffect(() => { setIsIOS(isCapacitorIOS()); }, []);
 
   const fmtValue = hiddenValue.toLocaleString("en-AU", {
     style:               "currency",
@@ -27,6 +28,7 @@ export function ReviewPaywallCard({ hiddenCount, hiddenValue }: Props) {
   });
 
   async function handleUnlock() {
+    if (isIOS) return; // hard guard — Stripe must never open inside the iOS app
     setLoading(true);
     setError(null);
     try {

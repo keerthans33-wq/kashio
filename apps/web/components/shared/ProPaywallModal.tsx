@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+// Web: Stripe checkout. iOS: RevenueCat via IOSPaywall — Stripe must never open inside the iOS app.
+
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { IOSPaywall } from "@/components/shared/IOSPaywall";
-import { isCapacitorIOS } from "@/lib/capacitor";
+import { useRevenueCat } from "@/components/providers/RevenueCatProvider";
 
 type Props = {
   open:         boolean;
@@ -30,16 +32,15 @@ const BULLETS = [
 ];
 
 export function ProPaywallModal({ open, onOpenChange }: Props) {
+  const { isIOS } = useRevenueCat();
+
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
   const [interval, setInterval] = useState<Interval>("year");
-  const [isIOS,    setIsIOS]    = useState(false);
 
-  useEffect(() => { setIsIOS(isCapacitorIOS()); }, []);
-
-  // Calls the shared Pro checkout endpoint. One subscription unlocks all features
-  // (export, receipts, review, dashboard) via isProUser() in lib/plan.ts.
+  // Web: Stripe checkout. One subscription unlocks all features via isProUser() in lib/plan.ts.
   async function handleUpgrade() {
+    if (isIOS) return; // hard guard — Stripe must never open inside the iOS app
     setLoading(true);
     setError(null);
     try {
