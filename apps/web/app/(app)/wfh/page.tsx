@@ -26,7 +26,7 @@ export default async function WfhLog() {
   const { monthHours, monthEst, ytdHours, ytdEst, monthName } = calcWfhSummary(entries);
 
   return (
-    <MobileScreen maxWidth="sm" as="main" padY={false} className="py-5 sm:py-10">
+    <MobileScreen maxWidth="sm" as="main" padY={false} className="py-3 sm:py-10">
 
       {/* Header */}
       <FadeIn className="flex items-start justify-between gap-4">

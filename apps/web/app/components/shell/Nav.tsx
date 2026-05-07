@@ -63,7 +63,7 @@ export default function Nav() {
         paddingTop:           "env(safe-area-inset-top)",
       }}
     >
-      <div className="flex items-stretch h-12 pl-1 pr-2">
+      <div className="flex items-stretch h-10 sm:h-12 pl-1 pr-2">
 
         {/* ── Desktop: tab links (hidden on mobile — bottom nav handles it) ── */}
         <div className="hidden sm:flex flex-1 items-stretch overflow-x-auto scrollbar-none min-w-0">

@@ -143,10 +143,10 @@ export default async function Dashboard() {
   const confirmedCatCount = new Set(confirmed.map((c) => c.category)).size;
 
   return (
-    <MobileScreen maxWidth="md" as="main" padY={false} className="py-5 sm:py-12">
+    <MobileScreen maxWidth="md" as="main" padY={false} className="py-3 sm:py-12">
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <FadeIn className="mb-4 flex items-center justify-between gap-4">
+      <FadeIn className="mb-3 flex items-center justify-between gap-4">
         <div>
           <p
             className="text-[10px] font-semibold uppercase tracking-widest mb-1"

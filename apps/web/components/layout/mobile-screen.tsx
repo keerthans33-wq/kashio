@@ -44,7 +44,7 @@ export function MobileScreen({
         "relative z-10 mx-auto w-full",
         MAX[maxWidth],
         padX && "px-5",
-        padY && "py-5 sm:py-14",
+        padY && "py-3 sm:py-14",
         className,
       )}
       {...props}

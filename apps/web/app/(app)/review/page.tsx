@@ -121,7 +121,7 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
   const isFiltered = category || confidence;
 
   return (
-    <MobileScreen maxWidth="lg" as="main" padY={false} className="py-5 sm:py-10">
+    <MobileScreen maxWidth="lg" as="main" padY={false} className="py-3 sm:py-10">
 
       {/* Header */}
       <FadeIn className="flex items-start justify-between gap-4">
