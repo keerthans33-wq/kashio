@@ -10,6 +10,7 @@ type PurchaseStatus = "idle" | "purchasing" | "success" | "cancelled";
 
 type Props = {
   onSuccess?: () => void;
+  compact?:   boolean;   // tighter vertical rhythm for dashboard card context
 };
 
 const BULLETS = [
@@ -19,7 +20,7 @@ const BULLETS = [
   "Up to 100 receipt uploads",
 ];
 
-export function IOSPaywall({ onSuccess }: Props) {
+export function IOSPaywall({ onSuccess, compact = false }: Props) {
   const { offerings, loading, error, purchase, restore } = useRevenueCat();
   const [selected,      setSelected]      = useState<Interval>("year");
   const [purchaseStatus, setPurchaseStatus] = useState<PurchaseStatus>("idle");
@@ -94,7 +95,7 @@ export function IOSPaywall({ onSuccess }: Props) {
     <div className="space-y-0">
       {/* Lock icon */}
       <div
-        className="mb-5 flex h-10 w-10 items-center justify-center rounded-full"
+        className={`${compact ? "mb-3" : "mb-5"} flex h-10 w-10 items-center justify-center rounded-full`}
         style={{ backgroundColor: "rgba(34,197,94,0.10)", border: "1px solid rgba(34,197,94,0.20)" }}
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} style={{ color: "#22C55E" }}>
@@ -102,17 +103,20 @@ export function IOSPaywall({ onSuccess }: Props) {
         </svg>
       </div>
 
-      <h2 className="text-[22px] font-bold mb-2 leading-snug" style={{ color: "var(--text-primary)" }}>
+      <h2
+        className={`${compact ? "text-[18px] mb-1" : "text-[22px] mb-2"} font-bold leading-snug`}
+        style={{ color: "var(--text-primary)" }}
+      >
         Unlock Kashio Pro
       </h2>
-      <p className="text-[13px] mb-5" style={{ color: "var(--text-secondary)" }}>
+      <p className={`text-[13px] ${compact ? "mb-3" : "mb-5"}`} style={{ color: "var(--text-secondary)" }}>
         Get your full tax summary, review all deductions, and keep proof in one place.
       </p>
 
       {/* Feature bullets */}
-      <ul className="mb-5 space-y-2.5">
+      <ul className={`${compact ? "mb-3 space-y-1.5" : "mb-5 space-y-2.5"}`}>
         {BULLETS.map((item) => (
-          <li key={item} className="flex items-center gap-2.5 text-[13px]" style={{ color: "var(--text-secondary)" }}>
+          <li key={item} className={`flex items-center gap-2.5 ${compact ? "text-[12px]" : "text-[13px]"}`} style={{ color: "var(--text-secondary)" }}>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" style={{ color: "#22C55E" }}>
               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
             </svg>
@@ -123,7 +127,7 @@ export function IOSPaywall({ onSuccess }: Props) {
 
       {/* Billing interval toggle */}
       <div
-        className="mb-4 flex rounded-xl p-1"
+        className={`${compact ? "mb-3" : "mb-4"} flex rounded-xl p-1`}
         style={{ backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)" }}
       >
         {(["month", "year"] as Interval[]).map((i) => (
@@ -131,7 +135,7 @@ export function IOSPaywall({ onSuccess }: Props) {
             key={i}
             onClick={() => { setSelected(i); setPurchaseStatus("idle"); }}
             disabled={isPurchasing}
-            className="relative flex-1 rounded-lg py-2 text-[13px] font-medium transition-all duration-150"
+            className={`relative flex-1 rounded-lg ${compact ? "py-1.5" : "py-2"} text-[13px] font-medium transition-all duration-150`}
             style={{
               backgroundColor: selected === i ? "rgba(34,197,94,0.15)" : "transparent",
               border:          selected === i ? "1px solid rgba(34,197,94,0.25)" : "1px solid transparent",
@@ -152,8 +156,11 @@ export function IOSPaywall({ onSuccess }: Props) {
       </div>
 
       {/* Price */}
-      <div className="mb-5 flex items-baseline gap-2">
-        <span className="text-[34px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
+      <div className={`${compact ? "mb-3" : "mb-5"} flex items-baseline gap-2`}>
+        <span
+          className={`${compact ? "text-[26px]" : "text-[34px]"} font-bold tabular-nums leading-none`}
+          style={{ color: "var(--text-primary)" }}
+        >
           {selected === "month" ? monthlyPrice : annualPrice}
         </span>
         <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>
@@ -163,7 +170,7 @@ export function IOSPaywall({ onSuccess }: Props) {
 
       <Button
         variant="primary"
-        className="w-full mb-3"
+        className={`w-full ${compact ? "mb-2" : "mb-3"}`}
         onClick={handlePurchase}
         disabled={isPurchasing || (!monthlyPkg && !annualPkg)}
       >
@@ -196,7 +203,7 @@ export function IOSPaywall({ onSuccess }: Props) {
       )}
 
       <button
-        className="w-full mb-4 text-[13px] py-2 transition-opacity hover:opacity-70"
+        className={`w-full ${compact ? "mb-3" : "mb-4"} text-[13px] py-2 transition-opacity hover:opacity-70`}
         style={{ color: "var(--text-muted)" }}
         onClick={handleRestore}
         disabled={restoring || isPurchasing}

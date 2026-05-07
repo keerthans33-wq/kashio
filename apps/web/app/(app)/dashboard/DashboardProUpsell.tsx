@@ -49,14 +49,14 @@ export function DashboardProUpsell() {
   if (isIOS) {
     return (
       <div
-        className="rounded-2xl overflow-hidden px-5 py-6"
+        className="rounded-2xl overflow-hidden px-4 py-4"
         style={{
           backgroundColor: "rgba(13,20,33,0.92)",
           border:          "1px solid rgba(34,197,94,0.22)",
           boxShadow:       "0 0 40px rgba(34,197,94,0.06), 0 2px 12px rgba(0,0,0,0.5)",
         }}
       >
-        <IOSPaywall />
+        <IOSPaywall compact />
       </div>
     );
   }

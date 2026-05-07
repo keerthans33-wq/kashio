@@ -24,8 +24,8 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen flex-col">
         <Nav />
 
-        {/* pb-24 clears the fixed bottom nav on mobile; removed on sm+ */}
-        <div className="flex-1 pb-24 sm:pb-0">{children}</div>
+        {/* pb-36 clears both the fixed bottom nav (64px) and the receipt FAB (~126px top edge) on mobile */}
+        <div className="flex-1 pb-36 sm:pb-0">{children}</div>
 
         <ReceiptUploadFab />
         <BottomNav />
