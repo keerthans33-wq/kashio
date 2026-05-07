@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import type { PurchasesPackage } from "@/lib/revenuecat.client";
 
 type Interval = "month" | "year";
+type PurchaseStatus = "idle" | "purchasing" | "success" | "cancelled";
 
 type Props = {
   onSuccess?: () => void;
@@ -20,10 +21,12 @@ const BULLETS = [
 
 export function IOSPaywall({ onSuccess }: Props) {
   const { offerings, loading, error, purchase, restore } = useRevenueCat();
-  const [selected, setSelected] = useState<Interval>("year");
-  const [restoring, setRestoring] = useState(false);
+  const [selected,      setSelected]      = useState<Interval>("year");
+  const [purchaseStatus, setPurchaseStatus] = useState<PurchaseStatus>("idle");
+  const [restoring,     setRestoring]     = useState(false);
+  const [restoreMsg,    setRestoreMsg]    = useState<string | null>(null);
 
-  const current = offerings?.current;
+  const current     = offerings?.current;
   const monthlyPkg: PurchasesPackage | null = current?.monthly ?? null;
   const annualPkg:  PurchasesPackage | null = current?.annual  ?? null;
 
@@ -33,22 +36,59 @@ export function IOSPaywall({ onSuccess }: Props) {
   async function handlePurchase() {
     const pkg = selected === "year" ? annualPkg : monthlyPkg;
     if (!pkg) return;
-    const success = await purchase(pkg);
-    if (success) {
+    setPurchaseStatus("purchasing");
+    setRestoreMsg(null);
+    const outcome = await purchase(pkg);
+    if (outcome === "success") {
+      setPurchaseStatus("success");
       onSuccess?.();
-      window.location.reload();
+      setTimeout(() => window.location.reload(), 1400);
+    } else if (outcome === "cancelled") {
+      setPurchaseStatus("cancelled");
+    } else {
+      // "error" — message is in RC context `error`; reset status so UI stays interactive
+      setPurchaseStatus("idle");
     }
   }
 
   async function handleRestore() {
     setRestoring(true);
+    setRestoreMsg(null);
+    setPurchaseStatus("idle");
     const success = await restore();
     setRestoring(false);
     if (success) {
+      setPurchaseStatus("success");
       onSuccess?.();
-      window.location.reload();
+      setTimeout(() => window.location.reload(), 1400);
+    } else {
+      setRestoreMsg("No active subscription found. If you believe this is wrong, contact support.");
     }
   }
+
+  // ── Success overlay ────────────────────────────────────────────────────────
+  if (purchaseStatus === "success") {
+    return (
+      <div className="flex flex-col items-center justify-center py-6 space-y-3 text-center">
+        <div
+          className="flex h-14 w-14 items-center justify-center rounded-full"
+          style={{ backgroundColor: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.30)" }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" viewBox="0 0 20 20" fill="currentColor" style={{ color: "#22C55E" }}>
+            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
+        </div>
+        <p className="text-[18px] font-bold" style={{ color: "var(--text-primary)" }}>
+          Kashio Pro unlocked
+        </p>
+        <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+          Loading your account…
+        </p>
+      </div>
+    );
+  }
+
+  const isPurchasing = purchaseStatus === "purchasing" || loading;
 
   return (
     <div className="space-y-0">
@@ -66,7 +106,7 @@ export function IOSPaywall({ onSuccess }: Props) {
         Unlock Kashio Pro
       </h2>
       <p className="text-[13px] mb-5" style={{ color: "var(--text-secondary)" }}>
-        Upload more receipts and unlock the full Kashio experience for tax time.
+        Get your full tax summary, review all deductions, and keep proof in one place.
       </p>
 
       {/* Feature bullets */}
@@ -89,7 +129,8 @@ export function IOSPaywall({ onSuccess }: Props) {
         {(["month", "year"] as Interval[]).map((i) => (
           <button
             key={i}
-            onClick={() => setSelected(i)}
+            onClick={() => { setSelected(i); setPurchaseStatus("idle"); }}
+            disabled={isPurchasing}
             className="relative flex-1 rounded-lg py-2 text-[13px] font-medium transition-all duration-150"
             style={{
               backgroundColor: selected === i ? "rgba(34,197,94,0.15)" : "transparent",
@@ -124,14 +165,33 @@ export function IOSPaywall({ onSuccess }: Props) {
         variant="primary"
         className="w-full mb-3"
         onClick={handlePurchase}
-        disabled={loading || (!monthlyPkg && !annualPkg)}
+        disabled={isPurchasing || (!monthlyPkg && !annualPkg)}
       >
-        {loading ? "Processing…" : "Unlock Pro"}
+        {isPurchasing ? (
+          <span className="flex items-center justify-center gap-2">
+            <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            Processing…
+          </span>
+        ) : "Unlock Pro"}
       </Button>
 
-      {error && (
+      {/* Status messages — cancelled, error, restore */}
+      {purchaseStatus === "cancelled" && (
+        <p className="text-center text-[12px] mb-2" style={{ color: "rgba(255,255,255,0.55)" }}>
+          Purchase cancelled. You can try again anytime.
+        </p>
+      )}
+      {error && purchaseStatus === "idle" && (
         <p className="text-center text-[12px] mb-2" style={{ color: "#f87171" }}>
           {error}
+        </p>
+      )}
+      {restoreMsg && (
+        <p className="text-center text-[12px] mb-2" style={{ color: "rgba(255,255,255,0.55)" }}>
+          {restoreMsg}
         </p>
       )}
 
@@ -139,7 +199,7 @@ export function IOSPaywall({ onSuccess }: Props) {
         className="w-full mb-4 text-[13px] py-2 transition-opacity hover:opacity-70"
         style={{ color: "var(--text-muted)" }}
         onClick={handleRestore}
-        disabled={restoring || loading}
+        disabled={restoring || isPurchasing}
       >
         {restoring ? "Restoring…" : "Restore purchases"}
       </button>

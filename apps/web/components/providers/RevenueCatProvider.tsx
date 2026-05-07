@@ -7,13 +7,15 @@ import type { PurchasesPackage } from "@/lib/revenuecat.client";
 
 type Offering = Awaited<ReturnType<typeof import("@/lib/revenuecat.client").getOfferings>>;
 
+export type PurchaseOutcome = "success" | "cancelled" | "error";
+
 type RCContextValue = {
   isIOS:       boolean;
   offerings:   Offering | null;
   isPro:       boolean;
   loading:     boolean;
   error:       string | null;
-  purchase:    (pkg: PurchasesPackage) => Promise<boolean>;
+  purchase:    (pkg: PurchasesPackage) => Promise<PurchaseOutcome>;
   restore:     () => Promise<boolean>;
 };
 
@@ -23,7 +25,7 @@ const defaultCtx: RCContextValue = {
   isPro:    false,
   loading:  false,
   error:    null,
-  purchase: async () => false,
+  purchase: async () => "error",
   restore:  async () => false,
 };
 
@@ -74,7 +76,7 @@ export function RevenueCatProvider({ children }: { children: React.ReactNode }) 
     }
   }
 
-  async function purchase(pkg: PurchasesPackage): Promise<boolean> {
+  async function purchase(pkg: PurchasesPackage): Promise<PurchaseOutcome> {
     setLoading(true);
     setError(null);
     try {
@@ -84,14 +86,14 @@ export function RevenueCatProvider({ children }: { children: React.ReactNode }) 
       if (pro) {
         setIsPro(true);
         await syncToServer();
+        return "success";
       }
-      return pro;
+      return "error";
     } catch (err: unknown) {
       const e = err as { userCancelled?: boolean; message?: string };
-      if (!e.userCancelled) {
-        setError(e.message ?? "Purchase failed. Please try again.");
-      }
-      return false;
+      if (e.userCancelled) return "cancelled";
+      setError(e.message ?? "Purchase failed. Please try again.");
+      return "error";
     } finally {
       setLoading(false);
     }
