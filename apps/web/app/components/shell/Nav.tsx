@@ -63,7 +63,7 @@ export default function Nav() {
         paddingTop:           "env(safe-area-inset-top)",
       }}
     >
-      <div className="flex items-stretch h-10 sm:h-12 pl-1 pr-2">
+      <div className="relative flex items-stretch h-10 sm:h-12 pl-1 pr-2">
 
         {/* ── Desktop: tab links (hidden on mobile — bottom nav handles it) ── */}
         <div className="hidden sm:flex flex-1 items-stretch overflow-x-auto scrollbar-none min-w-0">
@@ -88,8 +88,8 @@ export default function Nav() {
           })}
         </div>
 
-        {/* ── Mobile: centered page title (hidden on sm+) ─────────────────── */}
-        <div className="flex sm:hidden flex-1 items-center justify-center">
+        {/* ── Mobile: page title absolutely centred — unaffected by button widths ── */}
+        <div className="absolute inset-0 flex sm:hidden items-center justify-center pointer-events-none">
           <span
             className="text-[15px] font-semibold tracking-[-0.01em]"
             style={{ color: "rgba(255,255,255,0.92)" }}
@@ -99,7 +99,7 @@ export default function Nav() {
         </div>
 
         {/* ── Profile / sign-out button (all sizes) ────────────────────────── */}
-        <div ref={dropRef} className="relative flex items-center pl-1">
+        <div ref={dropRef} className="relative flex items-center pl-1 ml-auto sm:ml-0">
           <button
             onClick={() => setOpen((v) => !v)}
             aria-label="Account menu"
