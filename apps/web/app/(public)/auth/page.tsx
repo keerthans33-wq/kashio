@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "../../../lib/supabase";
+import { isCapacitorIOS } from "../../../lib/capacitor";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/shared/Logo";
 
@@ -64,6 +65,34 @@ export default function AuthPage() {
   async function handleGoogle() {
     setLoading(true);
     setMessage(null);
+
+    // iOS Capacitor: open OAuth in SFSafariViewController and handle the
+    // kashio:// deep-link callback in CapacitorAuthHandler.
+    if (isCapacitorIOS()) {
+      const redirectTo = "kashio://auth/callback";
+      console.log("[Kashio] Starting iOS Google OAuth with redirectTo:", redirectTo);
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options:  {
+          redirectTo,
+          skipBrowserRedirect: true,
+          queryParams: { prompt: "select_account" },
+        },
+      });
+      if (error) {
+        setMessage({ text: error.message, error: true });
+        setLoading(false);
+        return;
+      }
+      if (data?.url) {
+        const { Browser } = await import("@capacitor/browser");
+        await Browser.open({ url: data.url, presentationStyle: "popover" });
+        // Loading stays true — CapacitorAuthHandler handles the session and navigation.
+      }
+      return;
+    }
+
+    // Web: standard redirect flow
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options:  {

@@ -6,16 +6,13 @@ import { UserContext, useUserContext } from "../../lib/user-context";
 import { ReceiptUploadFab } from "../../components/shared/ReceiptUploadFab";
 import { BottomNav } from "../../components/ui/bottom-nav";
 import { RevenueCatProvider } from "../../components/providers/RevenueCatProvider";
+import { AppLoadingScreen } from "../../components/shared/AppLoadingScreen";
 
 function AppLayoutInner({ children }: { children: React.ReactNode }) {
   const userState = useUserContext();
 
   if (userState.loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/10 border-t-[#22C55E]" />
-      </div>
-    );
+    return <AppLoadingScreen />;
   }
 
   return (
