@@ -1,38 +1,68 @@
+import { MobileScreen } from "@/components/layout/mobile-screen";
+
+function Bone({ h, w, r = 8, className }: { h: number; w?: number | string; r?: number; className?: string }) {
+  return (
+    <div
+      className={className}
+      style={{
+        height:          h,
+        width:           w ?? "100%",
+        borderRadius:    r,
+        backgroundColor: "rgba(255,255,255,0.06)",
+        animation:       "pulse 2s cubic-bezier(0.4,0,0.6,1) infinite",
+        flexShrink:      0,
+      }}
+    />
+  );
+}
+
 export default function ReviewLoading() {
   return (
-    <main className="mx-auto max-w-3xl px-6 py-10">
-      <div className="h-8 w-24 rounded bg-gray-100 dark:bg-gray-800 animate-pulse" />
-      <div className="mt-2 h-4 w-96 max-w-full rounded bg-gray-100 dark:bg-gray-800 animate-pulse" />
+    <MobileScreen maxWidth="lg" as="main" padY={false} className="py-4 sm:py-10">
+
+      {/* Header */}
+      <div className="mb-5 space-y-2">
+        <Bone h={28} w={180} r={8} />
+        <Bone h={14} w={280} r={4} />
+      </div>
 
       {/* Summary tiles */}
-      <div className="mt-6 grid grid-cols-3 gap-3">
+      <div className="mb-5 grid grid-cols-3 gap-3">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
-            <div className="h-3 w-20 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
-            <div className="mt-2 h-7 w-10 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+          <div
+            key={i}
+            className="rounded-2xl px-4 py-3 space-y-2"
+            style={{ backgroundColor: "rgba(13,20,33,0.88)", border: "1px solid rgba(255,255,255,0.07)" }}
+          >
+            <Bone h={8} w={50} r={4} />
+            <Bone h={24} w={40} r={6} />
           </div>
         ))}
       </div>
 
-      {/* Cards */}
-      <div className="mt-8 space-y-4">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
-            <div className="flex justify-between">
-              <div className="space-y-2">
-                <div className="h-3 w-16 rounded bg-gray-100 dark:bg-gray-700 animate-pulse" />
-                <div className="h-5 w-36 rounded bg-gray-100 dark:bg-gray-700 animate-pulse" />
+      {/* Candidate cards */}
+      <div className="space-y-3">
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="rounded-2xl px-5 py-4"
+            style={{ backgroundColor: "rgba(13,20,33,0.88)", border: "1px solid rgba(255,255,255,0.07)" }}
+          >
+            <div className="flex items-start justify-between gap-4 mb-3">
+              <div className="space-y-1.5">
+                <Bone h={10} w={60} r={4} />
+                <Bone h={16} w={160 + i * 20} r={4} />
               </div>
-              <div className="space-y-2 text-right">
-                <div className="h-3 w-12 rounded bg-gray-100 dark:bg-gray-700 animate-pulse" />
-                <div className="h-5 w-20 rounded bg-gray-100 dark:bg-gray-700 animate-pulse" />
-              </div>
+              <Bone h={20} w={70} r={6} />
             </div>
-            <div className="mt-4 h-3 w-full rounded bg-gray-100 dark:bg-gray-700 animate-pulse" />
-            <div className="mt-2 h-3 w-3/4 rounded bg-gray-100 dark:bg-gray-700 animate-pulse" />
+            <div className="flex gap-2">
+              <Bone h={32} w={90} r={8} />
+              <Bone h={32} w={90} r={8} />
+            </div>
           </div>
         ))}
       </div>
-    </main>
+
+    </MobileScreen>
   );
 }

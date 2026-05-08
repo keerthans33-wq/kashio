@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { db } from "../../../lib/db";
 import { requireUserWithType } from "../../../lib/auth";
 import { calcWfhSummary } from "../../../lib/wfhSummary";
-import { WfhForm } from "./WfhForm";
-import { deleteWfhEntry } from "./actions";
+import { WfhEntriesSection } from "./WfhEntriesSection";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { MobileScreen } from "@/components/layout/mobile-screen";
 
@@ -85,7 +85,7 @@ export default async function WfhLog() {
         </FadeIn>
       )}
 
-      {/* Log form */}
+      {/* Log form + optimistic entry list */}
       <FadeIn delay={monthHours > 0 ? 0.1 : 0.06}>
         <div
           className="mt-5 rounded-2xl px-5 py-5"
@@ -98,63 +98,9 @@ export default async function WfhLog() {
           <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--text-muted)" }}>
             Add entry
           </p>
-          <WfhForm />
+          <WfhEntriesSection initialEntries={entries} totalHours={totalHours} />
         </div>
       </FadeIn>
-
-      {/* Entry log */}
-      {entries.length > 0 && (
-        <FadeIn delay={0.14}>
-          <div className="mt-8">
-            <div className="flex items-baseline justify-between mb-3">
-              <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
-                Log
-              </p>
-              <span className="text-[11px] tabular-nums" style={{ color: "var(--text-muted)" }}>
-                {entries.length} day{entries.length !== 1 ? "s" : ""} · {totalHours} hr{totalHours !== 1 ? "s" : ""}
-              </span>
-            </div>
-            <div className="space-y-2">
-              {entries.map((entry) => (
-                <div
-                  key={entry.id}
-                  className="flex items-center justify-between gap-4 rounded-xl px-4 py-3"
-                  style={{
-                    backgroundColor: "var(--bg-card)",
-                    border:          "1px solid var(--bg-border)",
-                    boxShadow:       "0 1px 2px rgba(0,0,0,0.3)",
-                  }}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="text-[13px] font-medium tabular-nums" style={{ color: "var(--text-primary)" }}>
-                      {new Date(entry.date + "T12:00:00").toLocaleDateString("en-AU", { day: "numeric", month: "short" })}
-                    </span>
-                    {entry.note && (
-                      <span className="truncate text-[12px]" style={{ color: "var(--text-muted)" }}>
-                        {entry.note}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-[13px] tabular-nums font-medium" style={{ color: "var(--text-secondary)" }}>
-                      {entry.hours} hr{entry.hours !== 1 ? "s" : ""}
-                    </span>
-                    <form action={deleteWfhEntry.bind(null, entry.id)}>
-                      <button
-                        type="submit"
-                        className="text-[12px] transition-colors duration-150 hover:text-red-400"
-                        style={{ color: "var(--text-muted)" }}
-                      >
-                        Remove
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </FadeIn>
-      )}
 
       {/* ATO note */}
       <p className="mt-8 text-xs" style={{ color: "var(--text-muted)", opacity: 0.6 }}>
@@ -163,7 +109,7 @@ export default async function WfhLog() {
 
       {/* Export shortcut */}
       <div className="mt-5 pt-5" style={{ borderTop: "1px solid var(--bg-border)" }}>
-        <a
+        <Link
           href="/export"
           className="flex items-center justify-between gap-3 group"
         >
@@ -181,7 +127,7 @@ export default async function WfhLog() {
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
-        </a>
+        </Link>
       </div>
 
     </MobileScreen>

@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { addWfhEntry } from "./actions";
 import { Button } from "@/components/ui/button";
 
-export function WfhForm() {
+type Props = {
+  onSubmit: (date: string, hours: number, note: string) => Promise<{ error: string } | undefined>;
+};
+
+export function WfhForm({ onSubmit }: Props) {
   const today = new Date().toLocaleDateString("en-CA");
 
   const [date,       setDate]       = useState(today);
@@ -30,7 +33,7 @@ export function WfhForm() {
 
     setSaving(true);
     try {
-      const result = await addWfhEntry(date, h, note.trim());
+      const result = await onSubmit(date, h, note.trim());
       if (result?.error) { setSaveError(result.error); }
       else { setHours(""); setNote(""); setSuccess(true); }
     } catch {
@@ -105,9 +108,7 @@ export function WfhForm() {
         style={inputStyle}
       />
 
-      {saveError && (
-        <p className="text-sm text-red-400">{saveError}</p>
-      )}
+      {saveError && <p className="text-sm text-red-400">{saveError}</p>}
       {success && (
         <p className="text-sm font-medium" style={{ color: "#22C55E" }}>Entry saved.</p>
       )}
