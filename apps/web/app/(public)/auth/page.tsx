@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "../../../lib/supabase";
+import { isCapacitorIOS } from "../../../lib/capacitor";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/shared/Logo";
 
@@ -64,6 +65,27 @@ export default function AuthPage() {
   async function handleGoogle() {
     setLoading(true);
     setMessage(null);
+
+    if (isCapacitorIOS()) {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options:  {
+          redirectTo:          "kashio://auth/callback",
+          skipBrowserRedirect: true,
+          queryParams:         { prompt: "select_account" },
+        },
+      });
+      if (error) {
+        setMessage({ text: error.message, error: true });
+        setLoading(false);
+      } else if (data?.url) {
+        const { Browser } = await import("@capacitor/browser");
+        await Browser.open({ url: data.url });
+        setLoading(false);
+      }
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options:  {

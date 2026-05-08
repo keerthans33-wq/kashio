@@ -31,8 +31,11 @@ export function IOSPaywall({ onSuccess, compact = false }: Props) {
   const monthlyPkg: PurchasesPackage | null = current?.monthly ?? null;
   const annualPkg:  PurchasesPackage | null = current?.annual  ?? null;
 
-  const monthlyPrice = monthlyPkg?.product.priceString ?? "$5.99";
-  const annualPrice  = annualPkg?.product.priceString  ?? "$39.99";
+  const monthlyPrice = monthlyPkg?.product.priceString ?? null;
+  const annualPrice  = annualPkg?.product.priceString  ?? null;
+
+  // True while RC hasn't resolved yet (no offerings and no error)
+  const pricesLoading = !offerings && !error;
 
   async function handlePurchase() {
     const pkg = selected === "year" ? annualPkg : monthlyPkg;
@@ -157,22 +160,30 @@ export function IOSPaywall({ onSuccess, compact = false }: Props) {
 
       {/* Price */}
       <div className={`${compact ? "mb-3" : "mb-5"} flex items-baseline gap-2`}>
-        <span
-          className={`${compact ? "text-[26px]" : "text-[34px]"} font-bold tabular-nums leading-none`}
-          style={{ color: "var(--text-primary)" }}
-        >
-          {selected === "month" ? monthlyPrice : annualPrice}
-        </span>
-        <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>
-          AUD / {selected === "month" ? "month" : "year"}
-        </span>
+        {pricesLoading ? (
+          <div className={`${compact ? "h-7" : "h-9"} w-24 rounded-md animate-pulse`} style={{ backgroundColor: "rgba(255,255,255,0.08)" }} />
+        ) : (
+          <>
+            <span
+              className={`${compact ? "text-[26px]" : "text-[34px]"} font-bold tabular-nums leading-none`}
+              style={{ color: (selected === "month" ? monthlyPrice : annualPrice) ? "var(--text-primary)" : "var(--text-muted)" }}
+            >
+              {(selected === "month" ? monthlyPrice : annualPrice) ?? "Price unavailable"}
+            </span>
+            {(selected === "month" ? monthlyPrice : annualPrice) && (
+              <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+                AUD / {selected === "month" ? "month" : "year"}
+              </span>
+            )}
+          </>
+        )}
       </div>
 
       <Button
         variant="primary"
         className={`w-full ${compact ? "mb-2" : "mb-3"}`}
         onClick={handlePurchase}
-        disabled={isPurchasing || (!monthlyPkg && !annualPkg)}
+        disabled={isPurchasing || pricesLoading || (!monthlyPkg && !annualPkg)}
       >
         {isPurchasing ? (
           <span className="flex items-center justify-center gap-2">
