@@ -17,7 +17,7 @@ function friendlyError(message: string): string {
   return message;
 }
 
-const inputClass = "h-11 w-full rounded-xl px-3 text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-[#22C55E]";
+const inputClass = "h-11 w-full rounded-xl px-3 text-base transition-colors focus:outline-none focus:ring-1 focus:ring-[#22C55E]";
 const inputStyle = {
   backgroundColor: "var(--bg-elevated)",
   border: "1px solid var(--bg-border)",

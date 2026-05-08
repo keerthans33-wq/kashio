@@ -64,7 +64,7 @@ export function WfhForm() {
             type="date"
             value={date}
             onChange={(e) => { setDate(e.target.value); setDateError(null); setSuccess(false); }}
-            className="h-11 w-full rounded-xl px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#22C55E] transition-colors"
+            className="h-11 w-full rounded-xl px-3 text-base focus:outline-none focus:ring-1 focus:ring-[#22C55E] transition-colors"
             style={{ ...inputStyle, borderColor: dateError ? "#EF4444" : "var(--bg-border)" }}
           />
           {dateError && <p className="mt-1 text-xs text-red-400">{dateError}</p>}
@@ -87,7 +87,7 @@ export function WfhForm() {
             placeholder="8"
             value={hours}
             onChange={(e) => { setHours(e.target.value); setHoursError(null); setSuccess(false); }}
-            className="h-11 w-full rounded-xl px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#22C55E] transition-colors"
+            className="h-11 w-full rounded-xl px-3 text-base focus:outline-none focus:ring-1 focus:ring-[#22C55E] transition-colors"
             style={{ ...inputStyle, borderColor: hoursError ? "#EF4444" : "var(--bg-border)" }}
           />
           {hoursError && <p className="mt-1 text-xs text-red-400">{hoursError}</p>}
@@ -101,7 +101,7 @@ export function WfhForm() {
         placeholder="Note (optional) — e.g. Full day, video calls"
         value={note}
         onChange={(e) => { setNote(e.target.value); setSuccess(false); }}
-        className="h-11 w-full rounded-xl px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#22C55E] transition-colors"
+        className="h-11 w-full rounded-xl px-3 text-base focus:outline-none focus:ring-1 focus:ring-[#22C55E] transition-colors"
         style={inputStyle}
       />
 

@@ -119,6 +119,17 @@ input[type="date"] {
   appearance: none;
 }
 
+/* ── iOS zoom prevention ─────────────────────────────────────────────── */
+/* iOS WebView zooms in when a focused input has font-size < 16px.       */
+/* Scoped to mobile only so desktop text sizes are unaffected.           */
+@media screen and (max-width: 768px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
 /* ── Aurora background system ────────────────────────────────────────── */
 
 /* Base blob — all positioning/color set inline by component */
