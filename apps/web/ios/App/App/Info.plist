@@ -50,9 +50,19 @@
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
+			<key>CFBundleURLName</key>
+			<string>kashio-custom</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>kashio</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>kashio-bundle</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>au.com.kashio.app</string>
 			</array>
 		</dict>
 	</array>

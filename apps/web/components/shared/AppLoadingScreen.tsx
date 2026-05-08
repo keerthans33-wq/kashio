@@ -7,7 +7,16 @@ export function AppLoadingScreen() {
   const [ios, setIos] = useState(false);
 
   useEffect(() => {
-    setIos(isCapacitorIOS());
+    const cap = isCapacitorIOS();
+    setIos(cap);
+    if (cap) {
+      // Hide the native splash screen now that React has rendered.
+      // capacitor.config.ts sets launchAutoHide: false so we control this manually,
+      // preventing the blank-screen gap before JS loads.
+      import("@capacitor/splash-screen")
+        .then(({ SplashScreen }) => SplashScreen.hide({ fadeOutDuration: 300 }))
+        .catch(() => {});
+    }
   }, []);
 
   if (!ios) {

@@ -33,9 +33,82 @@ type Props = {
 
 type Interval = "month" | "year";
 
+// Stripe prices for web only — never shown on iOS
 const MONTHLY_PRICE = "$5.99";
 const ANNUAL_PRICE  = "$39.99";
 const ANNUAL_SAVING = "Save 44%";
+
+// Fake export content that builds curiosity — blurred behind the paywall
+const FAKE_EXPORT_ROWS = [
+  { label: "Est. total deductions",  value: "$2,847",   bar: 100, color: "#22C55E" },
+  { label: "Categories confirmed",   value: "5 of 7",   bar: 71,  color: "#60A5FA" },
+  { label: "Items with receipt",     value: "12 of 18", bar: 66,  color: "#A78BFA" },
+  { label: "Export ready",           value: "Ready",    bar: 100, color: "#F59E0B" },
+];
+
+function ExportLockedPreview() {
+  return (
+    <div className="mb-5">
+      <div className="flex items-center justify-between mb-2.5">
+        <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
+          Your export summary
+        </p>
+        <span
+          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest"
+          style={{ backgroundColor: "rgba(34,197,94,0.14)", color: "#22C55E", border: "1px solid rgba(34,197,94,0.24)" }}
+        >
+          Pro feature
+        </span>
+      </div>
+
+      <div className="relative rounded-xl overflow-hidden">
+        {/* Blurred data rows */}
+        <div style={{ filter: "blur(3.5px)", userSelect: "none", pointerEvents: "none" }} aria-hidden="true">
+          {FAKE_EXPORT_ROWS.map((row, i) => (
+            <div
+              key={row.label}
+              className="flex items-center gap-3 px-3 py-2.5"
+              style={{
+                backgroundColor: "rgba(255,255,255,0.025)",
+                borderBottom:    i < FAKE_EXPORT_ROWS.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none",
+              }}
+            >
+              <span className="h-4 w-4 shrink-0 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }} />
+              <p className="flex-1 text-[12px]" style={{ color: "var(--text-secondary)" }}>{row.label}</p>
+              <div className="w-14 h-1 rounded-full overflow-hidden shrink-0" style={{ backgroundColor: "rgba(255,255,255,0.06)" }}>
+                <div className="h-full rounded-full" style={{ width: `${row.bar}%`, backgroundColor: row.color }} />
+              </div>
+              <p className="w-14 text-right text-[11px] font-medium tabular-nums shrink-0" style={{ color: "var(--text-secondary)" }}>
+                {row.value}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Frosted lock overlay */}
+        <div
+          className="absolute inset-0 flex flex-col items-center justify-center gap-2"
+          style={{
+            background:     "linear-gradient(to bottom, rgba(5,7,14,0.40) 0%, rgba(5,7,14,0.72) 100%)",
+            backdropFilter: "blur(1px)",
+          }}
+        >
+          <div
+            className="flex h-8 w-8 items-center justify-center rounded-full"
+            style={{ backgroundColor: "rgba(34,197,94,0.14)", border: "1px solid rgba(34,197,94,0.30)" }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} style={{ color: "#22C55E" }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+            </svg>
+          </div>
+          <p className="text-[11px] font-medium" style={{ color: "rgba(255,255,255,0.55)" }}>
+            Unlock to see your full export
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const fmt = (n: number) =>
   n.toLocaleString("en-AU", { style: "currency", currency: "AUD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -159,11 +232,11 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
     );
   }
 
-  // ── Locked: blurred preview + paywall card ────────────────────────────────
+  // ── Locked (iOS): blurred preview + inline RevenueCat paywall ────────────
   if (isIOS) {
     return (
       <motion.div
-        className="mb-8 rounded-2xl px-6 py-7"
+        className="mb-8 rounded-2xl overflow-hidden"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
@@ -173,7 +246,14 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
           boxShadow:       "0 2px 8px rgba(0,0,0,0.5), 0 0 48px rgba(34,197,94,0.07)",
         }}
       >
-        <IOSPaywall />
+        {/* Green accent line at top */}
+        <div className="h-[2px] w-full" style={{ background: "linear-gradient(90deg, #22C55E, #14B8A6)" }} />
+        <div className="px-6 pt-5 pb-1">
+          <ExportLockedPreview />
+        </div>
+        <div className="px-6 pb-6">
+          <IOSPaywall compact />
+        </div>
       </motion.div>
     );
   }
