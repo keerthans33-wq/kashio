@@ -60,6 +60,9 @@ export function IOSPaywall({ onSuccess, compact = false }: Props) {
   // After RC resolves: use real price strings or fall back to known prices.
   const monthlyPrice = monthlyPkg?.product.priceString ?? (pricesLoading ? null : FALLBACK_MONTHLY);
   const annualPrice  = annualPkg?.product.priceString  ?? (pricesLoading ? null : FALLBACK_ANNUAL);
+  const monthlyCurrency = monthlyPkg?.product.currencyCode ?? "AUD";
+  const annualCurrency  = annualPkg?.product.currencyCode ?? "AUD";
+  const selectedCurrency = selected === "month" ? monthlyCurrency : annualCurrency;
 
   // Debug log — fires once when offerings resolve.
   useEffect(() => {
@@ -68,7 +71,9 @@ export function IOSPaywall({ onSuccess, compact = false }: Props) {
       console.log(
         `[Kashio] iOS RevenueCat price loaded: monthly=${monthlyPrice ?? "null"}, yearly=${annualPrice ?? "null"}`,
         "\n  monthlyPkg:", monthlyPkg?.product.identifier ?? "none",
+        "\n  monthlyCurrency:", monthlyPkg?.product.currencyCode ?? "none",
         "\n  annualPkg:", annualPkg?.product.identifier ?? "none",
+        "\n  annualCurrency:", annualPkg?.product.currencyCode ?? "none",
         "\n  allPackageIds:", allPkgs.map((p) => p.product.identifier).join(", "),
       );
     }
@@ -203,7 +208,7 @@ export function IOSPaywall({ onSuccess, compact = false }: Props) {
               {selected === "month" ? monthlyPrice : annualPrice}
             </span>
             <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>
-              AUD / {selected === "month" ? "month" : "year"}
+              {selectedCurrency} / {selected === "month" ? "month" : "year"}
             </span>
           </>
         )}
