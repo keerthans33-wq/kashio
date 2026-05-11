@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { User, LogOut } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
 import { useUser } from "../../../lib/user-context";
+import { Logo } from "@/components/shared/Logo";
 
 const LINKS: { href: string; label: string; exact?: boolean }[] = [
   { href: "/dashboard", label: "Dashboard", exact: true },
@@ -88,7 +89,12 @@ export default function Nav() {
           })}
         </div>
 
-        {/* ── Mobile: page title absolutely centred — unaffected by button widths ── */}
+        {/* ── Mobile: logo left, title absolutely centred ─────────────────── */}
+        <div className="flex sm:hidden items-center">
+          <Link href="/dashboard" className="flex items-center pl-3 pr-2 pointer-events-auto">
+            <Logo height={20} />
+          </Link>
+        </div>
         <div className="absolute inset-0 flex sm:hidden items-center justify-center pointer-events-none">
           <span
             className="text-[15px] font-semibold tracking-[-0.01em]"

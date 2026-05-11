@@ -1,17 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRevenueCat } from "@/components/providers/RevenueCatProvider";
 import { Button } from "@/components/ui/button";
 import type { PurchasesPackage } from "@/lib/revenuecat.client";
 
 type Interval = "month" | "year";
-type PurchaseStatus = "idle" | "purchasing" | "success" | "cancelled";
+
+type PurchaseStatus = "idle" | "purchasing" | "success";
 
 type Props = {
   onSuccess?: () => void;
-  compact?:   boolean;   // tighter vertical rhythm for dashboard card context
+  compact?:   boolean;
 };
+
+// Known product identifiers configured in App Store Connect + RevenueCat.
+const MONTHLY_PRODUCT_ID = "kashio_pro_monthly";
+const ANNUAL_PRODUCT_ID  = "kashio_pro_yearly";
+
+// Fallback prices shown only when RevenueCat fails to load.
+// These match the current App Store Connect prices.
+const FALLBACK_MONTHLY = "$5.99";
+const FALLBACK_ANNUAL  = "$39.99";
 
 const BULLETS = [
   "Full deduction review",
@@ -22,57 +32,55 @@ const BULLETS = [
 
 export function IOSPaywall({ onSuccess, compact = false }: Props) {
   const { offerings, loading, error, purchase, restore } = useRevenueCat();
-  const [selected,      setSelected]      = useState<Interval>("year");
+  const [selected,       setSelected]       = useState<Interval>("year");
   const [purchaseStatus, setPurchaseStatus] = useState<PurchaseStatus>("idle");
-  const [restoring,     setRestoring]     = useState(false);
-  const [restoreMsg,    setRestoreMsg]    = useState<string | null>(null);
+  const [restoring,      setRestoring]      = useState(false);
+  const [restoreMsg,     setRestoreMsg]     = useState<string | null>(null);
+  const [rcLogged,       setRcLogged]       = useState(false);
 
-  const current     = offerings?.current;
-  const monthlyPkg: PurchasesPackage | null = current?.monthly ?? null;
-  const annualPkg:  PurchasesPackage | null = current?.annual  ?? null;
+  // ------------------------------------------------------------------
+  // Package lookup: prefer product-ID match, fall back to package type.
+  // This handles both CUSTOM and MONTHLY/ANNUAL package type setups.
+  // ------------------------------------------------------------------
+  const allPkgs: PurchasesPackage[] = offerings?.current?.availablePackages ?? [];
 
-  // True while RC hasn't resolved yet (no offerings and no error)
+  const monthlyPkg: PurchasesPackage | null =
+    allPkgs.find((p) => p.product.identifier === MONTHLY_PRODUCT_ID) ??
+    offerings?.current?.monthly ??
+    null;
+
+  const annualPkg: PurchasesPackage | null =
+    allPkgs.find((p) => p.product.identifier === ANNUAL_PRODUCT_ID) ??
+    offerings?.current?.annual ??
+    null;
+
+  // Show skeleton while RC is still loading (no offerings AND no error yet).
   const pricesLoading = !offerings && !error;
 
-  // Use RC price strings when available; fall back to known App Store prices only
-  // after RC has had a chance to load (i.e. not while still loading).
-  const monthlyPrice = monthlyPkg?.product.priceString ?? (pricesLoading ? null : "$5.99");
-  const annualPrice  = annualPkg?.product.priceString  ?? (pricesLoading ? null : "$39.99");
+  // After RC resolves: use real price strings or fall back to known prices.
+  const monthlyPrice = monthlyPkg?.product.priceString ?? (pricesLoading ? null : FALLBACK_MONTHLY);
+  const annualPrice  = annualPkg?.product.priceString  ?? (pricesLoading ? null : FALLBACK_ANNUAL);
+  const monthlyCurrency = monthlyPkg?.product.currencyCode ?? "AUD";
+  const annualCurrency  = annualPkg?.product.currencyCode ?? "AUD";
+  const selectedCurrency = selected === "month" ? monthlyCurrency : annualCurrency;
 
-  async function handlePurchase() {
-    const pkg = selected === "year" ? annualPkg : monthlyPkg;
-    if (!pkg) return;
-    setPurchaseStatus("purchasing");
-    setRestoreMsg(null);
-    const outcome = await purchase(pkg);
-    if (outcome === "success") {
-      setPurchaseStatus("success");
-      onSuccess?.();
-      setTimeout(() => window.location.reload(), 1400);
-    } else if (outcome === "cancelled") {
-      setPurchaseStatus("cancelled");
-    } else {
-      // "error" — message is in RC context `error`; reset status so UI stays interactive
-      setPurchaseStatus("idle");
+  // Debug log — fires once when offerings resolve.
+  useEffect(() => {
+    if (offerings && !rcLogged) {
+      setRcLogged(true);
+      console.log(
+        `[Kashio] iOS RevenueCat price loaded: monthly=${monthlyPrice ?? "null"}, yearly=${annualPrice ?? "null"}`,
+        "\n  monthlyPkg:", monthlyPkg?.product.identifier ?? "none",
+        "\n  monthlyCurrency:", monthlyPkg?.product.currencyCode ?? "none",
+        "\n  annualPkg:", annualPkg?.product.identifier ?? "none",
+        "\n  annualCurrency:", annualPkg?.product.currencyCode ?? "none",
+        "\n  allPackageIds:", allPkgs.map((p) => p.product.identifier).join(", "),
+      );
     }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [offerings]);
 
-  async function handleRestore() {
-    setRestoring(true);
-    setRestoreMsg(null);
-    setPurchaseStatus("idle");
-    const success = await restore();
-    setRestoring(false);
-    if (success) {
-      setPurchaseStatus("success");
-      onSuccess?.();
-      setTimeout(() => window.location.reload(), 1400);
-    } else {
-      setRestoreMsg("No active subscription found. If you believe this is wrong, contact support.");
-    }
-  }
-
-  // ── Success overlay ────────────────────────────────────────────────────────
+  // ── Success overlay ──────────────────────────────────────────────────
   if (purchaseStatus === "success") {
     return (
       <div className="flex flex-col items-center justify-center py-6 space-y-3 text-center">
@@ -84,17 +92,41 @@ export function IOSPaywall({ onSuccess, compact = false }: Props) {
             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
           </svg>
         </div>
-        <p className="text-[18px] font-bold" style={{ color: "var(--text-primary)" }}>
-          Kashio Pro unlocked
-        </p>
-        <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
-          Loading your account…
-        </p>
+        <p className="text-[18px] font-bold" style={{ color: "var(--text-primary)" }}>Kashio Pro unlocked</p>
+        <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>Loading your account…</p>
       </div>
     );
   }
 
-  const isPurchasing = purchaseStatus === "purchasing" || loading;
+  async function handlePurchase() {
+    const pkg = selected === "year" ? annualPkg : monthlyPkg;
+    if (!pkg) return;
+    setPurchaseStatus("purchasing");
+    const success = await purchase(pkg);
+    if (success) {
+      setPurchaseStatus("success");
+      onSuccess?.();
+      setTimeout(() => window.location.reload(), 1400);
+    } else {
+      setPurchaseStatus("idle");
+    }
+  }
+
+  async function handleRestore() {
+    setRestoring(true);
+    setRestoreMsg(null);
+    const success = await restore();
+    setRestoring(false);
+    if (success) {
+      setPurchaseStatus("success");
+      onSuccess?.();
+      setTimeout(() => window.location.reload(), 1400);
+    } else {
+      setRestoreMsg("No active subscription found. If you believe this is wrong, contact support.");
+    }
+  }
+
+  const isPurchasing = purchaseStatus === "purchasing" || (loading && purchaseStatus !== "idle");
 
   return (
     <div className="space-y-0">
@@ -138,7 +170,7 @@ export function IOSPaywall({ onSuccess, compact = false }: Props) {
         {(["month", "year"] as Interval[]).map((i) => (
           <button
             key={i}
-            onClick={() => { setSelected(i); setPurchaseStatus("idle"); }}
+            onClick={() => setSelected(i)}
             disabled={isPurchasing}
             className={`relative flex-1 rounded-lg ${compact ? "py-1.5" : "py-2"} text-[13px] font-medium transition-all duration-150`}
             style={{
@@ -160,10 +192,13 @@ export function IOSPaywall({ onSuccess, compact = false }: Props) {
         ))}
       </div>
 
-      {/* Price */}
+      {/* Price — skeleton while RC loads */}
       <div className={`${compact ? "mb-3" : "mb-5"} flex items-baseline gap-2`}>
         {pricesLoading ? (
-          <div className={`${compact ? "h-7" : "h-9"} w-24 rounded-md animate-pulse`} style={{ backgroundColor: "rgba(255,255,255,0.08)" }} />
+          <div
+            className={`${compact ? "h-7" : "h-9"} w-24 rounded-md animate-pulse`}
+            style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
+          />
         ) : (
           <>
             <span
@@ -173,7 +208,7 @@ export function IOSPaywall({ onSuccess, compact = false }: Props) {
               {selected === "month" ? monthlyPrice : annualPrice}
             </span>
             <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>
-              AUD / {selected === "month" ? "month" : "year"}
+              {selectedCurrency} / {selected === "month" ? "month" : "year"}
             </span>
           </>
         )}
@@ -196,12 +231,6 @@ export function IOSPaywall({ onSuccess, compact = false }: Props) {
         ) : "Unlock Pro"}
       </Button>
 
-      {/* Status messages — cancelled, error, restore */}
-      {purchaseStatus === "cancelled" && (
-        <p className="text-center text-[12px] mb-2" style={{ color: "rgba(255,255,255,0.55)" }}>
-          Purchase cancelled. You can try again anytime.
-        </p>
-      )}
       {error && purchaseStatus === "idle" && (
         <p className="text-center text-[12px] mb-2" style={{ color: "#f87171" }}>
           {error}

@@ -8,7 +8,15 @@ export { type PurchasesPackage, type CustomerInfo };
 export const RC_ENTITLEMENT = "pro";
 
 export async function configureRC(appUserID: string): Promise<void> {
-  const apiKey = process.env.NEXT_PUBLIC_REVENUECAT_IOS_API_KEY ?? "";
+  const apiKey =
+    process.env.NEXT_PUBLIC_REVENUECAT_IOS_API_KEY ??
+    process.env.NEXT_PUBLIC_REVENUECAT_API_KEY ??
+    "";
+
+  if (!apiKey) {
+    throw new Error("Missing RevenueCat iOS API key.");
+  }
+
   await Purchases.configure({ apiKey, appUserID });
 }
 

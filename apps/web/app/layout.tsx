@@ -30,13 +30,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         style={{
           backgroundColor: "var(--bg-app)",
           color: "var(--text-primary)",
+          paddingTop: "env(safe-area-inset-top)",
           paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
         {/* Atmospheric aurora layer — sits behind all page content */}
         <AuroraBackground intensity="medium" />
 
-        {/* Handles kashio:// deep link after Google OAuth on iOS */}
+        {/* Capacitor iOS deep-link handler — mounts at root, renders null */}
         <CapacitorAuthHandler />
 
         {/* Page content sits above the aurora */}
