@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { User, LogOut } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
 import { useUser } from "../../../lib/user-context";
+import { Logo } from "@/components/shared/Logo";
 
 const LINKS: { href: string; label: string; exact?: boolean }[] = [
   { href: "/dashboard", label: "Dashboard", exact: true },
@@ -88,10 +89,15 @@ export default function Nav() {
           })}
         </div>
 
-        {/* ── Mobile: centered page title (hidden on sm+) ─────────────────── */}
-        <div className="flex sm:hidden flex-1 items-center justify-center">
+        {/* ── Mobile: Kashio logo left + page title center (hidden on sm+) ── */}
+        <div className="flex sm:hidden flex-1 items-center">
+          {/* Logo — left anchor */}
+          <Link href="/dashboard" className="flex items-center pl-3 pr-4">
+            <Logo height={20} />
+          </Link>
+          {/* Page title — centered in remaining space */}
           <span
-            className="text-[15px] font-semibold tracking-[-0.01em]"
+            className="flex-1 text-center text-[15px] font-semibold tracking-[-0.01em] pr-14"
             style={{ color: "rgba(255,255,255,0.92)" }}
           >
             {pageTitle}

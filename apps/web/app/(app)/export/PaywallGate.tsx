@@ -45,44 +45,28 @@ const fmt = (n: number) =>
 const fmtRound = (n: number) =>
   n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 
-// ── Export-specific blurred locked preview ─────────────────────────────────
-// Shown above the paywall card for both iOS and web locked states.
-// Uses fake-but-realistic export data. Does NOT reuse dashboard rows.
+// ── Export-specific locked preview with real user data ─────────────────────────
+// Shows visible summary stats + sample rows, then blurs the full report.
 
-const FAKE_EXPORT_SECTIONS = [
-  {
-    label: "Tax Summary Report",
-    lines: [
-      { name: "Total potential deductions", value: "$2,847" },
-      { name: "Estimated tax saving (32.5%)", value: "~$925" },
-      { name: "Financial year", value: "2025–26" },
-    ],
-  },
-  {
-    label: "Category Breakdown",
-    lines: [
-      { name: "Home Office / WFH", value: "$1,140" },
-      { name: "Work Tools & Software", value: "$823" },
-      { name: "Professional Development", value: "$499" },
-      { name: "Work Travel", value: "$385" },
-    ],
-  },
-];
+type PreviewProps = {
+  allItems:       Item[];
+  categoryGroups: CategoryGroup[];
+  total:          number;
+  confirmedCount: number;
+};
 
-const FAKE_CHECKLIST = [
-  { label: "Receipts attached",       done: true  },
-  { label: "Categories confirmed",     done: true  },
-  { label: "Accountant PDF ready",    done: false },
-  { label: "CSV export ready",        done: false },
-];
+function ExportLockedPreview({ allItems, categoryGroups, total, confirmedCount }: PreviewProps) {
+  const estimatedSaving  = Math.round(total * 0.325);
+  const top3             = categoryGroups.slice(0, 3);
+  const sampleItems      = allItems.slice(0, 3);
+  const hasRealData      = confirmedCount > 0;
 
-function ExportLockedPreview() {
   return (
     <div className="mb-5">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-4">
         <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
-          Your export report
+          Your tax report preview
         </p>
         <span
           className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest"
@@ -92,68 +76,116 @@ function ExportLockedPreview() {
         </span>
       </div>
 
-      {/* Blurred report + frosted lock overlay */}
+      {/* ── Visible summary stats (not blurred) ────────────────────────────── */}
+      <div className="grid grid-cols-2 gap-2 mb-4">
+        <div
+          className="rounded-xl px-3 py-3"
+          style={{ backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+        >
+          <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "var(--text-muted)" }}>
+            Transactions reviewed
+          </p>
+          <p className="text-[20px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
+            {hasRealData ? confirmedCount : "—"}
+          </p>
+        </div>
+        <div
+          className="rounded-xl px-3 py-3"
+          style={{ backgroundColor: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.16)" }}
+        >
+          <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "rgba(34,197,94,0.70)" }}>
+            Potential claim
+          </p>
+          <p className="text-[20px] font-bold tabular-nums" style={{ color: "#22C55E" }}>
+            {hasRealData ? fmtRound(total) : "—"}
+          </p>
+        </div>
+      </div>
+
+      {/* Estimated saving */}
+      {hasRealData && estimatedSaving > 0 && (
+        <div
+          className="mb-4 flex items-center justify-between rounded-xl px-3 py-2.5"
+          style={{ backgroundColor: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.12)" }}
+        >
+          <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>Estimated tax saving (32.5%)</p>
+          <p className="text-[13px] font-semibold tabular-nums" style={{ color: "#22C55E" }}>~{fmtRound(estimatedSaving)}</p>
+        </div>
+      )}
+
+      {/* Top categories */}
+      {top3.length > 0 && (
+        <div className="mb-4">
+          <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "var(--text-muted)" }}>Top categories</p>
+          <div className="space-y-1.5">
+            {top3.map(({ cat, catTotal }) => (
+              <div
+                key={cat}
+                className="flex items-center justify-between rounded-lg px-3 py-2"
+                style={{ backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
+              >
+                <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{cat}</p>
+                <p className="text-[12px] font-medium tabular-nums" style={{ color: "var(--text-primary)" }}>{fmtRound(catTotal)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Sample rows (visible, not blurred) ──────────────────────────────── */}
+      {sampleItems.length > 0 && (
+        <div className="mb-4">
+          <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "var(--text-muted)" }}>Sample entries</p>
+          <div
+            className="rounded-xl overflow-hidden"
+            style={{ border: "1px solid rgba(255,255,255,0.07)" }}
+          >
+            {sampleItems.map((item, i) => (
+              <div
+                key={item.id}
+                className="flex items-center justify-between px-3 py-2.5"
+                style={{
+                  backgroundColor: i % 2 === 0 ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.015)",
+                  borderTop: i > 0 ? "1px solid rgba(255,255,255,0.05)" : "none",
+                }}
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>{item.merchant}</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>{item.date} · {item.category}</p>
+                </div>
+                <p className="shrink-0 ml-3 text-[12px] tabular-nums font-medium" style={{ color: "#22C55E" }}>
+                  {fmt(item.amount)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Blurred full report + frosted lock overlay ──────────────────────── */}
       <div className="relative rounded-xl overflow-hidden">
         <div
-          style={{ filter: "blur(3.5px)", userSelect: "none", pointerEvents: "none" }}
+          style={{ filter: "blur(4px)", userSelect: "none", pointerEvents: "none" }}
           aria-hidden="true"
         >
-          {/* Summary sections */}
-          {FAKE_EXPORT_SECTIONS.map((section, si) => (
-            <div
-              key={section.label}
-              style={{
-                backgroundColor: si % 2 === 0 ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.015)",
-                borderBottom: "1px solid rgba(255,255,255,0.06)",
-              }}
-            >
-              <p
-                className="px-3 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-widest"
-                style={{ color: "rgba(255,255,255,0.30)" }}
-              >
-                {section.label}
-              </p>
-              {section.lines.map((line, li) => (
-                <div
-                  key={line.name}
-                  className="flex items-center justify-between px-3 py-1.5"
-                  style={{ borderTop: li > 0 ? "1px solid rgba(255,255,255,0.04)" : "none" }}
-                >
-                  <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{line.name}</p>
-                  <p className="text-[12px] font-medium tabular-nums" style={{ color: "#22C55E" }}>{line.value}</p>
-                </div>
-              ))}
-            </div>
-          ))}
-
-          {/* Proof checklist */}
-          <div style={{ backgroundColor: "rgba(255,255,255,0.02)" }}>
-            <p
-              className="px-3 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-widest"
-              style={{ color: "rgba(255,255,255,0.30)" }}
-            >
-              Proof checklist
+          {/* Blurred category breakdown rows */}
+          <div style={{ backgroundColor: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <p className="px-3 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.30)" }}>
+              Full category breakdown
             </p>
-            {FAKE_CHECKLIST.map((item, i) => (
+            {(categoryGroups.length > 0 ? categoryGroups : [
+              { cat: "Home Office / WFH", catTotal: 1140 },
+              { cat: "Work Tools & Software", catTotal: 823 },
+              { cat: "Professional Development", catTotal: 499 },
+              { cat: "Work Travel", catTotal: 385 },
+            ]).map((g, i) => (
               <div
-                key={item.label}
-                className="flex items-center gap-2.5 px-3 py-1.5"
+                key={g.cat}
+                className="flex items-center justify-between px-3 py-1.5"
                 style={{ borderTop: i > 0 ? "1px solid rgba(255,255,255,0.04)" : "none" }}
               >
-                <div
-                  className="h-4 w-4 shrink-0 rounded-full flex items-center justify-center"
-                  style={{
-                    backgroundColor: item.done ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.05)",
-                    border: item.done ? "1px solid rgba(34,197,94,0.35)" : "1px solid rgba(255,255,255,0.10)",
-                  }}
-                >
-                  {item.done && (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor" style={{ color: "#22C55E" }}>
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  )}
-                </div>
-                <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{item.label}</p>
+                <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{g.cat}</p>
+                <p className="text-[12px] font-medium tabular-nums" style={{ color: "#22C55E" }}>{fmtRound(g.catTotal)}</p>
               </div>
             ))}
           </div>
@@ -172,7 +204,7 @@ function ExportLockedPreview() {
         <div
           className="absolute inset-0 flex flex-col items-center justify-center gap-2"
           style={{
-            background:     "linear-gradient(to bottom, rgba(5,7,14,0.35) 0%, rgba(5,7,14,0.68) 100%)",
+            background:     "linear-gradient(to bottom, rgba(5,7,14,0.35) 0%, rgba(5,7,14,0.72) 100%)",
             backdropFilter: "blur(1px)",
           }}
         >
@@ -184,8 +216,8 @@ function ExportLockedPreview() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
             </svg>
           </div>
-          <p className="text-[12px] font-medium" style={{ color: "rgba(255,255,255,0.60)" }}>
-            Unlock export report
+          <p className="text-[12px] font-medium" style={{ color: "rgba(255,255,255,0.65)" }}>
+            Unlock your full tax report
           </p>
         </div>
       </div>
@@ -193,7 +225,7 @@ function ExportLockedPreview() {
   );
 }
 
-// ── Main component ─────────────────────────────────────────────────────────
+// ── Main component ─────────────────────────────────────────────────────────────
 export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, confirmedCount }: Props) {
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
@@ -299,7 +331,7 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
     );
   }
 
-  // ── iOS locked: export preview + RevenueCat paywall ───────────────────────
+  // ── iOS locked: real preview + RevenueCat paywall ─────────────────────────
   if (isIOS) {
     return (
       <motion.div
@@ -315,7 +347,12 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
       >
         <div className="h-[2px] w-full" style={{ background: "linear-gradient(90deg, #22C55E, #14B8A6)" }} />
         <div className="px-5 pt-5 pb-1">
-          <ExportLockedPreview />
+          <ExportLockedPreview
+            allItems={allItems}
+            categoryGroups={categoryGroups}
+            total={total}
+            confirmedCount={confirmedCount}
+          />
         </div>
         <div className="px-5 pb-5">
           <IOSPaywall compact />
