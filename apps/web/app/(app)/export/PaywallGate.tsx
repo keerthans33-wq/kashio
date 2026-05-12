@@ -9,6 +9,7 @@ import { ExportButton } from "./ExportButton";
 import { Button } from "@/components/ui/button";
 import { IOSPaywall } from "@/components/shared/IOSPaywall";
 import { isCapacitorIOS } from "@/lib/capacitor";
+import { FALLBACK_PRICE, ANNUAL_SAVING_PCT } from "@/lib/pricing";
 
 type Item = {
   id:       string;
@@ -34,10 +35,6 @@ type Props = {
 
 type Interval = "month" | "year";
 
-// Stripe prices — web only, never shown on iOS
-const MONTHLY_PRICE = "$5.99";
-const ANNUAL_PRICE  = "$39.99";
-const ANNUAL_SAVING = "Save 44%";
 
 const fmt = (n: number) =>
   n.toLocaleString("en-AU", { style: "currency", currency: "AUD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -452,7 +449,7 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
               {i === "year" && (
                 <span className="ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold"
                   style={{ backgroundColor: "rgba(34,197,94,0.20)", color: "#22C55E" }}>
-                  {ANNUAL_SAVING}
+                  {ANNUAL_SAVING_PCT}
                 </span>
               )}
             </button>
@@ -462,7 +459,7 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
         {/* Price */}
         <div className="mb-5 flex items-baseline gap-2">
           <span className="text-[34px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
-            {interval === "month" ? MONTHLY_PRICE : ANNUAL_PRICE}
+            {interval === "month" ? FALLBACK_PRICE.monthly : FALLBACK_PRICE.annual}
           </span>
           <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>
             AUD / {interval === "month" ? "month" : "year"}

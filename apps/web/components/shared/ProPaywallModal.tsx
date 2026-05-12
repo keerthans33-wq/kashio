@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { IOSPaywall } from "@/components/shared/IOSPaywall";
 import { useRevenueCat } from "@/components/providers/RevenueCatProvider";
+import { FALLBACK_PRICE, ANNUAL_SAVING_PCT } from "@/lib/pricing";
 
 type Props = {
   open:         boolean;
@@ -20,9 +21,6 @@ type Props = {
 
 type Interval = "month" | "year";
 
-const MONTHLY_PRICE = "$5.99";
-const ANNUAL_PRICE  = "$39.99";
-const ANNUAL_SAVING = "Save 44%";
 
 const BULLETS = [
   "Full deduction review",
@@ -171,7 +169,7 @@ export function ProPaywallModal({ open, onOpenChange }: Props) {
                     className="ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold"
                     style={{ backgroundColor: "rgba(34,197,94,0.20)", color: "#22C55E" }}
                   >
-                    {ANNUAL_SAVING}
+                    {ANNUAL_SAVING_PCT}
                   </span>
                 )}
               </button>
@@ -184,7 +182,7 @@ export function ProPaywallModal({ open, onOpenChange }: Props) {
               className="text-[34px] font-bold tabular-nums leading-none"
               style={{ color: "var(--text-primary)" }}
             >
-              {interval === "month" ? MONTHLY_PRICE : ANNUAL_PRICE}
+              {interval === "month" ? FALLBACK_PRICE.monthly : FALLBACK_PRICE.annual}
             </span>
             <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>
               AUD / {interval === "month" ? "month" : "year"}
