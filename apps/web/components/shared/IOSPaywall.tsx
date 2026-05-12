@@ -3,25 +3,16 @@
 import { useEffect, useState } from "react";
 import { useRevenueCat } from "@/components/providers/RevenueCatProvider";
 import { Button } from "@/components/ui/button";
+import { PRODUCT_IDS, FALLBACK_PRICE, ANNUAL_SAVING_PCT } from "@/lib/pricing";
 import type { PurchasesPackage } from "@/lib/revenuecat.client";
 
 type Interval = "month" | "year";
-
 type PurchaseStatus = "idle" | "purchasing" | "success";
 
 type Props = {
   onSuccess?: () => void;
   compact?:   boolean;
 };
-
-// Known product identifiers configured in App Store Connect + RevenueCat.
-const MONTHLY_PRODUCT_ID = "kashio_pro_monthly";
-const ANNUAL_PRODUCT_ID  = "kashio_pro_yearly";
-
-// Fallback prices shown only when RevenueCat fails to load.
-// These match the current App Store Connect prices.
-const FALLBACK_MONTHLY = "$5.99";
-const FALLBACK_ANNUAL  = "$39.99";
 
 const BULLETS = [
   "Full deduction review",
@@ -38,49 +29,39 @@ export function IOSPaywall({ onSuccess, compact = false }: Props) {
   const [restoreMsg,     setRestoreMsg]     = useState<string | null>(null);
   const [rcLogged,       setRcLogged]       = useState(false);
 
-  // ------------------------------------------------------------------
-  // Package lookup: prefer product-ID match, fall back to package type.
-  // This handles both CUSTOM and MONTHLY/ANNUAL package type setups.
-  // ------------------------------------------------------------------
+  // ── Package lookup ──────────────────────────────────────────────────────────
+  // ONLY look up by exact product identifier — never fall through to
+  // offerings.current.monthly / .annual, which can return old products
+  // with old prices if the RC offering wasn't updated.
   const allPkgs: PurchasesPackage[] = offerings?.current?.availablePackages ?? [];
 
   const monthlyPkg: PurchasesPackage | null =
-    allPkgs.find((p) => p.product.identifier === MONTHLY_PRODUCT_ID) ??
-    offerings?.current?.monthly ??
-    null;
+    allPkgs.find((p) => p.product.identifier === PRODUCT_IDS.monthly) ?? null;
 
   const annualPkg: PurchasesPackage | null =
-    allPkgs.find((p) => p.product.identifier === ANNUAL_PRODUCT_ID) ??
-    offerings?.current?.annual ??
-    null;
+    allPkgs.find((p) => p.product.identifier === PRODUCT_IDS.annual) ?? null;
 
-  // Show skeleton while RC is still loading (no offerings AND no error yet).
+  // Skeleton while RC is loading (no offerings AND no error yet).
   const pricesLoading = !offerings && !error;
 
-  // After RC resolves: use real price strings or fall back to known prices.
-  const monthlyPrice = monthlyPkg?.product.priceString ?? (pricesLoading ? null : FALLBACK_MONTHLY);
-  const annualPrice  = annualPkg?.product.priceString  ?? (pricesLoading ? null : FALLBACK_ANNUAL);
-  const monthlyCurrency = monthlyPkg?.product.currencyCode ?? "AUD";
-  const annualCurrency  = annualPkg?.product.currencyCode ?? "AUD";
-  const selectedCurrency = selected === "month" ? monthlyCurrency : annualCurrency;
+  // Live price from RC, or fallback if RC resolved but product wasn't found.
+  const monthlyPrice = monthlyPkg?.product.priceString ?? (pricesLoading ? null : FALLBACK_PRICE.monthly);
+  const annualPrice  = annualPkg?.product.priceString  ?? (pricesLoading ? null : FALLBACK_PRICE.annual);
 
-  // Debug log — fires once when offerings resolve.
+  // ── Debug log — fires once when offerings resolve ───────────────────────────
   useEffect(() => {
-    if (offerings && !rcLogged) {
-      setRcLogged(true);
-      console.log(
-        `[Kashio] iOS RevenueCat price loaded: monthly=${monthlyPrice ?? "null"}, yearly=${annualPrice ?? "null"}`,
-        "\n  monthlyPkg:", monthlyPkg?.product.identifier ?? "none",
-        "\n  monthlyCurrency:", monthlyPkg?.product.currencyCode ?? "none",
-        "\n  annualPkg:", annualPkg?.product.identifier ?? "none",
-        "\n  annualCurrency:", annualPkg?.product.currencyCode ?? "none",
-        "\n  allPackageIds:", allPkgs.map((p) => p.product.identifier).join(", "),
-      );
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!offerings || rcLogged) return;
+    setRcLogged(true);
+    console.log("[Kashio] RevenueCat offering:", offerings.current?.identifier ?? "none");
+    console.log("[Kashio] All package IDs:", allPkgs.map((p) => p.product.identifier).join(", ") || "none");
+    console.log("[Kashio] Monthly product:", monthlyPkg?.product.identifier ?? "NOT FOUND", "| price:", monthlyPkg?.product.priceString ?? "n/a");
+    console.log("[Kashio] Yearly product:", annualPkg?.product.identifier ?? "NOT FOUND",  "| price:", annualPkg?.product.priceString ?? "n/a");
+    if (!monthlyPkg) console.warn("[Kashio] ⚠ Monthly package not found — expected ID:", PRODUCT_IDS.monthly, "— showing fallback price:", FALLBACK_PRICE.monthly);
+    if (!annualPkg)  console.warn("[Kashio] ⚠ Yearly package not found  — expected ID:", PRODUCT_IDS.annual,  "— showing fallback price:", FALLBACK_PRICE.annual);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [offerings]);
 
-  // ── Success overlay ──────────────────────────────────────────────────
+  // ── Success overlay ─────────────────────────────────────────────────────────
   if (purchaseStatus === "success") {
     return (
       <div className="flex flex-col items-center justify-center py-6 space-y-3 text-center">
@@ -102,8 +83,9 @@ export function IOSPaywall({ onSuccess, compact = false }: Props) {
     const pkg = selected === "year" ? annualPkg : monthlyPkg;
     if (!pkg) return;
     setPurchaseStatus("purchasing");
-    const success = await purchase(pkg);
-    if (success) {
+    const outcome = await purchase(pkg);
+    // outcome is "success" | "cancelled" | "error" — must check explicitly
+    if (outcome === "success") {
       setPurchaseStatus("success");
       onSuccess?.();
       setTimeout(() => window.location.reload(), 1400);
@@ -115,9 +97,9 @@ export function IOSPaywall({ onSuccess, compact = false }: Props) {
   async function handleRestore() {
     setRestoring(true);
     setRestoreMsg(null);
-    const success = await restore();
+    const ok = await restore();
     setRestoring(false);
-    if (success) {
+    if (ok) {
       setPurchaseStatus("success");
       onSuccess?.();
       setTimeout(() => window.location.reload(), 1400);
@@ -185,7 +167,7 @@ export function IOSPaywall({ onSuccess, compact = false }: Props) {
                 className="ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold"
                 style={{ backgroundColor: "rgba(34,197,94,0.20)", color: "#22C55E" }}
               >
-                Save 44%
+                {ANNUAL_SAVING_PCT}
               </span>
             )}
           </button>
@@ -208,7 +190,7 @@ export function IOSPaywall({ onSuccess, compact = false }: Props) {
               {selected === "month" ? monthlyPrice : annualPrice}
             </span>
             <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>
-              {selectedCurrency} / {selected === "month" ? "month" : "year"}
+              AUD / {selected === "month" ? "month" : "year"}
             </span>
           </>
         )}
