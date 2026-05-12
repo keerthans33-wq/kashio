@@ -29,10 +29,11 @@ export function IOSPaywall({ onSuccess, compact = false }: Props) {
   const [restoreMsg,     setRestoreMsg]     = useState<string | null>(null);
   const [rcLogged,       setRcLogged]       = useState(false);
 
-  // ── Package lookup ──────────────────────────────────────────────────────────
-  // ONLY look up by exact product identifier — never fall through to
-  // offerings.current.monthly / .annual, which can return old products
-  // with old prices if the RC offering wasn't updated.
+  // ── Package lookup — strictly by product ID ────────────────────────────────
+  // priceString intentionally NOT used for display: it returns the device's
+  // storefront currency (USD on US accounts, AUD on AU accounts).
+  // We always show AUD prices from FALLBACK_PRICE. RC is only needed to
+  // get the pkg object for the actual purchase call.
   const allPkgs: PurchasesPackage[] = offerings?.current?.availablePackages ?? [];
 
   const monthlyPkg: PurchasesPackage | null =
@@ -41,23 +42,17 @@ export function IOSPaywall({ onSuccess, compact = false }: Props) {
   const annualPkg: PurchasesPackage | null =
     allPkgs.find((p) => p.product.identifier === PRODUCT_IDS.annual) ?? null;
 
-  // Skeleton while RC is loading (no offerings AND no error yet).
-  const pricesLoading = !offerings && !error;
-
-  // Live price from RC, or fallback if RC resolved but product wasn't found.
-  const monthlyPrice = monthlyPkg?.product.priceString ?? (pricesLoading ? null : FALLBACK_PRICE.monthly);
-  const annualPrice  = annualPkg?.product.priceString  ?? (pricesLoading ? null : FALLBACK_PRICE.annual);
+  // Button is disabled until RC has loaded the package we need to purchase.
+  const pkgsLoading = !offerings && !error;
 
   // ── Debug log — fires once when offerings resolve ───────────────────────────
   useEffect(() => {
     if (!offerings || rcLogged) return;
     setRcLogged(true);
-    console.log("[Kashio] RevenueCat offering:", offerings.current?.identifier ?? "none");
-    console.log("[Kashio] All package IDs:", allPkgs.map((p) => p.product.identifier).join(", ") || "none");
-    console.log("[Kashio] Monthly product:", monthlyPkg?.product.identifier ?? "NOT FOUND", "| price:", monthlyPkg?.product.priceString ?? "n/a");
-    console.log("[Kashio] Yearly product:", annualPkg?.product.identifier ?? "NOT FOUND",  "| price:", annualPkg?.product.priceString ?? "n/a");
-    if (!monthlyPkg) console.warn("[Kashio] ⚠ Monthly package not found — expected ID:", PRODUCT_IDS.monthly, "— showing fallback price:", FALLBACK_PRICE.monthly);
-    if (!annualPkg)  console.warn("[Kashio] ⚠ Yearly package not found  — expected ID:", PRODUCT_IDS.annual,  "— showing fallback price:", FALLBACK_PRICE.annual);
+    console.log("[Kashio] RC offering:", offerings.current?.identifier ?? "none");
+    console.log("[Kashio] Packages:", allPkgs.map((p) => `${p.product.identifier}(${p.product.currencyCode} ${p.product.priceString})`).join(", ") || "none");
+    if (!monthlyPkg) console.warn("[Kashio] ⚠ Monthly pkg not found — expected:", PRODUCT_IDS.monthly);
+    if (!annualPkg)  console.warn("[Kashio] ⚠ Annual pkg not found  — expected:", PRODUCT_IDS.annual);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [offerings]);
 
@@ -109,6 +104,10 @@ export function IOSPaywall({ onSuccess, compact = false }: Props) {
   }
 
   const isPurchasing = purchaseStatus === "purchasing" || (loading && purchaseStatus !== "idle");
+
+  // Always show AUD prices — never depends on RC priceString / storefront currency.
+  const monthlyPrice = FALLBACK_PRICE.monthly;
+  const annualPrice  = FALLBACK_PRICE.annual;
 
   return (
     <div className="space-y-0">
@@ -174,33 +173,24 @@ export function IOSPaywall({ onSuccess, compact = false }: Props) {
         ))}
       </div>
 
-      {/* Price — skeleton while RC loads */}
+      {/* Price — always shows AUD, no RC loading dependency */}
       <div className={`${compact ? "mb-3" : "mb-5"} flex items-baseline gap-2`}>
-        {pricesLoading ? (
-          <div
-            className={`${compact ? "h-7" : "h-9"} w-24 rounded-md animate-pulse`}
-            style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
-          />
-        ) : (
-          <>
-            <span
-              className={`${compact ? "text-[26px]" : "text-[34px]"} font-bold tabular-nums leading-none`}
-              style={{ color: "var(--text-primary)" }}
-            >
-              {selected === "month" ? monthlyPrice : annualPrice}
-            </span>
-            <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>
-              AUD / {selected === "month" ? "month" : "year"}
-            </span>
-          </>
-        )}
+        <span
+          className={`${compact ? "text-[26px]" : "text-[34px]"} font-bold tabular-nums leading-none`}
+          style={{ color: "var(--text-primary)" }}
+        >
+          {selected === "month" ? monthlyPrice : annualPrice}
+        </span>
+        <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+          AUD / {selected === "month" ? "month" : "year"}
+        </span>
       </div>
 
       <Button
         variant="primary"
         className={`w-full ${compact ? "mb-2" : "mb-3"}`}
         onClick={handlePurchase}
-        disabled={isPurchasing || pricesLoading}
+        disabled={isPurchasing || pkgsLoading}
       >
         {isPurchasing ? (
           <span className="flex items-center justify-center gap-2">
