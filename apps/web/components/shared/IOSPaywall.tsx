@@ -10,8 +10,9 @@ type Interval = "month" | "year";
 type PurchaseStatus = "idle" | "purchasing" | "success";
 
 type Props = {
-  onSuccess?: () => void;
-  compact?:   boolean;
+  onSuccess?:   () => void;
+  compact?:     boolean;
+  buttonLabel?: string;
 };
 
 const BULLETS = [
@@ -21,7 +22,7 @@ const BULLETS = [
   "Up to 100 receipt uploads",
 ];
 
-export function IOSPaywall({ onSuccess, compact = false }: Props) {
+export function IOSPaywall({ onSuccess, compact = false, buttonLabel }: Props) {
   const { offerings, loading, error, purchase, restore } = useRevenueCat();
   const [selected,       setSelected]       = useState<Interval>("year");
   const [purchaseStatus, setPurchaseStatus] = useState<PurchaseStatus>("idle");
@@ -200,7 +201,7 @@ export function IOSPaywall({ onSuccess, compact = false }: Props) {
             </svg>
             Processing…
           </span>
-        ) : "Unlock Pro"}
+        ) : (buttonLabel ?? "Unlock Pro")}
       </Button>
 
       {error && purchaseStatus === "idle" && (

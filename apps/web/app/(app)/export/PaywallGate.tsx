@@ -329,33 +329,68 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
   // Wait until platform is known — prevents web prices flashing on iOS
   if (!platformReady) return null;
 
-  // ── iOS locked: real preview + RevenueCat paywall ─────────────────────────
+  // ── iOS locked: blurred preview + RevenueCat paywall card ───────────────
+  // Layout intentionally mirrors the web locked state for consistency.
   if (isIOS) {
     return (
-      <motion.div
-        className="mb-8 rounded-2xl overflow-hidden"
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-        style={{
-          backgroundColor: "rgba(13, 20, 33, 0.92)",
-          border:          "1px solid rgba(34,197,94,0.22)",
-          boxShadow:       "0 2px 8px rgba(0,0,0,0.5), 0 0 48px rgba(34,197,94,0.07)",
-        }}
-      >
-        <div className="h-[2px] w-full" style={{ background: "linear-gradient(90deg, #22C55E, #14B8A6)" }} />
-        <div className="px-5 pt-5 pb-1">
-          <ExportLockedPreview
-            allItems={allItems}
-            categoryGroups={categoryGroups}
-            total={total}
-            confirmedCount={confirmedCount}
+      <>
+        {/* Blurred category preview — same as web */}
+        <motion.div
+          className="mb-5 relative overflow-hidden rounded-2xl"
+          style={{ pointerEvents: "none", userSelect: "none" }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div style={{ filter: "blur(5px)", opacity: 0.4 }}>
+            <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--text-muted)" }}>
+              Breakdown
+            </p>
+            <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}>
+              <div className="px-5 py-3 flex items-center justify-between" style={{ borderBottom: "1px solid var(--bg-border)" }}>
+                <span className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
+                  {allItems[0]?.category ?? "Category"}
+                </span>
+                <span className="text-[14px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>$—</span>
+              </div>
+              {allItems.slice(0, 4).map((item, i) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between gap-4 px-5 py-2.5"
+                  style={{ borderTop: i > 0 ? "1px solid rgba(255,255,255,0.04)" : "none" }}
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-[13px]" style={{ color: "var(--text-primary)" }}>{item.merchant}</p>
+                    <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>{item.date}</p>
+                  </div>
+                  <span className="shrink-0 text-[13px] tabular-nums" style={{ color: "var(--text-secondary)" }}>
+                    {fmt(item.amount)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div
+            className="absolute inset-x-0 bottom-0 h-20"
+            style={{ background: "linear-gradient(to bottom, transparent, var(--bg-app))" }}
           />
-        </div>
-        <div className="px-5 pb-5">
-          <IOSPaywall compact />
-        </div>
-      </motion.div>
+        </motion.div>
+
+        {/* iOS paywall card — same visual container as web, RevenueCat inside */}
+        <motion.div
+          className="mb-8 rounded-2xl px-6 py-7"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+          style={{
+            backgroundColor: "rgba(13, 20, 33, 0.92)",
+            border:          "1px solid rgba(34,197,94,0.22)",
+            boxShadow:       "0 2px 8px rgba(0,0,0,0.5), 0 0 48px rgba(34,197,94,0.07)",
+          }}
+        >
+          <IOSPaywall buttonLabel="Unlock export report" />
+        </motion.div>
+      </>
     );
   }
 
