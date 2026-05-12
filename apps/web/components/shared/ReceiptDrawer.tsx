@@ -115,13 +115,11 @@ function ReceiptViewer({
       transition={{ duration: 0.15 }}
       className="fixed inset-0 z-[300] flex flex-col"
       style={{ backgroundColor: "rgba(0,0,0,0.94)" }}
-      onClick={onClose}
     >
       {/* Header bar */}
       <div
         className="flex items-center justify-between gap-3 px-4 py-3 shrink-0"
         style={{ paddingTop: "calc(env(safe-area-inset-top) + 12px)" }}
-        onClick={(e) => e.stopPropagation()}
       >
         <p
           className="text-[13px] font-medium truncate"
@@ -161,10 +159,7 @@ function ReceiptViewer({
           shrink below its content size, so max-h-full on the <img> resolves
           incorrectly in WKWebView and the image renders at the wrong size.   */}
       {isImage && (
-        <div
-          className="flex-1 min-h-0 flex items-center justify-center p-4"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <div className="flex-1 min-h-0 flex items-center justify-center p-4">
           {receipt.signedUrl ? (
             <div className="relative flex items-center justify-center w-full h-full">
               {/* Spinner shown while image loads */}
@@ -199,10 +194,7 @@ function ReceiptViewer({
 
       {/* PDF content */}
       {!isImage && (
-        <div
-          className="flex-1 flex flex-col items-center justify-center gap-5 p-8"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <div className="flex-1 flex flex-col items-center justify-center gap-5 p-8">
           <div
             className="flex h-16 w-16 items-center justify-center rounded-2xl"
             style={{ backgroundColor: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.20)" }}
@@ -220,7 +212,6 @@ function ReceiptViewer({
               href={receipt.signedUrl}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
               className="flex items-center gap-2 px-6 py-3 rounded-xl text-[14px] font-semibold transition-opacity hover:opacity-80"
               style={{ backgroundColor: "#22C55E", color: "#000" }}
             >
@@ -230,17 +221,6 @@ function ReceiptViewer({
           )}
         </div>
       )}
-
-      {/* Tap-outside hint on mobile */}
-      <div
-        className="shrink-0 flex justify-center pb-6 sm:hidden"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.22)" }}>
-          Tap outside to close
-        </p>
-      </div>
     </motion.div>
   );
 }
