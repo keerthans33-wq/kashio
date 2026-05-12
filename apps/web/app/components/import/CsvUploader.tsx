@@ -220,11 +220,11 @@ export default function CsvUploader() {
             </p>
             <p className="mt-0.5 text-sm" style={{ color: "var(--text-muted)" }}>
               {noneAdded
-                ? `${importResult.duplicates} transaction${importResult.duplicates !== 1 ? "s" : ""} already saved.`
+                ? `${importResult.duplicates} transaction${importResult.duplicates !== 1 ? "s" : ""} already imported from a previous upload.`
                 : <>
-                    {importResult.inserted} transaction{importResult.inserted !== 1 ? "s" : ""} added
-                    {importResult.duplicates > 0 && <> · {importResult.duplicates} skipped</>}
-                    {importResult.invalid > 0    && <> · {importResult.invalid} rejected</>}
+                    {importResult.inserted} imported
+                    {importResult.duplicates > 0 && <> · {importResult.duplicates} skipped (already imported from a previous upload)</>}
+                    {importResult.invalid > 0    && <> · {importResult.invalid} errors</>}
                   </>
               }
             </p>

@@ -61,7 +61,10 @@ model Transaction {
   importBatchId      String?
   deductionCandidate DeductionCandidate?
 
-  @@unique([userId, date, description, amount])
+  // No unique constraint here — within-batch duplicates are intentionally allowed
+  // (e.g. two identical $9.99 charges on the same day in one CSV are real distinct transactions).
+  // Cross-batch duplicate detection is done at the application level in importPipeline.ts.
+  @@index([userId, date, description, amount])
 }
 
 // Where the transaction came from.

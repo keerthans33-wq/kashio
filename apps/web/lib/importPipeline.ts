@@ -21,8 +21,9 @@ export async function runImportPipeline(
   userId: string,
   userType?: string | null,
 ): Promise<PipelineResult> {
-  // Manually filter duplicates instead of relying on skipDuplicates: true,
-  // which has known issues with Prisma's driverAdapters preview feature.
+  // Check for duplicates against transactions from PREVIOUS uploads only.
+  // Rows within the same CSV are never deduplicated against each other —
+  // two identical charges on the same day in one file are real distinct transactions.
   const existing = await db.transaction.findMany({
     where: { userId },
     select: { date: true, description: true, amount: true },
@@ -32,21 +33,11 @@ export async function runImportPipeline(
     existing.map((t) => `${t.date}|${t.description}|${t.amount}`)
   );
 
-  const unseenRows = rows.filter(
+  const newRows = rows.filter(
     (r) => !existingKeys.has(`${r.date}|${r.description}|${r.amount}`)
   );
 
-  // Also deduplicate within the new batch itself (same day + same description + same amount).
-  // Without this, createMany throws a unique constraint violation when the file has
-  // identical-looking transactions (e.g. two $9.99 coffee purchases on the same day).
-  const seenInBatch = new Set<string>();
-  const newRows = unseenRows.filter((r) => {
-    const key = `${r.date}|${r.description}|${r.amount}`;
-    if (seenInBatch.has(key)) return false;
-    seenInBatch.add(key);
-    return true;
-  });
-
+  // duplicates = rows skipped because they already exist from a previous upload
   const duplicates = rows.length - newRows.length;
 
   if (newRows.length === 0) {
