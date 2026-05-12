@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { FileImage, FileText, Trash2, Upload, Receipt, AlertCircle, Camera, FolderOpen, X, ExternalLink } from "lucide-react";
+import { FileImage, FileText, Trash2, Upload, Receipt, AlertCircle, Camera, FolderOpen, X, ExternalLink, Download } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -57,12 +57,15 @@ function formatDate(iso: string): string {
 
 function ReceiptViewer({
   receipt,
+  isNative,
   onClose,
 }: {
-  receipt: ReceiptRow;
-  onClose: () => void;
+  receipt:  ReceiptRow;
+  isNative: boolean;
+  onClose:  () => void;
 }) {
   const isImage = receipt.mimeType.startsWith("image/");
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
@@ -70,12 +73,39 @@ function ReceiptViewer({
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  // Prevent body scroll while viewer is open
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = prev; };
   }, []);
+
+  async function handleDownload() {
+    if (!receipt.signedUrl) return;
+    setDownloading(true);
+    try {
+      if (isNative) {
+        // On iOS open in Safari — user can long-press to save or use share sheet
+        window.open(receipt.signedUrl, "_blank");
+      } else {
+        // Fetch as blob so the browser triggers a real file download
+        const res  = await fetch(receipt.signedUrl);
+        const blob = await res.blob();
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement("a");
+        a.href     = url;
+        a.download = receipt.fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch {
+      // Fallback: open in new tab
+      window.open(receipt.signedUrl, "_blank");
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   return (
     <motion.div
@@ -99,14 +129,30 @@ function ReceiptViewer({
         >
           {receipt.fileName}
         </p>
-        <button
-          onClick={onClose}
-          aria-label="Close preview"
-          className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full transition-colors"
-          style={{ backgroundColor: "rgba(255,255,255,0.12)" }}
-        >
-          <X size={16} strokeWidth={2.2} style={{ color: "rgba(255,255,255,0.85)" }} />
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          {receipt.signedUrl && (
+            <button
+              onClick={handleDownload}
+              disabled={downloading}
+              aria-label="Download"
+              className="flex h-8 w-8 items-center justify-center rounded-full transition-colors disabled:opacity-50"
+              style={{ backgroundColor: "rgba(255,255,255,0.12)" }}
+            >
+              {downloading
+                ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/20 border-t-white/70" />
+                : <Download size={15} strokeWidth={2} style={{ color: "rgba(255,255,255,0.85)" }} />
+              }
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            aria-label="Close preview"
+            className="flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+            style={{ backgroundColor: "rgba(255,255,255,0.12)" }}
+          >
+            <X size={16} strokeWidth={2.2} style={{ color: "rgba(255,255,255,0.85)" }} />
+          </button>
+        </div>
       </div>
 
       {/* Image content */}
@@ -650,6 +696,7 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
           <ReceiptViewer
             key={viewingReceipt.id}
             receipt={viewingReceipt}
+            isNative={isNative}
             onClose={() => setViewingReceipt(null)}
           />
         )}

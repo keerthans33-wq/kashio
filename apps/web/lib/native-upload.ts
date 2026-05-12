@@ -28,7 +28,10 @@ export async function pickPhotoNative(): Promise<File | null> {
   );
 
   const photo = await Camera.getPhoto({
-    quality:       90,
+    // 1600px wide is plenty to read any receipt text and keeps file sizes small.
+    // quality 82 gives a good visual result with much smaller files than quality 90.
+    width:         1600,
+    quality:       82,
     allowEditing:  false,
     resultType:    CameraResultType.Base64,
     // Prompt shows native iOS action sheet: Camera · Photo Library
