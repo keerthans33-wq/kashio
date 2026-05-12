@@ -56,14 +56,12 @@ export default function Nav() {
     <nav
       className="sticky top-0 z-50"
       style={{
-        backgroundColor:      "rgba(5, 7, 14, 0.97)",
-        borderBottom:         "1px solid var(--bg-border)",
-        backdropFilter:       "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        paddingTop:           "env(safe-area-inset-top)",
+        backgroundColor: "#05070E",
+        borderBottom:    "1px solid var(--bg-border)",
+        paddingTop:      "env(safe-area-inset-top)",
       }}
     >
-      <div className="relative flex items-stretch h-9 sm:h-12 pl-1 pr-2">
+      <div className="relative flex items-center sm:items-stretch h-10 sm:h-12 pl-1 pr-2">
 
         {/* ── Desktop: tab links (hidden on mobile — bottom nav handles it) ── */}
         <div className="hidden sm:flex flex-1 items-stretch overflow-x-auto scrollbar-none min-w-0">
