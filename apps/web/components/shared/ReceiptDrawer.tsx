@@ -66,6 +66,7 @@ function ReceiptViewer({
 }) {
   const isImage = receipt.mimeType.startsWith("image/");
   const [downloading, setDownloading] = useState(false);
+  const [imgStatus,   setImgStatus]   = useState<"loading" | "loaded" | "error">("loading");
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
@@ -87,7 +88,7 @@ function ReceiptViewer({
         // On iOS open in Safari — user can long-press to save or use share sheet
         window.open(receipt.signedUrl, "_blank");
       } else {
-        // Fetch as blob so the browser triggers a real file download
+        // Fetch as blob so the browser triggers a real Save dialog with the original filename
         const res  = await fetch(receipt.signedUrl);
         const blob = await res.blob();
         const url  = URL.createObjectURL(blob);
@@ -100,7 +101,6 @@ function ReceiptViewer({
         URL.revokeObjectURL(url);
       }
     } catch {
-      // Fallback: open in new tab
       window.open(receipt.signedUrl, "_blank");
     } finally {
       setDownloading(false);
@@ -130,6 +130,7 @@ function ReceiptViewer({
           {receipt.fileName}
         </p>
         <div className="flex items-center gap-2 shrink-0">
+          {/* Download button — always shown if there's a URL (image or PDF) */}
           {receipt.signedUrl && (
             <button
               onClick={handleDownload}
@@ -155,19 +156,39 @@ function ReceiptViewer({
         </div>
       </div>
 
-      {/* Image content */}
+      {/* Image content
+          min-h-0 is critical: without it, a flex-1 child in a flex-col won't
+          shrink below its content size, so max-h-full on the <img> resolves
+          incorrectly in WKWebView and the image renders at the wrong size.   */}
       {isImage && (
         <div
-          className="flex-1 flex items-center justify-center p-4 overflow-hidden"
+          className="flex-1 min-h-0 flex items-center justify-center p-4"
           onClick={(e) => e.stopPropagation()}
         >
           {receipt.signedUrl ? (
-            <img
-              src={receipt.signedUrl}
-              alt={receipt.fileName}
-              className="max-h-full max-w-full object-contain rounded-xl"
-              style={{ boxShadow: "0 4px 40px rgba(0,0,0,0.70)" }}
-            />
+            <div className="relative flex items-center justify-center w-full h-full">
+              {/* Spinner shown while image loads */}
+              {imgStatus === "loading" && (
+                <span className="absolute h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-[#22C55E]" />
+              )}
+              {imgStatus === "error" ? (
+                <p className="text-[13px]" style={{ color: "rgba(255,255,255,0.40)" }}>
+                  Could not load image
+                </p>
+              ) : (
+                <img
+                  src={receipt.signedUrl}
+                  alt={receipt.fileName}
+                  onLoad={() => setImgStatus("loaded")}
+                  onError={() => setImgStatus("error")}
+                  className="max-h-full max-w-full object-contain rounded-xl transition-opacity duration-300"
+                  style={{
+                    opacity:    imgStatus === "loaded" ? 1 : 0,
+                    boxShadow:  "0 4px 40px rgba(0,0,0,0.70)",
+                  }}
+                />
+              )}
+            </div>
           ) : (
             <p className="text-[13px]" style={{ color: "rgba(255,255,255,0.40)" }}>
               Preview unavailable
