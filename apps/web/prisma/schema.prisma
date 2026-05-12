@@ -9,11 +9,12 @@ datasource db {
 
 // Stores the Basiq user ID created when a user connects their bank.
 model UserProfile {
-  id             String   @id @default(cuid())
-  userId         String   @unique              // Supabase user ID
-  reportUnlocked Boolean  @default(false)
-  receiptCount   Int      @default(0)
-  createdAt      DateTime @default(now())
+  id                 String   @id @default(cuid())
+  userId             String   @unique              // Supabase user ID
+  reportUnlocked     Boolean  @default(false)
+  receiptCount       Int      @default(0)
+  welcomeEmailSent   Boolean  @default(false)
+  createdAt          DateTime @default(now())
 }
 
 model Receipt {
