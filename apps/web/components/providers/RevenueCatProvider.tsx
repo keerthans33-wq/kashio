@@ -10,23 +10,25 @@ type Offering = Awaited<ReturnType<typeof import("@/lib/revenuecat.client").getO
 export type PurchaseOutcome = "success" | "cancelled" | "error";
 
 type RCContextValue = {
-  isIOS:       boolean;
-  offerings:   Offering | null;
-  isPro:       boolean;
-  loading:     boolean;
-  error:       string | null;
-  purchase:    (pkg: PurchasesPackage) => Promise<PurchaseOutcome>;
-  restore:     () => Promise<boolean>;
+  isIOS:          boolean;
+  platformReady:  boolean;
+  offerings:      Offering | null;
+  isPro:          boolean;
+  loading:        boolean;
+  error:          string | null;
+  purchase:       (pkg: PurchasesPackage) => Promise<PurchaseOutcome>;
+  restore:        () => Promise<boolean>;
 };
 
 const defaultCtx: RCContextValue = {
-  isIOS:    false,
-  offerings: null,
-  isPro:    false,
-  loading:  false,
-  error:    null,
-  purchase: async () => "error",
-  restore:  async () => false,
+  isIOS:         false,
+  platformReady: false,
+  offerings:     null,
+  isPro:         false,
+  loading:       false,
+  error:         null,
+  purchase:      async () => "error",
+  restore:       async () => false,
 };
 
 const RevenueCatContext = createContext<RCContextValue>(defaultCtx);
@@ -38,14 +40,19 @@ export function useRevenueCat() {
 export function RevenueCatProvider({ children }: { children: React.ReactNode }) {
   const { user }                          = useUser();
   const [isIOS, setIsIOS]                 = useState(false);
+  const [platformReady, setPlatformReady] = useState(false);
   const [offerings, setOfferings]         = useState<Offering | null>(null);
   const [isPro, setIsPro]                 = useState(false);
   const [loading, setLoading]             = useState(false);
   const [error, setError]                 = useState<string | null>(null);
   const configured                        = useRef(false);
 
-  // Detect platform after mount (avoids SSR mismatch)
-  useEffect(() => { setIsIOS(isCapacitorIOS()); }, []);
+  // Detect platform after mount (avoids SSR mismatch).
+  // platformReady gates all paywall rendering so iOS never flashes web prices.
+  useEffect(() => {
+    setIsIOS(isCapacitorIOS());
+    setPlatformReady(true);
+  }, []);
 
   // Configure RC once we know we're on iOS and have a user ID
   useEffect(() => {
@@ -123,7 +130,7 @@ export function RevenueCatProvider({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <RevenueCatContext.Provider value={{ isIOS, offerings, isPro, loading, error, purchase, restore }}>
+    <RevenueCatContext.Provider value={{ isIOS, platformReady, offerings, isPro, loading, error, purchase, restore }}>
       {children}
     </RevenueCatContext.Provider>
   );

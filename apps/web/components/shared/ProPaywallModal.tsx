@@ -30,7 +30,7 @@ const BULLETS = [
 ];
 
 export function ProPaywallModal({ open, onOpenChange }: Props) {
-  const { isIOS } = useRevenueCat();
+  const { isIOS, platformReady } = useRevenueCat();
 
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);

@@ -16,7 +16,7 @@ type Props = {
 type Interval = "month" | "year";
 
 export function ReviewPaywallCard({ hiddenCount, hiddenValue }: Props) {
-  const { isIOS } = useRevenueCat();
+  const { isIOS, platformReady } = useRevenueCat();
 
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
@@ -50,6 +50,8 @@ export function ReviewPaywallCard({ hiddenCount, hiddenValue }: Props) {
       setLoading(false);
     }
   }
+
+  if (!platformReady) return null;
 
   if (isIOS) {
     return (

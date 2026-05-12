@@ -104,7 +104,7 @@ function LockedPreview() {
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export function DashboardProUpsell() {
-  const { isIOS } = useRevenueCat();
+  const { isIOS, platformReady } = useRevenueCat();
   const [open, setOpen] = useState(false);
 
   const cardStyle = {
@@ -112,6 +112,9 @@ export function DashboardProUpsell() {
     border:          "1px solid rgba(34,197,94,0.22)",
     boxShadow:       "0 0 40px rgba(34,197,94,0.06), 0 2px 12px rgba(0,0,0,0.5)",
   };
+
+  // Wait until platform is known — prevents web prices flashing on iOS
+  if (!platformReady) return null;
 
   // iOS: blurred preview above inline IOSPaywall compact
   if (isIOS) {
