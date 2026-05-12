@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { FileImage, FileText, Trash2, Upload, Receipt, AlertCircle, Camera, FolderOpen } from "lucide-react";
+import { FileImage, FileText, Trash2, Upload, Receipt, AlertCircle, Camera, FolderOpen, X, ExternalLink } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -20,6 +20,7 @@ type ReceiptRow = {
   mimeType:  string;
   comment:   string | null;
   createdAt: string;
+  signedUrl: string | null;
 };
 
 export type DrawerToast = { type: "success" | "error"; message: string } | null;
@@ -52,6 +53,131 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "2-digit" });
 }
 
+// ── Full-screen receipt viewer ─────────────────────────────────────────────────
+
+function ReceiptViewer({
+  receipt,
+  onClose,
+}: {
+  receipt: ReceiptRow;
+  onClose: () => void;
+}) {
+  const isImage = receipt.mimeType.startsWith("image/");
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  // Prevent body scroll while viewer is open
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+      className="fixed inset-0 z-[300] flex flex-col"
+      style={{ backgroundColor: "rgba(0,0,0,0.94)" }}
+      onClick={onClose}
+    >
+      {/* Header bar */}
+      <div
+        className="flex items-center justify-between gap-3 px-4 py-3 shrink-0"
+        style={{ paddingTop: "calc(env(safe-area-inset-top) + 12px)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p
+          className="text-[13px] font-medium truncate"
+          style={{ color: "rgba(255,255,255,0.80)" }}
+        >
+          {receipt.fileName}
+        </p>
+        <button
+          onClick={onClose}
+          aria-label="Close preview"
+          className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+          style={{ backgroundColor: "rgba(255,255,255,0.12)" }}
+        >
+          <X size={16} strokeWidth={2.2} style={{ color: "rgba(255,255,255,0.85)" }} />
+        </button>
+      </div>
+
+      {/* Image content */}
+      {isImage && (
+        <div
+          className="flex-1 flex items-center justify-center p-4 overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {receipt.signedUrl ? (
+            <img
+              src={receipt.signedUrl}
+              alt={receipt.fileName}
+              className="max-h-full max-w-full object-contain rounded-xl"
+              style={{ boxShadow: "0 4px 40px rgba(0,0,0,0.70)" }}
+            />
+          ) : (
+            <p className="text-[13px]" style={{ color: "rgba(255,255,255,0.40)" }}>
+              Preview unavailable
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* PDF content */}
+      {!isImage && (
+        <div
+          className="flex-1 flex flex-col items-center justify-center gap-5 p-8"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div
+            className="flex h-16 w-16 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.20)" }}
+          >
+            <FileText size={28} strokeWidth={1.5} style={{ color: "#22C55E" }} />
+          </div>
+          <p className="text-[15px] font-semibold text-center" style={{ color: "rgba(255,255,255,0.85)" }}>
+            {receipt.fileName}
+          </p>
+          <p className="text-[12px] text-center" style={{ color: "rgba(255,255,255,0.40)" }}>
+            PDF documents open in your browser
+          </p>
+          {receipt.signedUrl && (
+            <a
+              href={receipt.signedUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl text-[14px] font-semibold transition-opacity hover:opacity-80"
+              style={{ backgroundColor: "#22C55E", color: "#000" }}
+            >
+              <ExternalLink size={14} strokeWidth={2.5} />
+              Open PDF
+            </a>
+          )}
+        </div>
+      )}
+
+      {/* Tap-outside hint on mobile */}
+      <div
+        className="shrink-0 flex justify-center pb-6 sm:hidden"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.22)" }}>
+          Tap outside to close
+        </p>
+      </div>
+    </motion.div>
+  );
+}
+
 // ── Per-row component ──────────────────────────────────────────────────────────
 
 function ReceiptListItem({
@@ -59,27 +185,30 @@ function ReceiptListItem({
   deleting,
   onDelete,
   onUpdate,
+  onView,
 }: {
   receipt:  ReceiptRow;
   deleting: boolean;
   onDelete: () => void;
   onUpdate: (data: { fileName?: string; comment?: string }) => Promise<void>;
+  onView:   () => void;
 }) {
+  const isImage = receipt.mimeType.startsWith("image/");
+
   const [editingName,   setEditingName]   = useState(false);
   const [nameValue,     setNameValue]     = useState(receipt.fileName);
   const [commentValue,  setCommentValue]  = useState(receipt.comment ?? "");
   const [savingName,    setSavingName]    = useState(false);
   const [savingComment, setSavingComment] = useState(false);
+  const [imgFailed,     setImgFailed]     = useState(false);
 
   const nameInputRef = useRef<HTMLInputElement>(null);
 
-  // Keep local state in sync if parent re-fetches the list.
-  useEffect(() => { setNameValue(receipt.fileName); }, [receipt.fileName]);
+  useEffect(() => { setNameValue(receipt.fileName); },   [receipt.fileName]);
   useEffect(() => { setCommentValue(receipt.comment ?? ""); }, [receipt.comment]);
 
   function startEditingName() {
     setEditingName(true);
-    // Focus on the next tick after the input renders.
     setTimeout(() => nameInputRef.current?.select(), 0);
   }
 
@@ -88,12 +217,8 @@ function ReceiptListItem({
     if (!trimmed) { setNameValue(receipt.fileName); setEditingName(false); return; }
     if (trimmed === receipt.fileName) { setEditingName(false); return; }
     setSavingName(true);
-    try {
-      await onUpdate({ fileName: trimmed });
-    } finally {
-      setSavingName(false);
-      setEditingName(false);
-    }
+    try { await onUpdate({ fileName: trimmed }); }
+    finally { setSavingName(false); setEditingName(false); }
   }
 
   function cancelName() {
@@ -106,11 +231,8 @@ function ReceiptListItem({
     const current = receipt.comment ?? "";
     if (trimmed === current) return;
     setSavingComment(true);
-    try {
-      await onUpdate({ comment: trimmed });
-    } finally {
-      setSavingComment(false);
-    }
+    try { await onUpdate({ comment: trimmed }); }
+    finally { setSavingComment(false); }
   }
 
   return (
@@ -124,16 +246,26 @@ function ReceiptListItem({
       style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
     >
       <div className="flex items-start gap-3">
-        {/* File type icon */}
-        <span
-          className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+        {/* Thumbnail / icon — tap to view */}
+        <button
+          onClick={onView}
+          aria-label={`View ${receipt.fileName}`}
+          className="mt-0.5 shrink-0 flex h-10 w-10 items-center justify-center rounded-lg overflow-hidden transition-opacity hover:opacity-75 active:opacity-60"
           style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
         >
-          {receipt.mimeType === "application/pdf"
-            ? <FileText  size={15} strokeWidth={1.75} style={{ color: "#22C55E"            }} />
-            : <FileImage size={15} strokeWidth={1.75} style={{ color: "rgba(96,165,250,0.9)" }} />
-          }
-        </span>
+          {isImage && receipt.signedUrl && !imgFailed ? (
+            <img
+              src={receipt.signedUrl}
+              alt=""
+              className="h-full w-full object-cover"
+              onError={() => setImgFailed(true)}
+            />
+          ) : receipt.mimeType === "application/pdf" ? (
+            <FileText  size={16} strokeWidth={1.75} style={{ color: "#22C55E"            }} />
+          ) : (
+            <FileImage size={16} strokeWidth={1.75} style={{ color: "rgba(96,165,250,0.9)" }} />
+          )}
+        </button>
 
         {/* Name + meta + comment */}
         <div className="min-w-0 flex-1">
@@ -196,9 +328,7 @@ function ReceiptListItem({
               }}
             />
             {savingComment && (
-              <span
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 animate-spin rounded-full border border-white/20 border-t-white/60"
-              />
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 animate-spin rounded-full border border-white/20 border-t-white/60" />
             )}
           </div>
         </div>
@@ -224,14 +354,15 @@ function ReceiptListItem({
 // ── Main drawer ────────────────────────────────────────────────────────────────
 
 export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCountChange }: Props) {
-  const inputRef                        = useRef<HTMLInputElement>(null);
-  const [receipts,    setReceipts]      = useState<ReceiptRow[]>([]);
-  const [loading,     setLoading]       = useState(false);
-  const [fetchError,  setFetchError]    = useState(false);
-  const [uploading,   setUploading]     = useState(false);
-  const [deletingId,  setDeletingId]    = useState<string | null>(null);
-  const [paywallOpen, setPaywallOpen]   = useState(false);
-  const [isNative,    setIsNative]      = useState(false);
+  const inputRef                             = useRef<HTMLInputElement>(null);
+  const [receipts,      setReceipts]         = useState<ReceiptRow[]>([]);
+  const [loading,       setLoading]          = useState(false);
+  const [fetchError,    setFetchError]       = useState(false);
+  const [uploading,     setUploading]        = useState(false);
+  const [deletingId,    setDeletingId]       = useState<string | null>(null);
+  const [paywallOpen,   setPaywallOpen]      = useState(false);
+  const [isNative,      setIsNative]         = useState(false);
+  const [viewingReceipt, setViewingReceipt]  = useState<ReceiptRow | null>(null);
 
   // Detect Capacitor iOS shell once on mount
   useEffect(() => {
@@ -263,11 +394,15 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
     if (open) fetchReceipts();
   }, [open, fetchReceipts]);
 
+  // Close viewer when drawer closes
+  useEffect(() => {
+    if (!open) setViewingReceipt(null);
+  }, [open]);
+
   // ── Upload ──────────────────────────────────────────────────────────────────
 
   function handleUploadClick() { inputRef.current?.click(); }
 
-  // Shared upload logic used by both web file input and native camera paths
   async function uploadFile(file: File) {
     if (!ALLOWED_MIMES.has(file.type)) {
       onToast({ type: "error", message: "Only JPEG, PNG, WebP, and PDF files are accepted." });
@@ -282,12 +417,10 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
     try {
       const body = new FormData();
       body.append("file", file);
-
       const res  = await fetch("/api/receipts/upload", { method: "POST", body });
       const data = await res.json() as { error?: string; message?: string };
 
       if (res.status === 402) { setPaywallOpen(true); return; }
-
       if (!res.ok) {
         onToast({ type: "error", message: data.message ?? "Could not upload receipt. Please try again." });
         return;
@@ -309,7 +442,6 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
     if (file) await uploadFile(file);
   }
 
-  // Native iOS: open Camera / Photo Library via Capacitor then feed into shared upload
   async function handleNativePhotoUpload() {
     try {
       const { pickPhotoNative } = await import("@/lib/native-upload");
@@ -317,7 +449,6 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
       if (file) await uploadFile(file);
     } catch (err) {
       const msg = err instanceof Error ? err.message.toLowerCase() : "";
-      // Silently ignore user-cancelled picker
       if (msg.includes("cancel") || msg.includes("no image")) return;
       onToast({ type: "error", message: "Could not access camera. Please check permissions in Settings." });
     }
@@ -338,9 +469,12 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
     const { receipt: updated } = await res.json() as {
       receipt: { id: string; fileName: string; comment: string | null };
     };
-    // Patch just this row in local state.
     setReceipts((prev) =>
       prev.map((r) => r.id === updated.id ? { ...r, ...updated } : r)
+    );
+    // Keep viewer in sync if it's showing the updated receipt
+    setViewingReceipt((prev) =>
+      prev?.id === updated.id ? { ...prev, ...updated } : prev
     );
   }
 
@@ -355,6 +489,7 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
         return;
       }
       setReceipts((prev) => prev.filter((r) => r.id !== id));
+      if (viewingReceipt?.id === id) setViewingReceipt(null);
       onCountChange();
     } catch {
       onToast({ type: "error", message: "Could not delete receipt. Please try again." });
@@ -413,7 +548,6 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
             </div>
 
             {isNative ? (
-              /* iOS: separate buttons for Camera/Photos and Files (PDF support) */
               <div className="flex items-center gap-2 mr-8">
                 <Button
                   variant="secondary"
@@ -441,7 +575,6 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
                 </Button>
               </div>
             ) : (
-              /* Web: single upload button using file input */
               <Button
                 variant="secondary"
                 size="sm"
@@ -501,6 +634,7 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
                       deleting={deletingId === r.id}
                       onDelete={() => handleDelete(r.id)}
                       onUpdate={(data) => handleUpdate(r.id, data)}
+                      onView={() => setViewingReceipt(r)}
                     />
                   ))}
                 </AnimatePresence>
@@ -509,6 +643,17 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Full-screen receipt viewer — rendered outside the Sheet so it overlays everything */}
+      <AnimatePresence>
+        {viewingReceipt && (
+          <ReceiptViewer
+            key={viewingReceipt.id}
+            receipt={viewingReceipt}
+            onClose={() => setViewingReceipt(null)}
+          />
+        )}
+      </AnimatePresence>
 
       <ProPaywallModal open={paywallOpen} onOpenChange={setPaywallOpen} />
     </>
