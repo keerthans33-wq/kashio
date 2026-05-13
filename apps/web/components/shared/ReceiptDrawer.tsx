@@ -91,15 +91,38 @@ function ReceiptViewer({
 
         const res  = await fetch(receipt.signedUrl);
         const blob = await res.blob();
+
+        const ext          = receipt.fileName.split(".").pop() ?? "jpg";
+        const downloadName = `receipt-${Date.now()}.${ext}`;
+
+        // For images, redraw through a canvas to strip EXIF metadata.
+        // iOS Photos sorts by the EXIF creation date; without stripping,
+        // the saved photo appears at the original capture date, not today.
+        let saveBlob = blob;
+        if (receipt.mimeType.startsWith("image/")) {
+          const objectUrl = URL.createObjectURL(blob);
+          const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+            const el = new Image();
+            el.onload  = () => resolve(el);
+            el.onerror = reject;
+            el.src     = objectUrl;
+          });
+          URL.revokeObjectURL(objectUrl);
+          const canvas  = document.createElement("canvas");
+          canvas.width  = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          canvas.getContext("2d")!.drawImage(img, 0, 0);
+          saveBlob = await new Promise<Blob>((res) =>
+            canvas.toBlob((b) => res(b!), "image/jpeg", 0.92)
+          );
+        }
+
         const base64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onload  = () => resolve((reader.result as string).split(",")[1]);
           reader.onerror = reject;
-          reader.readAsDataURL(blob);
+          reader.readAsDataURL(saveBlob);
         });
-
-        const ext          = receipt.fileName.split(".").pop() ?? "jpg";
-        const downloadName = `receipt-${Date.now()}.${ext}`;
 
         const written = await Filesystem.writeFile({
           path:      downloadName,
