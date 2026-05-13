@@ -59,16 +59,17 @@ function buildWelcomeEmail(): string {
       <td align="center">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;">
 
-          <!-- Dark header — use bgcolor attribute for email client compatibility -->
+          <!-- Green header — saturated colour survives Gmail dark mode inversion;
+               white SVG logo remains clearly visible against it -->
           <tr>
-            <td align="center" bgcolor="#05070E" style="background-color:#05070E;padding:36px 40px 30px;border-radius:14px 14px 0 0;">
+            <td align="center" bgcolor="#22C55E" style="background-color:#22C55E;padding:36px 40px 28px;border-radius:14px 14px 0 0;">
 
-              <!-- Kashio logo (white SVG on dark background) -->
+              <!-- Kashio logo (white SVG on green background) -->
               <img src="https://app.kashio.com.au/logo.svg"
-                   width="130" height="auto" alt="Kashio"
-                   style="display:block;margin:0 auto 10px;width:130px;" />
+                   width="140" height="auto" alt="Kashio"
+                   style="display:block;margin:0 auto 10px;width:140px;" />
 
-              <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.40);letter-spacing:0.2px;">
+              <p style="margin:0;font-size:13px;color:rgba(0,0,0,0.45);letter-spacing:0.2px;">
                 Find what you can claim.
               </p>
 
@@ -154,10 +155,12 @@ function buildWelcomeEmail(): string {
                 <tr>
                   <td bgcolor="#f9fafb" style="background-color:#f9fafb;border-radius:10px;padding:16px 18px;">
                     <p style="margin:0 0 12px;font-size:11px;font-weight:600;color:#9ca3af;letter-spacing:1px;text-transform:uppercase;">What's included</p>
-                    <p style="margin:0 0 7px;font-size:13px;color:#374151;"><span style="color:#22C55E;font-weight:700;">✓</span>&nbsp; Work-related expense detection</p>
-                    <p style="margin:0 0 7px;font-size:13px;color:#374151;"><span style="color:#22C55E;font-weight:700;">✓</span>&nbsp; Work from home (WFH) deduction tools</p>
-                    <p style="margin:0 0 7px;font-size:13px;color:#374151;"><span style="color:#22C55E;font-weight:700;">✓</span>&nbsp; Receipt uploads &amp; storage</p>
-                    <p style="margin:0;font-size:13px;color:#374151;"><span style="color:#22C55E;font-weight:700;">✓</span>&nbsp; Tax-ready export reports</p>
+                    <table role="presentation" cellspacing="0" cellpadding="0" width="100%">
+                      <tr><td width="20" style="vertical-align:top;padding-bottom:8px;color:#22C55E;font-weight:700;font-size:13px;">✓</td><td style="padding-bottom:8px;font-size:13px;color:#374151;">Work-related expense detection</td></tr>
+                      <tr><td width="20" style="vertical-align:top;padding-bottom:8px;color:#22C55E;font-weight:700;font-size:13px;">✓</td><td style="padding-bottom:8px;font-size:13px;color:#374151;">Work from home (WFH) deduction tools</td></tr>
+                      <tr><td width="20" style="vertical-align:top;padding-bottom:8px;color:#22C55E;font-weight:700;font-size:13px;">✓</td><td style="padding-bottom:8px;font-size:13px;color:#374151;">Receipt uploads &amp; storage</td></tr>
+                      <tr><td width="20" style="vertical-align:top;color:#22C55E;font-weight:700;font-size:13px;">✓</td><td style="font-size:13px;color:#374151;">Tax-ready export reports</td></tr>
+                    </table>
                   </td>
                 </tr>
               </table>
