@@ -28,6 +28,7 @@ export function IOSPaywall({ onSuccess, compact = false, buttonLabel }: Props) {
   const [purchaseStatus, setPurchaseStatus] = useState<PurchaseStatus>("idle");
   const [restoring,      setRestoring]      = useState(false);
   const [restoreMsg,     setRestoreMsg]     = useState<string | null>(null);
+  const [restoreSuccess, setRestoreSuccess] = useState(false);
   const [rcLogged,       setRcLogged]       = useState(false);
 
   // ── Package lookup — strictly by product ID ────────────────────────────────
@@ -69,8 +70,12 @@ export function IOSPaywall({ onSuccess, compact = false, buttonLabel }: Props) {
             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
           </svg>
         </div>
-        <p className="text-[18px] font-bold" style={{ color: "var(--text-primary)" }}>Kashio Pro unlocked</p>
-        <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>Loading your account…</p>
+        <p className="text-[18px] font-bold" style={{ color: "var(--text-primary)" }}>
+          {restoreSuccess ? "Purchases restored" : "Kashio Pro unlocked"}
+        </p>
+        <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+          {restoreSuccess ? "Kashio Pro is active." : "Loading your account…"}
+        </p>
       </div>
     );
   }
@@ -93,14 +98,20 @@ export function IOSPaywall({ onSuccess, compact = false, buttonLabel }: Props) {
   async function handleRestore() {
     setRestoring(true);
     setRestoreMsg(null);
-    const ok = await restore();
-    setRestoring(false);
-    if (ok) {
-      setPurchaseStatus("success");
-      onSuccess?.();
-      setTimeout(() => window.location.reload(), 1400);
-    } else {
-      setRestoreMsg("No active subscription found. If you believe this is wrong, contact support.");
+    try {
+      const ok = await restore();
+      if (ok) {
+        setRestoreSuccess(true);
+        setPurchaseStatus("success");
+        onSuccess?.();
+        setTimeout(() => window.location.reload(), 1400);
+      } else {
+        setRestoreMsg("No active purchase was found for this Apple ID.");
+      }
+    } catch {
+      setRestoreMsg("We couldn't restore purchases. Please try again.");
+    } finally {
+      setRestoring(false);
     }
   }
 
@@ -221,7 +232,7 @@ export function IOSPaywall({ onSuccess, compact = false, buttonLabel }: Props) {
         onClick={handleRestore}
         disabled={restoring || isPurchasing}
       >
-        {restoring ? "Restoring…" : "Restore purchases"}
+        {restoring ? "Restoring purchases…" : "Restore purchases"}
       </button>
 
       <p className="text-center text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>

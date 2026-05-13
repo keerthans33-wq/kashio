@@ -45,10 +45,15 @@ export default function SettingsPage() {
     setRestoreMessage(null);
     try {
       const ok = await restore();
-      setRestoreMessage({ text: ok ? "Purchases restored successfully." : "No active subscription found.", ok });
+      setRestoreMessage({
+        text: ok
+          ? "Purchases restored. Kashio Pro is active."
+          : "No active purchase was found for this Apple ID.",
+        ok,
+      });
     } catch (e) {
       console.error("Restore failed:", e);
-      setRestoreMessage({ text: "Could not restore purchases. Please try again.", ok: false });
+      setRestoreMessage({ text: "We couldn't restore purchases. Please try again.", ok: false });
     } finally {
       setRestoring(false);
     }

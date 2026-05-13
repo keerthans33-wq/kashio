@@ -116,9 +116,8 @@ export function RevenueCatProvider({ children }: { children: React.ReactNode }) 
       if (pro) {
         setIsPro(true);
         await syncToServer();
-      } else {
-        setError("No active subscription found.");
       }
+      // "no subscription" is an expected outcome, not an error — let callers handle messaging
       return pro;
     } catch (err: unknown) {
       const e = err as { message?: string };
