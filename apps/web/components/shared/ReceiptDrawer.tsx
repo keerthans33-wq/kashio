@@ -587,6 +587,8 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
           side="bottom"
           showCloseButton={true}
           className="rounded-t-2xl p-0 max-h-[80vh] flex flex-col"
+          onPointerDownOutside={(e) => { if (viewingReceipt) e.preventDefault(); }}
+          onInteractOutside={(e)    => { if (viewingReceipt) e.preventDefault(); }}
           style={{
             background:  "rgba(11, 17, 29, 0.98)",
             borderTop:   "1px solid rgba(34,197,94,0.14)",
