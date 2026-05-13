@@ -48,190 +48,134 @@ function buildWelcomeEmail(): string {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light" />
+  <meta name="supported-color-schemes" content="light" />
   <title>Welcome to Kashio</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f0f2f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
 
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f0f2f5;padding:40px 16px;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="#f0f2f5" style="background-color:#f0f2f5;padding:40px 16px;">
     <tr>
       <td align="center">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;">
 
-          <!-- Card -->
+          <!-- Dark header — use bgcolor attribute for email client compatibility -->
           <tr>
-            <td style="background-color:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 2px 24px rgba(0,0,0,0.09);">
+            <td align="center" bgcolor="#05070E" style="background-color:#05070E;padding:36px 40px 30px;border-radius:14px 14px 0 0;">
 
-              <!-- Dark header with logo -->
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+              <!-- Kashio logo (white SVG on dark background) -->
+              <img src="https://app.kashio.com.au/logo.svg"
+                   width="130" height="auto" alt="Kashio"
+                   style="display:block;margin:0 auto 10px;width:130px;" />
+
+              <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.40);letter-spacing:0.2px;">
+                Find what you can claim.
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- White card body -->
+          <tr>
+            <td bgcolor="#ffffff" style="background-color:#ffffff;padding:36px 36px 32px;border-radius:0 0 14px 14px;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+              <!-- Greeting -->
+              <p style="margin:0 0 8px;font-size:22px;font-weight:700;color:#0a0f1e;letter-spacing:-0.3px;">
+                Welcome to Kashio
+              </p>
+              <p style="margin:0 0 28px;font-size:15px;color:#4b5563;line-height:1.7;">
+                Your account is ready. Kashio helps Australians find potential tax deductions in their everyday spending — so you get more back at tax time.
+              </p>
+
+              <!-- Steps heading -->
+              <p style="margin:0 0 14px;font-size:11px;font-weight:600;color:#9ca3af;letter-spacing:1px;text-transform:uppercase;">
+                Getting started
+              </p>
+
+              <!-- Step 1 -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:16px;">
                 <tr>
-                  <td align="center" style="background-color:#05070E;padding:36px 40px 32px;border-radius:18px 18px 0 0;">
-
-                    <!-- Green avatar / profile icon -->
-                    <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 auto 14px;">
+                  <td width="32" style="vertical-align:top;padding-top:1px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0">
                       <tr>
-                        <td style="background-color:#22C55E;border-radius:16px;width:56px;height:56px;text-align:center;vertical-align:middle;">
-                          <span style="color:#05070E;font-size:28px;font-weight:900;line-height:56px;display:inline-block;width:56px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">K</span>
+                        <td bgcolor="#22C55E" style="background-color:#22C55E;border-radius:8px;width:28px;height:28px;text-align:center;vertical-align:middle;">
+                          <span style="color:#05070E;font-size:13px;font-weight:700;line-height:28px;display:inline-block;width:28px;">1</span>
                         </td>
                       </tr>
                     </table>
-
-                    <!-- Wordmark -->
-                    <p style="margin:0 0 4px;font-size:26px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;">Kashio</p>
-                    <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.45);letter-spacing:0.2px;">Find what you can claim.</p>
-
+                  </td>
+                  <td style="padding-left:12px;vertical-align:top;">
+                    <p style="margin:0 0 3px;font-size:14px;font-weight:600;color:#0a0f1e;">Import your transactions</p>
+                    <p style="margin:0;font-size:13px;color:#6b7280;line-height:1.6;">Download a statement from your bank and drop it into Kashio. We'll scan every transaction automatically — no manual entry needed.</p>
                   </td>
                 </tr>
               </table>
 
-              <!-- Body content -->
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+              <!-- Step 2 -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:16px;">
                 <tr>
-                  <td style="padding:36px 40px 32px;">
-
-                    <!-- Greeting -->
-                    <p style="margin:0 0 8px;font-size:22px;font-weight:700;color:#0a0f1e;letter-spacing:-0.3px;">
-                      Welcome to Kashio
-                    </p>
-                    <p style="margin:0 0 28px;font-size:15px;color:#4b5563;line-height:1.7;">
-                      Your account is ready. Kashio helps Australians find potential tax deductions in their everyday spending — so you get more back at tax time.
-                    </p>
-
-                    <!-- Steps heading -->
-                    <p style="margin:0 0 16px;font-size:12px;font-weight:600;color:#9ca3af;letter-spacing:0.8px;text-transform:uppercase;">
-                      Getting started
-                    </p>
-
-                    <!-- Steps -->
-                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:28px;">
-
+                  <td width="32" style="vertical-align:top;padding-top:1px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0">
                       <tr>
-                        <td style="padding-bottom:18px;">
-                          <table role="presentation" cellspacing="0" cellpadding="0" width="100%">
-                            <tr>
-                              <td style="width:36px;vertical-align:top;padding-top:1px;">
-                                <table role="presentation" cellspacing="0" cellpadding="0">
-                                  <tr>
-                                    <td style="background-color:#22C55E;border-radius:8px;width:28px;height:28px;text-align:center;vertical-align:middle;">
-                                      <span style="color:#05070E;font-size:13px;font-weight:700;line-height:28px;display:inline-block;width:28px;">1</span>
-                                    </td>
-                                  </tr>
-                                </table>
-                              </td>
-                              <td style="padding-left:12px;vertical-align:top;">
-                                <p style="margin:0 0 3px;font-size:14px;font-weight:600;color:#0a0f1e;">Import your transactions</p>
-                                <p style="margin:0;font-size:13px;color:#6b7280;line-height:1.6;">
-                                  Download a statement from your bank and drop it into Kashio. We'll scan every transaction automatically — no manual entry needed.
-                                </p>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-
-                      <tr>
-                        <td style="padding-bottom:18px;">
-                          <table role="presentation" cellspacing="0" cellpadding="0" width="100%">
-                            <tr>
-                              <td style="width:36px;vertical-align:top;padding-top:1px;">
-                                <table role="presentation" cellspacing="0" cellpadding="0">
-                                  <tr>
-                                    <td style="background-color:#22C55E;border-radius:8px;width:28px;height:28px;text-align:center;vertical-align:middle;">
-                                      <span style="color:#05070E;font-size:13px;font-weight:700;line-height:28px;display:inline-block;width:28px;">2</span>
-                                    </td>
-                                  </tr>
-                                </table>
-                              </td>
-                              <td style="padding-left:12px;vertical-align:top;">
-                                <p style="margin:0 0 3px;font-size:14px;font-weight:600;color:#0a0f1e;">See what you can claim</p>
-                                <p style="margin:0;font-size:13px;color:#6b7280;line-height:1.6;">
-                                  Kashio flags work expenses, home office costs, WFH deductions, and more. Confirm or skip each one in seconds.
-                                </p>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-
-                      <tr>
-                        <td>
-                          <table role="presentation" cellspacing="0" cellpadding="0" width="100%">
-                            <tr>
-                              <td style="width:36px;vertical-align:top;padding-top:1px;">
-                                <table role="presentation" cellspacing="0" cellpadding="0">
-                                  <tr>
-                                    <td style="background-color:#22C55E;border-radius:8px;width:28px;height:28px;text-align:center;vertical-align:middle;">
-                                      <span style="color:#05070E;font-size:13px;font-weight:700;line-height:28px;display:inline-block;width:28px;">3</span>
-                                    </td>
-                                  </tr>
-                                </table>
-                              </td>
-                              <td style="padding-left:12px;vertical-align:top;">
-                                <p style="margin:0 0 3px;font-size:14px;font-weight:600;color:#0a0f1e;">Export your report</p>
-                                <p style="margin:0;font-size:13px;color:#6b7280;line-height:1.6;">
-                                  Generate a clean deduction summary to share with your accountant or keep for your own records.
-                                </p>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-
-                    </table>
-
-                    <!-- Features row -->
-                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:28px;background-color:#f9fafb;border-radius:10px;">
-                      <tr>
-                        <td style="padding:16px 18px;">
-                          <p style="margin:0 0 10px;font-size:12px;font-weight:600;color:#9ca3af;letter-spacing:0.8px;text-transform:uppercase;">What's included</p>
-                          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                            <tr>
-                              <td width="50%" style="vertical-align:top;padding-bottom:6px;">
-                                <p style="margin:0;font-size:13px;color:#374151;">
-                                  <span style="color:#22C55E;font-weight:700;margin-right:6px;">✓</span>Work expense detection
-                                </p>
-                              </td>
-                              <td width="50%" style="vertical-align:top;padding-bottom:6px;">
-                                <p style="margin:0;font-size:13px;color:#374151;">
-                                  <span style="color:#22C55E;font-weight:700;margin-right:6px;">✓</span>WFH deduction tools
-                                </p>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td width="50%" style="vertical-align:top;">
-                                <p style="margin:0;font-size:13px;color:#374151;">
-                                  <span style="color:#22C55E;font-weight:700;margin-right:6px;">✓</span>Receipt uploads
-                                </p>
-                              </td>
-                              <td width="50%" style="vertical-align:top;">
-                                <p style="margin:0;font-size:13px;color:#374151;">
-                                  <span style="color:#22C55E;font-weight:700;margin-right:6px;">✓</span>Tax-ready export reports
-                                </p>
-                              </td>
-                            </tr>
-                          </table>
+                        <td bgcolor="#22C55E" style="background-color:#22C55E;border-radius:8px;width:28px;height:28px;text-align:center;vertical-align:middle;">
+                          <span style="color:#05070E;font-size:13px;font-weight:700;line-height:28px;display:inline-block;width:28px;">2</span>
                         </td>
                       </tr>
                     </table>
-
-                    <!-- CTA -->
-                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                      <tr>
-                        <td align="center">
-                          <a href="${APP_URL}/import" style="display:inline-block;background-color:#22C55E;color:#05070E;font-size:15px;font-weight:700;text-decoration:none;padding:14px 40px;border-radius:10px;letter-spacing:-0.1px;">
-                            Start reviewing transactions →
-                          </a>
-                        </td>
-                      </tr>
-                    </table>
-
-                    <p style="margin:20px 0 0;font-size:12px;color:#9ca3af;text-align:center;line-height:1.65;">
-                      Questions?
-                      <a href="mailto:support@kashio.com.au" style="color:#22C55E;text-decoration:none;">support@kashio.com.au</a>
-                    </p>
-
+                  </td>
+                  <td style="padding-left:12px;vertical-align:top;">
+                    <p style="margin:0 0 3px;font-size:14px;font-weight:600;color:#0a0f1e;">See what you can claim</p>
+                    <p style="margin:0;font-size:13px;color:#6b7280;line-height:1.6;">Kashio flags work expenses, home office costs, WFH deductions, and more. Confirm or skip each one in seconds.</p>
                   </td>
                 </tr>
               </table>
+
+              <!-- Step 3 -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:28px;">
+                <tr>
+                  <td width="32" style="vertical-align:top;padding-top:1px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td bgcolor="#22C55E" style="background-color:#22C55E;border-radius:8px;width:28px;height:28px;text-align:center;vertical-align:middle;">
+                          <span style="color:#05070E;font-size:13px;font-weight:700;line-height:28px;display:inline-block;width:28px;">3</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <td style="padding-left:12px;vertical-align:top;">
+                    <p style="margin:0 0 3px;font-size:14px;font-weight:600;color:#0a0f1e;">Export your report</p>
+                    <p style="margin:0;font-size:13px;color:#6b7280;line-height:1.6;">Generate a clean deduction summary to share with your accountant or keep for your own records.</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Features list — single column, no wrapping issues -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:28px;">
+                <tr>
+                  <td bgcolor="#f9fafb" style="background-color:#f9fafb;border-radius:10px;padding:16px 18px;">
+                    <p style="margin:0 0 12px;font-size:11px;font-weight:600;color:#9ca3af;letter-spacing:1px;text-transform:uppercase;">What's included</p>
+                    <p style="margin:0 0 7px;font-size:13px;color:#374151;"><span style="color:#22C55E;font-weight:700;">✓</span>&nbsp; Work-related expense detection</p>
+                    <p style="margin:0 0 7px;font-size:13px;color:#374151;"><span style="color:#22C55E;font-weight:700;">✓</span>&nbsp; Work from home (WFH) deduction tools</p>
+                    <p style="margin:0 0 7px;font-size:13px;color:#374151;"><span style="color:#22C55E;font-weight:700;">✓</span>&nbsp; Receipt uploads &amp; storage</p>
+                    <p style="margin:0;font-size:13px;color:#374151;"><span style="color:#22C55E;font-weight:700;">✓</span>&nbsp; Tax-ready export reports</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:20px;">
+                <tr>
+                  <td align="center">
+                    <a href="${APP_URL}/import" style="display:inline-block;background-color:#22C55E;color:#05070E;font-size:15px;font-weight:700;text-decoration:none;padding:14px 40px;border-radius:10px;letter-spacing:-0.1px;">
+                      Start reviewing transactions →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">
+                Questions? <a href="mailto:support@kashio.com.au" style="color:#22C55E;text-decoration:none;">support@kashio.com.au</a>
+              </p>
 
             </td>
           </tr>
