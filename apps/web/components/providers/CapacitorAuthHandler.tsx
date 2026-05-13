@@ -75,6 +75,10 @@ export function CapacitorAuthHandler() {
 
         console.log("[Kashio] Supabase session restored after deep link");
 
+        // Trigger welcome email — mirrors what /auth/callback does on web.
+        // Fire-and-forget; never block the navigation.
+        fetch("/api/auth/welcome", { method: "POST" }).catch(() => {});
+
         const userType = data.session.user.user_metadata?.user_type;
         window.location.href = userType ? "/import" : "/onboarding";
       });
