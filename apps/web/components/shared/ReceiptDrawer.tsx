@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { FileImage, FileText, Trash2, Upload, Receipt, AlertCircle, Camera, FolderOpen, X, ExternalLink, Download } from "lucide-react";
 import {
@@ -691,17 +692,20 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
         </SheetContent>
       </Sheet>
 
-      {/* Full-screen receipt viewer — rendered outside the Sheet so it overlays everything */}
-      <AnimatePresence>
-        {viewingReceipt && (
-          <ReceiptViewer
-            key={viewingReceipt.id}
-            receipt={viewingReceipt}
-            isNative={isNative}
-            onClose={() => setViewingReceipt(null)}
-          />
-        )}
-      </AnimatePresence>
+      {/* Full-screen receipt viewer — portalled to body so it layers above the Sheet portal */}
+      {createPortal(
+        <AnimatePresence>
+          {viewingReceipt && (
+            <ReceiptViewer
+              key={viewingReceipt.id}
+              receipt={viewingReceipt}
+              isNative={isNative}
+              onClose={() => setViewingReceipt(null)}
+            />
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       <ProPaywallModal open={paywallOpen} onOpenChange={setPaywallOpen} />
     </>
