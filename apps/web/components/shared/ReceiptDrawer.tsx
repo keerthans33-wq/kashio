@@ -582,13 +582,19 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
         tabIndex={-1}
       />
 
-      <Sheet open={open} onOpenChange={onOpenChange}>
+      <Sheet
+        open={open}
+        onOpenChange={(v) => {
+          // While the viewer is open, ignore Radix's request to close the sheet
+          // (any tap on the portalled viewer registers as an "outside click").
+          if (!v && viewingReceipt) return;
+          onOpenChange(v);
+        }}
+      >
         <SheetContent
           side="bottom"
           showCloseButton={true}
           className="rounded-t-2xl p-0 max-h-[80vh] flex flex-col"
-          onPointerDownOutside={(e) => { if (viewingReceipt) e.preventDefault(); }}
-          onInteractOutside={(e)    => { if (viewingReceipt) e.preventDefault(); }}
           style={{
             background:  "rgba(11, 17, 29, 0.98)",
             borderTop:   "1px solid rgba(34,197,94,0.14)",
