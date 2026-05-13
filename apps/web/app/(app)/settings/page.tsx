@@ -165,15 +165,18 @@ export default function SettingsPage() {
               onClick={closeModal}
             />
 
-            {/* Sheet */}
+            {/* Centering wrapper — pointer-events-none lets backdrop clicks close the modal */}
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center px-4 pointer-events-none"
+              style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+            >
             <motion.div
               key="sheet"
               initial={{ opacity: 0, scale: 0.96, y: 8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 8 }}
               transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-              className="fixed z-50 inset-x-4 sm:inset-x-auto sm:w-full sm:max-w-sm"
-              style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
+              className="w-full max-w-sm pointer-events-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <div
@@ -203,6 +206,7 @@ export default function SettingsPage() {
                 )}
               </div>
             </motion.div>
+            </div>
           </>
         )}
       </AnimatePresence>
