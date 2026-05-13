@@ -544,14 +544,20 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
   }
 
   async function handleNativePhotoUpload() {
+    const { pickPhotoNative, PermissionDeniedError } = await import("@/lib/native-upload");
     try {
-      const { pickPhotoNative } = await import("@/lib/native-upload");
       const file = await pickPhotoNative();
+      // null means user cancelled — do nothing
       if (file) await uploadFile(file);
     } catch (err) {
-      const msg = err instanceof Error ? err.message.toLowerCase() : "";
-      if (msg.includes("cancel") || msg.includes("no image")) return;
-      onToast({ type: "error", message: "Could not access camera. Please check permissions in Settings." });
+      if (err instanceof PermissionDeniedError) {
+        onToast({
+          type: "error",
+          message: "Permission is needed to upload receipts. You can enable it anytime in iPhone Settings.",
+        });
+        return;
+      }
+      onToast({ type: "error", message: "Could not open camera or photo library. Please try again." });
     }
   }
 

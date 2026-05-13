@@ -67,10 +67,10 @@
 		</dict>
 	</array>
 	<key>NSCameraUsageDescription</key>
-	<string>Kashio needs camera access to photograph your receipts.</string>
+	<string>Kashio uses your camera so you can capture and save receipts for your tax records.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Kashio needs photo library access to upload your receipts.</string>
+	<string>Kashio uses your photo library so you can upload receipt images for your tax records.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Kashio may save processed receipt images to your photo library.</string>
+	<string>Kashio may save exported reports or receipt-related files to your photo library if you choose to.</string>
 </dict>
 </plist>
