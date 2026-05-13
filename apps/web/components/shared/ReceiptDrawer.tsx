@@ -98,15 +98,18 @@ function ReceiptViewer({
           reader.readAsDataURL(blob);
         });
 
+        const ext          = receipt.fileName.split(".").pop() ?? "jpg";
+        const downloadName = `receipt-${Date.now()}.${ext}`;
+
         const written = await Filesystem.writeFile({
-          path:      receipt.fileName,
+          path:      downloadName,
           data:      base64,
           directory: Directory.Cache,
         });
 
         await Share.share({
-          title:      receipt.fileName,
-          url:        written.uri,
+          title:       downloadName,
+          url:         written.uri,
           dialogTitle: "Save receipt",
         });
       } else {
