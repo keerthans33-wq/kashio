@@ -86,10 +86,32 @@ function ReceiptViewer({
     setDownloading(true);
     try {
       if (isNative) {
-        // On iOS open in Safari — user can long-press to save or use share sheet
-        window.open(receipt.signedUrl, "_blank");
+        // Fetch file → write to Capacitor cache dir → iOS share sheet (Save to Photos / Files)
+        const { Filesystem, Directory } = await import("@capacitor/filesystem");
+        const { Share } = await import("@capacitor/share");
+
+        const res  = await fetch(receipt.signedUrl);
+        const blob = await res.blob();
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload  = () => resolve((reader.result as string).split(",")[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+
+        const written = await Filesystem.writeFile({
+          path:      receipt.fileName,
+          data:      base64,
+          directory: Directory.Cache,
+        });
+
+        await Share.share({
+          title:      receipt.fileName,
+          url:        written.uri,
+          dialogTitle: "Save receipt",
+        });
       } else {
-        // Fetch as blob so the browser triggers a real Save dialog with the original filename
+        // Web: blob download triggers Save dialog with the original filename
         const res  = await fetch(receipt.signedUrl);
         const blob = await res.blob();
         const url  = URL.createObjectURL(blob);
