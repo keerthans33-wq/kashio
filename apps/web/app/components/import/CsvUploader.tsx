@@ -64,6 +64,7 @@ export default function CsvUploader() {
   const [rawRows,         setRawRows]         = useState<string[][] | null>(null);
   const [result,          setResult]          = useState<Result | null>(null);
   const [importing,       setImporting]       = useState(false);
+  const [importLabel,     setImportLabel]     = useState("Uploading transactions…");
   const [importResult,    setImportResult]    = useState<ImportResult | null>(null);
   const [importError,     setImportError]     = useState<string | null>(null);
   const [showAllErrors,   setShowAllErrors]   = useState(false);
@@ -180,9 +181,11 @@ export default function CsvUploader() {
 
   async function handleImport() {
     if (!result || result.valid.length === 0) return;
+    setImportLabel("Uploading transactions…");
     setImporting(true);
     setImportError(null);
     try {
+      setTimeout(() => setImportLabel("Finding possible deductions…"), 1200);
       const { inserted, duplicates, flagged, totalValue } =
         await saveTransactions(result.valid, file?.name ?? "unknown.csv");
 
@@ -359,7 +362,7 @@ export default function CsvUploader() {
         <div className="mt-4 space-y-2">
           <Button type="button" onClick={handleImport} disabled={importing} className="w-full">
             {importing
-              ? "Reading your transactions…"
+              ? importLabel
               : `Import ${result.valid.length} transaction${result.valid.length !== 1 ? "s" : ""}`}
           </Button>
           {importError && <p className="text-xs text-center text-red-400">{importError}</p>}

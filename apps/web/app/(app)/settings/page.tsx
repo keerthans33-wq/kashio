@@ -14,10 +14,12 @@ export default function SettingsPage() {
   const { user } = useUser();
   const { isIOS, restore } = useRevenueCat();
 
-  const [modal,       setModal]       = useState<ModalStep | null>(null);
-  const [confirmText, setConfirmText] = useState("");
-  const [deleting,    setDeleting]    = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [modal,           setModal]           = useState<ModalStep | null>(null);
+  const [confirmText,     setConfirmText]     = useState("");
+  const [deleting,        setDeleting]        = useState(false);
+  const [deleteError,     setDeleteError]     = useState<string | null>(null);
+  const [restoring,       setRestoring]       = useState(false);
+  const [restoreMessage,  setRestoreMessage]  = useState<{ text: string; ok: boolean } | null>(null);
 
   function openDeleteModal() {
     setModal("warn");
@@ -33,12 +35,17 @@ export default function SettingsPage() {
   }
 
   async function handleRestorePurchases() {
+    if (restoring) return;
+    setRestoring(true);
+    setRestoreMessage(null);
     try {
       const ok = await restore();
-      alert(ok ? "Purchases restored." : "No active subscription found.");
+      setRestoreMessage({ text: ok ? "Purchases restored successfully." : "No active subscription found.", ok });
     } catch (e) {
       console.error("Restore failed:", e);
-      alert("Could not restore purchases. Please try again.");
+      setRestoreMessage({ text: "Could not restore purchases. Please try again.", ok: false });
+    } finally {
+      setRestoring(false);
     }
   }
 
@@ -97,18 +104,37 @@ export default function SettingsPage() {
             <Section label="Subscription">
               <button
                 onClick={handleRestorePurchases}
-                className="w-full flex items-center gap-3 px-4 py-3.5 transition-opacity hover:opacity-70"
+                disabled={restoring}
+                className="w-full flex items-center gap-3 px-4 py-3.5 transition-opacity hover:opacity-70 disabled:opacity-60"
               >
                 <span
                   className="flex items-center justify-center rounded-lg w-7 h-7 shrink-0"
                   style={{ backgroundColor: "rgba(34,197,94,0.12)", color: "#22C55E" }}
                 >
-                  <RefreshCw size={15} />
+                  {restoring
+                    ? <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#22C55E]/30 border-t-[#22C55E]" />
+                    : <RefreshCw size={15} />
+                  }
                 </span>
                 <span className="flex-1 text-left text-[14px]" style={{ color: "var(--text-primary)" }}>
-                  Restore purchases
+                  {restoring ? "Restoring purchases…" : "Restore purchases"}
                 </span>
               </button>
+              {restoreMessage && (
+                <div
+                  className="px-4 pb-3.5 pt-0"
+                >
+                  <p
+                    className="text-[12px] rounded-lg px-3 py-2"
+                    style={{
+                      backgroundColor: restoreMessage.ok ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)",
+                      color:           restoreMessage.ok ? "#22C55E" : "#ef4444",
+                    }}
+                  >
+                    {restoreMessage.text}
+                  </p>
+                </div>
+              )}
             </Section>
           )}
 

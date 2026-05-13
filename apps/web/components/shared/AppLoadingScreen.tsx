@@ -20,15 +20,42 @@ export function AppLoadingScreen() {
     }
   }, []);
 
-  // ── Web fallback: plain spinner ─────────────────────────────────────────
+  // ── Web fallback: branded loading screen ───────────────────────────────
   if (!ios) {
     return (
-      <div
-        className="flex min-h-screen flex-col items-center justify-center gap-4"
-        style={{ backgroundColor: "var(--bg-app)" }}
-      >
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/10 border-t-[#22C55E]" />
-      </div>
+      <>
+        <style>{`
+          @keyframes kashio-logo-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 8px rgba(34,197,94,0.20)); }
+            50%       { opacity: 0.88; transform: scale(0.97); filter: drop-shadow(0 0 20px rgba(34,197,94,0.45)); }
+          }
+          @keyframes kashio-dot-web {
+            0%, 80%, 100% { opacity: 0.22; transform: scale(0.70); }
+            40%            { opacity: 1;   transform: scale(1);    }
+          }
+        `}</style>
+        <div
+          className="flex min-h-screen flex-col items-center justify-center gap-5"
+          style={{ backgroundColor: "var(--bg-app)" }}
+        >
+          <div style={{ animation: "kashio-logo-pulse 2.6s ease-in-out infinite" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.svg" alt="Kashio" style={{ height: 56, width: "auto" }} />
+          </div>
+          <div style={{ display: "flex", gap: 6 }}>
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                style={{
+                  width: 5, height: 5, borderRadius: "50%",
+                  backgroundColor: "#22C55E",
+                  animation: `kashio-dot-web 1.5s ease-in-out ${i * 0.2}s infinite`,
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </>
     );
   }
 
