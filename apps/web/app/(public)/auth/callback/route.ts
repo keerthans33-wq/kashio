@@ -43,7 +43,12 @@ export async function GET(request: NextRequest) {
       console.error("[welcome-email] failed:", err)
     );
 
-    // Allow internal next-redirect (e.g. password reset). Only allow paths starting with /.
+    // Password reset link — Supabase sets type=recovery
+    if (searchParams.get("type") === "recovery") {
+      return NextResponse.redirect(`${origin}/auth/reset-password`);
+    }
+
+    // Allow internal next-redirect. Only allow paths starting with /.
     const next = searchParams.get("next");
     if (next?.startsWith("/")) {
       return NextResponse.redirect(`${origin}${next}`);
