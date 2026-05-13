@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { FileImage, FileText, Trash2, Upload, Receipt, AlertCircle, Camera, FolderOpen, X, ExternalLink, Download } from "lucide-react";
 import {
@@ -582,15 +581,7 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
         tabIndex={-1}
       />
 
-      <Sheet
-        open={open}
-        onOpenChange={(v) => {
-          // While the viewer is open, ignore Radix's request to close the sheet
-          // (any tap on the portalled viewer registers as an "outside click").
-          if (!v && viewingReceipt) return;
-          onOpenChange(v);
-        }}
-      >
+      <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent
           side="bottom"
           showCloseButton={true}
@@ -670,6 +661,19 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
             )}
           </div>
 
+          {/* Full-screen viewer — inside SheetContent so Radix doesn't block pointer events.
+              position:fixed children escape overflow clipping and cover the full viewport. */}
+          <AnimatePresence>
+            {viewingReceipt && (
+              <ReceiptViewer
+                key={viewingReceipt.id}
+                receipt={viewingReceipt}
+                isNative={isNative}
+                onClose={() => setViewingReceipt(null)}
+              />
+            )}
+          </AnimatePresence>
+
           {/* Receipt list */}
           <div className="flex-1 overflow-y-auto px-5 py-3">
             {loading ? (
@@ -722,22 +726,7 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
         </SheetContent>
       </Sheet>
 
-      {/* Full-screen receipt viewer — portalled to body so it layers above the Sheet portal */}
-      {createPortal(
-        <AnimatePresence>
-          {viewingReceipt && (
-            <ReceiptViewer
-              key={viewingReceipt.id}
-              receipt={viewingReceipt}
-              isNative={isNative}
-              onClose={() => setViewingReceipt(null)}
-            />
-          )}
-        </AnimatePresence>,
-        document.body
-      )}
-
-      <ProPaywallModal open={paywallOpen} onOpenChange={setPaywallOpen} />
+<ProPaywallModal open={paywallOpen} onOpenChange={setPaywallOpen} />
     </>
   );
 }
