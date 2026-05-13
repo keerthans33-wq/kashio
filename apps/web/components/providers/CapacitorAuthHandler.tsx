@@ -62,6 +62,9 @@ export function CapacitorAuthHandler() {
           return;
         }
 
+        let type: string | null = null;
+        try { type = new URL(url).searchParams.get("type"); } catch { /* ignore */ }
+
         // Close SFSafariViewController before exchanging the code
         try { await Browser.close(); } catch { /* already closed by user */ }
 
@@ -74,6 +77,12 @@ export function CapacitorAuthHandler() {
         }
 
         console.log("[Kashio] Supabase session restored after deep link");
+
+        // Password reset — go straight to the new-password form.
+        if (type === "recovery") {
+          window.location.href = "/auth/reset-password";
+          return;
+        }
 
         // Trigger welcome email — mirrors what /auth/callback does on web.
         // Fire-and-forget; never block the navigation.

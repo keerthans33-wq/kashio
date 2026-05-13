@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "../../../../lib/supabase";
+import { isCapacitorIOS } from "@/lib/capacitor";
 import { Button } from "@/components/ui/button";
 
 export default function ForgotPasswordPage() {
@@ -15,9 +16,15 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/auth/reset-password`,
-    });
+    // On iOS the PKCE code verifier lives in the Capacitor WebView cookie jar.
+    // The email link opens in Safari (different cookie store), so the server-side
+    // exchangeCodeForSession call fails. Instead redirect to the custom scheme so
+    // iOS fires appUrlOpen back into the WebView — same context, same cookies.
+    const redirectTo = isCapacitorIOS()
+      ? "kashio://auth/callback"
+      : `${window.location.origin}/auth/callback`;
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
 
     if (error) {
       setError(error.message);
