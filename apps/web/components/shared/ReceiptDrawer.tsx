@@ -721,16 +721,53 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
                 </button>
               </div>
             ) : receipts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-3 py-12">
+              <div className="flex flex-col items-center justify-center gap-4 py-12 px-4 text-center">
                 <div
                   className="flex h-12 w-12 items-center justify-center rounded-full"
-                  style={{ backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+                  style={{ backgroundColor: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.14)" }}
                 >
-                  <Receipt size={22} strokeWidth={1.5} style={{ color: "var(--text-muted)" }} />
+                  <Receipt size={22} strokeWidth={1.5} style={{ color: "#22C55E" }} />
                 </div>
-                <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
-                  No receipts yet
-                </p>
+                <div className="space-y-1.5">
+                  <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>
+                    No receipts yet
+                  </p>
+                  <p className="text-[12px] leading-relaxed max-w-[240px]" style={{ color: "var(--text-muted)" }}>
+                    Keep photos of receipts for your deductions — the ATO requires evidence for claims over $300.
+                  </p>
+                </div>
+                {isNative ? (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleNativePhotoUpload}
+                      disabled={uploading}
+                      className="flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-[13px] font-semibold disabled:opacity-50 transition-opacity hover:opacity-80"
+                      style={{ backgroundColor: "#22C55E", color: "#05070E" }}
+                    >
+                      <Camera size={14} strokeWidth={2} />
+                      Take photo
+                    </button>
+                    <button
+                      onClick={handleUploadClick}
+                      disabled={uploading}
+                      className="flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-[13px] font-semibold disabled:opacity-50 transition-opacity hover:opacity-80"
+                      style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "var(--text-primary)" }}
+                    >
+                      <FolderOpen size={14} strokeWidth={2} />
+                      Browse files
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleUploadClick}
+                    disabled={uploading}
+                    className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-[13px] font-semibold disabled:opacity-50 transition-opacity hover:opacity-80"
+                    style={{ backgroundColor: "#22C55E", color: "#05070E" }}
+                  >
+                    <Upload size={14} strokeWidth={2} />
+                    Upload receipt
+                  </button>
+                )}
               </div>
             ) : (
               <ul className="space-y-1">

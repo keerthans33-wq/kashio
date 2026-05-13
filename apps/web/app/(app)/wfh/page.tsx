@@ -85,6 +85,39 @@ export default async function WfhLog() {
         </FadeIn>
       )}
 
+      {/* Intro card — only shown before any entries are logged */}
+      {totalHours === 0 && (
+        <FadeIn delay={0.06}>
+          <div
+            className="mt-5 rounded-2xl px-5 py-5 space-y-3"
+            style={{
+              backgroundColor: "var(--bg-card)",
+              border:          "1px solid var(--bg-border)",
+              boxShadow:       "var(--shadow-card)",
+            }}
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#22C55E" }}>
+              How it works
+            </p>
+            <p className="text-[14px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+              The ATO&apos;s 67¢/hr fixed-rate method lets you claim a deduction for every hour you work from home — no need to keep individual expense receipts.
+            </p>
+            <ul className="space-y-2">
+              {[
+                "Log the date and hours worked from home.",
+                "Kashio totals your WFH deduction automatically.",
+                "Include it in your return or share with your accountant.",
+              ].map((step) => (
+                <li key={step} className="flex items-start gap-2.5">
+                  <span className="mt-0.5 shrink-0 text-[12px] font-bold" style={{ color: "#22C55E" }}>·</span>
+                  <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>{step}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </FadeIn>
+      )}
+
       {/* Log form + optimistic entry list */}
       <FadeIn delay={monthHours > 0 ? 0.1 : 0.06}>
         <div

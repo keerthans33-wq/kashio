@@ -112,6 +112,90 @@ export default async function Dashboard() {
 
   const { ytdHours: wfhHours, ytdEst: wfhEst, fyLabel } = calcWfhSummary(wfhEntries);
 
+  const hasData  = active.length > 0 || wfhHours > 0;
+
+  // ── Empty-state (no data yet) ─────────────────────────────────────────────
+  if (!hasData) {
+    return (
+      <MobileScreen maxWidth="md" as="main" padY={false} className="pt-4 pb-10 sm:py-14">
+        <FadeIn>
+          <p
+            className="text-[10px] font-semibold uppercase tracking-widest mb-1"
+            style={{ color: "var(--text-muted)" }}
+          >
+            {fyLabel}
+          </p>
+          <h1
+            className="text-[24px] font-bold tracking-tight leading-tight mb-6"
+            style={{ color: "var(--text-primary)" }}
+          >
+            Your Tax Snapshot
+          </h1>
+        </FadeIn>
+
+        {/* Welcome card */}
+        <FadeIn delay={0.05} className="mb-4">
+          <div
+            className="relative overflow-hidden rounded-2xl px-5 py-6"
+            style={{
+              backgroundColor: "rgba(13, 20, 33, 0.92)",
+              border:          "1px solid rgba(34,197,94,0.22)",
+              boxShadow:       "0 0 48px rgba(34,197,94,0.06), 0 2px 8px rgba(0,0,0,0.5)",
+            }}
+          >
+            <div className="absolute inset-x-0 top-0 h-[2px]" style={{ backgroundColor: "#22C55E", opacity: 0.7 }} />
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{ background: "radial-gradient(ellipse 80% 60% at 50% 100%, rgba(34,197,94,0.05) 0%, transparent 100%)" }}
+            />
+            <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--text-muted)" }}>
+              Welcome to Kashio
+            </p>
+            <p className="text-[22px] font-bold leading-tight mb-2" style={{ color: "#FFFFFF" }}>
+              Find what you can claim.
+            </p>
+            <p className="text-[13px] leading-relaxed" style={{ color: "rgba(255,255,255,0.50)" }}>
+              Kashio helps Australians find possible tax deductions in their everyday spending.
+              Upload a bank statement CSV to get started — it takes less than a minute.
+            </p>
+            <p className="mt-3 text-[10px]" style={{ color: "rgba(255,255,255,0.20)" }}>
+              Estimate only — not tax advice. Consult your accountant.
+            </p>
+          </div>
+        </FadeIn>
+
+        {/* Get started steps */}
+        <FadeIn delay={0.10} className="mb-4">
+          <p
+            className="text-[10px] font-semibold uppercase tracking-widest mb-3"
+            style={{ color: "var(--text-muted)" }}
+          >
+            Get started
+          </p>
+          <div className="space-y-2">
+            <QuickAction
+              href="/import"
+              Icon={Upload}
+              label="Upload your first CSV"
+              sub="Export a statement from your bank and drop it in"
+              highlight
+            />
+            <QuickAction
+              href="/wfh"
+              Icon={Home}
+              label="Log work-from-home days"
+              sub="Claim 67¢/hr under the ATO fixed-rate method"
+            />
+          </div>
+        </FadeIn>
+
+        <p className="mt-6 text-[11px] text-center" style={{ color: "var(--text-muted)", opacity: 0.4 }}>
+          Not tax advice — check with your accountant before lodging.
+        </p>
+      </MobileScreen>
+    );
+  }
+
   const { score: readiness, label: readinessLabel, nextAction } = calculateTaxReadiness({
     candidates: active.map((c) => ({
       status:   c.status   as "NEEDS_REVIEW" | "CONFIRMED",
@@ -122,7 +206,6 @@ export default async function Dashboard() {
   });
 
   const arcColor = readinessColor(readiness);
-  const hasData  = active.length > 0 || wfhHours > 0;
 
   // Per-category totals
   const catData = CATEGORY_GROUPS.map((cat) => ({

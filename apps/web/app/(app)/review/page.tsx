@@ -9,8 +9,10 @@ import { ReviewList } from "./ReviewList";
 import { ReviewPaywallCard } from "./ReviewPaywallCard";
 import type { CandidateCardProps } from "./CandidateCard";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { MobileScreen } from "@/components/layout/mobile-screen";
+import { Upload, SlidersHorizontal } from "lucide-react";
 
 const HEADING: Record<string, string> = {
   employee:    "Work-related deductions",
@@ -261,20 +263,30 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
       {/* List */}
       {all.length === 0 ? (
-        <div className="mt-10 rounded-2xl px-6 py-10 text-center space-y-3" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}>
-          <p className="text-[15px] font-medium" style={{ color: "var(--text-secondary)" }}>Nothing to review yet</p>
-          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-            <Link href="/import" className="underline underline-offset-2">Import your bank CSV</Link>
-            {" "}to get started.
-          </p>
+        <div className="mt-8 rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}>
+          <EmptyState
+            icon={<Upload size={22} strokeWidth={1.5} />}
+            heading="Nothing to review yet"
+            body={`Import your bank statement CSV and Kashio will automatically identify potential ${termPlural(userType)}.`}
+            action={
+              <Button asChild>
+                <Link href="/import">Import your first CSV →</Link>
+              </Button>
+            }
+          />
         </div>
       ) : candidates.length === 0 ? (
-        <div className="mt-10 rounded-2xl px-6 py-10 text-center space-y-3" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}>
-          <p className="text-[15px] font-medium" style={{ color: "var(--text-secondary)" }}>No {termPlural(userType)} match these filters</p>
-          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-            <Link href="/review" className="underline underline-offset-2">Clear filters</Link>
-            {" "}to see everything.
-          </p>
+        <div className="mt-8 rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}>
+          <EmptyState
+            icon={<SlidersHorizontal size={22} strokeWidth={1.5} />}
+            heading={`No ${termPlural(userType)} match these filters`}
+            body="Try removing a filter to see more results."
+            action={
+              <Button asChild variant="secondary">
+                <Link href="/review">Clear filters</Link>
+              </Button>
+            }
+          />
         </div>
       ) : (
         <div className="mt-6">
