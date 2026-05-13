@@ -47,31 +47,25 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
                 Send feedback
               </a>
               <a
-                href="https://kashio.com.au/legal/privacy"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/privacy"
                 className="text-xs transition-opacity hover:opacity-100"
                 style={{ color: "var(--text-muted)" }}
               >
                 Privacy
               </a>
               <a
-                href="https://kashio.com.au/legal/terms"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/terms"
                 className="text-xs transition-opacity hover:opacity-100"
                 style={{ color: "var(--text-muted)" }}
               >
                 Terms
               </a>
               <a
-                href="https://kashio.com.au/legal/disclaimer"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/support"
                 className="text-xs transition-opacity hover:opacity-100"
                 style={{ color: "var(--text-muted)" }}
               >
-                Disclaimer
+                Support
               </a>
             </div>
           </div>

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
-import { User, LogOut } from "lucide-react";
+import { User, LogOut, Settings } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
 import { useUser } from "../../../lib/user-context";
 
@@ -145,6 +145,21 @@ export default function Nav() {
                     {user?.email ?? "—"}
                   </p>
                 </div>
+
+                {/* Settings link */}
+                <Link
+                  href="/settings"
+                  className="w-full flex items-center gap-3 px-4 text-[13px] font-medium transition-colors duration-100"
+                  style={{
+                    minHeight: 48,
+                    color:     "rgba(255,255,255,0.55)",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.90)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.55)")}
+                >
+                  <Settings size={14} strokeWidth={2} style={{ opacity: 0.6 }} />
+                  Settings
+                </Link>
 
                 {/* Sign out — large touch target */}
                 <button
