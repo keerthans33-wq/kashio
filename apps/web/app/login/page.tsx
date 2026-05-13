@@ -15,6 +15,13 @@ function friendlyError(msg: string): string {
   if (msg.includes("User already registered"))   return "Account already exists — sign in instead.";
   if (msg.includes("Password should be at least")) return "Password must be at least 6 characters.";
   if (msg.includes("rate limit"))                return "Too many attempts. Wait a moment and try again.";
+  if (
+    msg.includes("Failed to fetch") ||
+    msg.includes("Load failed") ||
+    msg.includes("NetworkError") ||
+    msg.includes("Network request failed") ||
+    msg.includes("offline")
+  ) return "No internet connection. Check your network and try again.";
   return msg;
 }
 
@@ -40,24 +47,30 @@ export default function LoginPage() {
     setLoadingLabel(mode === "signin" ? "Signing in…" : "Creating your account…");
     setLoading(true);
 
-    if (mode === "signin") {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) { setError(friendlyError(error.message)); setLoading(false); return; }
-      const userType = data.user?.user_metadata?.user_type;
-      window.location.href = userType ? "/import" : "/onboarding";
-    } else {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { first_name: firstName.trim(), last_name: lastName.trim() } },
-      });
-      if (error) { setError(friendlyError(error.message)); setLoading(false); return; }
-      if (!data.session) {
-        setMessage("Check your email for a confirmation link, then sign in.");
-        setLoading(false);
-        return;
+    try {
+      if (mode === "signin") {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) { setError(friendlyError(error.message)); setLoading(false); return; }
+        const userType = data.user?.user_metadata?.user_type;
+        window.location.href = userType ? "/import" : "/onboarding";
+      } else {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { first_name: firstName.trim(), last_name: lastName.trim() } },
+        });
+        if (error) { setError(friendlyError(error.message)); setLoading(false); return; }
+        if (!data.session) {
+          setMessage("Check your email for a confirmation link, then sign in.");
+          setLoading(false);
+          return;
+        }
+        window.location.href = "/onboarding";
       }
-      window.location.href = "/onboarding";
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Something went wrong.";
+      setError(friendlyError(msg));
+      setLoading(false);
     }
   }
 

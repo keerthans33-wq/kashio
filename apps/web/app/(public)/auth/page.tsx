@@ -20,7 +20,13 @@ function friendlyError(message: string): string {
     return "Please enter a valid email address.";
   if (message.includes("rate limit") || message.includes("too many"))
     return "Too many attempts. Please wait a moment and try again.";
-  // Fall back to the original message if we don't have a mapping
+  if (
+    message.includes("Failed to fetch") ||
+    message.includes("Load failed") ||
+    message.includes("NetworkError") ||
+    message.includes("Network request failed") ||
+    message.includes("offline")
+  ) return "No internet connection. Check your network and try again.";
   return message;
 }
 
@@ -54,12 +60,17 @@ export default function AuthPage() {
     setLoadingLabel("Signing in…");
     setLoading(true);
     setMessage(null);
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      setMessage({ text: friendlyError(error.message), error: true });
-    } else {
-      const userType = data.user?.user_metadata?.user_type;
-      window.location.href = userType ? "/import" : "/onboarding";
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setMessage({ text: friendlyError(error.message), error: true });
+      } else {
+        const userType = data.user?.user_metadata?.user_type;
+        window.location.href = userType ? "/import" : "/onboarding";
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Something went wrong.";
+      setMessage({ text: friendlyError(msg), error: true });
     }
     setLoading(false);
   }

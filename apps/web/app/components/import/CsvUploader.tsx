@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { validateCsv, type ValidRow, type InvalidRow, type RawRow } from "../../../lib/validateCsv";
 import { remapColumns, type ColumnMapping } from "../../../lib/remapColumns";
 import { detectColumns, mergeDebitCredit } from "../../../lib/detectColumns";
+import { fetchWithTimeout } from "../../../lib/fetchWithTimeout";
 import PreviewTable from "./PreviewTable";
 import ColumnMapper from "./ColumnMapper";
 import BankCsvInstructions from "./BankCsvInstructions";
@@ -33,10 +34,11 @@ async function saveTransactions(
   transactions: ValidRow[],
   fileName: string,
 ): Promise<{ inserted: number; duplicates: number; flagged: number; totalValue: number }> {
-  const res = await fetch("/api/transactions/import", {
-    method:  "POST",
-    headers: { "Content-Type": "application/json" },
-    body:    JSON.stringify({ transactions, fileName }),
+  const res = await fetchWithTimeout("/api/transactions/import", {
+    method:     "POST",
+    headers:    { "Content-Type": "application/json" },
+    body:       JSON.stringify({ transactions, fileName }),
+    timeoutMs:  30_000,
   });
   if (!res.ok) {
     let message = "Failed to save transactions.";
@@ -181,6 +183,10 @@ export default function CsvUploader() {
 
   async function handleImport() {
     if (!result || result.valid.length === 0) return;
+    if (!navigator.onLine) {
+      setImportError("You're offline. Connect to the internet and try again.");
+      return;
+    }
     setImportLabel("Uploading transactions…");
     setImporting(true);
     setImportError(null);

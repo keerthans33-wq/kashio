@@ -7,6 +7,7 @@ import { ReceiptUploadFab } from "../../components/shared/ReceiptUploadFab";
 import { BottomNav } from "../../components/ui/bottom-nav";
 import { RevenueCatProvider } from "../../components/providers/RevenueCatProvider";
 import { AppLoadingScreen } from "../../components/shared/AppLoadingScreen";
+import { OfflineBanner } from "../../components/shared/OfflineBanner";
 
 function AppLayoutInner({ children }: { children: React.ReactNode }) {
   const userState = useUserContext();
@@ -20,6 +21,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
       <RevenueCatProvider>
       <div className="flex min-h-screen flex-col">
         <Nav />
+        <OfflineBanner />
 
         {/* pb-36 clears both the fixed bottom nav (64px) and the receipt FAB (~126px top edge) on mobile */}
         <div className="flex-1 pb-36 sm:pb-0">{children}</div>

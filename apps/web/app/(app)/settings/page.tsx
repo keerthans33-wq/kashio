@@ -7,6 +7,7 @@ import { ChevronRight, FileText, Shield, HelpCircle, Mail, RefreshCw, Trash2, Al
 import { useUser } from "@/lib/user-context";
 import { useRevenueCat } from "@/components/providers/RevenueCatProvider";
 import { supabase } from "@/lib/supabase";
+import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 
 type ModalStep = "warn" | "type";
 
@@ -36,6 +37,10 @@ export default function SettingsPage() {
 
   async function handleRestorePurchases() {
     if (restoring) return;
+    if (!navigator.onLine) {
+      setRestoreMessage({ text: "You're offline. Connect to the internet to restore purchases.", ok: false });
+      return;
+    }
     setRestoring(true);
     setRestoreMessage(null);
     try {
@@ -51,11 +56,15 @@ export default function SettingsPage() {
 
   async function handleDelete() {
     if (confirmText !== "DELETE" || deleting) return;
+    if (!navigator.onLine) {
+      setDeleteError("You're offline. Connect to the internet to delete your account.");
+      return;
+    }
     setDeleting(true);
     setDeleteError(null);
 
     try {
-      const res  = await fetch("/api/account/delete", { method: "DELETE" });
+      const res  = await fetchWithTimeout("/api/account/delete", { method: "DELETE", timeoutMs: 30_000 });
       const json = await res.json() as { ok?: boolean; error?: string };
 
       if (!res.ok) {
@@ -67,8 +76,15 @@ export default function SettingsPage() {
       // Clear local session then bounce to login.
       await supabase.auth.signOut();
       window.location.href = "/login";
-    } catch {
-      setDeleteError("Network error. Please try again.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      setDeleteError(
+        msg.includes("offline") || msg.includes("network")
+          ? "You're offline. Connect to the internet and try again."
+          : msg.includes("timed out")
+          ? "Request timed out. Check your connection and try again."
+          : "Network error. Please try again."
+      );
       setDeleting(false);
     }
   }

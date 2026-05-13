@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ProPaywallModal } from "@/components/shared/ProPaywallModal";
+import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -507,12 +508,16 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
       onToast({ type: "error", message: "File must be 5 MB or smaller." });
       return;
     }
+    if (!navigator.onLine) {
+      onToast({ type: "error", message: "You're offline. Connect to the internet to upload receipts." });
+      return;
+    }
 
     setUploading(true);
     try {
       const body = new FormData();
       body.append("file", file);
-      const res  = await fetch("/api/receipts/upload", { method: "POST", body });
+      const res  = await fetchWithTimeout("/api/receipts/upload", { method: "POST", body, timeoutMs: 30_000 });
       const data = await res.json() as { error?: string; message?: string };
 
       if (res.status === 402) { setPaywallOpen(true); return; }
@@ -524,8 +529,9 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
       onToast({ type: "success", message: "Receipt uploaded" });
       fetchReceipts();
       onCountChange();
-    } catch {
-      onToast({ type: "error", message: "Could not upload receipt. Please try again." });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Could not upload receipt. Please try again.";
+      onToast({ type: "error", message: msg });
     } finally {
       setUploading(false);
     }

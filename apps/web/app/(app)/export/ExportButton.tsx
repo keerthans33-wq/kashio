@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { isCapacitorIOS } from "@/lib/capacitor";
+import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 
 type State = "idle" | "loading" | "done" | "error";
+type ErrorKind = "offline" | "timeout" | "server" | null;
 
 async function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -49,16 +51,23 @@ function exportForWeb(blob: Blob, fileName: string): void {
 }
 
 export function ExportButton() {
-  const [state, setState] = useState<State>("idle");
-  const [ios,   setIos]   = useState(false);
+  const [state,     setState]     = useState<State>("idle");
+  const [errorKind, setErrorKind] = useState<ErrorKind>(null);
+  const [ios,       setIos]       = useState(false);
 
   useEffect(() => { setIos(isCapacitorIOS()); }, []);
 
   async function handleExport() {
+    if (!navigator.onLine) {
+      setState("error");
+      setErrorKind("offline");
+      return;
+    }
     setState("loading");
+    setErrorKind(null);
     try {
-      const res = await fetch("/api/export");
-      if (!res.ok) throw new Error("Export failed");
+      const res = await fetchWithTimeout("/api/export", { timeoutMs: 30_000 });
+      if (!res.ok) throw new Error("server");
 
       const blob     = await res.blob();
       const fileName =
@@ -74,6 +83,12 @@ export function ExportButton() {
       setState("done");
     } catch (e) {
       console.error("[Kashio] Export error:", e);
+      const msg = e instanceof Error ? e.message : "";
+      setErrorKind(
+        msg.includes("offline") || msg.includes("network") ? "offline"
+        : msg.includes("timed out") ? "timeout"
+        : "server"
+      );
       setState("error");
     }
   }
@@ -153,10 +168,23 @@ export function ExportButton() {
 
       {state === "error" && (
         <div
-          className="rounded-xl px-4 py-3 text-center"
+          className="rounded-xl px-4 py-3.5 text-center space-y-2.5"
           style={{ backgroundColor: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.15)" }}
         >
-          <p className="text-[13px] text-red-400">Export failed. Please try again.</p>
+          <p className="text-[13px] text-red-400">
+            {errorKind === "offline"
+              ? "You're offline. Connect to the internet and try again."
+              : errorKind === "timeout"
+              ? "Request timed out. Check your connection and try again."
+              : "Export failed. Please try again."}
+          </p>
+          <button
+            onClick={handleExport}
+            className="text-[12px] font-medium underline underline-offset-2"
+            style={{ color: "rgba(255,255,255,0.45)" }}
+          >
+            Retry
+          </button>
         </div>
       )}
     </div>
