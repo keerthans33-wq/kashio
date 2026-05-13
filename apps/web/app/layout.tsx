@@ -4,6 +4,7 @@ import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { AuroraBackground } from "@/components/ui/aurora-background";
 import { CapacitorAuthHandler } from "@/components/providers/CapacitorAuthHandler";
+import { CapacitorSplashHider } from "@/components/providers/CapacitorSplashHider";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -36,6 +37,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Atmospheric aurora layer — sits behind all page content */}
         <AuroraBackground intensity="medium" />
 
+        {/* Hides native Capacitor splash on every route, not just (app) routes */}
+        <CapacitorSplashHider />
         {/* Capacitor iOS deep-link handler — mounts at root, renders null */}
         <CapacitorAuthHandler />
 

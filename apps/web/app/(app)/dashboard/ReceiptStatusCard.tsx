@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Receipt, CheckCircle, AlertCircle } from "lucide-react";
 import { ReceiptDrawer, type DrawerToast } from "@/components/shared/ReceiptDrawer";
 import { motion, AnimatePresence } from "motion/react";
+import { scheduleReceiptLimitReminder } from "@/lib/notifications";
 
 type UsageData  = { count: number; limit: number; isPro: boolean };
 type ToastKind  = "success" | "error";
@@ -23,6 +24,7 @@ function buildSubtitle(usage: UsageData): string {
 
 export function ReceiptStatusCard() {
   const toastTimer               = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevReceiptCount         = useRef<number | null>(null);
   const [usage,  setUsage]       = useState<UsageData | null>(null);
   const [open,   setOpen]        = useState(false);
   const [toast,  setToast]       = useState<ToastState>(null);
@@ -30,7 +32,16 @@ export function ReceiptStatusCard() {
   const fetchUsage = useCallback(() => {
     fetch("/api/receipts/usage")
       .then((r) => (r.ok ? r.json() : null))
-      .then((data: UsageData | null) => { if (data) setUsage(data); })
+      .then((data: UsageData | null) => {
+        if (!data) return;
+        setUsage(data);
+        const prev = prevReceiptCount.current;
+        // Schedule reminder only when count newly reaches or exceeds 4/5 (not on initial load).
+        if (prev !== null && !data.isPro && data.count >= 4 && data.limit === 5 && data.count > prev) {
+          scheduleReceiptLimitReminder().catch(() => {});
+        }
+        prevReceiptCount.current = data.count;
+      })
       .catch(() => {});
   }, []);
 

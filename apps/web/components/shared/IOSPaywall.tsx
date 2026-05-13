@@ -5,6 +5,7 @@ import { useRevenueCat } from "@/components/providers/RevenueCatProvider";
 import { Button } from "@/components/ui/button";
 import { PRODUCT_IDS, FALLBACK_PRICE, ANNUAL_SAVING_PCT } from "@/lib/pricing";
 import type { PurchasesPackage } from "@/lib/revenuecat.client";
+import { cancelNotification, NOTIF_ID } from "@/lib/notifications";
 
 type Interval = "month" | "year";
 type PurchaseStatus = "idle" | "purchasing" | "success";
@@ -89,6 +90,7 @@ export function IOSPaywall({ onSuccess, compact = false, buttonLabel }: Props) {
     if (outcome === "success") {
       setPurchaseStatus("success");
       onSuccess?.();
+      cancelNotification(NOTIF_ID.RECEIPT).catch(() => {});
       setTimeout(() => window.location.reload(), 1400);
     } else {
       setPurchaseStatus("idle");
@@ -104,6 +106,7 @@ export function IOSPaywall({ onSuccess, compact = false, buttonLabel }: Props) {
         setRestoreSuccess(true);
         setPurchaseStatus("success");
         onSuccess?.();
+        cancelNotification(NOTIF_ID.RECEIPT).catch(() => {});
         setTimeout(() => window.location.reload(), 1400);
       } else {
         setRestoreMsg("No active purchase was found for this Apple ID.");

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Nav from "../components/shell/Nav";
 import { ThemeToggle } from "../components/shell/ThemeToggle";
 import { UserContext, useUserContext } from "../../lib/user-context";
@@ -9,10 +10,20 @@ import { RevenueCatProvider } from "../../components/providers/RevenueCatProvide
 import { AppLoadingScreen } from "../../components/shared/AppLoadingScreen";
 import { OfflineBanner } from "../../components/shared/OfflineBanner";
 
+// Minimum time the loading screen stays visible. Prevents a sub-frame flash
+// on fast connections and ensures the logo is always perceptible.
+const MIN_LOADING_MS = 700;
+
 function AppLayoutInner({ children }: { children: React.ReactNode }) {
   const userState = useUserContext();
+  const [minPassed, setMinPassed] = useState(false);
 
-  if (userState.loading) {
+  useEffect(() => {
+    const t = setTimeout(() => setMinPassed(true), MIN_LOADING_MS);
+    return () => clearTimeout(t);
+  }, []);
+
+  if (userState.loading || !minPassed) {
     return <AppLoadingScreen />;
   }
 

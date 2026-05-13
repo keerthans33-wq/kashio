@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { CandidateCard, type CandidateCardProps } from "./CandidateCard";
 import { bulkConfirmCandidates, bulkRejectCandidates, bulkResetCandidates } from "./actions";
 import { Button } from "@/components/ui/button";
+import { cancelNotification, scheduleExportReminder, NOTIF_ID } from "@/lib/notifications";
 
 type Status = "NEEDS_REVIEW" | "CONFIRMED" | "REJECTED";
 
@@ -35,6 +36,21 @@ export function ReviewList({ needsReview, confirmed, rejected, missingEvidence }
   const effectiveNeeds    = effectiveItems.filter((c) => c.status === "NEEDS_REVIEW");
   const effectiveConfirmed = effectiveItems.filter((c) => c.status === "CONFIRMED");
   const effectiveRejected  = effectiveItems.filter((c) => c.status === "REJECTED");
+
+  // Cancel the "review pending" reminder when the user visits this page.
+  useEffect(() => {
+    cancelNotification(NOTIF_ID.REVIEW).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Schedule the export reminder the first time all items are reviewed this session.
+  const prevNeedsLen = useRef(effectiveNeeds.length);
+  useEffect(() => {
+    if (prevNeedsLen.current > 0 && effectiveNeeds.length === 0 && effectiveConfirmed.length > 0) {
+      scheduleExportReminder().catch(() => {});
+    }
+    prevNeedsLen.current = effectiveNeeds.length;
+  }, [effectiveNeeds.length, effectiveConfirmed.length]);
 
   function handleCardStatusChange(id: string, next: Status) {
     setStatusOverrides((prev) => new Map(prev).set(id, next));

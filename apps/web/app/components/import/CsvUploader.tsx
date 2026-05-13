@@ -8,6 +8,7 @@ import { validateCsv, type ValidRow, type InvalidRow, type RawRow } from "../../
 import { remapColumns, type ColumnMapping } from "../../../lib/remapColumns";
 import { detectColumns, mergeDebitCredit } from "../../../lib/detectColumns";
 import { fetchWithTimeout } from "../../../lib/fetchWithTimeout";
+import { scheduleReviewReminder } from "../../../lib/notifications";
 import PreviewTable from "./PreviewTable";
 import ColumnMapper from "./ColumnMapper";
 import BankCsvInstructions from "./BankCsvInstructions";
@@ -205,6 +206,7 @@ export default function CsvUploader() {
       // import count and optionally import another file first.
 
       setImportResult({ inserted, duplicates, invalid: result.invalid.length, flagged, totalValue });
+      scheduleReviewReminder().catch(() => {});
     } catch (err) {
       setImportError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {

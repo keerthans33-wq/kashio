@@ -1,15 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
-import { ChevronRight, FileText, Shield, HelpCircle, Mail, RefreshCw, Trash2, AlertTriangle } from "lucide-react";
+import { ChevronRight, FileText, Shield, HelpCircle, Mail, RefreshCw, Trash2, AlertTriangle, Bell } from "lucide-react";
 import { useUser } from "@/lib/user-context";
 import { useRevenueCat } from "@/components/providers/RevenueCatProvider";
 import { supabase } from "@/lib/supabase";
 import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
+import {
+  checkPermission,
+  requestPermission,
+  getRemindersEnabled,
+  setRemindersEnabled,
+  hasAskedPermission,
+} from "@/lib/notifications";
 
 type ModalStep = "warn" | "type";
+
+type ReminderStatus = "loading" | "unavailable" | "not-asked" | "granted" | "denied";
 
 export default function SettingsPage() {
   const { user } = useUser();
@@ -21,6 +30,38 @@ export default function SettingsPage() {
   const [deleteError,     setDeleteError]     = useState<string | null>(null);
   const [restoring,       setRestoring]       = useState(false);
   const [restoreMessage,  setRestoreMessage]  = useState<{ text: string; ok: boolean } | null>(null);
+
+  const [reminderStatus,  setReminderStatus]  = useState<ReminderStatus>("loading");
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [askingPerm,      setAskingPerm]      = useState(false);
+
+  useEffect(() => {
+    if (!isIOS) { setReminderStatus("unavailable"); return; }
+    checkPermission().then((perm) => {
+      if (!hasAskedPermission()) {
+        setReminderStatus("not-asked");
+      } else if (perm === "granted") {
+        setReminderStatus("granted");
+        setReminderEnabled(getRemindersEnabled());
+      } else {
+        setReminderStatus("denied");
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isIOS]);
+
+  async function handleEnableReminders() {
+    setAskingPerm(true);
+    const granted = await requestPermission();
+    setReminderStatus(granted ? "granted" : "denied");
+    setReminderEnabled(granted);
+    setAskingPerm(false);
+  }
+
+  function handleToggleReminders(v: boolean) {
+    setReminderEnabled(v);
+    setRemindersEnabled(v);
+  }
 
   function openDeleteModal() {
     setModal("warn");
@@ -119,6 +160,57 @@ export default function SettingsPage() {
             <SettingsRow icon={<HelpCircle size={15} />} label="Help & FAQ"   href="/support" />
             <SettingsRow icon={<Mail size={15} />}       label="Contact us"   href="mailto:support@kashio.com.au" external />
           </Section>
+
+          {/* Reminders */}
+          {reminderStatus !== "unavailable" && reminderStatus !== "loading" && (
+            <Section label="Reminders">
+              <div className="px-4 py-3.5 space-y-3">
+                <div className="flex items-center gap-3">
+                  <span
+                    className="flex items-center justify-center rounded-lg w-7 h-7 shrink-0"
+                    style={{ backgroundColor: "rgba(34,197,94,0.12)", color: "#22C55E" }}
+                  >
+                    <Bell size={15} />
+                  </span>
+                  <span className="flex-1 text-[14px]" style={{ color: "var(--text-primary)" }}>
+                    Deduction reminders
+                  </span>
+
+                  {reminderStatus === "granted" && (
+                    <button
+                      onClick={() => handleToggleReminders(!reminderEnabled)}
+                      className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200"
+                      style={{ backgroundColor: reminderEnabled ? "#22C55E" : "rgba(255,255,255,0.12)" }}
+                      role="switch"
+                      aria-checked={reminderEnabled}
+                    >
+                      <span
+                        className="inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200"
+                        style={{ transform: reminderEnabled ? "translateX(26px)" : "translateX(2px)" }}
+                      />
+                    </button>
+                  )}
+
+                  {reminderStatus === "not-asked" && (
+                    <button
+                      onClick={handleEnableReminders}
+                      disabled={askingPerm}
+                      className="rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-opacity hover:opacity-70 disabled:opacity-50"
+                      style={{ backgroundColor: "rgba(34,197,94,0.15)", color: "#22C55E" }}
+                    >
+                      {askingPerm ? "Enabling…" : "Enable"}
+                    </button>
+                  )}
+                </div>
+
+                <p className="text-[12px] leading-relaxed pl-10" style={{ color: "var(--text-muted)" }}>
+                  {reminderStatus === "denied"
+                    ? "To enable reminders, go to iPhone Settings → Kashio → Notifications."
+                    : "Get notified to review your deductions and export your report before tax time."}
+                </p>
+              </div>
+            </Section>
+          )}
 
           {/* Subscription */}
           {isIOS && (

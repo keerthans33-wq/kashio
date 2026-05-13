@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { isCapacitorIOS } from "@/lib/capacitor";
 import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
+import { cancelNotification, NOTIF_ID } from "@/lib/notifications";
 
 type State = "idle" | "loading" | "done" | "error";
 type ErrorKind = "offline" | "timeout" | "server" | null;
@@ -81,6 +82,7 @@ export function ExportButton() {
       }
 
       setState("done");
+      cancelNotification(NOTIF_ID.EXPORT).catch(() => {});
     } catch (e) {
       console.error("[Kashio] Export error:", e);
       const msg = e instanceof Error ? e.message : "";
