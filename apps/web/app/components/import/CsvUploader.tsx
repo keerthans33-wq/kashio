@@ -9,6 +9,7 @@ import { remapColumns, type ColumnMapping } from "../../../lib/remapColumns";
 import { detectColumns, mergeDebitCredit } from "../../../lib/detectColumns";
 import { fetchWithTimeout } from "../../../lib/fetchWithTimeout";
 import { scheduleReviewReminder } from "../../../lib/notifications";
+import { parseAnzJson } from "../../../lib/utils/parsers/anzJsonParser";
 import PreviewTable from "./PreviewTable";
 import ColumnMapper from "./ColumnMapper";
 import BankCsvInstructions from "./BankCsvInstructions";
@@ -92,25 +93,55 @@ export default function CsvUploader() {
     setResult({ raw: rows, valid, invalid });
   }
 
-  // ── CSV parsing ────────────────────────────────────────────────────────────
+  // ── File parsing ───────────────────────────────────────────────────────────
   //
-  // TODO (1/3 — CSV Parser): processFile() is the single entry point for all
-  // CSV parsing. The current pipeline is:
-  //   1. PapaParse reads the raw file into string[][]
-  //   2. detectColumns() auto-maps columns (date / amount / description)
-  //   3. remapColumns() normalises rows to { date, description, amount }
-  //   4. validateCsv() parses and validates each row
+  // processFile() is the single entry point for all file parsing.
+  //   - .csv  → CSV pipeline (PapaParse → detectColumns → remapColumns → validateCsv)
+  //   - .json → ANZ JSON pipeline (parseAnzJson → ValidRow[] directly)
   //
-  // To support a new bank format: add an alias or heuristic to
-  // lib/detectColumns.ts — no changes needed here.
-  // To swap the parser entirely: replace the Papa.parse block below with
-  // your own reader and call runValidation() with the normalised rows.
+  // To support a new bank CSV format: add aliases to lib/detectColumns.ts.
+  // To support a new JSON format: add a parser to lib/utils/parsers/ and
+  //   add another branch in processJsonFile() based on file content.
   //
   function processFile(f: File) {
-    if (!f.name.toLowerCase().endsWith(".csv")) {
-      setFileError("Please upload a .csv file.");
+    const ext = f.name.toLowerCase().split(".").pop();
+    if (ext === "json") {
+      processJsonFile(f).catch(() => setParseError("Could not read file."));
+    } else if (ext === "csv") {
+      processCsvFile(f);
+    } else {
+      setFileError("Please upload a .csv or .json file.");
+    }
+  }
+
+  async function processJsonFile(f: File) {
+    let text: string;
+    try {
+      text = await f.text();
+    } catch {
+      setParseError("Could not read file.");
       return;
     }
+
+    let raw: unknown;
+    try {
+      raw = JSON.parse(text);
+    } catch {
+      setParseError("Invalid JSON. Please check your file and try again.");
+      return;
+    }
+
+    const { valid, invalid, error } = parseAnzJson(raw);
+
+    if (error) {
+      setParseError(error);
+      return;
+    }
+
+    setResult({ raw: [], valid, invalid });
+  }
+
+  function processCsvFile(f: File) {
     Papa.parse<string[]>(f, {
       header:         false,
       skipEmptyLines: true,
@@ -188,7 +219,11 @@ export default function CsvUploader() {
       setImportError("You're offline. Connect to the internet and try again.");
       return;
     }
-    setImportLabel("Uploading transactions…");
+    setImportLabel(
+      file?.name.toLowerCase().endsWith(".json")
+        ? "Processing ANZ transaction file…"
+        : "Uploading transactions…"
+    );
     setImporting(true);
     setImportError(null);
     try {
@@ -278,7 +313,7 @@ export default function CsvUploader() {
       <div
         role="button"
         tabIndex={0}
-        aria-label="Upload CSV file"
+        aria-label="Upload CSV or JSON file"
         onClick={() => inputRef.current?.click()}
         onKeyDown={(e) => e.key === "Enter" && inputRef.current?.click()}
         onDragOver={handleDragOver}
@@ -317,7 +352,7 @@ export default function CsvUploader() {
         ) : (
           <div>
             <p className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>
-              Upload CSV file
+              Upload CSV or JSON file
             </p>
             <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
               Drag and drop, or click to browse
@@ -325,7 +360,7 @@ export default function CsvUploader() {
           </div>
         )}
 
-        <input ref={inputRef} type="file" accept=".csv" onChange={handleFileChange} className="hidden" />
+        <input ref={inputRef} type="file" accept=".csv,.json" onChange={handleFileChange} className="hidden" />
       </div>
 
       {/* File / parse errors */}

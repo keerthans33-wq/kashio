@@ -1,0 +1,100 @@
+{
+  "transactions": [
+    {
+      "date": "2024-07-15",
+      "amount": -42.50,
+      "description": "OFFICEWORKS 0042 SYDNEY NSW",
+      "transactionType": "Debit",
+      "balance": 2891.45,
+      "reference": ""
+    },
+    {
+      "date": "2024-07-14",
+      "amount": -12.80,
+      "description": "SPOTIFY P15A2E47C3 STOCKHOLM",
+      "transactionType": "Debit",
+      "balance": 2933.95,
+      "reference": ""
+    },
+    {
+      "date": "2024-07-12",
+      "amount": -890.00,
+      "description": "QANTAS AIRWAYS SYDNEY NSW",
+      "transactionType": "Debit",
+      "balance": 2946.75,
+      "reference": "QF20240712"
+    },
+    {
+      "date": "2024-07-11",
+      "amount": 5200.00,
+      "description": "SALARY ACME PTY LTD",
+      "transactionType": "Credit",
+      "balance": 3836.75,
+      "reference": "PAYROLL"
+    },
+    {
+      "date": "2024-07-10",
+      "amount": -68.40,
+      "description": "TELSTRA CORPORATION MELBOURNE VIC",
+      "transactionType": "Debit",
+      "balance": -1363.25,
+      "reference": ""
+    },
+    {
+      "date": "2024-07-09",
+      "amount": -24.99,
+      "description": "ADOBE SYSTEMS INC SAN JOSE CA",
+      "transactionType": "Debit",
+      "balance": -1294.85,
+      "reference": ""
+    },
+    {
+      "date": "2024-07-08",
+      "amount": -156.00,
+      "description": "BUNNINGS WAREHOUSE AUBURN NSW",
+      "transactionType": "Debit",
+      "balance": -1269.86,
+      "reference": ""
+    },
+    {
+      "date": "2024-07-05",
+      "amount": -38.50,
+      "description": "UBER EATS SYDNEY NSW",
+      "transactionType": "Debit",
+      "balance": -1113.86,
+      "reference": ""
+    },
+    {
+      "date": "2024-07-04",
+      "amount": -210.00,
+      "description": "HARVEY NORMAN AUBURN NSW",
+      "transactionType": "Debit",
+      "balance": -1075.36,
+      "reference": ""
+    },
+    {
+      "date": "2024-07-03",
+      "amount": -15.00,
+      "description": "PARKING SYDNEY AIRPORT SYDNEY NSW",
+      "transactionType": "Debit",
+      "balance": -865.36,
+      "reference": ""
+    },
+    {
+      "date": "2024-07-02",
+      "amount": -9.99,
+      "description": "AMAZON PRIME SUBSCRIPTION SYDNEY NSW",
+      "transactionType": "Debit",
+      "balance": -850.36,
+      "reference": ""
+    },
+    {
+      "date": "2024-07-01",
+      "amount": -320.00,
+      "description": "JB HI-FI STORES PTY LTD PARRAMATTA NSW",
+      "transactionType": "Debit",
+      "balance": -840.37,
+      "reference": ""
+    }
+  ]
+}
