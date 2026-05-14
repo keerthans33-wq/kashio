@@ -25,7 +25,13 @@ export async function POST() {
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    await sendWelcomeEmailIfNew(userId, user?.email ?? null);
+    // Only proceed for accounts created in the last 10 minutes (new sign-ups).
+    const accountAgeMs = user?.created_at
+      ? Date.now() - new Date(user.created_at).getTime()
+      : Infinity;
+    if (accountAgeMs < 10 * 60 * 1000) {
+      await sendWelcomeEmailIfNew(userId, user?.email ?? null);
+    }
 
     return NextResponse.json({ ok: true });
   } catch {

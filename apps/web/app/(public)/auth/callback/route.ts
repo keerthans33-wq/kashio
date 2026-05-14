@@ -37,11 +37,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${origin}/login`);
     }
 
-    // Fire-and-forget: send welcome email to new users only.
-    // Does not block the redirect — failure is logged but swallowed.
-    sendWelcomeEmailIfNew(data.user.id, data.user.email ?? null).catch((err) =>
-      console.error("[welcome-email] failed:", err)
-    );
+    // Only send welcome email if the account was created in the last 10 minutes.
+    // This gates out every returning-user login before hitting the DB.
+    // The sendWelcomeEmailIfNew function also checks welcomeEmailSent as a
+    // secondary guard against edge-case double-fires.
+    const accountAgeMs = Date.now() - new Date(data.user.created_at).getTime();
+    if (accountAgeMs < 10 * 60 * 1000) {
+      sendWelcomeEmailIfNew(data.user.id, data.user.email ?? null).catch((err) =>
+        console.error("[welcome-email] failed:", err)
+      );
+    }
 
     // Password reset link — Supabase sets type=recovery
     if (searchParams.get("type") === "recovery") {
