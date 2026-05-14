@@ -62,13 +62,20 @@ export function CapacitorAuthHandler() {
           return;
         }
 
-        let type: string | null = null;
-        try { type = new URL(url).searchParams.get("type"); } catch { /* ignore */ }
-
         // Close SFSafariViewController before exchanging the code
         try { await Browser.close(); } catch { /* already closed by user */ }
 
+        // Supabase fires onAuthStateChange with PASSWORD_RECOVERY synchronously
+        // inside exchangeCodeForSession — before the Promise resolves. The URL
+        // `type` param is unreliable (Supabase doesn't always include it), so we
+        // listen for the event directly as the authoritative recovery signal.
+        let isRecovery = false;
+        const { data: { subscription: recoveryListener } } = supabase.auth.onAuthStateChange((event) => {
+          if (event === "PASSWORD_RECOVERY") isRecovery = true;
+        });
+
         const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+        recoveryListener.unsubscribe();
 
         if (error || !data.session) {
           console.error("[Kashio] exchangeCodeForSession failed:", error?.message);
@@ -79,7 +86,7 @@ export function CapacitorAuthHandler() {
         console.log("[Kashio] Supabase session restored after deep link");
 
         // Password reset — go straight to the new-password form.
-        if (type === "recovery") {
+        if (isRecovery) {
           window.location.href = "/auth/reset-password";
           return;
         }

@@ -51,6 +51,11 @@ export function useUserContext(): UserContextValue {
       if (event === "SIGNED_OUT") {
         window.location.replace("/login");
       }
+      // On iOS, tapping a password-reset link fires PASSWORD_RECOVERY instead of
+      // establishing a normal session. Route to the reset form rather than the app.
+      if (event === "PASSWORD_RECOVERY") {
+        window.location.replace("/auth/reset-password");
+      }
     });
 
     return () => subscription.unsubscribe();

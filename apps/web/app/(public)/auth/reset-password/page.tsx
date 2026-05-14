@@ -14,7 +14,7 @@ export default function ResetPasswordPage() {
   async function handleSubmit() {
     setError(null);
     if (!password)               { setError("Please enter a new password."); return; }
-    if (password.length < 6)     { setError("Password must be at least 6 characters."); return; }
+    if (password.length < 8)     { setError("Password must be at least 8 characters."); return; }
     if (password !== confirm)    { setError("Passwords don't match."); return; }
 
     setLoading(true);
@@ -23,7 +23,9 @@ export default function ResetPasswordPage() {
       setError(error.message);
     } else {
       setDone(true);
-      setTimeout(() => { window.location.href = "/auth"; }, 2500);
+      // Sign out so the recovery session can't be reused, then go to login.
+      await supabase.auth.signOut();
+      setTimeout(() => { window.location.href = "/login"; }, 2000);
     }
     setLoading(false);
   }
@@ -50,7 +52,7 @@ export default function ResetPasswordPage() {
             style={{ backgroundColor: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)" }}
           >
             <p className="text-sm" style={{ color: "#22C55E" }}>
-              Password updated. Taking you to sign in…
+              Password updated. Taking you to log in…
             </p>
           </div>
         ) : (
@@ -61,7 +63,7 @@ export default function ResetPasswordPage() {
                 <input
                   type="password"
                   autoComplete="new-password"
-                  placeholder="At least 6 characters"
+                  placeholder="At least 8 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="h-11 w-full rounded-xl px-3 text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-[#22C55E]"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useOptimistic, useTransition } from "react";
+import { useEffect, useOptimistic, useState, useTransition } from "react";
 import { WfhForm } from "./WfhForm";
 import { addWfhEntry, deleteWfhEntry } from "./actions";
 
@@ -27,8 +27,31 @@ export function WfhEntriesSection({
       [newEntry, ...state].sort((a, b) => b.date.localeCompare(a.date)),
   );
 
-  const entryCount = entries.length;
-  const totalHrs   = entries.reduce((s, e) => s + e.hours, 0);
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!deleteError) return;
+    const t = setTimeout(() => setDeleteError(null), 5000);
+    return () => clearTimeout(t);
+  }, [deleteError]);
+
+  const visibleEntries = entries.filter((e) => !deletingIds.has(e.id));
+  const entryCount = visibleEntries.length;
+  const totalHrs   = visibleEntries.reduce((s, e) => s + e.hours, 0);
+
+  async function handleDelete(id: string) {
+    if (deletingIds.has(id)) return;
+    setDeleteError(null);
+    setDeletingIds((prev) => new Set([...prev, id]));
+    try {
+      await deleteWfhEntry(id);
+      setDeletingIds((prev) => { const s = new Set(prev); s.delete(id); return s; });
+    } catch {
+      setDeletingIds((prev) => { const s = new Set(prev); s.delete(id); return s; });
+      setDeleteError("Couldn't delete this log. Please try again.");
+    }
+  }
 
   function handleAdd(
     date: string,
@@ -75,8 +98,12 @@ export function WfhEntriesSection({
           </span>
         </div>
 
+        {deleteError && (
+          <p className="mb-3 text-[12px] text-red-400">{deleteError}</p>
+        )}
+
         <div className="space-y-2">
-          {entries.map((entry) => (
+          {visibleEntries.map((entry) => (
             <div
               key={entry.id}
               className="flex items-center justify-between gap-4 rounded-xl px-4 py-3 transition-opacity duration-200"
@@ -117,15 +144,14 @@ export function WfhEntriesSection({
                   {entry.hours} hr{entry.hours !== 1 ? "s" : ""}
                 </span>
                 {!entry.pending && (
-                  <form action={deleteWfhEntry.bind(null, entry.id)}>
-                    <button
-                      type="submit"
-                      className="text-[12px] transition-colors duration-150 hover:text-red-400"
-                      style={{ color: "var(--text-muted)" }}
-                    >
-                      Remove
-                    </button>
-                  </form>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(entry.id)}
+                    className="text-[12px] transition-colors duration-150 hover:text-red-400"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Remove
+                  </button>
                 )}
               </div>
             </div>
