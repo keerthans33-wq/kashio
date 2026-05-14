@@ -224,10 +224,16 @@ function ExportLockedPreview({ allItems, categoryGroups, total, confirmedCount }
 
 // ── Main component ─────────────────────────────────────────────────────────────
 export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, confirmedCount }: Props) {
-  const { isIOS, platformReady } = useRevenueCat();
+  const { isIOS, platformReady, isPro } = useRevenueCat();
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
   const [interval, setInterval] = useState<Interval>("year");
+
+  // Treat the user as unlocked if the server confirmed it (DB) OR if the
+  // RevenueCat client just confirmed a purchase / restore this session.
+  // The RC SDK is authoritative immediately after purchase; the server-side
+  // DB sync can lag by several seconds due to Apple → RC propagation delay.
+  const isUnlocked = reportUnlocked || isPro;
 
   async function handleUnlock() {
     if (isIOS) return; // hard guard — Stripe must never open inside iOS app
@@ -253,7 +259,7 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
   }
 
   // ── Unlocked: full breakdown + download ───────────────────────────────────
-  if (reportUnlocked) {
+  if (isUnlocked) {
     return (
       <motion.div
         className="space-y-8"
