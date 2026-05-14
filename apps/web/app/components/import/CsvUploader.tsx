@@ -127,14 +127,17 @@ export default function CsvUploader() {
     try {
       raw = JSON.parse(text);
     } catch {
-      setParseError("Invalid JSON. Please check your file and try again.");
+      // ANZ sometimes names CSV exports with a .json extension.
+      // If JSON.parse fails, treat the file as CSV — it will auto-detect columns normally.
+      processCsvFile(f);
       return;
     }
 
     const { valid, invalid, error } = parseAnzJson(raw);
 
     if (error) {
-      setParseError(error);
+      // Parsed as JSON but not recognised as a transaction format — also try CSV.
+      processCsvFile(f);
       return;
     }
 
