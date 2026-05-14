@@ -51,8 +51,9 @@ export function useUserContext(): UserContextValue {
       if (event === "SIGNED_OUT") {
         window.location.replace("/login");
       }
-      // On iOS, tapping a password-reset link fires PASSWORD_RECOVERY instead of
-      // establishing a normal session. Route to the reset form rather than the app.
+      // PASSWORD_RECOVERY fires for legacy implicit-flow OTP recovery links only.
+      // PKCE flow (the default) never fires this — CapacitorAuthHandler handles
+      // recovery detection via typeParam / data.redirectType from exchangeCodeForSession.
       if (event === "PASSWORD_RECOVERY") {
         window.location.replace("/auth/reset-password");
       }

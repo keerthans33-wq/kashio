@@ -50,8 +50,11 @@ export function CapacitorAuthHandler() {
         if (!isAuthCallback(url)) return;
 
         let code: string | null = null;
+        let typeParam: string | null = null;
         try {
-          code = new URL(url).searchParams.get("code");
+          const parsed = new URL(url);
+          code      = parsed.searchParams.get("code");
+          typeParam = parsed.searchParams.get("type");
         } catch {
           console.warn("[Kashio] Could not parse appUrlOpen URL:", url);
           return;
@@ -65,17 +68,7 @@ export function CapacitorAuthHandler() {
         // Close SFSafariViewController before exchanging the code
         try { await Browser.close(); } catch { /* already closed by user */ }
 
-        // Supabase fires onAuthStateChange with PASSWORD_RECOVERY synchronously
-        // inside exchangeCodeForSession — before the Promise resolves. The URL
-        // `type` param is unreliable (Supabase doesn't always include it), so we
-        // listen for the event directly as the authoritative recovery signal.
-        let isRecovery = false;
-        const { data: { subscription: recoveryListener } } = supabase.auth.onAuthStateChange((event) => {
-          if (event === "PASSWORD_RECOVERY") isRecovery = true;
-        });
-
         const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-        recoveryListener.unsubscribe();
 
         if (error || !data.session) {
           console.error("[Kashio] exchangeCodeForSession failed:", error?.message);
@@ -85,7 +78,22 @@ export function CapacitorAuthHandler() {
 
         console.log("[Kashio] Supabase session restored after deep link");
 
-        // Password reset — go straight to the new-password form.
+        // Two independent signals for a password-recovery flow:
+        //
+        // 1. typeParam === "recovery": Supabase appends ?type=recovery to the
+        //    redirect URL when the deep link is a password reset link.
+        //
+        // 2. data.redirectType === "PASSWORD_RECOVERY": when resetPasswordForEmail
+        //    is called with PKCE, Supabase stores "/PASSWORD_RECOVERY" alongside
+        //    the code verifier in cookies. _exchangeCodeForSession reads it back
+        //    and returns it. The TS types don't expose this field so we cast.
+        //
+        // NOTE: exchangeCodeForSession (PKCE) fires SIGNED_IN, never
+        // PASSWORD_RECOVERY, so onAuthStateChange is useless here.
+        const isRecovery =
+          typeParam === "recovery" ||
+          (data as any).redirectType === "PASSWORD_RECOVERY";
+
         if (isRecovery) {
           window.location.href = "/auth/reset-password";
           return;
