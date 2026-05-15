@@ -1,6 +1,5 @@
 import UIKit
 import Capacitor
-import CapacitorCommunityAppleSignIn
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
