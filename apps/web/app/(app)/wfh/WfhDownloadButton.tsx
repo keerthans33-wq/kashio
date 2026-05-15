@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRevenueCat } from "@/components/providers/RevenueCatProvider";
 import { ProPaywallModal } from "@/components/shared/ProPaywallModal";
+import { isCapacitorIOS } from "@/lib/capacitor";
 
 type Entry = {
   id:    string;
@@ -44,6 +45,7 @@ export function WfhDownloadButton({ entries, fyLabel, ytdHours, ytdEst, email, s
 
   const [loading,     setLoading]     = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
+  const ios = isCapacitorIOS();
 
   const { fyStart, fyEnd, fyFilename } = fyBounds(fyLabel);
   const fyEntries = entries.filter((e) => e.date >= fyStart && e.date <= fyEnd);
@@ -182,7 +184,33 @@ export function WfhDownloadButton({ entries, fyLabel, ytdHours, ytdEst, email, s
         doc.text(`Page ${i} of ${pageCount}`, W - 14, pH - 6.5, { align: "right" });
       }
 
-      doc.save(`Kashio-WFH-Log-${fyFilename}.pdf`);
+      const fileName = `Kashio-WFH-Log-${fyFilename}.pdf`;
+      if (isCapacitorIOS()) {
+        const blob   = doc.output("blob");
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload  = () => resolve((reader.result as string).split(",")[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        const [{ Filesystem, Directory }, { Share }] = await Promise.all([
+          import("@capacitor/filesystem"),
+          import("@capacitor/share"),
+        ]);
+        const { uri } = await Filesystem.writeFile({
+          path:      fileName,
+          data:      base64,
+          directory: Directory.Cache,
+        });
+        await Share.share({
+          title:       "WFH Log",
+          text:        "Your Kashio WFH log is ready.",
+          url:         uri,
+          dialogTitle: "Save or share your WFH log",
+        });
+      } else {
+        doc.save(fileName);
+      }
     } finally {
       setLoading(false);
     }
@@ -234,7 +262,7 @@ export function WfhDownloadButton({ entries, fyLabel, ytdHours, ytdEst, email, s
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                 </svg>
               )}
-              {loading ? "Generating…" : "Download WFH Log"}
+              {loading ? "Generating…" : ios ? "Share WFH Log" : "Download WFH Log"}
             </button>
           </div>
         </div>
