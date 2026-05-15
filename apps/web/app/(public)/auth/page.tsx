@@ -46,6 +46,14 @@ export default function AuthPage() {
     });
   }, []);
 
+  async function sha256(plain: string): Promise<string> {
+    const data = new TextEncoder().encode(plain);
+    const hash = await crypto.subtle.digest("SHA-256", data);
+    return Array.from(new Uint8Array(hash))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  }
+
   // Basic checks before hitting Supabase
   function validate(): string | null {
     if (!email)    return "Please enter your email.";
@@ -73,6 +81,63 @@ export default function AuthPage() {
       setMessage({ text: friendlyError(msg), error: true });
     }
     setLoading(false);
+  }
+
+  async function handleApple() {
+    setLoadingLabel("Signing in with Apple…");
+    setLoading(true);
+    setMessage(null);
+
+    if (isCapacitorIOS()) {
+      try {
+        const { SignInWithApple } = await import("@capacitor-community/apple-sign-in");
+
+        const rawNonce = Array.from(crypto.getRandomValues(new Uint8Array(32)))
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+        const hashedNonce = await sha256(rawNonce);
+
+        const result = await SignInWithApple.authorize({
+          clientId: "au.com.kashio.app",
+          redirectURI: "kashio://auth/callback",
+          scopes: "email name",
+          nonce: hashedNonce,
+        });
+
+        const { identityToken } = result.response;
+        if (!identityToken) throw new Error("Apple sign-in returned no identity token.");
+
+        const { data, error } = await supabase.auth.signInWithIdToken({
+          provider: "apple",
+          token: identityToken,
+          nonce: rawNonce,
+        });
+
+        if (error) throw error;
+
+        fetch("/api/auth/welcome", { method: "POST" }).catch(() => {});
+
+        const userType = data.user?.user_metadata?.user_type;
+        window.location.href = userType ? "/import" : "/onboarding";
+      } catch (err: any) {
+        if (err?.code === 1001 || String(err?.message ?? "").toLowerCase().includes("cancel")) {
+          setLoading(false);
+          return;
+        }
+        setMessage({ text: friendlyError(err instanceof Error ? err.message : "Apple sign-in failed. Please try again."), error: true });
+        setLoading(false);
+      }
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "apple",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    if (error) {
+      setMessage({ text: error.message, error: true });
+      setLoading(false);
+    }
   }
 
   async function handleGoogle() {
@@ -156,6 +221,24 @@ export default function AuthPage() {
           {loading && loadingLabel === "Redirecting to Google…" ? loadingLabel : "Continue with Google"}
         </Button>
 
+        {/* Apple — white button per Apple HIG for dark surfaces */}
+        <button
+          type="button"
+          onClick={handleApple}
+          disabled={loading}
+          className="w-full h-11 flex items-center justify-center gap-2.5 rounded-xl text-[14px] font-medium transition-opacity disabled:opacity-50 hover:opacity-90 mt-3"
+          style={{ backgroundColor: "#FFFFFF", color: "#000000" }}
+        >
+          {loading && loadingLabel === "Signing in with Apple…" ? (
+            <div className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-black/20 border-t-black/60" />
+          ) : (
+            <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.7 9.05 7.42c1.42.07 2.41.74 3.24.8 1.23-.24 2.41-.93 3.72-.84 1.57.12 2.75.72 3.52 1.84-3.22 1.93-2.46 5.98.48 7.13-.57 1.39-1.32 2.76-2.96 3.93zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+            </svg>
+          )}
+          {loading && loadingLabel === "Signing in with Apple…" ? loadingLabel : "Sign in with Apple"}
+        </button>
+
         {/* Divider */}
         <div className="my-5 flex items-center gap-3">
           <div className="h-px flex-1" style={{ backgroundColor: "var(--bg-border)" }} />
@@ -208,7 +291,9 @@ export default function AuthPage() {
 
         {/* Sign in button */}
         <Button onClick={handleSignIn} disabled={loading} className="mt-4 w-full">
-          {loading && loadingLabel !== "Redirecting to Google…" ? loadingLabel : "Sign in"}
+          {loading && loadingLabel !== "Redirecting to Google…" && loadingLabel !== "Signing in with Apple…"
+            ? loadingLabel
+            : "Sign in"}
         </Button>
 
         <p className="mt-5 text-center text-sm" style={{ color: "var(--text-muted)" }}>
