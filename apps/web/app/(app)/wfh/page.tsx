@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { db } from "../../../lib/db";
-import { requireUserWithType } from "../../../lib/auth";
+import { requireUserWithType, getUserWithEmail } from "../../../lib/auth";
+import { fetchUserPlan, isProUser } from "../../../lib/plan";
 import { calcWfhSummary } from "../../../lib/wfhSummary";
 import { WfhEntriesSection } from "./WfhEntriesSection";
+import { WfhDownloadButton } from "./WfhDownloadButton";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { MobileScreen } from "@/components/layout/mobile-screen";
 
@@ -17,13 +19,16 @@ export default async function WfhLog() {
     redirect("/login");
   }
 
-  const entries = await db.wfhLog.findMany({
-    where:   { userId },
-    orderBy: { date: "desc" },
-  });
+  const [entries, plan, emailData] = await Promise.all([
+    db.wfhLog.findMany({ where: { userId }, orderBy: { date: "desc" } }),
+    fetchUserPlan(userId),
+    getUserWithEmail(),
+  ]);
 
+  const isPro      = isProUser(plan);
+  const userEmail  = emailData?.email ?? "";
   const totalHours = entries.reduce((s, e) => s + e.hours, 0);
-  const { monthHours, monthEst, ytdHours, ytdEst, monthName } = calcWfhSummary(entries);
+  const { monthHours, monthEst, ytdHours, ytdEst, monthName, fyLabel } = calcWfhSummary(entries);
 
   return (
     <MobileScreen maxWidth="sm" as="main" padY={false} className="py-3 sm:py-10">
@@ -134,6 +139,22 @@ export default async function WfhLog() {
           <WfhEntriesSection initialEntries={entries} totalHours={totalHours} />
         </div>
       </FadeIn>
+
+      {/* Download WFH Log */}
+      {totalHours > 0 && (
+        <FadeIn delay={0.14}>
+          <div className="mt-5">
+            <WfhDownloadButton
+              entries={entries}
+              fyLabel={fyLabel}
+              ytdHours={ytdHours}
+              ytdEst={ytdEst}
+              email={userEmail}
+              serverIsPro={isPro}
+            />
+          </div>
+        </FadeIn>
+      )}
 
       {/* ATO note */}
       <p className="mt-8 text-xs" style={{ color: "var(--text-muted)", opacity: 0.6 }}>
