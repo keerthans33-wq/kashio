@@ -52,11 +52,37 @@ export default async function ExportReport() {
           .no-print { display: none !important; }
           .page-break-inside-avoid { break-inside: avoid; }
         }
-        @media screen {
+        /* Layout — mobile first */
+        .report-wrap { width: 100%; padding: 16px 16px 32px; }
+        @media (min-width: 640px) {
           .report-wrap { max-width: 860px; margin: 0 auto; padding: 32px 32px 48px; }
         }
-        /* Table */
-        .ded-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 11px; }
+        /* Report header — stack on mobile */
+        .report-header-table, .report-header-table tbody, .report-header-table tr { display: block !important; }
+        .report-header-table td { display: block !important; text-align: left !important; }
+        .report-header-table td:last-child { margin-top: 6px; }
+        @media (min-width: 640px) {
+          .report-header-table { display: table !important; }
+          .report-header-table tbody { display: table-row-group !important; }
+          .report-header-table tr { display: table-row !important; }
+          .report-header-table td { display: table-cell !important; }
+          .report-header-table td:last-child { text-align: right !important; margin-top: 0; }
+        }
+        /* Summary cards — stack on mobile, row on desktop */
+        .summary-table, .summary-table tbody, .summary-table tr { display: block !important; }
+        .summary-cell { display: block !important; width: 100% !important; padding: 0 0 8px !important; vertical-align: top; }
+        .summary-cell:last-child { padding-bottom: 0 !important; }
+        @media (min-width: 640px) {
+          .summary-table { display: table !important; width: 100%; border-collapse: separate !important; border-spacing: 0 !important; }
+          .summary-table tbody { display: table-row-group !important; }
+          .summary-table tr { display: table-row !important; }
+          .summary-cell { display: table-cell !important; width: 33% !important; padding: 0 !important; }
+          .summary-cell:nth-child(2) { padding: 0 6px !important; }
+        }
+        /* Table scroll wrapper */
+        .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        /* Deductions table */
+        .ded-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 520px; }
         .ded-table th, .ded-table td { padding: 7px 10px; text-align: left; vertical-align: top; overflow: hidden; }
         .ded-table th { background: #1f2937; color: #fff; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
         .ded-table td { border-bottom: 1px solid #f3f4f6; color: #374151; }
@@ -66,27 +92,30 @@ export default async function ExportReport() {
         .ded-table td.evidence-missing { color: #b45309; font-weight: 600; white-space: nowrap; }
         .ded-table tr.missing-row { background: #fffbeb; }
         .ded-table tr:last-child.total-row td { background: #f9fafb; border-top: 2px solid #e5e7eb; font-weight: 700; color: #111827; }
-        .ded-table .col-date     { width: 11%; }
-        .ded-table .col-merchant { width: 24%; }
-        .ded-table .col-category { width: 22%; }
-        .ded-table .col-amount   { width: 13%; }
-        .ded-table .col-evidence { width: 13%; }
-        .ded-table .col-note     { width: 17%; }
+        @media (min-width: 640px) {
+          .ded-table { table-layout: fixed; font-size: 11px; min-width: 0; }
+          .ded-table .col-date     { width: 11%; }
+          .ded-table .col-merchant { width: 24%; }
+          .ded-table .col-category { width: 22%; }
+          .ded-table .col-amount   { width: 13%; }
+          .ded-table .col-evidence { width: 13%; }
+          .ded-table .col-note     { width: 17%; }
+        }
         .note-text { font-size: 10px; color: #9ca3af; margin-top: 2px; }
         .truncate-cell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
         /* Category table */
-        .cat-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        .cat-table td { padding: 6px 12px; border-bottom: 1px solid #f3f4f6; }
+        .cat-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .cat-table td { padding: 8px 12px; border-bottom: 1px solid #f3f4f6; }
         .cat-table td:last-child { text-align: right; font-weight: 600; color: #111827; }
         .cat-table tr.total-row td { background: #f9fafb; font-weight: 700; color: #111827; border-top: 2px solid #e5e7eb; }
         /* WFH table */
-        .wfh-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        .wfh-table td { padding: 6px 12px; color: #374151; }
+        .wfh-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .wfh-table td { padding: 8px 12px; color: #374151; }
         .wfh-table td:last-child { text-align: right; font-weight: 600; color: #111827; }
       `}</style>
 
       {/* Toolbar — screen only */}
-      <div className="no-print" style={{ position: "sticky", top: 0, zIndex: 10, background: "var(--bg-card)", borderBottom: "1px solid var(--bg-border)", padding: "10px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div className="no-print" style={{ position: "sticky", top: 0, zIndex: 10, background: "var(--bg-card)", borderBottom: "1px solid var(--bg-border)", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <a href="/export" style={{ fontSize: 13, color: "var(--text-muted)", textDecoration: "none", fontWeight: 500 }}>← Back to Export</a>
           <span style={{ color: "var(--bg-border)" }}>|</span>
@@ -98,7 +127,7 @@ export default async function ExportReport() {
       <div className="report-wrap">
 
         {/* ── Report header ──────────────────────────────────────── */}
-        <table style={{ width: "100%", borderBottom: "3px solid #7c3aed", paddingBottom: 12, marginBottom: 20 }}>
+        <table className="report-header-table" style={{ width: "100%", borderBottom: "3px solid #7c3aed", paddingBottom: 12, marginBottom: 20 }}>
           <tbody>
             <tr>
               <td style={{ verticalAlign: "bottom" }}>
@@ -114,7 +143,7 @@ export default async function ExportReport() {
         </table>
 
         {/* ── Summary ────────────────────────────────────────────── */}
-        <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: "0 0", marginBottom: 24 }}>
+        <table className="summary-table" style={{ marginBottom: 24 }}>
           <tbody>
             <tr>
               {[
@@ -122,7 +151,7 @@ export default async function ExportReport() {
                 { label: "Evidence attached",    value: String(withEvidence), sub: missing > 0 ? `${missing} still missing` : "all ready" },
                 { label: "Total claimed",        value: `$${total.toFixed(2)}`, sub: "AUD" },
               ].map((s, i) => (
-                <td key={i} style={{ width: "33%", padding: i === 1 ? "0 6px" : 0, verticalAlign: "top" }}>
+                <td key={i} className="summary-cell">
                   <div style={{ border: i === 2 ? "1px solid #ddd6fe" : "1px solid #e5e7eb", borderRadius: 6, padding: "10px 14px", background: i === 2 ? "#f5f3ff" : "#fff" }}>
                     <div style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: i === 2 ? "#7c3aed" : "#9ca3af" }}>{s.label}</div>
                     <div style={{ fontSize: 22, fontWeight: 800, color: i === 2 ? "#6d28d9" : "#111827", margin: "4px 0 2px" }}>{s.value}</div>
@@ -185,6 +214,7 @@ export default async function ExportReport() {
             )}
           </div>
           <div style={{ border: "1px solid #e5e7eb", borderRadius: 6, overflow: "hidden" }}>
+          <div className="table-scroll">
             <table className="ded-table">
               <colgroup>
                 <col className="col-date" />
@@ -224,6 +254,7 @@ export default async function ExportReport() {
                 </tr>
               </tbody>
             </table>
+          </div>
           </div>
         </div>
 
