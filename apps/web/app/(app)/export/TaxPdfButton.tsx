@@ -37,10 +37,9 @@ export function TaxPdfButton({ allItems, categoryGroups, total, confirmedCount, 
   const [loading, setLoading] = useState(false);
   const ios = isCapacitorIOS();
 
-  const now            = new Date();
-  const year           = now.getFullYear();
-  const fy             = `FY${String(year - 1).slice(2)}–${String(year).slice(2)}`;
-  const fyFilename     = `${year - 1}-${year}`;
+  const now        = new Date();
+  const year       = now.getFullYear();
+  const fy         = `FY${String(year - 1).slice(2)}–${String(year).slice(2)}`;
   const estimatedSaving = Math.round(total * 0.325);
 
   async function handleDownload() {
@@ -283,7 +282,7 @@ export function TaxPdfButton({ allItems, categoryGroups, total, confirmedCount, 
         doc.text(`Page ${i} of ${pageCount}`, W - 14, pH - 6.5, { align: "right" });
       }
 
-      const fileName = `Kashio-Tax-Summary-${fyFilename}.pdf`;
+      const fileName = `Kashio-Tax-Summary-${year}.pdf`;
 
       if (ios) {
         const blob   = doc.output("blob");
