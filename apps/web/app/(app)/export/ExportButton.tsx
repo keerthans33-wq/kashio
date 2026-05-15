@@ -36,7 +36,6 @@ async function exportForIOS(blob: Blob, fileName: string): Promise<void> {
 
   await Share.share({
     title:       "Kashio tax report",
-    text:        "Your Kashio tax report is ready.",
     url:         uri,
     dialogTitle: "Save or share your Kashio report",
   });

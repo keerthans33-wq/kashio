@@ -204,7 +204,6 @@ export function WfhDownloadButton({ entries, fyLabel, ytdHours, ytdEst, email, s
         });
         await Share.share({
           title:       "WFH Log",
-          text:        "Your Kashio WFH log is ready.",
           url:         uri,
           dialogTitle: "Save or share your WFH log",
         });

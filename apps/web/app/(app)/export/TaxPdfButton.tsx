@@ -304,7 +304,6 @@ export function TaxPdfButton({ allItems, categoryGroups, total, confirmedCount, 
         });
         await Share.share({
           title:       "Tax Deduction Summary",
-          text:        "Your Kashio tax summary is ready.",
           url:         uri,
           dialogTitle: "Save or share your tax summary",
         });
