@@ -254,7 +254,7 @@ export async function GET() {
   return new Response(buffer, {
     headers: {
       "Content-Type":        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": `attachment; filename="kashio-tax-summary-${year}.xlsx"`,
+      "Content-Disposition": `attachment; filename="Kashio-Tax-Summary-${year - 1}-${year}.xlsx"`,
     },
   });
 }
