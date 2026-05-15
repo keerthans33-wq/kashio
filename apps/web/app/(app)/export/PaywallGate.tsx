@@ -518,7 +518,7 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
           Subscriptions auto-renew unless cancelled at least 24 hours before the end of the current period.
         </p>
         <p className="text-center text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
-          <a href="https://kashio.com.au/privacy" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Privacy Policy</a>
+          <a href="https://kashio.com.au/legal/privacy" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Privacy Policy</a>
           {" · "}
           <a href="https://kashio.com.au/terms" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Terms of Use</a>
         </p>

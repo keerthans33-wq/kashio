@@ -256,7 +256,7 @@ export function IOSPaywall({ onSuccess, compact = false, buttonLabel }: Props) {
       <div className="flex justify-center gap-5 mb-3">
         <button
           type="button"
-          onClick={() => openLink("https://kashio.com.au/privacy")}
+          onClick={() => openLink("https://kashio.com.au/legal/privacy")}
           className="text-[11px] underline underline-offset-2 transition-opacity hover:opacity-70"
           style={{ color: "var(--text-muted)" }}
         >
