@@ -124,6 +124,15 @@ export function IOSPaywall({ onSuccess, compact = false, buttonLabel }: Props) {
   const monthlyPrice = FALLBACK_PRICE.monthly;
   const annualPrice  = FALLBACK_PRICE.annual;
 
+  async function openLink(url: string) {
+    try {
+      const { Browser } = await import("@capacitor/browser");
+      await Browser.open({ url, presentationStyle: "popover" });
+    } catch {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  }
+
   return (
     <div className="space-y-0">
       {/* Lock icon */}
@@ -188,17 +197,22 @@ export function IOSPaywall({ onSuccess, compact = false, buttonLabel }: Props) {
         ))}
       </div>
 
-      {/* Price — always shows AUD, no RC loading dependency */}
-      <div className={`${compact ? "mb-3" : "mb-5"} flex items-baseline gap-2`}>
-        <span
-          className={`${compact ? "text-[26px]" : "text-[34px]"} font-bold tabular-nums leading-none`}
-          style={{ color: "var(--text-primary)" }}
-        >
-          {selected === "month" ? monthlyPrice : annualPrice}
-        </span>
-        <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>
-          AUD / {selected === "month" ? "month" : "year"}
-        </span>
+      {/* Plan name + price — Apple 3.1.2(c): title, length, and price must be visible */}
+      <div className={compact ? "mb-3" : "mb-5"}>
+        <p className="text-[11px] font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>
+          {selected === "month" ? "Kashio Pro Monthly" : "Kashio Pro Yearly"}
+        </p>
+        <div className="flex items-baseline gap-2">
+          <span
+            className={`${compact ? "text-[26px]" : "text-[34px]"} font-bold tabular-nums leading-none`}
+            style={{ color: "var(--text-primary)" }}
+          >
+            {selected === "month" ? monthlyPrice : annualPrice}
+          </span>
+          <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+            AUD / {selected === "month" ? "month" : "year"}
+          </span>
+        </div>
       </div>
 
       <Button
@@ -238,8 +252,29 @@ export function IOSPaywall({ onSuccess, compact = false, buttonLabel }: Props) {
         {restoring ? "Restoring purchases…" : "Restore purchases"}
       </button>
 
+      {/* Apple 3.1.2(c) required links */}
+      <div className="flex justify-center gap-5 mb-3">
+        <button
+          type="button"
+          onClick={() => openLink("https://kashio.com.au/privacy")}
+          className="text-[11px] underline underline-offset-2 transition-opacity hover:opacity-70"
+          style={{ color: "var(--text-muted)" }}
+        >
+          Privacy Policy
+        </button>
+        <button
+          type="button"
+          onClick={() => openLink("https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")}
+          className="text-[11px] underline underline-offset-2 transition-opacity hover:opacity-70"
+          style={{ color: "var(--text-muted)" }}
+        >
+          Terms of Use
+        </button>
+      </div>
+
+      {/* Apple 3.1.2(c) required auto-renewal disclosure */}
       <p className="text-center text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
-        Subscription managed through Apple. Cancel anytime in Settings.
+        Subscriptions auto-renew unless cancelled at least 24 hours before the end of the current period. Payment will be charged to your Apple ID account. You can manage or cancel your subscription in your App Store account settings.
       </p>
     </div>
   );

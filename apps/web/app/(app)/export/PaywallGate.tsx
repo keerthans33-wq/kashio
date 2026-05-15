@@ -514,11 +514,13 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
 
         {error && <p className="text-center text-[12px] mb-1" style={{ color: "#f87171" }}>{error}</p>}
 
+        <p className="text-center text-[11px] leading-relaxed mb-2" style={{ color: "var(--text-muted)" }}>
+          Subscriptions auto-renew unless cancelled at least 24 hours before the end of the current period.
+        </p>
         <p className="text-center text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
-          By subscribing, you agree to Kashio&apos;s{" "}
-          <a href="https://kashio.com.au/legal/terms" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Terms</a>,{" "}
-          <a href="https://kashio.com.au/legal/privacy" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Privacy Policy</a>.
-          Cancel anytime.
+          <a href="https://kashio.com.au/privacy" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Privacy Policy</a>
+          {" · "}
+          <a href="https://kashio.com.au/terms" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Terms of Use</a>
         </p>
       </motion.div>
     </>
