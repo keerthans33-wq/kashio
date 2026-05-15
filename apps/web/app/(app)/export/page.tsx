@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { db } from "../../../lib/db";
-import { requireUserWithType } from "../../../lib/auth";
+import { requireUserWithType, getUserWithEmail } from "../../../lib/auth";
 import { fetchUserPlan, shouldShowExportPaywall } from "../../../lib/plan";
 import { mapExportRow } from "../../../lib/export/mapExportRow";
 import { ACTIVE_CATEGORIES, CATEGORIES_BY_USER_TYPE } from "../../../lib/rules/categories";
@@ -56,7 +56,7 @@ export default async function Export({
   const { id: userId, userType } = await requireUserWithType();
   const allowedCategories = (userType && CATEGORIES_BY_USER_TYPE[userType]) ?? ACTIVE_CATEGORIES;
 
-  const [confirmedRaw, wfhEntries, plan] = await Promise.all([
+  const [confirmedRaw, wfhEntries, plan, emailData] = await Promise.all([
     db.deductionCandidate.findMany({
       where:   { status: "CONFIRMED", userId },
       include: { transaction: true },
@@ -64,6 +64,7 @@ export default async function Export({
     }),
     db.wfhLog.findMany({ where: { userId }, select: { date: true, hours: true } }),
     fetchUserPlan(userId),
+    getUserWithEmail(),
   ]);
 
   const params = await searchParams;
@@ -72,6 +73,7 @@ export default async function Export({
   const reportUnlocked = devOverride || !shouldShowExportPaywall(plan);
 
   const { ytdHours: wfhYtdHours, ytdEst: wfhYtdEst } = calcWfhSummary(wfhEntries);
+  const userEmail = emailData?.email ?? "";
 
   const confirmed = confirmedRaw.filter((c) => allowedCategories.includes(c.category));
 
@@ -209,6 +211,9 @@ export default async function Export({
         categoryGroups={categoryGroups.map((g) => ({ cat: g.cat, catTotal: g.catTotal, items: g.items.map((i) => ({ id: i.id, merchant: i.row.merchant, date: i.row.date, amount: i.row.amount, category: i.row.category })) }))}
         total={total}
         confirmedCount={confirmed.length}
+        wfhYtdHours={wfhYtdHours}
+        wfhYtdEst={wfhYtdEst}
+        email={userEmail}
       />
 
       {/* 4 — Footer */}

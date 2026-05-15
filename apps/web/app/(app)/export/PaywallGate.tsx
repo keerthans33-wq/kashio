@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { motion } from "motion/react";
 import { ExportButton } from "./ExportButton";
+import { TaxPdfButton } from "./TaxPdfButton";
 import { Button } from "@/components/ui/button";
 import { IOSPaywall } from "@/components/shared/IOSPaywall";
 import { useRevenueCat } from "@/components/providers/RevenueCatProvider";
@@ -31,6 +32,9 @@ type Props = {
   categoryGroups: CategoryGroup[];
   total:          number;
   confirmedCount: number;
+  wfhYtdHours:   number;
+  wfhYtdEst:     number;
+  email:          string;
 };
 
 type Interval = "month" | "year";
@@ -223,7 +227,7 @@ function ExportLockedPreview({ allItems, categoryGroups, total, confirmedCount }
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
-export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, confirmedCount }: Props) {
+export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, confirmedCount, wfhYtdHours, wfhYtdEst, email }: Props) {
   const { isIOS, platformReady, isPro } = useRevenueCat();
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
@@ -324,9 +328,20 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
             Your report is ready
           </p>
           <p className="text-[13px] mb-8" style={{ color: "var(--text-muted)" }}>
-            Download your XLSX summary — share it with your accountant or use it to lodge your return.
+            Download your summary — share it with your accountant or use it to lodge your return.
           </p>
-          <ExportButton />
+          <div className="space-y-3">
+            <ExportButton />
+            <TaxPdfButton
+              allItems={allItems}
+              categoryGroups={categoryGroups}
+              total={total}
+              confirmedCount={confirmedCount}
+              wfhYtdHours={wfhYtdHours}
+              wfhYtdEst={wfhYtdEst}
+              email={email}
+            />
+          </div>
         </motion.div>
       </motion.div>
     );
