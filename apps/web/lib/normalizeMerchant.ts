@@ -28,34 +28,85 @@
 // Each entry: [pattern to match against the raw description, canonical name].
 // Applied case-insensitively; first match wins.
 const MERCHANT_ALIASES: [RegExp, string][] = [
-  // Google products — GOOGLE* prefix would be stripped, losing the product name
-  [/^GOOGLE\s*\*\s*ADS?\b/i,                   "Google Ads"],
-  [/^GOOGLE\s*\*\s*STORAGE\b/i,                 "Google"],
-  [/^GOOGLE\s*\*\s*PLAY\b/i,                    "Google"],
-  // Meta / Facebook advertising
-  [/^META\s+(?:PAYMENTS?|ADS?)\b/i,             "Meta Ads"],
-  [/^FACEBOOK\s+ADS?\b/i,                       "Facebook Ads"],
-  // TikTok advertising
-  [/^TIKTOK\s+(?:ADS?|FOR\s+BUSINESS)\b/i,      "TikTok Ads"],
-  // LinkedIn Premium — "PREM" suffix would be stripped as location noise
+
+  // ── Google ─────────────────────────────────────────────────────────────────
+  // GOOGLE* prefix would be stripped by PREFIXES, losing the product name.
+  [/^GOOGLE\s*\*?\s*ADS?\b/i,                    "Google Ads"],
+  [/^GOOGLE\s*\*?\s*ADWORDS?\b/i,                "Google Ads"],
+  [/^GOOGLE\s*\*?\s*AD\s+SERVICES?\b/i,          "Google Ads"],
+  [/^GOOGLE\s*\*?\s*ANALYTICS?\b/i,              "Google Analytics"],
+  [/^GOOGLE\s*\*?\s*STORAGE\b/i,                 "Google"],
+  [/^GOOGLE\s*\*?\s*PLAY\b/i,                    "Google"],
+  [/^GOOGLE\s*\*?\s*WORKSPACE\b/i,               "Google Workspace"],
+  [/^GOOGLE\s*\*?\s*CLOUD\b/i,                   "Google Cloud"],
+  [/^GOOGLE\s*\*?\s*ONE\b/i,                     "Google"],
+
+  // ── Meta / Facebook / Instagram ────────────────────────────────────────────
+  [/^META\s+(?:PAYMENTS?|ADS?|BUSINESS)\b/i,     "Meta Ads"],
+  [/^FACEBOOK\s+ADS?\b/i,                        "Facebook Ads"],
+  [/^INSTAGRAM\s+ADS?\b/i,                       "Meta Ads"],
+
+  // ── Microsoft / Bing ───────────────────────────────────────────────────────
+  [/^MICROSOFT\s*[\*\s]\s*365\b/i,               "Microsoft 365"],
+  [/^MICROSOFT\s*[\*\s]\s*ADS?\b/i,              "Microsoft Ads"],
+  [/^BING\s+ADS?\b/i,                            "Bing Ads"],
+  [/^MICROSOFT\s+AZURE\b/i,                      "Microsoft Azure"],
+
+  // ── TikTok ─────────────────────────────────────────────────────────────────
+  [/^TIKTOK\s+(?:ADS?|FOR\s+BUSINESS)\b/i,       "TikTok Ads"],
+
+  // ── Twitter / X ────────────────────────────────────────────────────────────
+  [/^TWITTER\s+ADS?\b/i,                         "X Ads"],
+  [/^X\s+ADS?\b/i,                               "X Ads"],
+  [/^X\.COM\s+ADS?\b/i,                          "X Ads"],
+
+  // ── LinkedIn ───────────────────────────────────────────────────────────────
   [/^LINKEDIN\s+PREM\b/i,                        "LinkedIn Premium"],
-  // AI tools
+  [/^LINKEDIN\s+ADS?\b/i,                        "LinkedIn Ads"],
+
+  // ── YouTube / Pinterest / Snapchat / Reddit ────────────────────────────────
+  [/^YOUTUBE\s+ADS?\b/i,                         "YouTube Ads"],
+  [/^PINTEREST\s+ADS?\b/i,                       "Pinterest Ads"],
+  [/^SNAPCHAT\s+ADS?\b/i,                        "Snapchat Ads"],
+  [/^REDDIT\s+ADS?\b/i,                          "Reddit Ads"],
+
+  // ── AI tools ───────────────────────────────────────────────────────────────
   [/^CHATGPT\b/i,                                "ChatGPT"],
   [/^OPENAI\b/i,                                 "OpenAI"],
-  // AWS — drop the verbose form before location stripping removes too much
-  [/^AWS\s+AMAZON\b/i,                           "AWS"],
-  // Microsoft 365 standalone billing description
-  [/^MICROSOFT\s*[\*\s]\s*365\b/i,               "Microsoft 365"],
-  // Xero — location suffixes like "XERO AU SYDNEY" already handled by LOCATION_SLUG,
-  // but catch "XERO AUSTRALIA" etc. which might not be all-caps in the slug regex
+  [/^ANTHROPIC\b/i,                              "Anthropic"],
+  [/^MIDJOURNEY\b/i,                             "Midjourney"],
+  [/^ELEVENLABS\b/i,                             "ElevenLabs"],
+  [/^PERPLEXITY\b/i,                             "Perplexity"],
+
+  // ── Accounting ─────────────────────────────────────────────────────────────
   [/^XERO\s+AU\b/i,                              "Xero"],
-  // Adobe Creative Cloud — alias so normalisation doesn't produce "Adobe Creative Cloud"
-  // as a separate string from the "adobe" merchant key
+  [/^XERO\s+AUSTRALIA\b/i,                       "Xero"],
+
+  // ── Creative / Adobe ───────────────────────────────────────────────────────
   [/^ADOBE\s*[\*\s]\s*CREATIVE\s*CLOUD\b/i,      "Adobe"],
-  // Common company legal suffixes that banks append but stripping pipeline doesn't catch
-  // (≤2 chars don't trigger LOCATION_SLUG which requires ≥3 chars)
-  [/^UBER\s+BV\b/i,                               "Uber"],
-  [/^CANVA\s+PTY\b/i,                             "Canva"],
+  [/^ADOBE\s*\*\s*ACROBAT\b/i,                   "Adobe"],
+  [/^ENVATO\s+PTY\b/i,                           "Envato"],
+
+  // ── Cloud / hosting ────────────────────────────────────────────────────────
+  [/^AWS\s+AMAZON\b/i,                           "AWS"],
+  [/^AMAZON\s+WEB\s+SERVICES?\b/i,               "AWS"],
+  [/^GCP\b/i,                                    "Google Cloud"],
+  [/^DIGITALOCEAN\b/i,                           "DigitalOcean"],
+
+  // ── Payment processing ─────────────────────────────────────────────────────
+  [/^STRIPE\s+PAYMENTS?\b/i,                     "Stripe"],
+  [/^STRIPE\s+TECHNOLOGY\b/i,                    "Stripe"],
+  [/^PAYPAL\s+MERCHANT\b/i,                      "Stripe"],   // generic fallback
+  [/^AIRWALLEX\b/i,                              "Airwallex"],
+  [/^WISE\s+BUSINESS\b/i,                        "Wise"],
+
+  // ── Company legal suffixes (≤2 chars, not caught by LOCATION_SLUG) ─────────
+  [/^UBER\s+BV\b/i,                              "Uber"],
+  [/^CANVA\s+PTY\b/i,                            "Canva"],
+  [/^SHOPIFY\s+INC\b/i,                          "Shopify"],
+  [/^WISTIA\s+INC\b/i,                           "Wistia"],
+  [/^LOOM\s+INC\b/i,                             "Loom"],
+  [/^ZAPIER\s+INC\b/i,                           "Zapier"],
 ];
 
 // ---------------------------------------------------------------------------

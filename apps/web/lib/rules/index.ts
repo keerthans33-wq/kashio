@@ -1,6 +1,7 @@
 import type { TransactionInput, DeductionMatch, RawMatch, Rule } from "./types";
 import { isExcluded, isPersonalUse, downgradeConfidence } from "./shared";
 import { adjustConfidence } from "./userTypeLayer";
+import { isBlacklisted } from "./blacklist";
 import { detectSoftware } from "./detectSoftware";
 import { detectOfficeSupplies } from "./detectOfficeSupplies";
 import { detectWorkEquipment } from "./detectWorkEquipment";
@@ -38,6 +39,9 @@ export function detectDeduction(transaction: TransactionInput, userType?: string
 
   // Skip refunds, reversals, reimbursements, and cashback.
   if (isExcluded(transaction)) return null;
+
+  // Suppress clearly personal expenses — blacklist wins before any rule or AI pass.
+  if (isBlacklisted(transaction, userType)) return null;
 
   // Run detection on all rules, apply user-type confidence adjustment immediately.
   // If adjustConfidence returns null the match is suppressed for this user type.

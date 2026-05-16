@@ -1052,4 +1052,502 @@ export const MERCHANTS: Record<string, MerchantEntry> = {
     category:    CATEGORIES.PROFESSIONAL_DEVELOPMENT,
     description: "Professional engineering membership and CPD. Annual fees are a deductible professional expense.",
   },
+  "tax institute": {
+    category:    CATEGORIES.PROFESSIONAL_DEVELOPMENT,
+    description: "Tax Institute of Australia membership and CPD. Annual fees are a deductible professional expense.",
+  },
+  "ausimm": {
+    category:    CATEGORIES.PROFESSIONAL_DEVELOPMENT,
+    description: "AusIMM (Australasian Institute of Mining and Metallurgy) membership and events.",
+  },
+  "aicd": {
+    category:    CATEGORIES.PROFESSIONAL_DEVELOPMENT,
+    description: "Australian Institute of Company Directors membership and director courses.",
+  },
+  "general assembly": {
+    category:    CATEGORIES.PROFESSIONAL_DEVELOPMENT,
+    description: "Tech and business skills bootcamps and workshops.",
+  },
+  "domestika": {
+    category:    CATEGORIES.PROFESSIONAL_DEVELOPMENT,
+    description: "Online creative and professional skills courses.",
+  },
+  "masterclass": {
+    category:    CATEGORIES.PROFESSIONAL_DEVELOPMENT,
+    description: "Online courses taught by industry experts. Work-related topics are potentially deductible.",
+  },
+  "edx": {
+    category:    CATEGORIES.PROFESSIONAL_DEVELOPMENT,
+    description: "University-level online courses and professional certificates.",
+  },
+  "rmit": {
+    category:    CATEGORIES.PROFESSIONAL_DEVELOPMENT,
+    description: "RMIT University short courses, programs, and professional development.",
+  },
+
+  // ── Advertising platforms ──────────────────────────────────────────────────
+  "x ads": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "X (formerly Twitter) advertising platform. Ad spend is a deductible business expense.",
+  },
+  "twitter ads": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Twitter/X advertising platform. Ad spend is a deductible business expense.",
+  },
+  "youtube ads": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "YouTube advertising platform. Ad spend is a deductible business expense.",
+  },
+  "pinterest ads": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Pinterest advertising platform. Ad spend is a deductible business expense.",
+  },
+  "snapchat ads": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Snapchat advertising platform. Ad spend is a deductible business expense.",
+  },
+  "reddit ads": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Reddit advertising platform. Ad spend is a deductible business expense.",
+  },
+  "bing ads": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Microsoft/Bing advertising platform. Ad spend is a deductible business expense.",
+  },
+  "microsoft ads": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Microsoft Advertising (Bing Ads). Ad spend is a deductible business expense.",
+  },
+
+  // ── SEO / content tools ────────────────────────────────────────────────────
+  "moz": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "SEO software for keyword research and link building.",
+  },
+  "ubersuggest": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "SEO and content planning tool.",
+  },
+  "screaming frog": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "SEO website crawler and audit tool.",
+  },
+  "surfer": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Surfer SEO — AI-powered content optimisation platform.",
+  },
+  "jasper": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    description:   "AI writing assistant for marketing and content creation.",
+  },
+  "copy ai": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    description:   "AI copywriting and content generation tool.",
+  },
+  "marketmuse": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "AI content strategy and SEO platform.",
+  },
+
+  // ── Analytics / tracking ───────────────────────────────────────────────────
+  "google analytics": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Google Analytics — website traffic and user behaviour analytics.",
+  },
+  "hotjar": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Website heatmaps and user session recording.",
+  },
+  "mixpanel": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    description:   "Product analytics and user behaviour tracking platform.",
+  },
+  "amplitude": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    description:   "Digital analytics platform for product and growth teams.",
+  },
+  "segment": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    description:   "Customer data platform and analytics pipeline.",
+  },
+  "posthog": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    description:   "Open-source product analytics, session replay, and A/B testing.",
+  },
+  "fullstory": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    description:   "Digital experience analytics and session recording.",
+  },
+  "microsoft clarity": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    description:   "Microsoft Clarity — free website heatmap and session recording tool.",
+  },
+
+  // ── Email / CRM / automation ───────────────────────────────────────────────
+  "activecampaign": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Email marketing and CRM automation platform.",
+  },
+  "zoho": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Zoho suite — CRM, accounting, and business productivity tools.",
+  },
+  "pipedrive": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "CRM and sales pipeline management software.",
+  },
+  "calendly": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    description:   "Scheduling and appointment booking platform.",
+  },
+  "jotform": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    description:   "Online form builder and data collection platform.",
+  },
+  "zapier": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    description:   "Workflow automation platform — connects apps and automates tasks.",
+  },
+  "make": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    description:   "Make (formerly Integromat) — visual workflow automation platform.",
+  },
+  "convertkit": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Email marketing platform for creators and small businesses.",
+  },
+  "brevo": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Brevo (formerly Sendinblue) — email marketing and CRM platform.",
+  },
+  "constant contact": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Email marketing and digital marketing platform.",
+  },
+
+  // ── Accounting / bookkeeping ───────────────────────────────────────────────
+  "reckon": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Accounting software for small businesses and bookkeepers.",
+  },
+  "freshbooks": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Invoicing, accounting, and expense tracking for small businesses.",
+  },
+  "wave": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Wave — free invoicing and accounting software for small businesses.",
+  },
+  "invoice2go": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Mobile invoicing and business management app.",
+  },
+  "rounded": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Rounded — invoicing and tax tracking for Australian freelancers.",
+  },
+  "hnry": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Hnry — automated tax and invoicing service for contractors.",
+  },
+
+  // ── Payment processing ─────────────────────────────────────────────────────
+  "tyro": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Tyro — Australian EFTPOS and payment terminal for businesses.",
+  },
+  "airwallex": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Airwallex — global payments, FX, and business accounts.",
+  },
+  "wise": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Wise — international business transfers and multi-currency accounts.",
+  },
+
+  // ── Website / app builders ─────────────────────────────────────────────────
+  "wix": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Wix — website builder for small businesses.",
+  },
+  "squarespace": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Squarespace — website builder and e-commerce platform.",
+  },
+  "wordpress": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "WordPress.com hosting and website subscription.",
+  },
+  "webflow": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    description:   "Webflow — no-code website design and CMS platform.",
+  },
+
+  // ── Hosting / infrastructure ───────────────────────────────────────────────
+  "netlify": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    description:   "Netlify — web hosting and deployment platform.",
+  },
+  "hostinger": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Hostinger — web hosting and domain services.",
+  },
+  "hostgator": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "HostGator — web hosting for small businesses.",
+  },
+  "bluehost": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Bluehost — web hosting for small businesses.",
+  },
+  "siteground": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "SiteGround — web hosting and managed WordPress hosting.",
+  },
+  "firebase": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    description:   "Firebase — Google's backend-as-a-service for app development.",
+  },
+  "render": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    description:   "Render — cloud platform for deploying web services.",
+  },
+  "railway": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    description:   "Railway — infrastructure platform for developers.",
+  },
+  "heroku": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    description:   "Heroku — cloud platform for deploying and running apps.",
+  },
+  "microsoft azure": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    description:   "Microsoft Azure — cloud computing and infrastructure services.",
+  },
+  "dnsimple": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "DNSimple — domain management and DNS hosting.",
+  },
+
+  // ── AI / creative / design tools ──────────────────────────────────────────
+  "midjourney": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "specific",
+    description: "Midjourney — AI image generation tool. Used for design and creative work.",
+  },
+  "envato": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "specific",
+    description: "Envato — creative asset marketplace (themes, templates, stock).",
+  },
+  "runway": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "specific",
+    description: "Runway — AI video generation and editing platform.",
+  },
+  "elevenlabs": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "specific",
+    description: "ElevenLabs — AI voice generation and text-to-speech platform.",
+  },
+  "descript": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "specific",
+    description: "Descript — AI-powered audio and video editing platform.",
+  },
+  "veed": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "specific",
+    description: "Veed.io — online video editing and production platform.",
+  },
+  "perplexity": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "specific",
+    description: "Perplexity AI — AI-powered research and search assistant.",
+  },
+  "epidemic sound": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "specific",
+    description: "Epidemic Sound — royalty-free music subscription for creators.",
+  },
+  "artlist": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "specific",
+    description: "Artlist — royalty-free music and SFX subscription for video creators.",
+  },
+  "motion array": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "specific",
+    description: "Motion Array — video templates, transitions, and stock footage.",
+  },
+  "freepik": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "specific",
+    description: "Freepik — stock photos, vectors, and design assets.",
+  },
+  "shutterstock": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "specific",
+    description: "Shutterstock — stock photography and video licensing.",
+  },
+  "istock": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "specific",
+    description: "iStockphoto — stock photography and video by Getty Images.",
+  },
+
+  // ── Developer / team tools ─────────────────────────────────────────────────
+  "gitlab": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "specific",
+    description: "GitLab — DevOps platform for code hosting and CI/CD.",
+  },
+  "bitbucket": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "specific",
+    description: "Bitbucket — code hosting and collaboration platform by Atlassian.",
+  },
+  "lucidchart": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "specific",
+    description: "Lucidchart — visual collaboration and diagramming platform.",
+  },
+  "docusign": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "specific",
+    description:   "DocuSign — electronic signature and contract management platform.",
+  },
+  "nordvpn": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "broad",
+    description: "NordVPN — virtual private network service. Work use may be deductible.",
+  },
+  "expressvpn": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "broad",
+    description: "ExpressVPN — virtual private network service. Work use may be deductible.",
+  },
+
+  // ── Workwear / PPE specialists ─────────────────────────────────────────────
+  "rsea safety": {
+    category:    CATEGORIES.WORK_CLOTHING,
+    description: "RSEA Safety — PPE, safety workwear, and equipment for Australian workplaces.",
+  },
+  "kinggee": {
+    category:    CATEGORIES.WORK_CLOTHING,
+    description: "KingGee — trade workwear brand. Pants, shirts, and protective clothing.",
+  },
+  "steel blue": {
+    category:    CATEGORIES.WORK_CLOTHING,
+    description: "Steel Blue — Australian safety boot brand.",
+  },
+  "mongrel boots": {
+    category:    CATEGORIES.WORK_CLOTHING,
+    description: "Mongrel Boots — safety and work boots.",
+  },
+  "redback boots": {
+    category:    CATEGORIES.WORK_CLOTHING,
+    description: "Redback Boots — Australian safety and work boots.",
+  },
+  "puma safety": {
+    category:    CATEGORIES.WORK_CLOTHING,
+    description: "Puma Safety — safety footwear for industrial and trade workers.",
+  },
+
 };
+
