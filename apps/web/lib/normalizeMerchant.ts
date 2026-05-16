@@ -32,6 +32,8 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   // ── Google ─────────────────────────────────────────────────────────────────
   // GOOGLE* prefix would be stripped by PREFIXES, losing the product name.
   [/^GOOGLE\s*\*?\s*ADS?\b/i,                    "Google Ads"],
+  // Leet-speak variant: GOOGLE ADW0RDS (zero instead of letter o)
+  [/^GOOGLE\s*[-*._ ]?\s*ADW[0O]RDS?\b/i,        "Google Ads"],
   [/^GOOGLE\s*\*?\s*ADWORDS?\b/i,                "Google Ads"],
   [/^GOOGLE\s*\*?\s*AD\s+SERVICES?\b/i,          "Google Ads"],
   [/^GOOGLE\s*\*?\s*ANALYTICS?\b/i,              "Google Analytics"],
@@ -47,6 +49,9 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   [/^INSTAGRAM\s+ADS?\b/i,                       "Meta Ads"],
 
   // ── Microsoft / Bing ───────────────────────────────────────────────────────
+  // MSFT abbreviation variants — must precede MICROSOFT entries
+  [/^MSFT\s*[\*\s]\s*AZURE\b/i,                  "Microsoft Azure"],
+  [/^MSFT\s*[\*\s]\s*365\b/i,                    "Microsoft 365"],
   [/^MICROSOFT\s*[\*\s]\s*365\b/i,               "Microsoft 365"],
   [/^MICROSOFT\s*[\*\s]\s*ADS?\b/i,              "Microsoft Ads"],
   [/^BING\s+ADS?\b/i,                            "Bing Ads"],
@@ -113,6 +118,11 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   [/^STRIPE\s+TECHNOLOGY\b/i,                    "Stripe"],
   [/^AIRWALLEX\b/i,                              "Airwallex"],
   [/^WISE\s+BUSINESS\b/i,                        "Wise"],
+
+  // ── Apple ──────────────────────────────────────────────────────────────────
+  // APPLE.COM/BILL and similar — resolve before the generic "apple" in merchants.ts
+  // so it gets a distinct canonical name for display and alias matching.
+  [/^APPLE\.COM\b/i,                             "Apple Services"],
 
   // ── Company legal suffixes (≤2 chars, not caught by LOCATION_SLUG) ─────────
   [/^UBER\s+BV\b/i,                              "Uber"],

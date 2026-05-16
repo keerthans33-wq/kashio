@@ -13,6 +13,7 @@
 import type { Rule, RawMatch, Explanation, Confidence } from "./types";
 import { CATEGORIES } from "./categories";
 import { merchantText, matchesMerchant } from "./shared";
+import { findMerchantAliasMatch, FUZZY_ALIAS_GROUPS } from "./merchantMatcher";
 
 type AliasEntry = {
   category:   string;
@@ -96,12 +97,45 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   ["wise",             { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "an international business payment platform" }],
 
   // ── Equipment — trade & tool retailers ────────────────────────────────────
-  ["sydney tools",    { category: CATEGORIES.EQUIPMENT, confidence: "MEDIUM", what: "a trade tools and equipment retailer" }],
-  ["sydneytools",     { category: CATEGORIES.EQUIPMENT, confidence: "MEDIUM", what: "a trade tools and equipment retailer" }],
+  ["sydney tools",    { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a trade tools and equipment retailer" }],
+  ["sydneytools",     { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a trade tools and equipment retailer" }],
+
+  // ── Apple Services ────────────────────────────────────────────────────────
+  // Canonical name produced by normalizeMerchant for APPLE.COM/* descriptors.
+  ["apple services",  { category: CATEGORIES.SOFTWARE,   confidence: "MEDIUM", what: "Apple service subscriptions (iCloud, Apple One, App Store)" }],
 
 ];
 
 function detect(tx: { normalizedMerchant: string; description: string }, _userType?: string | null): RawMatch | null {
+  // ── Priority 1: fuzzy match on the raw bank descriptor ───────────────────
+  // Runs before the exact ALIAS_MAP check so that the real underlying merchant
+  // (e.g. Klaviyo in "SHOPIFY*KLAVIYO", OpenAI in "STRIPE*OPENAI") wins even
+  // when the display normalizer has already lost it to terminal-code stripping.
+  const fuzzyResult = findMerchantAliasMatch(tx.description, FUZZY_ALIAS_GROUPS);
+  if (fuzzyResult) {
+    if (process.env.NODE_ENV === "development") {
+      console.log("[Kashio Engine] Merchant match", {
+        raw:          tx.description,
+        normalized:   fuzzyResult.normalizedMerchant,
+        matchedAlias: fuzzyResult.matchedAlias,
+        category:     fuzzyResult.category,
+        matchSource:  fuzzyResult.matchSource,
+      });
+    }
+    return {
+      category:   fuzzyResult.category,
+      confidence: fuzzyResult.confidence,
+      canUpgrade: true,
+      signals: {
+        aliasMatch:    fuzzyResult.matchedAlias,
+        what:          fuzzyResult.what,
+        canonicalName: fuzzyResult.name,
+        matchSource:   "merchant_alias_fuzzy",
+      },
+    };
+  }
+
+  // ── Priority 2: exact ALIAS_MAP check on the display-normalised merchant ──
   const merchant = merchantText(tx);
   for (const [name, entry] of ALIAS_MAP) {
     if (matchesMerchant(merchant, name)) {
@@ -117,11 +151,14 @@ function detect(tx: { normalizedMerchant: string; description: string }, _userTy
 }
 
 function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?: string | null): Explanation {
-  const isBusiness = userType === "contractor" || userType === "sole_trader";
-  const context    = isBusiness ? "your business" : "your work";
-  const what       = match.signals.what as string;
+  const isBusiness  = userType === "contractor" || userType === "sole_trader";
+  const context     = isBusiness ? "your business" : "your work";
+  const what        = match.signals.what as string;
+  // Fuzzy matches supply a canonical brand name (e.g. "Klaviyo") to avoid
+  // surfacing the messy display-normalised merchant (e.g. "Shopify") in the UI.
+  const displayName = (match.signals.canonicalName as string | undefined) ?? tx.normalizedMerchant;
   return {
-    reason:           `${tx.normalizedMerchant} is ${what}. If this was for ${context}, it may be deductible — confirm before claiming.`,
+    reason:           `${displayName} is ${what}. If this was for ${context}, it may be deductible — confirm before claiming.`,
     confidenceReason: `Recognised ${match.category.toLowerCase()} provider. Confirm it was a work or business expense before claiming.`,
     mixedUse:         true,
   };
