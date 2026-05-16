@@ -1,6 +1,7 @@
 import { db } from "./db";
 import { detectDeduction } from "./rules";
 import { refineTransaction } from "./gemini/refineTransaction";
+import { classifyTransaction } from "./gemini/classifyTransaction";
 import type { IngestionRow } from "./ingestion/types";
 
 export type TransactionSource = "CSV" | "DEMO_BANK" | "BASIQ";
@@ -71,11 +72,15 @@ export async function runImportPipeline(
         };
 
         const rawMatch = detectDeduction(tx, userType);
-        if (!rawMatch) return null;
 
-        // Optional Gemini refinement — only fires for LOW-confidence matches
-        // when GEMINI_ENABLED=true. Falls back to rawMatch silently on any failure.
-        const match = await refineTransaction(rawMatch, tx, userType);
+        // Rules engine matched — Gemini refines wording and may upgrade LOW→MEDIUM.
+        // Rules engine missed — Gemini classifies from scratch as a LOW-confidence fallback
+        // so transactions without explicit rule coverage are still surfaced for review.
+        const match = rawMatch
+          ? await refineTransaction(rawMatch, tx, userType)
+          : await classifyTransaction(tx, userType);
+
+        if (!match) return null;
 
         return {
           transactionId:    t.id,
