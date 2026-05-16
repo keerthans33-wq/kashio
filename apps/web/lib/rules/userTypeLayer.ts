@@ -52,6 +52,26 @@ const DELTAS: Record<string, Record<UserType, Delta>> = {
     contractor:  0,   // LOW; genuine business contexts only
     sole_trader: +1,  // LOW → MEDIUM
   },
+  [CATEGORIES.MARKETING]: {
+    employee:    0,   // side-business ad spend is possible but needs confirmation
+    contractor: +1,
+    sole_trader: +1,
+  },
+  [CATEGORIES.ACCOUNTING]: {
+    employee:    0,
+    contractor: +1,
+    sole_trader: +1,
+  },
+  [CATEGORIES.WEBSITE_DOMAINS]: {
+    employee:    0,
+    contractor: +1,
+    sole_trader: +1,
+  },
+  [CATEGORIES.PAYMENT_PROCESSING]: {
+    employee:    0,
+    contractor: +1,
+    sole_trader: +1,
+  },
 };
 
 /**

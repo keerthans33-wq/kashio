@@ -2,6 +2,7 @@ import type { TransactionInput, DeductionMatch, RawMatch, Rule } from "./types";
 import { isExcluded, isPersonalUse, downgradeConfidence } from "./shared";
 import { adjustConfidence } from "./userTypeLayer";
 import { isBlacklisted } from "./blacklist";
+import { detectMerchantAlias } from "./detectMerchantAlias";
 import { detectSoftware } from "./detectSoftware";
 import { detectOfficeSupplies } from "./detectOfficeSupplies";
 import { detectWorkEquipment } from "./detectWorkEquipment";
@@ -13,6 +14,7 @@ import { detectMeals } from "./detectMeals";
 import { detectFallback } from "./detectFallback";
 
 const ALL_RULES: Rule[] = [
+  detectMerchantAlias,
   detectSoftware,
   detectOfficeSupplies,
   detectWorkEquipment,

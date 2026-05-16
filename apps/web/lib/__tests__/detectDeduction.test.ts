@@ -310,26 +310,27 @@ describe("detectDeduction — highly-likely merchant fallback", () => {
     expect(result).not.toBeNull();
   });
 
-  it("surfaces Google Ads for contractor as Software", () => {
+  it("surfaces Google Ads for contractor as Marketing & Advertising", () => {
     const result = detectDeduction(tx("Google Ads campaign charge", "Google Ads"), "contractor");
-    expect(result?.category).toBe("Software & Subscriptions");
+    expect(result?.category).toBe("Marketing & Advertising");
     expect(result).not.toBeNull();
   });
 
-  it("does NOT surface Google Ads for employee (forUserTypes restriction)", () => {
+  it("surfaces Google Ads for employee via alias override (side-business ad spend)", () => {
     const result = detectDeduction(tx("Google Ads charge", "Google Ads"), "employee");
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Marketing & Advertising");
   });
 
-  it("surfaces Meta Ads for sole_trader as Software", () => {
+  it("surfaces Meta Ads for sole_trader as Marketing & Advertising", () => {
     const result = detectDeduction(tx("Meta Ads spend", "Meta Ads"), "sole_trader");
-    expect(result?.category).toBe("Software & Subscriptions");
+    expect(result?.category).toBe("Marketing & Advertising");
     expect(result).not.toBeNull();
   });
 
-  it("surfaces Vercel subscription as Software", () => {
+  it("surfaces Vercel subscription as Website & Domains", () => {
     const result = detectDeduction(tx("Vercel Pro plan monthly", "Vercel"), "contractor");
-    expect(result?.category).toBe("Software & Subscriptions");
+    expect(result?.category).toBe("Website & Domains");
     expect(result).not.toBeNull();
   });
 
@@ -347,17 +348,17 @@ describe("detectDeduction — highly-likely merchant fallback", () => {
 });
 
 describe("detectDeduction — merchant normalization (bank description variants)", () => {
-  it("normalizes 'Google Ads' merchant (from GOOGLE *ADS bank description) to Software", () => {
+  it("normalizes 'Google Ads' merchant (from GOOGLE *ADS bank description) to Marketing & Advertising", () => {
     // After normalizeMerchant("GOOGLE *ADS") → "Google Ads"
     const result = detectDeduction(tx("ad spend", "Google Ads"), "contractor");
-    expect(result?.category).toBe("Software & Subscriptions");
+    expect(result?.category).toBe("Marketing & Advertising");
     expect(result).not.toBeNull();
   });
 
-  it("normalizes 'Meta Ads' merchant to Software", () => {
+  it("normalizes 'Meta Ads' merchant to Marketing & Advertising", () => {
     // After normalizeMerchant("META PAYMENTS") → "Meta Ads"
     const result = detectDeduction(tx("ad spend", "Meta Ads"), "sole_trader");
-    expect(result?.category).toBe("Software & Subscriptions");
+    expect(result?.category).toBe("Marketing & Advertising");
     expect(result).not.toBeNull();
   });
 
@@ -415,5 +416,170 @@ describe("normalizeMerchant — alias pre-processing", () => {
     expect(normalizeMerchant("SQ *RIVERSIDE CAFE")).toBe("Riverside");
     expect(normalizeMerchant("POS PURCHASE BUNNINGS AUBURN")).toBe("Bunnings");
     expect(normalizeMerchant("OFFICEWORKS 0042 SYDNEY")).toBe("Officeworks");
+  });
+});
+
+// ─── Regression: alias override fires for ALL user types ────────────────────
+// Verifies that merchants with forUserTypes restrictions in merchants.ts are
+// still detected via detectMerchantAlias regardless of the user type.
+describe("detectDeduction — alias override regression (must fire for all user types)", () => {
+
+  // ── Marketing & Advertising ────────────────────────────────────────────────
+  it("Google Ads fires for employee as Marketing & Advertising", () => {
+    const result = detectDeduction(tx("Google Ads charge", "Google Ads"), "employee");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Marketing & Advertising");
+  });
+
+  it("Meta Ads fires for employee as Marketing & Advertising", () => {
+    const result = detectDeduction(tx("Meta Ads charge", "Meta Ads"), "employee");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Marketing & Advertising");
+  });
+
+  it("LinkedIn Ads fires for employee as Marketing & Advertising", () => {
+    const result = detectDeduction(tx("LinkedIn Ads charge", "LinkedIn Ads"), "employee");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Marketing & Advertising");
+  });
+
+  it("TikTok Ads fires for employee as Marketing & Advertising", () => {
+    const result = detectDeduction(tx("TikTok Ads spend", "TikTok Ads"), "employee");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Marketing & Advertising");
+  });
+
+  it("Mailchimp fires for employee as Marketing & Advertising", () => {
+    const result = detectDeduction(tx("Mailchimp subscription", "Mailchimp"), "employee");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Marketing & Advertising");
+  });
+
+  it("Klaviyo fires for employee as Marketing & Advertising", () => {
+    const result = detectDeduction(tx("Klaviyo email marketing", "Klaviyo"), "employee");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Marketing & Advertising");
+  });
+
+  it("Semrush fires for employee as Marketing & Advertising", () => {
+    const result = detectDeduction(tx("SEMrush subscription", "Semrush"), "employee");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Marketing & Advertising");
+  });
+
+  // ── Accounting & Business ──────────────────────────────────────────────────
+  it("Xero fires for employee as Accounting & Business", () => {
+    const result = detectDeduction(tx("Xero monthly subscription", "Xero"), "employee");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Accounting & Business");
+  });
+
+  it("MYOB fires for employee as Accounting & Business", () => {
+    const result = detectDeduction(tx("MYOB accounting software", "Myob"), "employee");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Accounting & Business");
+  });
+
+  it("Freshbooks fires for contractor as Accounting & Business", () => {
+    const result = detectDeduction(tx("Freshbooks invoicing", "Freshbooks"), "contractor");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Accounting & Business");
+  });
+
+  it("Hnry fires for sole_trader as Accounting & Business", () => {
+    const result = detectDeduction(tx("Hnry contractor tax", "Hnry"), "sole_trader");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Accounting & Business");
+  });
+
+  // ── Website & Domains ──────────────────────────────────────────────────────
+  it("Shopify fires for employee as Website & Domains", () => {
+    const result = detectDeduction(tx("Shopify monthly plan", "Shopify"), "employee");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Website & Domains");
+  });
+
+  it("GoDaddy fires for employee as Website & Domains", () => {
+    const result = detectDeduction(tx("GoDaddy domain renewal", "Godaddy"), "employee");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Website & Domains");
+  });
+
+  it("Squarespace fires for contractor as Website & Domains", () => {
+    const result = detectDeduction(tx("Squarespace annual plan", "Squarespace"), "contractor");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Website & Domains");
+  });
+
+  it("Vercel fires for employee as Website & Domains", () => {
+    const result = detectDeduction(tx("Vercel Pro hosting", "Vercel"), "employee");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Website & Domains");
+  });
+
+  it("Netlify fires for contractor as Website & Domains", () => {
+    const result = detectDeduction(tx("Netlify hosting charge", "Netlify"), "contractor");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Website & Domains");
+  });
+
+  // ── Payment Processing ─────────────────────────────────────────────────────
+  it("Stripe fires for sole_trader as Payment Processing", () => {
+    const result = detectDeduction(tx("Stripe payment fees", "Stripe"), "sole_trader");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Payment Processing");
+  });
+
+  it("Airwallex fires for contractor as Payment Processing", () => {
+    const result = detectDeduction(tx("Airwallex business transfer", "Airwallex"), "contractor");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Payment Processing");
+  });
+
+  it("Wise fires for employee as Payment Processing", () => {
+    const result = detectDeduction(tx("Wise international transfer", "Wise"), "employee");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Payment Processing");
+  });
+
+  // ── Contractors/sole_traders get +1 confidence lift ───────────────────────
+  it("Google Ads contractor gets HIGH confidence (MEDIUM + adjustment)", () => {
+    const result = detectDeduction(tx("Google Ads charge", "Google Ads"), "contractor");
+    expect(result?.confidence).toBe("HIGH");
+  });
+
+  it("Xero sole_trader gets HIGH confidence (MEDIUM + adjustment)", () => {
+    const result = detectDeduction(tx("Xero subscription", "Xero"), "sole_trader");
+    expect(result?.confidence).toBe("HIGH");
+  });
+
+  it("Stripe sole_trader gets HIGH confidence (MEDIUM + adjustment)", () => {
+    const result = detectDeduction(tx("Stripe fees", "Stripe"), "sole_trader");
+    expect(result?.confidence).toBe("HIGH");
+  });
+});
+
+// ─── Regression: blacklisted merchants must stay hidden ─────────────────────
+describe("detectDeduction — blacklist regression (must stay hidden)", () => {
+  it("Netflix returns null (personal streaming)", () => {
+    expect(detectDeduction(tx("Netflix subscription", "Netflix"), "employee")).toBeNull();
+    expect(detectDeduction(tx("Netflix subscription", "Netflix"), "contractor")).toBeNull();
+  });
+
+  it("McDonald's returns null (fast food)", () => {
+    expect(detectDeduction(tx("McDonalds purchase", "Mcdonald"), "sole_trader")).toBeNull();
+  });
+
+  it("Dan Murphy's returns null (alcohol retailer)", () => {
+    expect(detectDeduction(tx("Dan Murphys order", "Dan Murphy"), "sole_trader")).toBeNull();
+  });
+
+  it("Sportsbet returns null (gambling)", () => {
+    expect(detectDeduction(tx("Sportsbet deposit", "Sportsbet"), "contractor")).toBeNull();
+  });
+
+  it("Aldi returns null for employee and contractor (grocery)", () => {
+    expect(detectDeduction(tx("Aldi purchase", "Aldi"), "employee")).toBeNull();
+    expect(detectDeduction(tx("Aldi purchase", "Aldi"), "contractor")).toBeNull();
   });
 });
