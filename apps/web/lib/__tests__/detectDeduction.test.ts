@@ -559,6 +559,115 @@ describe("detectDeduction — alias override regression (must fire for all user 
   });
 });
 
+// ─── Regression: 4 merchants that were missing from 91/95 CSV detection ─────
+describe("detectDeduction — previously missing merchants (QuickBooks, PayPal Fee, Square, Sydney Tools)", () => {
+
+  // QuickBooks — accounting software, all user types
+  it("QuickBooks fires for employee as Accounting & Business", () => {
+    const result = detectDeduction(tx("QuickBooks monthly subscription", "QuickBooks"), "employee");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Accounting & Business");
+  });
+
+  it("QuickBooks fires for contractor as Accounting & Business (HIGH confidence)", () => {
+    const result = detectDeduction(tx("QuickBooks subscription", "QuickBooks"), "contractor");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Accounting & Business");
+    expect(result?.confidence).toBe("HIGH");
+  });
+
+  it("normalizeMerchant: INTUIT*QUICKBOOKS → QuickBooks (intercepted before TERMINAL_CODE strips *QUICKBOOKS)", () => {
+    expect(normalizeMerchant("INTUIT*QUICKBOOKS")).toBe("QuickBooks");
+    expect(normalizeMerchant("INTUIT*QUICKBOOK")).toBe("QuickBooks");
+    expect(normalizeMerchant("QUICK BOOKS")).toBe("QuickBooks");
+    expect(normalizeMerchant("INTUIT AU")).toBe("QuickBooks");
+  });
+
+  it("Intuit AU normalized merchant fires as Accounting & Business", () => {
+    const result = detectDeduction(tx("Intuit QuickBooks AU charge", "QuickBooks"), "sole_trader");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Accounting & Business");
+  });
+
+  // PayPal Fee — payment processing, all user types
+  it("PayPal Fee fires for employee as Payment Processing", () => {
+    const result = detectDeduction(tx("PayPal merchant fee", "Paypal Fee"), "employee");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Payment Processing");
+  });
+
+  it("PayPal Merchant fires for sole_trader as Payment Processing", () => {
+    const result = detectDeduction(tx("PayPal merchant fees", "Paypal Merchant"), "sole_trader");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Payment Processing");
+  });
+
+  it("normalizeMerchant: PAYPAL*FEE → PayPal Fee (intercepted before PREFIXES strips PAYPAL*)", () => {
+    expect(normalizeMerchant("PAYPAL*FEE")).toBe("PayPal Fee");
+    expect(normalizeMerchant("PAYPAL*FEES")).toBe("PayPal Fee");
+    expect(normalizeMerchant("PAYPAL*MERCHANT")).toBe("PayPal Fee");
+    expect(normalizeMerchant("PAYPAL*AU")).toBe("PayPal Fee");
+    expect(normalizeMerchant("PAYPAL MERCHANT FEES")).toBe("PayPal Fee");
+    expect(normalizeMerchant("PAYPAL AUSTRALIA")).toBe("PayPal Fee");
+  });
+
+  it("PayPal Fee normalized merchant fires as Payment Processing", () => {
+    const result = detectDeduction(tx("PayPal fee", "Paypal Fee"), "contractor");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Payment Processing");
+  });
+
+  // Square — payment processing/POS, all user types
+  it("Square fires for employee as Payment Processing", () => {
+    const result = detectDeduction(tx("Square payment", "Square"), "employee");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Payment Processing");
+  });
+
+  it("Squareup fires for contractor as Payment Processing", () => {
+    const result = detectDeduction(tx("Squareup POS charge", "Squareup"), "contractor");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Payment Processing");
+  });
+
+  it("Square AU fires for sole_trader as Payment Processing", () => {
+    const result = detectDeduction(tx("Square AU fees", "Square Au"), "sole_trader");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Payment Processing");
+  });
+
+  it("Squarespace is NOT reclassified as Payment Processing (must stay Website & Domains)", () => {
+    const result = detectDeduction(tx("Squarespace annual plan", "Squarespace"), "contractor");
+    expect(result?.category).toBe("Website & Domains");
+  });
+
+  // Sydney Tools — equipment, all user types
+  it("Sydney Tools fires for employee as Equipment", () => {
+    const result = detectDeduction(tx("Sydney Tools order", "Sydney Tools"), "employee");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Equipment");
+  });
+
+  it("Sydney Tools fires for contractor as Equipment (HIGH confidence)", () => {
+    const result = detectDeduction(tx("Sydney Tools purchase", "Sydney Tools"), "contractor");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Equipment");
+    expect(result?.confidence).toBe("HIGH");
+  });
+
+  it("normalizeMerchant: SYDNEY TOOLS → Sydney Tools (intercepted before AU_CITIES strips SYDNEY)", () => {
+    expect(normalizeMerchant("SYDNEY TOOLS")).toBe("Sydney Tools");
+    expect(normalizeMerchant("SYDNEY-TOOLS")).toBe("Sydney Tools");
+    expect(normalizeMerchant("SYDNEYTOOLS")).toBe("Sydney Tools");
+  });
+
+  it("Sydney Tools normalized merchant fires as Equipment", () => {
+    const result = detectDeduction(tx("Sydney Tools AU", "Sydney Tools"), "sole_trader");
+    expect(result).not.toBeNull();
+    expect(result?.category).toBe("Equipment");
+  });
+});
+
 // ─── Regression: blacklisted merchants must stay hidden ─────────────────────
 describe("detectDeduction — blacklist regression (must stay hidden)", () => {
   it("Netflix returns null (personal streaming)", () => {

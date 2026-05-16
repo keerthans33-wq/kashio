@@ -82,6 +82,16 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   [/^XERO\s+AU\b/i,                              "Xero"],
   [/^XERO\s+AUSTRALIA\b/i,                       "Xero"],
 
+  // ── QuickBooks / Intuit ────────────────────────────────────────────────────
+  // Must run before TERMINAL_CODE (Step 2) strips "*QUICKBOOKS" off "INTUIT*QUICKBOOKS".
+  [/^INTUIT\s*\*\s*QUICKBOOKS?\b/i,              "QuickBooks"],
+  [/^INTUIT\s*\*?\s*AU\b/i,                      "QuickBooks"],
+  [/^QUICK[\s-]*BOOKS?\b/i,                      "QuickBooks"],
+
+  // ── Sydney Tools ──────────────────────────────────────────────────────────
+  // Must run before AU_CITIES (Step 3) strips "SYDNEY" and LOCATION_SLUG strips "TOOLS".
+  [/^SYDNEY[\s-]*TOOLS?\b/i,                     "Sydney Tools"],
+
   // ── Creative / Adobe ───────────────────────────────────────────────────────
   [/^ADOBE\s*[\*\s]\s*CREATIVE\s*CLOUD\b/i,      "Adobe"],
   [/^ADOBE\s*\*\s*ACROBAT\b/i,                   "Adobe"],
@@ -94,9 +104,13 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   [/^DIGITALOCEAN\b/i,                           "DigitalOcean"],
 
   // ── Payment processing ─────────────────────────────────────────────────────
+  // PayPal fee aliases must run before PREFIXES (Step 1) strips "PAYPAL*" off "PAYPAL*FEE".
+  [/^PAYPAL\s*\*?\s*FEE[S]?\b/i,                 "PayPal Fee"],
+  [/^PAYPAL\s*\*?\s*MERCHANT\b/i,                "PayPal Fee"],
+  [/^PAYPAL\s*\*?\s*AU\b/i,                      "PayPal Fee"],
+  [/^PAYPAL\s*AUSTRALIA\b/i,                     "PayPal Fee"],
   [/^STRIPE\s+PAYMENTS?\b/i,                     "Stripe"],
   [/^STRIPE\s+TECHNOLOGY\b/i,                    "Stripe"],
-  [/^PAYPAL\s+MERCHANT\b/i,                      "Stripe"],   // generic fallback
   [/^AIRWALLEX\b/i,                              "Airwallex"],
   [/^WISE\s+BUSINESS\b/i,                        "Wise"],
 

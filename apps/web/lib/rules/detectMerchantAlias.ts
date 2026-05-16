@@ -51,12 +51,16 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   // ── Accounting & Business ──────────────────────────────────────────────────
   ["xero",            { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "cloud accounting software" }],
   ["myob",            { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "accounting and payroll software" }],
+  ["quickbooks",      { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "accounting and invoicing software" }],
+  ["quick books",     { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "accounting and invoicing software" }],
+  ["intuit",          { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "accounting software (QuickBooks)" }],
   ["reckon",          { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "accounting software" }],
   ["freshbooks",      { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "invoicing and accounting software" }],
   ["invoice2go",      { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "mobile invoicing software" }],
   ["hnry",            { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "a contractor tax and invoicing service" }],
 
   // ── Website & Domains ──────────────────────────────────────────────────────
+  // NOTE: squarespace must precede square so "Squarespace" doesn't match the shorter key first.
   ["shopify",         { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "an ecommerce platform" }],
   ["godaddy",         { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a domain registrar and web host" }],
   ["crazy domains",   { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a domain registrar" }],
@@ -74,10 +78,26 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   ["digitalocean",    { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a cloud hosting provider" }],
 
   // ── Payment Processing ─────────────────────────────────────────────────────
-  ["stripe",          { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing platform" }],
-  ["airwallex",       { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a global business payment platform" }],
-  ["tyro",            { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "an Australian business payment terminal provider" }],
-  ["wise",            { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "an international business payment platform" }],
+  // PayPal fee variants — checked before generic "paypal" to return the right category.
+  ["paypal fee",       { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing fee" }],
+  ["paypal merchant",  { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing service" }],
+  ["paypal australia", { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing service" }],
+  ["paypal au",        { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing service" }],
+  // Square — squarespace entry above must remain earlier in the list (longer key wins via first-match).
+  ["squareup",         { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing and POS platform" }],
+  ["square payments",  { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing platform" }],
+  ["square pos",       { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a point of sale system" }],
+  ["square au",        { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing platform" }],
+  ["square up",        { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing and POS platform" }],
+  ["square",           { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing and POS platform" }],
+  ["stripe",           { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing platform" }],
+  ["airwallex",        { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a global business payment platform" }],
+  ["tyro",             { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "an Australian business payment terminal provider" }],
+  ["wise",             { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "an international business payment platform" }],
+
+  // ── Equipment — trade & tool retailers ────────────────────────────────────
+  ["sydney tools",    { category: CATEGORIES.EQUIPMENT, confidence: "MEDIUM", what: "a trade tools and equipment retailer" }],
+  ["sydneytools",     { category: CATEGORIES.EQUIPMENT, confidence: "MEDIUM", what: "a trade tools and equipment retailer" }],
 
 ];
 
