@@ -1,19 +1,22 @@
 // Fallback rule — two jobs:
 //
-//   1. Known merchants with no specific rule (currently: Professional Development):
-//      getMerchantInfo() returns an entry, but no other rule handles that category.
-//      Return LOW confidence using the merchant's own category.
+//   1. Known merchants with no keyword / not handled at full confidence by a specific rule:
+//      getMerchantInfo() returns an entry. Return LOW confidence using the merchant's
+//      own category so the transaction is always surfaced for review.
+//      forUserTypes is respected: if a merchant is restricted to certain user types,
+//      employees or irrelevant types are still excluded here.
+//      Specific rules win via the confidence/priority ordering in detectDeduction.
 //
 //   2. Unknown merchants with a work keyword:
 //      getMerchantInfo() returns null. Scan keywords to infer a category.
 //      Return LOW confidence.
 //
-// Priority 1 ensures any specific rule wins when both fire.
+// Priority 1 ensures any specific rule wins when both fire at the same confidence.
 
 import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
 import { combinedText } from "./shared";
-import { getMerchantInfo } from "../merchants";
+import { getMerchantInfo, type MerchantEntry } from "../merchants";
 
 // Keywords grouped by the category they most strongly suggest.
 // Only include keywords that are unambiguous enough to be worth surfacing at LOW confidence.
@@ -99,24 +102,28 @@ const KEYWORD_CATEGORIES: { category: string; keywords: string[] }[] = [
   },
 ];
 
-// Categories whose merchants are in the knowledge base but have no specific detection rule.
-// The fallback handles them so their entries aren't dead.
-const FALLBACK_HANDLED_CATEGORIES: Set<string> = new Set([CATEGORIES.PROFESSIONAL_DEVELOPMENT]);
+function matchesUserType(info: MerchantEntry, userType?: string | null): boolean {
+  if (!info.forUserTypes) return true;
+  if (!userType) return true;
+  return info.forUserTypes.includes(userType);
+}
 
 function detect(tx: { normalizedMerchant: string; description: string }, userType?: string | null): RawMatch | null {
   const info = getMerchantInfo(tx.normalizedMerchant);
 
   if (info) {
-    // Known merchant in a fallback-handled category — surface it at LOW.
-    if (FALLBACK_HANDLED_CATEGORIES.has(info.category)) {
-      return {
-        category:   info.category,
-        confidence: "LOW",
-        signals:    { merchantMatch: true },
-      };
-    }
-    // All other known merchants are handled by their category-specific rule.
-    return null;
+    // Respect forUserTypes restrictions (e.g. Woolworths → sole_trader only).
+    if (!matchesUserType(info, userType)) return null;
+
+    // Surface all known merchants at LOW confidence as a safety net.
+    // Specific rules win via the confidence/priority ordering in detectDeduction.
+    // canUpgrade: false — a lone merchant match without a keyword is too weak to promote.
+    return {
+      category:   info.category,
+      confidence: "LOW",
+      canUpgrade: false,
+      signals:    { merchantMatch: true },
+    };
   }
 
   // Unknown merchant — scan keywords to infer a category.
@@ -148,6 +155,7 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?:
         ? `${tx.normalizedMerchant} is ${/^[aeiou]/i.test(what) ? "an" : "a"} ${what}. If this was for ${context}, it may be deductible — check your statement before claiming.`
         : `${tx.normalizedMerchant} looks like a ${match.category.toLowerCase()} provider. If this was for ${context}, it may be deductible — confirm before claiming.`,
       confidenceReason: `Recognised ${match.category.toLowerCase()} provider, but we can't confirm this was a work expense from the transaction alone.`,
+      mixedUse: true,
     };
   }
 

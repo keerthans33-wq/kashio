@@ -2,10 +2,11 @@
 // and returns a clean, readable merchant name.
 //
 // Pipeline (applied in order):
-//   1. Strip known prefixes  — "SQ *COFFEE SHOP" → "COFFEE SHOP"
-//   2. Strip terminal codes  — "OFFICEWORKS *AB12CD" → "OFFICEWORKS"
-//   3. Strip location suffix — "OFFICEWORKS SYDNEY NSW" → "OFFICEWORKS"
-//   4. Strip standalone IDs  — "RENT 123456" → "RENT"
+//   0. Merchant alias map   — "GOOGLE *ADS" → "Google Ads" (before prefix stripping)
+//   1. Strip known prefixes — "SQ *COFFEE SHOP" → "COFFEE SHOP"
+//   2. Strip terminal codes — "OFFICEWORKS *AB12CD" → "OFFICEWORKS"
+//   3. Strip location suffix— "OFFICEWORKS SYDNEY NSW" → "OFFICEWORKS"
+//   4. Strip standalone IDs — "RENT 123456" → "RENT"
 //   5. Title-case the result
 //
 // Examples:
@@ -15,6 +16,47 @@
 //   "OFFICEWORKS 0042 SYDNEY"       → "Officeworks"
 //   "AMZN*AB12CD SEATTLE"           → "Amzn"
 //   "DIRECT DEBIT 123456 RENT"      → "Direct Debit Rent"
+//   "GOOGLE *ADS"                   → "Google Ads"
+//   "META PAYMENTS"                 → "Meta Ads"
+//   "LINKEDIN PREM"                 → "LinkedIn Premium"
+
+// ---------------------------------------------------------------------------
+// Step 0 — Merchant alias map (runs before prefix stripping)
+// ---------------------------------------------------------------------------
+// Some bank descriptions contain a product name after a prefix that would
+// otherwise be stripped (e.g. "GOOGLE *ADS" → "ADS" without this step).
+// Each entry: [pattern to match against the raw description, canonical name].
+// Applied case-insensitively; first match wins.
+const MERCHANT_ALIASES: [RegExp, string][] = [
+  // Google products — GOOGLE* prefix would be stripped, losing the product name
+  [/^GOOGLE\s*\*\s*ADS?\b/i,                   "Google Ads"],
+  [/^GOOGLE\s*\*\s*STORAGE\b/i,                 "Google"],
+  [/^GOOGLE\s*\*\s*PLAY\b/i,                    "Google"],
+  // Meta / Facebook advertising
+  [/^META\s+(?:PAYMENTS?|ADS?)\b/i,             "Meta Ads"],
+  [/^FACEBOOK\s+ADS?\b/i,                       "Facebook Ads"],
+  // TikTok advertising
+  [/^TIKTOK\s+(?:ADS?|FOR\s+BUSINESS)\b/i,      "TikTok Ads"],
+  // LinkedIn Premium — "PREM" suffix would be stripped as location noise
+  [/^LINKEDIN\s+PREM\b/i,                        "LinkedIn Premium"],
+  // AI tools
+  [/^CHATGPT\b/i,                                "ChatGPT"],
+  [/^OPENAI\b/i,                                 "OpenAI"],
+  // AWS — drop the verbose form before location stripping removes too much
+  [/^AWS\s+AMAZON\b/i,                           "AWS"],
+  // Microsoft 365 standalone billing description
+  [/^MICROSOFT\s*[\*\s]\s*365\b/i,               "Microsoft 365"],
+  // Xero — location suffixes like "XERO AU SYDNEY" already handled by LOCATION_SLUG,
+  // but catch "XERO AUSTRALIA" etc. which might not be all-caps in the slug regex
+  [/^XERO\s+AU\b/i,                              "Xero"],
+  // Adobe Creative Cloud — alias so normalisation doesn't produce "Adobe Creative Cloud"
+  // as a separate string from the "adobe" merchant key
+  [/^ADOBE\s*[\*\s]\s*CREATIVE\s*CLOUD\b/i,      "Adobe"],
+  // Common company legal suffixes that banks append but stripping pipeline doesn't catch
+  // (≤2 chars don't trigger LOCATION_SLUG which requires ≥3 chars)
+  [/^UBER\s+BV\b/i,                               "Uber"],
+  [/^CANVA\s+PTY\b/i,                             "Canva"],
+];
 
 // ---------------------------------------------------------------------------
 // Step 1 — Strip known prefixes
@@ -78,6 +120,11 @@ function toTitleCase(str: string): string {
 
 export function normalizeMerchant(description: string): string {
   let result = description.trim();
+
+  // 0. Merchant alias map — resolve known patterns before any stripping.
+  for (const [pattern, canonical] of MERCHANT_ALIASES) {
+    if (pattern.test(result)) return canonical;
+  }
 
   // 1. Strip known prefixes (loop so stacked prefixes like "POS PURCHASE SQ *" are removed).
   let changed = true;

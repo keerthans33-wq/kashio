@@ -79,9 +79,8 @@ export const MERCHANTS: Record<string, MerchantEntry> = {
     description: "Commercial office desks, chairs, and fit-out products.",
   },
   "ikea": {
-    category:      CATEGORIES.OFFICE_SUPPLIES,
-    forUserTypes:  ["contractor", "sole_trader"],
-    description:   "Furniture including desks, chairs, and shelving for home offices.",
+    category:    CATEGORIES.OFFICE_SUPPLIES,
+    description: "Furniture including desks, chairs, and shelving for home offices.",
   },
   "aeron": {
     category:      CATEGORIES.OFFICE_SUPPLIES,
@@ -170,59 +169,62 @@ export const MERCHANTS: Record<string, MerchantEntry> = {
   },
 
   // ── Hardware, tools & trade ────────────────────────────────────────────────
+  // forUserTypes removed: any user can have work-related hardware/tool purchases.
+  // Keyword is still required by detectTools to reach MEDIUM/HIGH confidence.
   "bunnings": {
-    category:      CATEGORIES.EQUIPMENT,
-    tier:          "general",
-    forUserTypes:  ["contractor", "sole_trader"],
-    description:   "Hardware, tools, building materials, and home improvement products.",
+    category:    CATEGORIES.EQUIPMENT,
+    tier:        "general",
+    description: "Hardware, tools, building materials, and home improvement products.",
   },
   "mitre 10": {
-    category:      CATEGORIES.EQUIPMENT,
-    tier:          "general",
-    forUserTypes:  ["contractor", "sole_trader"],
-    description:   "Hardware and building supplies.",
+    category:    CATEGORIES.EQUIPMENT,
+    tier:        "general",
+    description: "Hardware and building supplies.",
   },
   "home hardware": {
-    category:      CATEGORIES.EQUIPMENT,
-    tier:          "general",
-    forUserTypes:  ["contractor", "sole_trader"],
-    description:   "Hardware and building supplies.",
+    category:    CATEGORIES.EQUIPMENT,
+    tier:        "general",
+    description: "Hardware and building supplies.",
   },
   "hardings hardware": {
-    category:      CATEGORIES.EQUIPMENT,
-    tier:          "general",
-    forUserTypes:  ["contractor", "sole_trader"],
-    description:   "Hardware and supplies.",
+    category:    CATEGORIES.EQUIPMENT,
+    tier:        "general",
+    description: "Hardware and supplies.",
   },
   "total tools": {
-    category:      CATEGORIES.EQUIPMENT,
-    tier:          "trade_only",
-    forUserTypes:  ["contractor", "sole_trader"],
-    description:   "Trade tools and equipment for professionals.",
+    category:    CATEGORIES.EQUIPMENT,
+    tier:        "trade_only",
+    description: "Trade tools and equipment for professionals.",
   },
   "sydney tools": {
-    category:      CATEGORIES.EQUIPMENT,
-    tier:          "trade_only",
-    forUserTypes:  ["contractor", "sole_trader"],
-    description:   "Trade tools and equipment for professionals.",
+    category:    CATEGORIES.EQUIPMENT,
+    tier:        "trade_only",
+    description: "Trade tools and equipment for professionals.",
   },
   "tools warehouse": {
-    category:      CATEGORIES.EQUIPMENT,
-    tier:          "trade_only",
-    forUserTypes:  ["contractor", "sole_trader"],
-    description:   "Power tools and hand tools for trade use.",
+    category:    CATEGORIES.EQUIPMENT,
+    tier:        "trade_only",
+    description: "Power tools and hand tools for trade use.",
   },
   "tool kit depot": {
-    category:      CATEGORIES.EQUIPMENT,
-    tier:          "trade_only",
-    forUserTypes:  ["contractor", "sole_trader"],
-    description:   "Trade tools and equipment.",
+    category:    CATEGORIES.EQUIPMENT,
+    tier:        "trade_only",
+    description: "Trade tools and equipment.",
   },
   "blackwoods": {
-    category:      CATEGORIES.EQUIPMENT,
-    tier:          "trade_only",
-    forUserTypes:  ["contractor", "sole_trader"],
-    description:   "Industrial and safety supplies for trade and business.",
+    category:    CATEGORIES.EQUIPMENT,
+    tier:        "trade_only",
+    description: "Industrial and safety supplies for trade and business.",
+  },
+  "repco": {
+    category:    CATEGORIES.EQUIPMENT,
+    tier:        "general",
+    description: "Auto parts and accessories. Work vehicle maintenance may be deductible.",
+  },
+  "supercheap auto": {
+    category:    CATEGORIES.EQUIPMENT,
+    tier:        "general",
+    description: "Auto parts and accessories for work vehicle maintenance.",
   },
 
   // ── Consumer electronics & computers ──────────────────────────────────────
@@ -889,5 +891,165 @@ export const MERCHANTS: Record<string, MerchantEntry> = {
   "amazon": {
     category:    CATEGORIES.PROFESSIONAL_DEVELOPMENT,
     description: "Online retailer. Professional books and work-related items may be deductible.",
+  },
+
+  // ── General retailers (mixed-use — always surfaced at LOW for review) ───────
+  "kmart": {
+    category:    CATEGORIES.OFFICE_SUPPLIES,
+    description: "General merchandise retailer. Work-related office, stationery, or equipment purchases may qualify.",
+  },
+  "target": {
+    category:    CATEGORIES.OFFICE_SUPPLIES,
+    description: "General merchandise retailer. Work-related purchases may qualify.",
+  },
+  "big w": {
+    category:    CATEGORIES.OFFICE_SUPPLIES,
+    description: "General merchandise retailer. Work-related purchases may qualify.",
+  },
+
+  // ── Workwear specialists ──────────────────────────────────────────────────
+  "workwearhub": {
+    category:    CATEGORIES.WORK_CLOTHING,
+    description: "Online workwear retailer. Hi-vis, safety clothing, and uniforms.",
+  },
+  "scrubs australia": {
+    category:    CATEGORIES.WORK_CLOTHING,
+    description: "Medical and healthcare workwear.",
+  },
+  "chemist warehouse": {
+    category:    CATEGORIES.WORK_CLOTHING,
+    description: "Pharmacy and health products. Safety or medical workwear may be deductible for eligible workers.",
+  },
+
+  // ── AI tools (software subscriptions) ────────────────────────────────────
+  "chatgpt": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "specific",
+    description: "AI assistant. Paid plans used for work tasks such as writing, research, or coding are potentially deductible.",
+  },
+  "openai": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "specific",
+    description: "AI platform. API and subscription charges used for work or business are potentially deductible.",
+  },
+  "claude": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "specific",
+    description: "AI assistant by Anthropic. Paid plans used for work tasks are potentially deductible.",
+  },
+  "anthropic": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "specific",
+    description: "AI platform. API charges used for work or business development are potentially deductible.",
+  },
+
+  // ── Online advertising ────────────────────────────────────────────────────
+  "google ads": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Google Ads online advertising platform. Ad spend and account fees are a deductible business expense.",
+  },
+  "meta ads": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Meta (Facebook/Instagram) advertising platform. Ad spend is a deductible business expense.",
+  },
+  "facebook ads": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Facebook advertising. Ad spend and management fees are deductible business expenses.",
+  },
+  "linkedin ads": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "LinkedIn advertising platform. Ad spend is a deductible business expense.",
+  },
+  "tiktok ads": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "TikTok advertising platform. Ad spend is a deductible business expense.",
+  },
+
+  // ── SEO & marketing tools ─────────────────────────────────────────────────
+  "semrush": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "SEO and digital marketing platform. Subscription is a deductible business tool expense.",
+  },
+  "ahrefs": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "SEO toolset. Subscription is a deductible business tool expense.",
+  },
+  "klaviyo": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Email marketing and automation platform. Subscription is a deductible business expense.",
+  },
+  "gohighlevel": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "CRM and marketing automation platform. Subscription is a deductible business expense.",
+  },
+
+  // ── Hosting & infrastructure ───────────────────────────────────────────────
+  "vercel": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "specific",
+    description: "Web hosting and deployment platform. Subscription is a deductible business expense.",
+  },
+  "supabase": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "specific",
+    description: "Backend-as-a-service platform. Subscription is a deductible business expense.",
+  },
+
+  // ── Domain registration ────────────────────────────────────────────────────
+  "crazy domains": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Domain registration and hosting. Business domain costs are a deductible expense.",
+  },
+  "godaddy": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Domain registration and hosting. Business domain costs are a deductible expense.",
+  },
+  "domain.com.au": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Australian domain registration. Business domain costs are a deductible expense.",
+  },
+  "namecheap": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Domain registration and hosting. Business domain costs are a deductible expense.",
+  },
+
+  // ── Payment processing ─────────────────────────────────────────────────────
+  "square": {
+    category:      CATEGORIES.SOFTWARE,
+    tier:          "specific",
+    forUserTypes:  ["contractor", "sole_trader"],
+    description:   "Payment processing for small businesses. Transaction fees and subscription are deductible.",
+  },
+
+  // ── Professional memberships ───────────────────────────────────────────────
+  "engineers australia": {
+    category:    CATEGORIES.PROFESSIONAL_DEVELOPMENT,
+    description: "Professional engineering membership and CPD. Annual fees are a deductible professional expense.",
   },
 };

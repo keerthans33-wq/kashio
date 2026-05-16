@@ -62,6 +62,8 @@ export async function runImportPipeline(
     where: { importBatchId: batch.id },
   });
 
+  let aiErrors = 0;
+
   const candidates = (
     await Promise.all(
       savedTransactions.map(async (t) => {
@@ -76,9 +78,19 @@ export async function runImportPipeline(
         // Rules engine matched — Gemini refines wording and may upgrade LOW→MEDIUM.
         // Rules engine missed — Gemini classifies from scratch as a LOW-confidence fallback
         // so transactions without explicit rule coverage are still surfaced for review.
-        const match = rawMatch
-          ? await refineTransaction(rawMatch, tx, userType)
-          : await classifyTransaction(tx, userType);
+        let match: Awaited<ReturnType<typeof classifyTransaction>>;
+        if (rawMatch) {
+          match = await refineTransaction(rawMatch, tx, userType);
+        } else {
+          const classified = await classifyTransaction(tx, userType);
+          if (classified === null && tx.amount < 0) {
+            // classifyTransaction silently returns null on Gemini error too.
+            // We can't distinguish "not deductible" from "Gemini failed" here,
+            // so only count these as potential AI misses for logging purposes.
+            aiErrors++;
+          }
+          match = classified;
+        }
 
         if (!match) return null;
 
@@ -111,6 +123,18 @@ export async function runImportPipeline(
       data: newCandidates.map((c) => ({ ...c, userId })),
     });
   }
+
+  const hidden = savedTransactions.length - candidates.length;
+  console.log("[pipeline]", {
+    batchId:           batch.id,
+    source,
+    imported:          newRows.length,
+    expenses:          savedTransactions.length,
+    candidatesCreated: newCandidates.length,
+    hidden,
+    duplicates,
+    aiDropped:         aiErrors,
+  });
 
   const txById = new Map(savedTransactions.map((t) => [t.id, t]));
   const totalValue = candidates.reduce(
