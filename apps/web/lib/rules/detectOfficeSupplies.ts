@@ -70,27 +70,50 @@ function detect(tx: { normalizedMerchant: string; description: string }, userTyp
   }
 
   // ── Supply keywords (stationery, ink, etc.) ────────────────────────────────
-  const supplyKeyword = SUPPLY_KEYWORDS.find((k) => combined.includes(k));
-  if (!supplyKeyword) return null;
-
   const specialistMerchants = getMerchantsForCategory(CATEGORIES.OFFICE_SUPPLIES, "specialist", userType);
   const merchantMatch = specialistMerchants.some((m) => matchesMerchant(merchant, m));
+
+  const supplyKeyword = SUPPLY_KEYWORDS.find((k) => combined.includes(k));
+
+  // Specialist office retailer with no keyword — flag at LOW so Officeworks
+  // purchases without a description are still surfaced for review.
+  if (!supplyKeyword) {
+    if (!merchantMatch) return null;
+    return {
+      category:   CATEGORIES.OFFICE_SUPPLIES,
+      confidence: "LOW",
+      canUpgrade: false,
+      signals:    { merchantMatch: true, keyword: undefined, merchantOnly: true },
+    };
+  }
 
   return {
     category:   CATEGORIES.OFFICE_SUPPLIES,
     confidence: merchantMatch ? "MEDIUM" : "LOW",
     canUpgrade: merchantMatch,
-    signals:    { merchantMatch, keyword: supplyKeyword },
+    signals:    { merchantMatch, keyword: supplyKeyword, merchantOnly: false },
   };
 }
 
 function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?: string | null): Explanation {
-  const { isUtility, isFurniture, merchantMatch, keyword, utilityMerchant } = match.signals;
+  const { isUtility, isFurniture, merchantMatch, keyword, utilityMerchant, merchantOnly } = match.signals;
   const context   = userType === "sole_trader" ? "your business" : "your work";
   const supplies  = userType === "employee" ? "Office supplies" : "Business supplies";
   const qualifier = userType === "employee"
     ? "are deductible if not reimbursed by your employer"
     : "are a deductible business expense";
+
+  // ── Merchant-only explanation (no keyword in transaction) ─────────────────
+  if (merchantOnly) {
+    const info = getMerchantInfo(tx.normalizedMerchant);
+    const what = info?.description.split(". ")[0].replace(/\.$/, "").toLowerCase() ?? "office supplies and stationery";
+    const ctx  = userType === "sole_trader" ? "your business" : "your work";
+    return {
+      reason: `${tx.normalizedMerchant} sells ${what}. If what you purchased was for ${ctx} — such as stationery, printer supplies, or office equipment — it may be deductible. Review this transaction and confirm the item before claiming.`,
+      confidenceReason: "Recognised office retailer, but no specific item keyword in the transaction. Review to confirm it's a work-related purchase.",
+      mixedUse: true,
+    };
+  }
 
   // ── Utility bill explanation ───────────────────────────────────────────────
   if (isUtility) {

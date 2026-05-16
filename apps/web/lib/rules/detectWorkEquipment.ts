@@ -35,14 +35,25 @@ const ALL_KEYWORDS = [...STRONG_KEYWORDS, ...WEAK_KEYWORDS];
 function detect(tx: { normalizedMerchant: string; description: string }, userType?: string | null): RawMatch | null {
   const combined = combinedText(tx);
 
-  const keyword = ALL_KEYWORDS.find((k) => combined.includes(k));
-  if (!keyword) return null;
-
-  // Known tech retailers — a merchant match strengthens a weak keyword signal.
   const techMerchants = getMerchantsForCategory(CATEGORIES.EQUIPMENT, "tech_retailer", userType);
-  const isStrong      = STRONG_KEYWORDS.includes(keyword);
-  const inDesc        = tx.description.toLowerCase().includes(keyword);
   const techMerchant  = techMerchants.some((m) => matchesMerchant(merchantText(tx), m));
+
+  const keyword  = ALL_KEYWORDS.find((k) => combined.includes(k));
+
+  // Tech retailer with no keyword — flag at LOW confidence so purchases at
+  // JB Hi-Fi, Harvey Norman, Officeworks etc. are always surfaced for review.
+  if (!keyword) {
+    if (!techMerchant) return null;
+    return {
+      category:   CATEGORIES.EQUIPMENT,
+      confidence: "LOW",
+      canUpgrade: false,
+      signals:    { keyword: undefined, inDesc: false, isStrong: false, techMerchant: true, merchantOnly: true },
+    };
+  }
+
+  const isStrong = STRONG_KEYWORDS.includes(keyword);
+  const inDesc   = tx.description.toLowerCase().includes(keyword);
 
   // Weak keywords need a corroborating signal — either a tech merchant or the
   // keyword present in the description (not just in the merchant name).
@@ -51,15 +62,13 @@ function detect(tx: { normalizedMerchant: string; description: string }, userTyp
   return {
     category:   CATEGORIES.EQUIPMENT,
     confidence: isStrong ? "MEDIUM" : "LOW",
-    // Only promote strong specialist items; weak keywords are common in personal/gaming
-    // contexts even from a tech retailer, so keep them LOW for all user types.
     canUpgrade: isStrong,
-    signals:    { keyword, inDesc, isStrong, techMerchant },
+    signals:    { keyword, inDesc, isStrong, techMerchant, merchantOnly: false },
   };
 }
 
 function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?: string | null): Explanation {
-  const { keyword, isStrong, techMerchant } = match.signals;
+  const { keyword, isStrong, techMerchant, merchantOnly } = match.signals;
   const ctx          = useContext(userType);
   const forWork      = userType === "sole_trader" ? "for your business"
                      : userType === "contractor"  ? "for your work"
@@ -67,6 +76,24 @@ function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?:
   const employerNote = userType === "employee"
     ? " Check that this isn't supplied or reimbursed by your employer."
     : "";
+
+  if (merchantOnly) {
+    const info = getMerchantInfo(tx.normalizedMerchant);
+    const what = info
+      ? info.description.split(". ")[0].replace(/\.$/, "").toLowerCase()
+      : "electronics and computers";
+    const forWork = userType === "sole_trader" ? "for your business"
+                  : userType === "contractor"  ? "for your work"
+                  : "for work";
+    const employerNote = userType === "employee"
+      ? " Check that this isn't supplied or reimbursed by your employer."
+      : "";
+    return {
+      reason: `${tx.normalizedMerchant} sells ${what}. If what you purchased is used ${forWork} — such as a laptop, monitor, or peripheral — it may be deductible. Review this transaction and confirm the item before claiming.${employerNote}`,
+      confidenceReason: "Recognised tech retailer, but no specific item keyword in the transaction. Review to confirm it's a work-related purchase.",
+      mixedUse: true,
+    };
+  }
 
   if (techMerchant) {
     const info = getMerchantInfo(tx.normalizedMerchant);

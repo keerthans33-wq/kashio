@@ -231,6 +231,16 @@ export const MERCHANTS: Record<string, MerchantEntry> = {
     tier:        "tech_retailer",
     description: "Consumer electronics, computers, and home entertainment.",
   },
+  "jb hifi": {
+    category:    CATEGORIES.EQUIPMENT,
+    tier:        "tech_retailer",
+    description: "Consumer electronics, computers, and home entertainment.",
+  },
+  "jbhifi": {
+    category:    CATEGORIES.EQUIPMENT,
+    tier:        "tech_retailer",
+    description: "Consumer electronics, computers, and home entertainment.",
+  },
   "harvey norman": {
     category:    CATEGORIES.EQUIPMENT,
     tier:        "tech_retailer",
@@ -245,6 +255,31 @@ export const MERCHANTS: Record<string, MerchantEntry> = {
     category:    CATEGORIES.EQUIPMENT,
     tier:        "tech_retailer",
     description: "Electronics and home appliances.",
+  },
+  "jaycar": {
+    category:    CATEGORIES.EQUIPMENT,
+    tier:        "tech_retailer",
+    description: "Electronics components, tools, and accessories.",
+  },
+  "altronics": {
+    category:    CATEGORIES.EQUIPMENT,
+    tier:        "tech_retailer",
+    description: "Electronics components and tech accessories.",
+  },
+  "msy technology": {
+    category:    CATEGORIES.EQUIPMENT,
+    tier:        "tech_retailer",
+    description: "Computer hardware, laptops, and components.",
+  },
+  "ted's cameras": {
+    category:    CATEGORIES.EQUIPMENT,
+    tier:        "tech_retailer",
+    description: "Cameras, lenses, and photography equipment.",
+  },
+  "camera house": {
+    category:    CATEGORIES.EQUIPMENT,
+    tier:        "tech_retailer",
+    description: "Cameras and photography accessories.",
   },
   "apple": {
     category:    CATEGORIES.EQUIPMENT,
