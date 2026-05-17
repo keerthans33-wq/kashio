@@ -221,4 +221,270 @@ export const FUZZY_ALIAS_GROUPS: FuzzyAliasGroup[] = [
     confidence: "MEDIUM",
   },
 
+  // ── AI / coding / startup tools ───────────────────────────────────────────
+  // These tools are commonly billed via STRIPE* or PADDLE* gateway descriptors,
+  // which causes TERMINAL_CODE to strip the product name, leaving only the
+  // gateway. The fuzzy layer catches the real merchant from the raw descriptor.
+
+  {
+    name:       "Cursor",
+    aliases:    ["cursor ai", "cursor"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an AI-powered code editor",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Replit",
+    aliases:    ["replit"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an online IDE and collaborative coding platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Lovable",
+    aliases:    ["lovable dev", "lovable"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an AI app-building platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Bolt",
+    aliases:    ["bolt new", "bolt"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an AI web-development platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Windsurf",
+    aliases:    ["windsurf"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an AI-powered code editor",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Perplexity",
+    aliases:    ["perplexity ai", "perplexity"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an AI search and research tool",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Groq",
+    aliases:    ["groq"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an AI inference platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Replicate",
+    aliases:    ["replicate"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an AI model hosting platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Mistral AI",
+    aliases:    ["mistral ai", "mistral"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an AI model platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Stability AI",
+    aliases:    ["stability ai", "stability"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an AI image generation platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Hugging Face",
+    aliases:    ["hugging face", "huggingface"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an AI model hub and platform",
+    confidence: "MEDIUM",
+  },
+
+  // ── AI video / voice / image ──────────────────────────────────────────────
+
+  // Pika Labs — "PIKA LABS" has LABS stripped by LOCATION_SLUG; fuzzy lifts
+  // from a potential miss to MEDIUM via importantTokenMatch on "pika".
+  {
+    name:       "Pika",
+    aliases:    ["pika labs", "pika"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an AI video generation platform",
+    confidence: "MEDIUM",
+  },
+  // ElevenLabs — "ELEVENLABS INC" may lose INC; also appears as STRIPE*ELEVENLABS.
+  {
+    name:       "ElevenLabs",
+    aliases:    ["elevenlabs", "eleven labs"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an AI voice synthesis platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Synthesia",
+    aliases:    ["synthesia"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an AI video creation platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "HeyGen",
+    aliases:    ["heygen"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an AI video generation platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Runway",
+    aliases:    ["runwayml", "runway"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an AI creative and video suite",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Midjourney",
+    aliases:    ["midjourney"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an AI image generation platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Higgsfield",
+    aliases:    ["higgsfield"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an AI video generation platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Suno",
+    aliases:    ["suno"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an AI music generation platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Udio",
+    aliases:    ["udio"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an AI music generation platform",
+    confidence: "MEDIUM",
+  },
+
+  // ── Developer / monitoring / infra ────────────────────────────────────────
+
+  // Sentry — may appear as "SENTRY.IO" (dot not caught by display normalizer)
+  // or as "STRIPE*SENTRY".
+  {
+    name:       "Sentry",
+    aliases:    ["sentry io", "sentry"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an application monitoring and error-tracking platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Datadog",
+    aliases:    ["datadog"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "a cloud monitoring and observability platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Linear",
+    aliases:    ["linear"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "a project and issue-tracking tool",
+    confidence: "MEDIUM",
+  },
+  // Resend — commonly billed via STRIPE*RESEND; without fuzzy, Stripe wins.
+  {
+    name:       "Resend",
+    aliases:    ["resend"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "a transactional email API platform",
+    confidence: "MEDIUM",
+  },
+  // Clerk — commonly billed via STRIPE*CLERK.
+  {
+    name:       "Clerk",
+    aliases:    ["clerk"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an authentication and user management platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Twilio",
+    aliases:    ["twilio"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "a cloud communications platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Mailgun",
+    aliases:    ["mailgun"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an email delivery API platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Supabase",
+    aliases:    ["supabase"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an open-source backend-as-a-service platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Cloudflare",
+    aliases:    ["cloudflare"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "a cloud network and security platform",
+    confidence: "MEDIUM",
+  },
+
+  // ── Website / no-code builders ────────────────────────────────────────────
+
+  {
+    name:       "Framer",
+    aliases:    ["framer"],
+    category:   CATEGORIES.WEBSITE_DOMAINS,
+    what:       "a no-code website builder",
+    confidence: "MEDIUM",
+  },
+
+  // ── Design / assets / content ─────────────────────────────────────────────
+  // Multi-word merchants where LOCATION_SLUG strips the trailing word (SOUND,
+  // ARRAY, MARKET) from the display name. Compact aliases (no spaces) let
+  // compactMatch fire on the full raw descriptor without relying on
+  // importantTokenMatch — which would false-positive on common tokens like
+  // "creative" appearing in "Adobe Creative Cloud".
+
+  {
+    name:       "Epidemic Sound",
+    // "epidemicsound" (compact) matches "EPIDEMIC SOUND" via compactMatch;
+    // avoids importantTokenMatch on the common word "sound".
+    aliases:    ["epidemicsound"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "a royalty-free music licensing platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Motion Array",
+    // "motionarray" (compact) matches "MOTION ARRAY" via compactMatch.
+    aliases:    ["motionarray"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "a motion graphics and video asset platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Creative Market",
+    // "creativemarket" (compact) matches "CREATIVE MARKET" or "STRIPE*CREATIVEMARKET"
+    // via compactMatch; avoids false-positive on "creative" in "Adobe Creative Cloud".
+    aliases:    ["creativemarket"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "a digital design asset marketplace",
+    confidence: "MEDIUM",
+  },
+
 ];

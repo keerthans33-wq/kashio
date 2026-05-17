@@ -20,10 +20,10 @@ describe("detectDeduction — Work Tools (Software & Equipment)", () => {
     expect(result).not.toBeNull();
   });
 
-  it("detects Canva subscription as SOFTWARE LOW for employee", () => {
+  it("detects Canva subscription as SOFTWARE MEDIUM for employee (Canva is now in ALIAS_MAP)", () => {
     const result = detectDeduction(tx("Canva pro plan annual", "Canva"), "employee");
     expect(result?.category).toBe("Software & Subscriptions");
-    expect(result?.confidence).toBe("LOW");
+    expect(result?.confidence).toBe("MEDIUM");
   });
 
   it("detects Notion as SOFTWARE (specific merchant, requires keyword)", () => {

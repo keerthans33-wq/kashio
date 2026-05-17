@@ -62,6 +62,8 @@ const ALIAS_MAP: [string, AliasEntry][] = [
 
   // ── Website & Domains ──────────────────────────────────────────────────────
   // NOTE: squarespace must precede square so "Squarespace" doesn't match the shorter key first.
+  // NOTE: shopify billing must precede shopify so "Shopify Billing" hits the more-specific entry first.
+  ["shopify billing",  { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "an ecommerce platform subscription" }],
   ["shopify",         { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "an ecommerce platform" }],
   ["godaddy",         { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a domain registrar and web host" }],
   ["crazy domains",   { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a domain registrar" }],
@@ -77,6 +79,21 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   ["render",          { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a cloud hosting platform" }],
   ["railway",         { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a cloud infrastructure platform" }],
   ["digitalocean",    { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a cloud hosting provider" }],
+  // NOTE: wordpress com must precede wordpress.
+  ["wordpress com",   { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a hosted website and blogging platform" }],
+  ["wordpress",       { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a website and blogging platform" }],
+  ["framer",          { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a no-code website builder" }],
+  ["carrd",           { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a simple one-page website builder" }],
+  ["bubble",          { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a no-code app development platform" }],
+  ["glide",           { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a no-code app builder" }],
+  ["softr",           { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a no-code web app builder" }],
+  ["memberstack",     { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a membership and authentication platform" }],
+  ["outseta",         { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a SaaS billing and membership platform" }],
+  // NOTE: lemon squeezy must precede lemonsqueezy.
+  ["lemon squeezy",   { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a digital products and ecommerce platform" }],
+  ["lemonsqueezy",    { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a digital products and ecommerce platform" }],
+  ["gumroad",         { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a digital products and creator commerce platform" }],
+  ["paddle",          { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a merchant-of-record payment platform" }],
 
   // ── Payment Processing ─────────────────────────────────────────────────────
   // PayPal fee variants — checked before generic "paypal" to return the right category.
@@ -103,6 +120,135 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   // ── Apple Services ────────────────────────────────────────────────────────
   // Canonical name produced by normalizeMerchant for APPLE.COM/* descriptors.
   ["apple services",  { category: CATEGORIES.SOFTWARE,   confidence: "MEDIUM", what: "Apple service subscriptions (iCloud, Apple One, App Store)" }],
+
+  // ── Software & Subscriptions — AI / coding / startup tools ────────────────
+  // NOTE: compound names precede their shorter base form so the specific entry wins first.
+  ["cursor ai",       { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI-powered code editor" }],
+  ["cursor",          { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI-powered code editor" }],
+  ["replit",          { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an online IDE and collaborative coding platform" }],
+  ["lovable dev",     { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI app-building platform" }],
+  ["lovable",         { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI app-building platform" }],
+  ["bolt new",        { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI web-development platform" }],
+  ["bolt",            { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI web-development platform" }],
+  ["stackblitz",      { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an online dev environment and code sandbox" }],
+  ["windsurf",        { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI-powered code editor" }],
+  ["codeium",         { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI coding assistant" }],
+  ["tabnine",         { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI coding assistant" }],
+  ["github copilot",  { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI coding assistant" }],
+  ["copilot",         { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI coding assistant" }],
+  ["perplexity ai",   { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI search and research tool" }],
+  ["perplexity",      { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI search and research tool" }],
+  ["poe",             { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI chatbot platform" }],
+  ["groq",            { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI inference platform" }],
+  ["replicate",       { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI model hosting platform" }],
+  ["together ai",     { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI model API platform" }],
+  ["mistral ai",      { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI model platform" }],
+  ["stability ai",    { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI image generation platform" }],
+  ["hugging face",    { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI model hub and platform" }],
+  ["huggingface",     { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI model hub and platform" }],
+
+  // ── Software & Subscriptions — AI video / voice / image ───────────────────
+  // NOTE: pika labs must precede pika so the specific entry wins first.
+  ["pika labs",       { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI video generation platform" }],
+  ["pika",            { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI video generation platform" }],
+  ["synthesia",       { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI video creation platform" }],
+  ["heygen",          { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI video generation platform" }],
+  // NOTE: runwayml must precede runway.
+  ["runwayml",        { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI creative and video suite" }],
+  ["runway",          { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI creative and video suite" }],
+  ["elevenlabs",      { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI voice synthesis platform" }],
+  ["descript",        { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI audio and video editing platform" }],
+  ["veed",            { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an online video editing platform" }],
+  ["capcut",          { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a video editing platform" }],
+  ["kapwing",         { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an online video editing platform" }],
+  ["invideo",         { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI video creation platform" }],
+  ["opus clip",       { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI video clipping and repurposing tool" }],
+  ["opal",            { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a professional video creation platform" }],
+  ["midjourney",      { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI image generation platform" }],
+  ["leonardo ai",     { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI image generation platform" }],
+  ["ideogram",        { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI image generation platform" }],
+  ["krea",            { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI creative platform" }],
+  ["kling",           { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI video generation platform" }],
+  ["higgsfield",      { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI video generation platform" }],
+  ["fal ai",          { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI model inference platform" }],
+  ["luma ai",         { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI video and 3D generation platform" }],
+  ["suno",            { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI music generation platform" }],
+  ["udio",            { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI music generation platform" }],
+
+  // ── Software & Subscriptions — Developer / monitoring / infra ─────────────
+  ["gitlab",          { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a DevOps and code hosting platform" }],
+  ["bitbucket",       { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a code hosting and CI/CD platform" }],
+  ["sentry",          { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an application monitoring and error-tracking platform" }],
+  ["datadog",         { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a cloud monitoring and observability platform" }],
+  ["linear",          { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a project and issue-tracking tool" }],
+  ["jira",            { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a project and issue-tracking platform" }],
+  ["confluence",      { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a team knowledge and documentation platform" }],
+  ["docker",          { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a containerisation and development platform" }],
+  ["npm",             { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a JavaScript package registry" }],
+  ["planetscale",     { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a serverless MySQL database platform" }],
+  ["neon",            { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a serverless Postgres database platform" }],
+  // NOTE: mongo db (with space) must precede mongodb.
+  ["mongo db",        { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a cloud database platform" }],
+  ["mongodb",         { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a cloud database platform" }],
+  ["redis",           { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an in-memory data platform" }],
+  ["upstash",         { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a serverless Redis and Kafka platform" }],
+  ["clerk",           { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an authentication and user management platform" }],
+  ["auth0",           { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an identity and authentication platform" }],
+  ["resend",          { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a transactional email API platform" }],
+  ["mailgun",         { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an email delivery API platform" }],
+  ["twilio",          { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a cloud communications platform" }],
+  ["supabase",        { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an open-source backend-as-a-service platform" }],
+  ["firebase",        { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a cloud app development platform" }],
+  ["cloudflare",      { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a cloud network and security platform" }],
+  // NOTE: amazon web services must precede aws so the full name matches first.
+  ["amazon web services", { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "Amazon Web Services cloud platform" }],
+  ["aws",             { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "Amazon Web Services cloud platform" }],
+  ["google cloud",    { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "Google Cloud Platform" }],
+  ["microsoft azure", { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "Microsoft Azure cloud platform" }],
+
+  // ── Software & Subscriptions — Design / assets / content ──────────────────
+  ["canva",           { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a graphic design and content creation platform" }],
+  // NOTE: adobe creative cloud must precede any standalone adobe entry.
+  ["adobe creative cloud", { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "Adobe Creative Cloud suite" }],
+  // NOTE: envato elements must precede envato.
+  ["envato elements", { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a creative asset subscription service" }],
+  ["envato",          { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a creative digital assets marketplace" }],
+  ["motion array",    { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a motion graphics and video asset platform" }],
+  ["artlist",         { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a royalty-free music and SFX licensing platform" }],
+  ["epidemic sound",  { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a royalty-free music licensing platform" }],
+  ["freepik",         { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a graphic design resource platform" }],
+  ["shutterstock",    { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a stock image and media licensing platform" }],
+  ["istock",          { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a stock image licensing platform" }],
+  ["storyblocks",     { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a royalty-free stock media platform" }],
+  ["unsplash",        { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a stock photography platform" }],
+  ["pexels",          { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a stock photography platform" }],
+  ["flaticon",        { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an icon and graphic resource platform" }],
+  ["icons8",          { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an icon and design asset platform" }],
+  ["creative market", { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a digital design asset marketplace" }],
+  ["placeit",         { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a branding and mockup design platform" }],
+
+  // ── Software & Subscriptions — Business productivity / communication ───────
+  ["slack",           { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a team messaging and collaboration platform" }],
+  ["zoom",            { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a video conferencing and collaboration platform" }],
+  ["google workspace",{ category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "Google's suite of business productivity tools" }],
+  ["microsoft 365",   { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "Microsoft's suite of business productivity tools" }],
+  // NOTE: microsoft teams must precede teams.
+  ["microsoft teams", { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a business communication and collaboration platform" }],
+  ["loom",            { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an async video messaging platform" }],
+  ["miro",            { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an online collaborative whiteboard platform" }],
+  ["lucidchart",      { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a diagramming and visual collaboration platform" }],
+  ["docusign",        { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an e-signature and agreement platform" }],
+  ["panda doc",       { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a document automation and e-signature platform" }],
+  ["lastpass",        { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a password management platform" }],
+  ["1password",       { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a password management platform" }],
+  ["nordvpn",         { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a VPN service" }],
+  ["expressvpn",      { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a VPN service" }],
+  ["calendly",        { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a scheduling and appointment booking platform" }],
+  ["typeform",        { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an online form and survey platform" }],
+  ["jotform",         { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an online form builder" }],
+  ["zapier",          { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a workflow automation platform" }],
+  ["make",            { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a visual workflow automation platform" }],
+  ["airtable",        { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a cloud database and collaboration platform" }],
 
 ];
 
