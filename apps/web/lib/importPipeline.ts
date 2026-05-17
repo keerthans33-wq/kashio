@@ -1,7 +1,12 @@
 import { db } from "./db";
 import { detectDeduction } from "./rules";
+import { isExcluded } from "./rules/shared";
+import { isBlacklisted } from "./rules/blacklist";
 import { refineTransaction } from "./gemini/refineTransaction";
 import { classifyTransaction } from "./gemini/classifyTransaction";
+import { logClassificationSummary } from "./classificationAudit";
+import type { ClassificationAuditEntry } from "./classificationAudit";
+import type { DeductionMatch } from "./rules/types";
 import type { IngestionRow } from "./ingestion/types";
 
 export type TransactionSource = "CSV" | "DEMO_BANK" | "BASIQ";
@@ -14,6 +19,22 @@ export type PipelineResult = {
   flagged: number;
   totalValue: number;
 };
+
+// Returned when both the rules engine and Gemini produce no match for an
+// expense that is not blacklisted and not excluded. Surfaced for user review
+// rather than silently dropped — the user can confirm or reject.
+function safeFallbackMatch(amount: number): DeductionMatch {
+  return {
+    category:         "Uncategorised Possible Deduction",
+    confidence:       "LOW",
+    reason:           "This expense wasn't matched by any deduction rule. Review to check if it has a work-related purpose.",
+    confidenceReason: "No rule or AI match found. Confirm manually whether this is a deductible expense.",
+    mixedUse:         true,
+    needsReceipt:     Math.abs(amount) > 82.50,
+    canUpgrade:       false,
+    signals:          { safeFallback: true },
+  };
+}
 
 export async function runImportPipeline(
   rows: PipelineRow[],
@@ -62,7 +83,7 @@ export async function runImportPipeline(
     where: { importBatchId: batch.id },
   });
 
-  let aiErrors = 0;
+  const auditEntries: ClassificationAuditEntry[] = [];
 
   const candidates = (
     await Promise.all(
@@ -73,26 +94,66 @@ export async function runImportPipeline(
           amount:             t.amount,
         };
 
-        const rawMatch = detectDeduction(tx, userType);
+        const baseAudit: ClassificationAuditEntry = {
+          id:                    t.id,
+          rawDescription:        t.description,
+          normalizedDescription: t.normalizedMerchant,
+          amount:                t.amount,
+          isExpense:             t.amount < 0,
+          decision:              "hidden",
+        };
 
-        // Rules engine matched — Gemini refines wording and may upgrade LOW→MEDIUM.
-        // Rules engine missed — Gemini classifies from scratch as a LOW-confidence fallback
-        // so transactions without explicit rule coverage are still surfaced for review.
-        let match: Awaited<ReturnType<typeof classifyTransaction>>;
+        // Credits and zero-amount entries are not expenses.
+        if (t.amount >= 0) {
+          auditEntries.push({ ...baseAudit, hiddenReason: "credit_or_zero" });
+          return null;
+        }
+
+        // Refunds, reversals, reimbursements, cashback.
+        if (isExcluded(tx)) {
+          auditEntries.push({ ...baseAudit, hiddenReason: "excluded" });
+          return null;
+        }
+
+        // Explicit personal-expense blacklist.
+        if (isBlacklisted(tx, userType)) {
+          auditEntries.push({ ...baseAudit, hiddenReason: "blacklisted" });
+          return null;
+        }
+
+        // Rules engine — if it matches, Gemini optionally refines wording/confidence.
+        // If it misses, Gemini classifies from scratch as a LOW-confidence fallback.
+        // If both miss, the safety fallback surfaces the expense for manual review
+        // rather than silently hiding it.
+        const rawMatch = detectDeduction(tx, userType);
+        let match: DeductionMatch;
+        let matchSource: ClassificationAuditEntry["source"];
+
         if (rawMatch) {
+          matchSource = "engine";
           match = await refineTransaction(rawMatch, tx, userType);
         } else {
           const classified = await classifyTransaction(tx, userType);
-          if (classified === null && tx.amount < 0) {
-            // classifyTransaction silently returns null on Gemini error too.
-            // We can't distinguish "not deductible" from "Gemini failed" here,
-            // so only count these as potential AI misses for logging purposes.
-            aiErrors++;
+          if (classified !== null) {
+            matchSource = "gemini";
+            match = classified;
+          } else {
+            // Safety fallback: this expense has no explicit reason to be hidden.
+            // Surface it for review rather than silently dropping it.
+            matchSource = "safe_fallback";
+            match = safeFallbackMatch(t.amount);
           }
-          match = classified;
         }
 
-        if (!match) return null;
+        auditEntries.push({
+          ...baseAudit,
+          decision:     "included",
+          category:     match.category,
+          confidence:   match.confidence,
+          source:       matchSource,
+          matchedAlias: match.signals.aliasMatch as string | undefined,
+          reason:       match.reason,
+        });
 
         return {
           transactionId:    t.id,
@@ -124,17 +185,7 @@ export async function runImportPipeline(
     });
   }
 
-  const hidden = savedTransactions.length - candidates.length;
-  console.log("[pipeline]", {
-    batchId:           batch.id,
-    source,
-    imported:          newRows.length,
-    expenses:          savedTransactions.length,
-    candidatesCreated: newCandidates.length,
-    hidden,
-    duplicates,
-    aiDropped:         aiErrors,
-  });
+  logClassificationSummary(auditEntries);
 
   const txById = new Map(savedTransactions.map((t) => [t.id, t]));
   const totalValue = candidates.reduce(
@@ -143,10 +194,10 @@ export async function runImportPipeline(
   );
 
   return {
-    batchId: batch.id,
-    inserted: newRows.length,
+    batchId:    batch.id,
+    inserted:   newRows.length,
     duplicates,
-    flagged: candidates.length,
+    flagged:    candidates.length,
     totalValue,
   };
 }
