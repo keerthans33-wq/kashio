@@ -5,8 +5,9 @@
 // or legal/location suffixes (PTY, INC, LABS) that cause the display normalizer
 // to lose the real underlying merchant.
 //
-// The three exported helpers implement the matching spec verbatim.
+// The exported helpers implement the matching spec verbatim.
 // FUZZY_ALIAS_GROUPS is the data set; detectMerchantAlias.ts is the entry point.
+// extractMerchantTokens is a utility for stripping platform/payment noise.
 
 import { CATEGORIES } from "./categories";
 import type { Confidence } from "./types";
@@ -64,6 +65,32 @@ export function tokenizeMerchant(normalized: string): string[] {
     .map(t => t.trim())
     .filter(Boolean)
     .filter(t => t.length > 1);
+}
+
+// ---------------------------------------------------------------------------
+// extractMerchantTokens — strips platform and payment noise, returns residual tokens
+// ---------------------------------------------------------------------------
+// Removes known payment-platform names (paypal, stripe, apple, google…) and
+// generic payment/billing words, then splits on separators.
+//
+// Use cases:
+//   • tokens.length === 0 → generic platform/app-store charge (no real merchant)
+//   • tokens.length  >  0 → blended descriptor; residual tokens name the merchant
+//
+// Examples:
+//   "PAYPAL * FIGMA"     → ["figma"]
+//   "APPLE.COM/BILL"     → []
+//   "STRIPE * CHATGPT"   → ["chatgpt"]
+//   "SHOPIFY*KLAVIYO"    → ["klaviyo"]
+export function extractMerchantTokens(description: string): string[] {
+  return description
+    .toLowerCase()
+    .replace(/\b(paypal|stripe|shopify|square|squareup|wise|airwallex|apple|google|amazon|visa|mastercard|amex)\b/g, " ")
+    .replace(/\b(payment|payments|billing|bill|fee|fees|charge|charges|invoice|subscription|subs|merchant|processing|payout|services|play|store|com|au|inc|pty|ltd)\b/g, " ")
+    .replace(/[*/\-_.# 0-9]+/g, " ")
+    .split(" ")
+    .map(t => t.trim())
+    .filter(t => t.length > 2);
 }
 
 // ---------------------------------------------------------------------------
@@ -134,6 +161,38 @@ export const FUZZY_ALIAS_GROUPS: FuzzyAliasGroup[] = [
 
   // ── Gateway-behind merchants ──────────────────────────────────────────────
   // These must precede their gateway to win when both tokens appear.
+
+  // ChatGPT — STRIPE * CHATGPT: CHATGPT is stripped by TERMINAL_CODE, leaving
+  // only "Stripe" after display normalisation. Fuzzy catches "chatgpt" in the
+  // raw descriptor and classifies it as Software, not Payment Processing.
+  {
+    name:       "ChatGPT",
+    aliases:    ["chatgpt", "chat gpt"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "an AI chatbot by OpenAI",
+    confidence: "MEDIUM",
+  },
+
+  // Adobe — PAYPAL * ADOBE: "adobe" is a distinctive 5-char token not in any
+  // noise list. Fuzzy catches it before the gateway prefix wins.
+  {
+    name:       "Adobe",
+    aliases:    ["adobe"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "a creative software platform",
+    confidence: "MEDIUM",
+  },
+
+  // Canva — PAYPAL * CANVA is also handled upstream by PAYPAL* prefix stripping
+  // in normalizeMerchant (→ "Canva" → ALIAS_MAP). This entry makes the fuzzy
+  // layer authoritative for all gateway variants.
+  {
+    name:       "Canva",
+    aliases:    ["canva"],
+    category:   CATEGORIES.SOFTWARE,
+    what:       "a graphic design and content creation platform",
+    confidence: "MEDIUM",
+  },
 
   // Figma — PAYPAL * FIGMA has PAYPAL* stripped by the display normalizer;
   // fuzzy catches "figma" in the raw descriptor.

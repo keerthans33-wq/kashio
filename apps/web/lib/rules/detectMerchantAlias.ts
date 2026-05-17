@@ -13,7 +13,7 @@
 import type { Rule, RawMatch, Explanation, Confidence } from "./types";
 import { CATEGORIES } from "./categories";
 import { merchantText, matchesMerchant } from "./shared";
-import { findMerchantAliasMatch, FUZZY_ALIAS_GROUPS } from "./merchantMatcher";
+import { findMerchantAliasMatch, FUZZY_ALIAS_GROUPS, extractMerchantTokens } from "./merchantMatcher";
 
 type AliasEntry = {
   category:   string;
@@ -281,7 +281,42 @@ function detect(tx: { normalizedMerchant: string; description: string }, _userTy
     };
   }
 
-  // ── Priority 2: exact ALIAS_MAP check on the display-normalised merchant ──
+  // ── Priority 2: Generic app-store charges — LOW confidence ───────────────
+  // Runs after the fuzzy merchant check (which surfaces known blended merchants
+  // like PAYPAL*FIGMA → Figma) but before ALIAS_MAP (which would otherwise
+  // return MEDIUM for "Apple Services").
+  //
+  // Fires when:
+  //   • normalizedMerchant is "Apple Services" (APPLE.COM/* or APPLE SERVICES),
+  //     or the raw descriptor starts with "GOOGLE PLAY"
+  // AND extractMerchantTokens returns no residual token beyond platform noise.
+  //
+  // If a useful token is present (e.g. APPLE.COM/ICLOUD → ["icloud"]) the check
+  // is skipped so ALIAS_MAP can handle it at MEDIUM confidence.
+  {
+    const merchantLower = tx.normalizedMerchant.toLowerCase();
+    const isAppleServices = merchantLower === "apple services";
+    const isGooglePlay    = /^google\s+play\b/i.test(tx.description);
+    if (isAppleServices || isGooglePlay) {
+      const residualTokens = extractMerchantTokens(tx.description);
+      if (residualTokens.length === 0) {
+        const displayName = isAppleServices ? "Apple Services" : "Google Play";
+        return {
+          category:   CATEGORIES.SOFTWARE,
+          confidence: "LOW",
+          canUpgrade: false,
+          signals: {
+            appStore:    true,
+            displayName,
+            what:        "app store subscriptions",
+            matchSource: "app_store_generic",
+          },
+        };
+      }
+    }
+  }
+
+  // ── Priority 3: exact ALIAS_MAP check on the display-normalised merchant ──
   const merchant = merchantText(tx);
   for (const [name, entry] of ALIAS_MAP) {
     if (matchesMerchant(merchant, name)) {
@@ -297,6 +332,15 @@ function detect(tx: { normalizedMerchant: string; description: string }, _userTy
 }
 
 function explain(match: RawMatch, tx: { normalizedMerchant: string }, userType?: string | null): Explanation {
+  if (match.signals.appStore) {
+    const displayName = match.signals.displayName as string;
+    return {
+      reason:           `${displayName} charge detected. App-store subscriptions may be work-related — review the underlying app or receipt before claiming.`,
+      confidenceReason: "App-store charges can cover many different apps. Check your receipt to confirm which app this is and whether it was used for work.",
+      mixedUse:         true,
+    };
+  }
+
   const isBusiness  = userType === "contractor" || userType === "sole_trader";
   const context     = isBusiness ? "your business" : "your work";
   const what        = match.signals.what as string;

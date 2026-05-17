@@ -8,10 +8,10 @@ function tx(description: string, normalizedMerchant: string, amount = -50) {
 }
 
 describe("detectDeduction — Work Tools (Software & Equipment)", () => {
-  it("detects Adobe with subscription keyword as SOFTWARE LOW (broad merchant)", () => {
+  it("detects Adobe Creative Cloud as SOFTWARE MEDIUM (now explicitly recognised in FUZZY_ALIAS_GROUPS)", () => {
     const result = detectDeduction(tx("Adobe Creative Cloud monthly subscription", "Adobe"), "employee");
     expect(result?.category).toBe("Software & Subscriptions");
-    expect(result?.confidence).toBe("LOW");
+    expect(result?.confidence).toBe("MEDIUM");
   });
 
   it("detects Google with subscription keyword as SOFTWARE", () => {
@@ -298,10 +298,10 @@ describe("detectDeduction — highly-likely merchant fallback", () => {
     expect(result?.confidence).toBe("MEDIUM");
   });
 
-  it("surfaces ChatGPT with no keyword as Software LOW", () => {
+  it("surfaces ChatGPT with no keyword as Software MEDIUM (now explicitly recognised in FUZZY_ALIAS_GROUPS)", () => {
     const result = detectDeduction(tx("ChatGPT purchase", "ChatGPT"), "employee");
     expect(result?.category).toBe("Software & Subscriptions");
-    expect(result?.confidence).toBe("LOW");
+    expect(result?.confidence).toBe("MEDIUM");
   });
 
   it("surfaces OpenAI subscription as Software", () => {

@@ -120,8 +120,9 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   [/^WISE\s+BUSINESS\b/i,                        "Wise"],
 
   // ── Apple ──────────────────────────────────────────────────────────────────
-  // APPLE.COM/BILL and similar — resolve before the generic "apple" in merchants.ts
-  // so it gets a distinct canonical name for display and alias matching.
+  // Resolve APPLE.COM/* and the plain "APPLE SERVICES" descriptor before LOCATION_SLUG
+  // can strip " SERVICES" (all-caps slug) and before PREFIXES touch anything.
+  [/^APPLE\s+SERVICES?\b/i,                      "Apple Services"],
   [/^APPLE\.COM\b/i,                             "Apple Services"],
 
   // ── Company legal suffixes (≤2 chars, not caught by LOCATION_SLUG) ─────────
