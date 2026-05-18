@@ -196,6 +196,9 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   // ── Equipment — trade, tool, and computer hardware retailers ─────────────
   ["sydney tools",    { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a trade tools and equipment retailer" }],
   ["sydneytools",     { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a trade tools and equipment retailer" }],
+  ["total tools",     { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a trade tools and equipment retailer" }],
+  // bunnings is a general hardware store — LOW confidence since purchases may be personal.
+  ["bunnings",        { category: CATEGORIES.EQUIPMENT,  confidence: "LOW",    what: "a hardware and building supplies retailer" }],
   // msy technology must precede msy (longer key wins).
   ["msy technology",  { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a computer hardware and electronics retailer" }],
   ["msy",             { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a computer hardware and electronics retailer" }],
@@ -235,6 +238,15 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   ["pluralsight",       { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "a tech skills learning platform" }],
   ["domestika",         { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "an online creative skills learning platform" }],
   ["edx",               { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "an online education platform" }],
+  ["coursera",          { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "an online learning and professional development platform" }],
+  ["udemy",             { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "an online learning and professional development platform" }],
+
+  // ── Office Supplies ───────────────────────────────────────────────────────
+  // big w office must precede any shorter "big w" entry (longer key wins).
+  ["big w office",     { category: CATEGORIES.OFFICE_SUPPLIES, confidence: "MEDIUM", what: "an office supplies section of Big W" }],
+  ["office choice",    { category: CATEGORIES.OFFICE_SUPPLIES, confidence: "MEDIUM", what: "an office supplies retailer" }],
+  // amazon business must precede any generic "amazon" entry.
+  ["amazon business",  { category: CATEGORIES.OFFICE_SUPPLIES, confidence: "MEDIUM", what: "an Amazon business purchasing account" }],
 
   // ── Work Clothing — workwear, PPE, and safety footwear ───────────────────
   // rsea safety must precede rsea (longer key wins).
@@ -259,6 +271,7 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   ["protector alsafe", { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "a safety equipment and workwear supplier" }],
   ["workwearhub",     { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "an online workwear retailer" }],
   ["tradies",         { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "a workwear and safety clothing retailer" }],
+  ["scrubs australia", { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "a medical and work uniform retailer" }],
 
   // ── Apple Services ────────────────────────────────────────────────────────
   // Canonical name produced by normalizeMerchant for APPLE.COM/* descriptors.

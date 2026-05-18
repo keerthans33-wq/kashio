@@ -34,6 +34,8 @@ export type FuzzyMatch = FuzzyAliasGroup & {
 export function normalizeMerchantFuzzy(raw: string): string {
   return String(raw || "")
     .toLowerCase()
+    .replace(/@/g, "a")
+    .replace(/3/g, "e")
     .replace(/0/g, "o")
     .replace(/1/g, "i")
     .replace(/5/g, "s")
@@ -230,7 +232,12 @@ export const FUZZY_ALIAS_GROUPS: FuzzyAliasGroup[] = [
   // false-positive on "MSFT-ADVERTISING/BING*AU" and similar descriptors.
   {
     name:       "Microsoft Azure",
-    aliases:    ["microsoft azure", "msftazure", "azure"],
+    // "microsoft azure" (space-separated) is intentionally NOT an alias:
+    // aliasTokens ["microsoft","azure"] → importantTokenMatch fires on "microsoft"
+    // alone, which cross-fires on "MICR0SOFT @DS" (Microsoft Ads) → wrong category.
+    // "azure" (5 chars) is distinctive enough for importantTokenMatch on its own.
+    // "msftazure" compact matches "MSFT*AZURE" via compactMatch.
+    aliases:    ["msftazure", "azure"],
     category:   CATEGORIES.SOFTWARE,
     what:       "a cloud computing and infrastructure platform",
     confidence: "MEDIUM",
@@ -546,10 +553,68 @@ export const FUZZY_ALIAS_GROUPS: FuzzyAliasGroup[] = [
     confidence: "MEDIUM",
   },
 
-  // ── Ad networks / recommendation engines ─────────────────────────────────
-  // These appear with dots, hyphens, or gateway prefixes that prevent the
-  // display normaliser from producing a clean merchant name.
+  // ── Ad networks / social ad platforms ────────────────────────────────────
+  // These appear with dots, hyphens, leet-speak, or gateway prefixes that prevent
+  // the display normaliser from producing a clean merchant name.
+  // Compact aliases (no spaces) are used to avoid importantTokenMatch false-positives
+  // on short tokens like "ads" (3 chars) or "google" / "meta" (distinctive but risky
+  // in isolation). compactMatch fires when the alias is a substring of the collapsed
+  // normalized descriptor — so "googleads" matches "G0OGLE ADS" (after 0→o: "google
+  // ads" → compact "googleads") without firing on "GOOGLE WORKSPACE" ("googleworkspace").
 
+  {
+    name:       "Google Ads",
+    // Only compact form — "google adwords" (space-separated) would fire
+    // importantTokenMatch on "google" alone, hitting GOOGLE PLAY / GOOGLE CLOUD.
+    // "G0OGLE ADS" → normalizeMerchantFuzzy(0→o) → "google ads" → compact
+    // "googleads" ✓.  "G0OGLE ADWORDS" is also caught: "googleadwords" ⊅ "googleads"
+    // but MERCHANT_ALIASES handles adwords via the display normaliser first.
+    aliases:    ["googleads"],
+    category:   CATEGORIES.MARKETING,
+    what:       "an online advertising platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Meta Ads",
+    // "INST@GRAM ADS" → @→a → "instagram ads" → compact "instagramads" ✓.
+    // "INSTAGRAM PROMOTE*AU" → compact "instagrampromote" ⊃ "instagrampromot" ✓.
+    aliases:    ["metaads", "instagramads", "facebookads", "instagrampromot"],
+    category:   CATEGORIES.MARKETING,
+    what:       "a social media advertising platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "TikTok Ads",
+    // "tiktok for business" (space-separated) would fire importantTokenMatch on
+    // "business" alone, causing false positives on any descriptor with "business".
+    aliases:    ["tiktokads", "tiktok ads"],
+    category:   CATEGORIES.MARKETING,
+    what:       "a social media advertising platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "LinkedIn Ads",
+    // NOT "linkedin" alone — that would fire on LinkedIn Learning and LinkedIn Premium.
+    // "linkedinads" compact is safe: only matches descriptors containing "linkedinads".
+    aliases:    ["linkedinads"],
+    category:   CATEGORIES.MARKETING,
+    what:       "a professional network advertising platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Pinterest Ads",
+    aliases:    ["pinterestads", "pinterest ads"],
+    category:   CATEGORIES.MARKETING,
+    what:       "a social media advertising platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Reddit Ads",
+    aliases:    ["redditads", "reddit ads"],
+    category:   CATEGORIES.MARKETING,
+    what:       "an online advertising platform",
+    confidence: "MEDIUM",
+  },
   {
     name:       "Snap Ads",
     // "SNAP*ADS MANAGER" — TERMINAL_CODE strips *ADS (3 chars ✓), leaving "SNAP
@@ -1203,6 +1268,92 @@ export const FUZZY_ALIAS_GROUPS: FuzzyAliasGroup[] = [
     aliases:    ["workwearhub"],
     category:   CATEGORIES.WORK_CLOTHING,
     what:       "an online workwear retailer",
+    confidence: "MEDIUM",
+  },
+
+  // ── Professional development / online learning ────────────────────────────
+
+  {
+    name:       "Coursera",
+    // "COURS3RA" → 3→e → "coursera" ✓ via exact/importantTokenMatch.
+    aliases:    ["coursera"],
+    category:   CATEGORIES.PROFESSIONAL_DEVELOPMENT,
+    what:       "an online learning and professional development platform",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Udemy",
+    aliases:    ["udemy"],
+    category:   CATEGORIES.PROFESSIONAL_DEVELOPMENT,
+    what:       "an online learning and professional development platform",
+    confidence: "MEDIUM",
+  },
+
+  // ── Office supplies / trade tools ─────────────────────────────────────────
+  // Compact aliases prevent importantTokenMatch false-positives on common words
+  // like "office" (6 chars), "total" (5 chars), "big" (3 chars).
+
+  {
+    name:       "Big W Office",
+    // "BIG W OFFICE BUNBURY" → compact "bigwoffice" ⊆ "bigwoffice" via compactMatch ✓.
+    aliases:    ["bigwoffice"],
+    category:   CATEGORIES.OFFICE_SUPPLIES,
+    what:       "an office supplies section of Big W",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Office Choice",
+    // "OFFICE CHOICE PERTH" → compact "officechoice" ✓.
+    aliases:    ["officechoice"],
+    category:   CATEGORIES.OFFICE_SUPPLIES,
+    what:       "an office supplies retailer",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Total Tools",
+    // "TOTAL TOOLS MOOROOKA" → compact "totaltools" ✓.
+    aliases:    ["totaltools"],
+    category:   CATEGORIES.EQUIPMENT,
+    what:       "a trade tools and equipment retailer",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Crazy Domains",
+    // "CRAZY DOMAINS SYDNEY" → LOCATION_SLUG strips → display "Crazy";
+    // MERCHANT_ALIASES resolves first, but fuzzy adds redundancy.
+    aliases:    ["crazydomains", "crazy domains"],
+    category:   CATEGORIES.WEBSITE_DOMAINS,
+    what:       "a domain registrar and web hosting provider",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Amazon Business",
+    // "AMAZON BUSINESS AU" → LOCATION_SLUG strips " BUSINESS AU" → display "Amazon".
+    // MERCHANT_ALIASES resolves first; fuzzy catches any gateway variant.
+    aliases:    ["amazonbusiness"],
+    category:   CATEGORIES.OFFICE_SUPPLIES,
+    what:       "an Amazon business purchasing account",
+    confidence: "MEDIUM",
+  },
+  {
+    name:       "Bunnings",
+    // "BUNNINGS WAREHOUSE AUBURN" — broad general hardware retailer; LOW confidence
+    // since purchases may be personal. Only fires for business/tradie context.
+    aliases:    ["bunnings"],
+    category:   CATEGORIES.EQUIPMENT,
+    what:       "a hardware and building supplies retailer",
+    confidence: "LOW",
+  },
+
+  // ── Workwear additions ────────────────────────────────────────────────────
+
+  {
+    name:       "Scrubs Australia",
+    // "SCRUBS AUSTRALIA SYDNEY" → LOCATION_SLUG strips " AUSTRALIA SYDNEY";
+    // compact alias avoids importantTokenMatch on "scrubs" in unrelated contexts.
+    aliases:    ["scrubsaustralia"],
+    category:   CATEGORIES.WORK_CLOTHING,
+    what:       "a medical and work uniform retailer",
     confidence: "MEDIUM",
   },
 

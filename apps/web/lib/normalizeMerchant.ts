@@ -2,12 +2,13 @@
 // and returns a clean, readable merchant name.
 //
 // Pipeline (applied in order):
-//   0. Merchant alias map   — "GOOGLE *ADS" → "Google Ads" (before prefix stripping)
-//   1. Strip known prefixes — "SQ *COFFEE SHOP" → "COFFEE SHOP"
-//   2. Strip terminal codes — "OFFICEWORKS *AB12CD" → "OFFICEWORKS"
-//   3. Strip location suffix— "OFFICEWORKS SYDNEY NSW" → "OFFICEWORKS"
-//   4. Strip standalone IDs — "RENT 123456" → "RENT"
-//   5. Title-case the result
+//   -1. Leet-speak repair   — "G0OGLE" → "GOOGLE", "INST@GRAM" → "INSTAGRAM"
+//   0.  Merchant alias map  — "GOOGLE *ADS" → "Google Ads" (before prefix stripping)
+//   1.  Strip known prefixes — "SQ *COFFEE SHOP" → "COFFEE SHOP"
+//   2.  Strip terminal codes — "OFFICEWORKS *AB12CD" → "OFFICEWORKS"
+//   3.  Strip location suffix— "OFFICEWORKS SYDNEY NSW" → "OFFICEWORKS"
+//   4.  Strip standalone IDs — "RENT 123456" → "RENT"
+//   5.  Title-case the result
 //
 // Examples:
 //   "SQ *RIVERSIDE CAFE"           → "Riverside Cafe"
@@ -47,6 +48,7 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   [/^META\s+(?:PAYMENTS?|ADS?|BUSINESS)\b/i,     "Meta Ads"],
   [/^FACEBOOK\s+ADS?\b/i,                        "Facebook Ads"],
   [/^INSTAGRAM\s+ADS?\b/i,                       "Meta Ads"],
+  [/^INSTAGRAM\s+PROMOT/i,                       "Meta Ads"],
 
   // ── Microsoft / Bing ───────────────────────────────────────────────────────
   // MSFT abbreviation variants — must precede MICROSOFT entries.
@@ -128,6 +130,8 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   // .COM / .COM.AU suffixes on these descriptors survive LOCATION_SLUG because
   // the dot is not a space; ALIAS_MAP substring still matches, but we resolve
   // here for cleaner display names.
+  // CRAZY DOMAINS — LOCATION_SLUG strips " DOMAINS SYDNEY" → bare "Crazy".
+  [/^CRAZY\s+DOMAINS\b/i,                        "Crazy Domains"],
   [/^HOSTGATOR\b/i,                              "Hostgator"],
   [/^BLUEHOST\b/i,                               "Bluehost"],
   [/^SITEGROUND\b/i,                             "Siteground"],
@@ -149,6 +153,9 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   [/^CHARTERED\s+ACCOUNTANTS\b/i,                "Chartered Accountants ANZ"],
   [/^CA\s+ANZ\b/i,                               "CA ANZ"],
   [/^ENGINEERS\s+AUSTRALIA\b/i,                  "Engineers Australia"],
+  // COURSERA / UDEMY — standalone brand names, resolve before location stripping.
+  [/^COURSERA\b/i,                               "Coursera"],
+  [/^UDEMY\b/i,                                  "Udemy"],
 
   // ── Workwear / safety ─────────────────────────────────────────────────────
   // RSEA SAFETY #PERTH — TERMINAL_CODE strips #PERTH but LOCATION_SLUG then
@@ -157,6 +164,23 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   [/^TOTALLY[\s-]*WORKWEAR\b/i,                  "Totally Workwear"],
   [/^BLACKWOODS\b/i,                             "Blackwoods"],
   [/^HARD\s+YAKKA\b/i,                           "Hard Yakka"],
+  // PUMA SAFETY / MONGREL BOOTS — LOCATION_SLUG strips SAFETY / BOOTS suffix.
+  [/^PUMA\s+SAFETY\b/i,                          "Puma Safety"],
+  [/^MONGREL\s+BOOTS?\b/i,                       "Mongrel Boots"],
+  // SCRUBS AUSTRALIA — LOCATION_SLUG strips " AUSTRALIA".
+  [/^SCRUBS\s+AUSTRALIA\b/i,                     "Scrubs Australia"],
+
+  // ── Design / assets ───────────────────────────────────────────────────────
+  // MOTION ARRAY — LOCATION_SLUG strips ARRAY suffix, leaving just "Motion".
+  [/^MOTION\s+ARRAY\b/i,                         "Motion Array"],
+
+  // ── Office / hardware retailers ───────────────────────────────────────────
+  // BIG W OFFICE / OFFICE CHOICE / TOTAL TOOLS — second word is stripped by
+  // LOCATION_SLUG when followed by a location suffix.
+  [/^BIG\s+W\s+OFFICE\b/i,                       "Big W Office"],
+  [/^OFFICE\s+CHOICE\b/i,                        "Office Choice"],
+  // TOTAL TOOLS — LOCATION_SLUG strips TOOLS and SYDNEY TOOLS strips SYDNEY.
+  [/^TOTAL\s+TOOLS?\b/i,                         "Total Tools"],
 
   // ── Hardware / tech retailers ─────────────────────────────────────────────
   // MSY TECHNOLOGY — LOCATION_SLUG strips TECHNOLOGY, leaving just "Msy".
@@ -184,6 +208,8 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   // ── Cloud / hosting ────────────────────────────────────────────────────────
   [/^AWS\s+AMAZON\b/i,                           "AWS"],
   [/^AMAZON\s+WEB\s+SERVICES?\b/i,               "AWS"],
+  // AMAZON BUSINESS — LOCATION_SLUG strips " BUSINESS" → bare "Amazon".
+  [/^AMAZON\s+BUSINESS\b/i,                      "Amazon Business"],
   [/^GCP\b/i,                                    "Google Cloud"],
   [/^DIGITALOCEAN\b/i,                           "DigitalOcean"],
 
@@ -212,6 +238,24 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   [/^LOOM\s+INC\b/i,                             "Loom"],
   [/^ZAPIER\s+INC\b/i,                           "Zapier"],
 ];
+
+// ---------------------------------------------------------------------------
+// Step -1 — Leet-speak repair (applied before everything else)
+// ---------------------------------------------------------------------------
+// Repairs @ → a and 0 → o — the two substitutions reliably unambiguous in
+// Australian bank merchant descriptors. Applied to the raw description before
+// MERCHANT_ALIASES, so patterns like /^GOOGLE\s*ADS/i match "G0OGLE ADS" and
+// /^INSTAGRAM\s+ADS/i matches "INST@GRAM ADS".
+// Only @ and 0 are repaired here — the other leet digits (1, 3, 5, 8) are
+// handled by normalizeMerchantFuzzy in the classification layer.
+function repairLeetspeakDisplay(raw: string): string {
+  return raw
+    .replace(/@/g, "a")
+    // Only repair 0→o when the zero is directly between two letters.
+    // This preserves standalone reference codes like "0042" (preceded by a space)
+    // while fixing leet-speak like "G0OGLE" (zero between G and O).
+    .replace(/(?<=[a-zA-Z])0(?=[a-zA-Z])/g, "o");
+}
 
 // ---------------------------------------------------------------------------
 // Step 1 — Strip known prefixes
@@ -274,7 +318,9 @@ function toTitleCase(str: string): string {
 }
 
 export function normalizeMerchant(description: string): string {
-  let result = description.trim();
+  // -1. Leet-speak repair — must run before MERCHANT_ALIASES so regex patterns
+  // designed for clean descriptors also match corrupted bank descriptions.
+  let result = repairLeetspeakDisplay(description.trim());
 
   // 0. Merchant alias map — resolve known patterns before any stripping.
   for (const [pattern, canonical] of MERCHANT_ALIASES) {
