@@ -11,19 +11,22 @@ type Status     = "NEEDS_REVIEW" | "CONFIRMED" | "REJECTED";
 type Confidence = "LOW" | "MEDIUM" | "HIGH";
 
 export type CandidateCardProps = {
-  id:                string;
-  status:            Status;
-  confidence:        Confidence;
-  category:          string;
-  reason:            string;
-  confidenceReason?: string;
-  mixedUse?:         boolean;
-  hasEvidence:       boolean;
-  evidenceNote:      string | null;
-  workPercent?:      number | null;
-  transaction:       { normalizedMerchant: string; amount: number; date: string; description: string };
-  userType?:         string | null;
-  onStatusChange?:   (id: string, next: Status) => void;
+  id:                     string;
+  status:                 Status;
+  confidence:             Confidence;
+  category:               string;
+  reason:                 string;
+  confidenceReason?:      string;
+  mixedUse?:              boolean;
+  hasEvidence:            boolean;
+  evidenceNote:           string | null;
+  workPercent?:           number | null;
+  score:                  number;
+  reviewRequired:         boolean;
+  excludeFromEstimate:    boolean;
+  transaction:            { normalizedMerchant: string; amount: number; date: string; description: string };
+  userType?:              string | null;
+  onStatusChange?:        (id: string, next: Status) => void;
 };
 
 // ── Visual constants ───────────────────────────────────────────────────────────
@@ -63,7 +66,8 @@ const CONFIDENCE_COLOR: Record<Confidence, string> = {
 
 export function CandidateCard({
   id, status: initialStatus, confidence, category, reason, confidenceReason,
-  mixedUse, hasEvidence, evidenceNote, workPercent: initialWorkPercent, transaction, onStatusChange,
+  mixedUse, hasEvidence, evidenceNote, workPercent: initialWorkPercent, transaction,
+  reviewRequired, excludeFromEstimate, onStatusChange,
 }: CandidateCardProps) {
   const [status, setStatus]                 = useState<Status>(initialStatus);
   const [expanded, setExpanded]             = useState(false);
@@ -148,8 +152,8 @@ export function CandidateCard({
           </p>
         </div>
 
-        {/* Row 2: date · confidence */}
-        <div className="mt-1.5 flex items-center gap-2">
+        {/* Row 2: date · confidence · badges */}
+        <div className="mt-1.5 flex items-center gap-2 flex-wrap">
           <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
             {transaction.date}
           </span>
@@ -166,6 +170,22 @@ export function CandidateCard({
                 />
                 {CONFIDENCE_LABEL[confidence]}
               </span>
+              {reviewRequired && (
+                <span
+                  className="rounded-full px-2 py-0.5 text-[11px] font-medium"
+                  style={{ backgroundColor: "rgba(245,158,11,0.12)", color: "#F59E0B" }}
+                >
+                  Needs review
+                </span>
+              )}
+              {excludeFromEstimate && (
+                <span
+                  className="rounded-full px-2 py-0.5 text-[11px] font-medium"
+                  style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}
+                >
+                  Not in estimate
+                </span>
+              )}
             </>
           )}
         </div>

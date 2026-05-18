@@ -536,10 +536,10 @@ describe("detectDeduction — alias override regression (must fire for all user 
     expect(result?.category).toBe("Payment Processing");
   });
 
-  it("Wise fires for employee as Payment Processing", () => {
+  it("Wise fires as Uncategorised Possible Deduction (ambiguous payment, not Payment Processing)", () => {
     const result = detectDeduction(tx("Wise international transfer", "Wise"), "employee");
     expect(result).not.toBeNull();
-    expect(result?.category).toBe("Payment Processing");
+    expect(result?.category).toBe("Uncategorised Possible Deduction");
   });
 
   // ── Contractors/sole_traders get +1 confidence lift ───────────────────────
@@ -602,13 +602,14 @@ describe("detectDeduction — previously missing merchants (QuickBooks, PayPal F
     expect(result?.category).toBe("Payment Processing");
   });
 
-  it("normalizeMerchant: PAYPAL*FEE → PayPal Fee (intercepted before PREFIXES strips PAYPAL*)", () => {
+  it("normalizeMerchant: PAYPAL*FEE/MERCHANT → PayPal Fee; PAYPAL*AU/AUSTRALIA → PayPal (ambiguous)", () => {
     expect(normalizeMerchant("PAYPAL*FEE")).toBe("PayPal Fee");
     expect(normalizeMerchant("PAYPAL*FEES")).toBe("PayPal Fee");
     expect(normalizeMerchant("PAYPAL*MERCHANT")).toBe("PayPal Fee");
-    expect(normalizeMerchant("PAYPAL*AU")).toBe("PayPal Fee");
+    // AU and AUSTRALIA now produce bare "PayPal" so detectAmbiguousPayment can surface them at LOW confidence.
+    expect(normalizeMerchant("PAYPAL*AU")).toBe("PayPal");
     expect(normalizeMerchant("PAYPAL MERCHANT FEES")).toBe("PayPal Fee");
-    expect(normalizeMerchant("PAYPAL AUSTRALIA")).toBe("PayPal Fee");
+    expect(normalizeMerchant("PAYPAL AUSTRALIA")).toBe("PayPal");
   });
 
   it("PayPal Fee normalized merchant fires as Payment Processing", () => {

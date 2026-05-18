@@ -2,6 +2,7 @@ import type { TransactionInput, DeductionMatch, RawMatch, Rule } from "./types";
 import { isExcluded, isPersonalUse, downgradeConfidence } from "./shared";
 import { adjustConfidence } from "./userTypeLayer";
 import { isBlacklisted } from "./blacklist";
+import { detectAmbiguousPayment } from "./detectAmbiguousPayment";
 import { detectMerchantAlias } from "./detectMerchantAlias";
 import { detectSoftware } from "./detectSoftware";
 import { detectOfficeSupplies } from "./detectOfficeSupplies";
@@ -14,7 +15,8 @@ import { detectMeals } from "./detectMeals";
 import { detectFallback } from "./detectFallback";
 
 const ALL_RULES: Rule[] = [
-  detectMerchantAlias,
+  detectAmbiguousPayment, // priority 11 — intercepts ambiguous payment platforms before alias rule
+  detectMerchantAlias,    // priority 10
   detectSoftware,
   detectOfficeSupplies,
   detectWorkEquipment,

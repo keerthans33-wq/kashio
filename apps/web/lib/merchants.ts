@@ -580,6 +580,10 @@ export const MERCHANTS: Record<string, MerchantEntry> = {
     category:    CATEGORIES.PHONE_INTERNET,
     description: "Budget internet and mobile plans.",
   },
+  "belong": {
+    category:    CATEGORIES.PHONE_INTERNET,
+    description: "NBN and mobile plans (Telstra wholesale).",
+  },
   "spintel": {
     category:    CATEGORIES.PHONE_INTERNET,
     description: "NBN and mobile plans.",
@@ -637,6 +641,14 @@ export const MERCHANTS: Record<string, MerchantEntry> = {
     category:    CATEGORIES.WORK_TRAVEL,
     tier:        "transport",
     description: "Regional and domestic Australian flights.",
+  },
+
+  // ── Meals — food delivery ──────────────────────────────────────────────────
+  // Uber Eats is food delivery, not rideshare — must not be Work Travel.
+  // adjustConfidence suppresses this for employees (MEALS + employee → null).
+  "uber eats": {
+    category:    CATEGORIES.MEALS,
+    description: "Food delivery service.",
   },
 
   // ── Work travel — rideshare & taxis ────────────────────────────────────────
@@ -783,10 +795,52 @@ export const MERCHANTS: Record<string, MerchantEntry> = {
     tier:        "fuel",
     description: "Fuel stations. Work-related driving is partially deductible.",
   },
+  "mobil": {
+    category:    CATEGORIES.WORK_TRAVEL,
+    tier:        "fuel",
+    description: "Fuel stations. Work-related driving is partially deductible.",
+  },
+  "liberty": {
+    category:    CATEGORIES.WORK_TRAVEL,
+    tier:        "fuel",
+    description: "Independent fuel stations. Work-related driving is partially deductible.",
+  },
   "7-eleven": {
     category:    CATEGORIES.WORK_TRAVEL,
     tier:        "convenience",
     description: "Convenience store and fuel. Only the fuel component is potentially deductible.",
+  },
+
+  // ── Parking ───────────────────────────────────────────────────────────────
+  "wilson parking": {
+    category:    CATEGORIES.WORK_TRAVEL,
+    tier:        "parking",
+    description: "Parking stations. Work-related parking may be deductible — not daily commute parking.",
+  },
+  "secure parking": {
+    category:    CATEGORIES.WORK_TRAVEL,
+    tier:        "parking",
+    description: "Parking stations. Work-related parking may be deductible — not daily commute parking.",
+  },
+  "cpp parking": {
+    category:    CATEGORIES.WORK_TRAVEL,
+    tier:        "parking",
+    description: "Parking stations (Care Park). Work-related parking may be deductible.",
+  },
+  "city of perth parking": {
+    category:    CATEGORIES.WORK_TRAVEL,
+    tier:        "parking",
+    description: "City of Perth council parking. Work-related parking may be deductible.",
+  },
+  "easypark": {
+    category:    CATEGORIES.WORK_TRAVEL,
+    tier:        "parking",
+    description: "Parking payment app. Work-related parking may be deductible.",
+  },
+  "paystay": {
+    category:    CATEGORIES.WORK_TRAVEL,
+    tier:        "parking",
+    description: "Parking payment app. Work-related parking may be deductible.",
   },
 
   // ── Work clothing ──────────────────────────────────────────────────────────

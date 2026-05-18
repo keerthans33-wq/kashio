@@ -35,6 +35,16 @@ export function combinedText(tx: TxText): string {
   return `${tx.normalizedMerchant} ${tx.description}`.toLowerCase();
 }
 
+// Words that indicate the merchant is a physical venue — e.g. a telco's
+// naming-rights sponsorship of a stadium should not cause purchases there to
+// be classified as phone/internet. Checked against combinedText so the venue
+// word is found even when normalizeMerchant has already stripped it.
+export const VENUE_WORDS = ["stadium", "arena", "dome", "oval", "sportsground", "showground"];
+
+export function containsVenueWord(combined: string): boolean {
+  return VENUE_WORDS.some((v) => combined.includes(v));
+}
+
 // Patterns that suggest personal rather than work use.
 // A match reduces confidence by one step rather than excluding outright.
 //

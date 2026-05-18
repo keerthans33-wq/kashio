@@ -6,8 +6,10 @@ import { refineTransaction } from "./gemini/refineTransaction";
 import { classifyTransaction } from "./gemini/classifyTransaction";
 import { logClassificationSummary } from "./classificationAudit";
 import { CATEGORIES } from "./rules/categories";
+import { computeScore } from "./rules/scoring";
 import type { ClassificationAuditEntry } from "./classificationAudit";
 import type { DeductionMatch } from "./rules/types";
+import type { ScoringSource } from "./rules/scoring";
 import type { IngestionRow } from "./ingestion/types";
 
 // Tokens that signal a transaction might be a business expense even if the
@@ -197,6 +199,14 @@ export async function runImportPipeline(
           reason:       match.reason,
         });
 
+        const score = computeScore({
+          confidence:   match.confidence,
+          signals:      match.signals,
+          mixedUse:     match.mixedUse ?? false,
+          needsReceipt: match.needsReceipt,
+          source:       matchSource as ScoringSource,
+        });
+
         return {
           transactionId:    t.id,
           category:         match.category,
@@ -204,6 +214,7 @@ export async function runImportPipeline(
           reason:           match.reason,
           confidenceReason: match.confidenceReason,
           mixedUse:         match.mixedUse ?? false,
+          score,
         };
       }),
     )

@@ -5,7 +5,7 @@
 
 import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
-import { merchantText, combinedText, matchesMerchant } from "./shared";
+import { merchantText, combinedText, matchesMerchant, containsVenueWord } from "./shared";
 import { getMerchantsForCategory, getMerchantInfo } from "../merchants";
 
 const KEYWORDS = [
@@ -24,9 +24,11 @@ const KEYWORDS = [
 function detect(tx: { normalizedMerchant: string; description: string }, userType?: string | null): RawMatch | null {
   const combined = combinedText(tx);
 
-  const merchants     = getMerchantsForCategory(CATEGORIES.PHONE_INTERNET, undefined, userType);
-  const merchant      = merchantText(tx);
-  const merchantMatch = merchants.some((m) => matchesMerchant(merchant, m));
+  const merchants = getMerchantsForCategory(CATEGORIES.PHONE_INTERNET, undefined, userType);
+  const merchant  = merchantText(tx);
+  // Block merchant match for physical venues — a telco's naming-rights sponsorship
+  // of a stadium does not make purchases there phone/internet expenses.
+  const merchantMatch = !containsVenueWord(combined) && merchants.some((m) => matchesMerchant(merchant, m));
   const keyword       = KEYWORDS.find((k) => combined.includes(k));
 
   if (!merchantMatch && !keyword) return null;

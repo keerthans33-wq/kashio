@@ -217,8 +217,11 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   // PayPal fee aliases must run before PREFIXES (Step 1) strips "PAYPAL*" off "PAYPAL*FEE".
   [/^PAYPAL\s*\*?\s*FEE[S]?\b/i,                 "PayPal Fee"],
   [/^PAYPAL\s*\*?\s*MERCHANT\b/i,                "PayPal Fee"],
-  [/^PAYPAL\s*\*?\s*AU\b/i,                      "PayPal Fee"],
-  [/^PAYPAL\s*AUSTRALIA\b/i,                     "PayPal Fee"],
+  // "PAYPAL AU" / "PAYPAL AUSTRALIA" are the Australian PayPal entity — they appear for both
+  // consumer payments and merchant fees. Normalise to bare "PayPal" so detectAmbiguousPayment
+  // can surface them at LOW confidence rather than auto-categorising as Payment Processing.
+  [/^PAYPAL\s*\*?\s*AU\b/i,                      "PayPal"],
+  [/^PAYPAL\s*AUSTRALIA\b/i,                     "PayPal"],
   [/^STRIPE\s+PAYMENTS?\b/i,                     "Stripe"],
   [/^STRIPE\s+TECHNOLOGY\b/i,                    "Stripe"],
   [/^AIRWALLEX\b/i,                              "Airwallex"],
@@ -229,6 +232,46 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   // can strip " SERVICES" (all-caps slug) and before PREFIXES touch anything.
   [/^APPLE\s+SERVICES?\b/i,                      "Apple Services"],
   [/^APPLE\.COM\b/i,                             "Apple Services"],
+
+  // ── Sponsored / branded venues ────────────────────────────────────────────
+  // Physical venues whose names begin with a telco or brand sponsor.
+  // Must be caught before LOCATION_SLUG strips the venue word (e.g. "STADIUM",
+  // "DOME"), which would leave only the sponsor name and cause false category
+  // matches (e.g. "Optus" → Phone & Internet).
+  [/^OPTUS\s+STADIUM\b/i,              "Optus Stadium"],
+  [/^TELSTRA\s+DOME\b/i,              "Telstra Dome"],
+  [/^TELSTRA\s+STADIUM\b/i,           "Telstra Stadium"],
+
+  // ── Fuel brands ───────────────────────────────────────────────────────────
+  // "EG AMPOL" — EG Group operates Ampol-branded fuel stations.
+  // LOCATION_SLUG strips " AMPOL" → "EG"; resolve to Ampol first.
+  [/^EG\s+AMPOL\b/i,                             "Ampol"],
+  // "UNITED PETROLEUM" — LOCATION_SLUG strips " PETROLEUM" → "United".
+  [/^UNITED\s+PETROLEUM\b/i,                     "United Petroleum"],
+  // "PUMA ENERGY" — LOCATION_SLUG strips " ENERGY" → "Puma", losing brand context.
+  [/^PUMA\s+ENERGY\b/i,                          "Puma Energy"],
+
+  // ── Parking brands ────────────────────────────────────────────────────────
+  // LOCATION_SLUG strips the "PARKING" suffix, losing the brand context.
+  // Resolve to full display names before any stripping occurs.
+  [/^WILSON\s+PARKING\b/i,                       "Wilson Parking"],
+  [/^SECURE\s+PARKING\b/i,                       "Secure Parking"],
+  [/^CPP\s+PARKING\b/i,                          "CPP Parking"],
+  [/^CITY\s+OF\s+PERTH\s+PARKING\b/i,            "City of Perth Parking"],
+
+  // ── Uber variants ─────────────────────────────────────────────────────────
+  // "UBER EATS" must be resolved before LOCATION_SLUG strips "EATS" → "Uber",
+  // which would lose the food-delivery context needed to avoid Work Travel.
+  [/^UBER[\s*]+EATS?\b/i,                        "Uber Eats"],
+  // "UBER HELP.UBER.COM" / "UBER * HELP.UBER.C" — Uber's help-centre URL appears
+  // in bank statements. "HELP" (4 chars) triggers importantTokenMatch → "Help Scout".
+  // Resolve to bare "Uber" before any fuzzy matching runs.
+  [/^UBER\s*\*?\s*HELP\b/i,                      "Uber"],
+
+  // ── Taxi services ─────────────────────────────────────────────────────────
+  // "13 CABS" — LOCATION_SLUG strips "CABS" → "13" (not a recognisable merchant).
+  // Must be caught before stripping so the canonical name is preserved.
+  [/^13\s+CABS?\b/i,                             "13cabs"],
 
   // ── Company legal suffixes (≤2 chars, not caught by LOCATION_SLUG) ─────────
   [/^UBER\s+BV\b/i,                              "Uber"],

@@ -4,6 +4,7 @@ import { db } from "../../../../lib/db";
 import { requireUserWithType } from "../../../../lib/auth";
 import { CATEGORIES_BY_USER_TYPE, ACTIVE_CATEGORIES } from "../../../../lib/rules/categories";
 import { getMetaBySlug } from "../../../../lib/categorySlug";
+import { computeReviewRequired, computeExcludeFromEstimate } from "../../../../lib/rules/scoring";
 import { ReviewList } from "../ReviewList";
 import type { CandidateCardProps } from "../CandidateCard";
 import { FadeIn } from "@/components/motion/FadeIn";
@@ -18,20 +19,26 @@ function toCardProps(c: {
   confidence: "LOW" | "MEDIUM" | "HIGH"; category: string;
   reason: string; confidenceReason: string | null; mixedUse: boolean;
   hasEvidence: boolean; evidenceNote: string | null; workPercent: number | null;
+  score: number;
   transaction: { normalizedMerchant: string; amount: number; date: string; description: string };
 }, userType: string | null): CandidateCardProps {
+  const reviewRequired      = computeReviewRequired(c.score, c.mixedUse);
+  const excludeFromEstimate = computeExcludeFromEstimate(c.score);
   return {
-    id:               c.id,
-    status:           c.status,
-    confidence:       c.confidence,
-    category:         c.category,
-    reason:           c.reason,
-    confidenceReason: c.confidenceReason ?? undefined,
-    mixedUse:         c.mixedUse,
-    hasEvidence:      c.hasEvidence,
-    evidenceNote:     c.evidenceNote ?? null,
-    workPercent:      c.workPercent ?? null,
-    transaction:      c.transaction,
+    id:                  c.id,
+    status:              c.status,
+    confidence:          c.confidence,
+    category:            c.category,
+    reason:              c.reason,
+    confidenceReason:    c.confidenceReason ?? undefined,
+    mixedUse:            c.mixedUse,
+    hasEvidence:         c.hasEvidence,
+    evidenceNote:        c.evidenceNote ?? null,
+    workPercent:         c.workPercent ?? null,
+    score:               c.score,
+    reviewRequired,
+    excludeFromEstimate,
+    transaction:         c.transaction,
     userType,
   };
 }

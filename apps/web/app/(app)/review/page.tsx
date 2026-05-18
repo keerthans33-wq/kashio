@@ -2,6 +2,7 @@ import Link from "next/link";
 import { db } from "../../../lib/db";
 import { requireUserWithType } from "../../../lib/auth";
 import { fetchUserPlan, isProUser, getReviewLimit } from "../../../lib/plan";
+import { computeReviewRequired, computeExcludeFromEstimate } from "../../../lib/rules/scoring";
 import { ACTIVE_CATEGORIES, CATEGORIES_BY_USER_TYPE, CATEGORY_PRIORITY_BY_USER_TYPE } from "../../../lib/rules/categories";
 import { getCategoryMeta, categoryToSlug } from "../../../lib/categorySlug";
 import { ReviewFilters } from "./ReviewFilters";
@@ -48,18 +49,24 @@ type Candidate = Awaited<ReturnType<typeof db.deductionCandidate.findMany>>[numb
 };
 
 function toCardProps(c: Candidate, userType: string | null): CandidateCardProps {
+  const score              = c.score;
+  const reviewRequired     = computeReviewRequired(score, c.mixedUse ?? false);
+  const excludeFromEstimate = computeExcludeFromEstimate(score);
   return {
-    id:               c.id,
-    status:           c.status,
-    confidence:       c.confidence,
-    category:         c.category,
-    reason:           c.reason,
-    confidenceReason: c.confidenceReason ?? undefined,
-    mixedUse:         c.mixedUse,
-    hasEvidence:      c.hasEvidence,
-    evidenceNote:     c.evidenceNote ?? null,
-    workPercent:      c.workPercent ?? null,
-    transaction:      c.transaction,
+    id:                  c.id,
+    status:              c.status,
+    confidence:          c.confidence,
+    category:            c.category,
+    reason:              c.reason,
+    confidenceReason:    c.confidenceReason ?? undefined,
+    mixedUse:            c.mixedUse,
+    hasEvidence:         c.hasEvidence,
+    evidenceNote:        c.evidenceNote ?? null,
+    workPercent:         c.workPercent ?? null,
+    score,
+    reviewRequired,
+    excludeFromEstimate,
+    transaction:         c.transaction,
     userType,
   };
 }

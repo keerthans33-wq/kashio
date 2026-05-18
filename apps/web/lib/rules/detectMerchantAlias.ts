@@ -14,6 +14,7 @@ import type { Rule, RawMatch, Explanation, Confidence } from "./types";
 import { CATEGORIES } from "./categories";
 import { merchantText, matchesMerchant } from "./shared";
 import { findMerchantAliasMatch, FUZZY_ALIAS_GROUPS, extractMerchantTokens } from "./merchantMatcher";
+import { getMerchantInfo } from "../merchants";
 
 type AliasEntry = {
   category:   string;
@@ -164,11 +165,15 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   ["akamai",          { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a content delivery and cloud security platform" }],
 
   // ── Payment Processing ─────────────────────────────────────────────────────
-  // PayPal fee variants — checked before generic "paypal" to return the right category.
+  // Only clearly-business merchant service fees belong here.
+  // Ambiguous payment platforms (Wise, bare PayPal, bare Zip/Afterpay) are handled by
+  // detectAmbiguousPayment at LOW/MEDIUM Uncategorised so users must confirm deductibility.
+
+  // PayPal — only explicit fee/merchant variants are business expenses.
+  // "paypal australia" / "paypal au" removed: normalizeMerchant now produces bare "PayPal"
+  // for those descriptors, which detectAmbiguousPayment intercepts at LOW confidence.
   ["paypal fee",              { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing fee" }],
   ["paypal merchant",         { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing service" }],
-  ["paypal australia",        { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing service" }],
-  ["paypal au",               { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing service" }],
   // Square — squarespace entry above must remain earlier in the list (longer key wins via first-match).
   ["squareup",                { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing and POS platform" }],
   ["square payments",         { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing platform" }],
@@ -179,16 +184,15 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   ["stripe",                  { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing platform" }],
   ["airwallex",               { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a global business payment platform" }],
   ["tyro",                    { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "an Australian business payment terminal provider" }],
-  ["wise",                    { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "an international business payment platform" }],
+  // "wise" removed — Wise is ambiguous (personal vs business transfer). detectAmbiguousPayment handles it.
   // EFTPOS Air — MERCHANT_ALIASES preserves display name before PREFIXES strips EFTPOS.
   ["eftpos air",              { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a wireless EFTPOS terminal service" }],
   // Afterpay merchant — more specific forms must precede generic.
   ["afterpay merchant fee",   { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a buy-now-pay-later merchant processing fee" }],
   ["afterpay merchant",       { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a buy-now-pay-later merchant processing fee" }],
-  // Zip — more specific forms must precede generic.
+  // Zip merchant — only the business-merchant variant is Payment Processing.
+  // "zip co" / "zip pay" removed — consumer BNPL payments handled by detectAmbiguousPayment.
   ["zip merchant",            { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a buy-now-pay-later merchant processing fee" }],
-  ["zip co",                  { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a buy-now-pay-later payment service" }],
-  ["zip pay",                 { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a buy-now-pay-later payment service" }],
   ["zeller",                  { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "an Australian business banking and payment platform" }],
   ["sumup",                   { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a card payment and POS platform" }],
   ["smartpay",                { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment terminal service" }],
@@ -409,6 +413,15 @@ const ALIAS_MAP: [string, AliasEntry][] = [
 ];
 
 function detect(tx: { normalizedMerchant: string; description: string }, _userType?: string | null): RawMatch | null {
+  // If normalizeMerchant has already resolved this description to a known
+  // transport merchant, skip fuzzy matching entirely. The raw description may
+  // contain words that match unrelated aliases (e.g. "UBER HELP.UBER.COM"
+  // normalises to "Uber" — transport — but "HELP" fires importantTokenMatch for
+  // "Help Scout" via the raw descriptor). Transport merchants are definitively
+  // identified by normalizeMerchant; fuzzy overrides would only produce false positives.
+  const merchantInfo = getMerchantInfo(tx.normalizedMerchant);
+  if (merchantInfo?.category === CATEGORIES.WORK_TRAVEL) return null;
+
   // ── Priority 1: fuzzy match on the raw bank descriptor ───────────────────
   // Runs before the exact ALIAS_MAP check so that the real underlying merchant
   // (e.g. Klaviyo in "SHOPIFY*KLAVIYO", OpenAI in "STRIPE*OPENAI") wins even

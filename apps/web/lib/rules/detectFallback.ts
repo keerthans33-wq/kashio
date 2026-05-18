@@ -15,7 +15,7 @@
 
 import type { Rule, RawMatch, Explanation } from "./types";
 import { CATEGORIES } from "./categories";
-import { combinedText } from "./shared";
+import { combinedText, containsVenueWord } from "./shared";
 import { getMerchantInfo, type MerchantEntry } from "../merchants";
 
 // Keywords grouped by the category they most strongly suggest.
@@ -109,11 +109,18 @@ function matchesUserType(info: MerchantEntry, userType?: string | null): boolean
 }
 
 function detect(tx: { normalizedMerchant: string; description: string }, userType?: string | null): RawMatch | null {
+  const combined = combinedText(tx);
   const info = getMerchantInfo(tx.normalizedMerchant);
 
   if (info) {
     // Respect forUserTypes restrictions (e.g. Woolworths → sole_trader only).
     if (!matchesUserType(info, userType)) return null;
+
+    // A venue name that starts with a brand/sponsor (e.g. "Optus Stadium") must not
+    // be categorised as that brand's service category. Check both the normalised
+    // merchant and the raw description so venue words stripped by normalizeMerchant
+    // are still caught (e.g. "OPTUS ARENA" → normalised "Optus", desc still has "arena").
+    if (containsVenueWord(combined)) return null;
 
     // Surface all known merchants at LOW confidence as a safety net.
     // Specific rules win via the confidence/priority ordering in detectDeduction.
@@ -127,7 +134,6 @@ function detect(tx: { normalizedMerchant: string; description: string }, userTyp
   }
 
   // Unknown merchant — scan keywords to infer a category.
-  const combined = combinedText(tx);
   for (const { category, keywords } of KEYWORD_CATEGORIES) {
     const keyword = keywords.find((k) => combined.includes(k));
     if (keyword) {

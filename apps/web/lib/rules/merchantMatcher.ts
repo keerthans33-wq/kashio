@@ -884,22 +884,21 @@ export const FUZZY_ALIAS_GROUPS: FuzzyAliasGroup[] = [
     what:       "a wireless EFTPOS terminal service",
     confidence: "MEDIUM",
   },
+  // Afterpay Merchant Fee is intentionally omitted from FUZZY_ALIAS_GROUPS.
+  // normalizeMerchant's /^AFTERPAY\s+MERCHANT\b/i pattern converts any
+  // "AFTERPAY MERCHANT*" descriptor to "Afterpay Merchant Fee" before ALIAS_MAP
+  // runs, so the fuzzy layer is not needed and would cause false positives:
+  // any alias containing "afterpay" fires exactIncludes bidirectionally on bare
+  // "AFTERPAY" descriptions (consumer BNPL payments), wrongly returning
+  // Payment Processing instead of Uncategorised via detectAmbiguousPayment.
   {
-    name:       "Afterpay Merchant Fee",
-    // "AFTERPAY MERCHANT-FEE" — hyphen not converted; ALIAS_MAP "afterpay merchant"
-    // substring matches "afterpay merchant-fee" ✓. Fuzzy strips hyphen ✓.
-    aliases:    ["afterpay merchant fee", "afterpay merchant"],
+    name:       "Zip Merchant",
+    // Only merchant/business-side Zip transactions belong in Payment Processing.
+    // Consumer BNPL payments ("ZIP CO", "ZIP PAY") are intercepted by detectAmbiguousPayment
+    // at LOW Uncategorised — the underlying purchase may be deductible but needs review.
+    aliases:    ["zip merchant", "zip co merchant"],
     category:   CATEGORIES.PAYMENT_PROCESSING,
     what:       "a buy-now-pay-later merchant processing fee",
-    confidence: "MEDIUM",
-  },
-  {
-    name:       "Zip",
-    // "ZIP CO MERCHANT" — LOCATION_SLUG strips " MERCHANT" → "Zip Co";
-    // ALIAS_MAP "zip co" substring matches ✓. Fuzzy catches other variants.
-    aliases:    ["zip merchant", "zip co merchant", "zip co", "zip pay"],
-    category:   CATEGORIES.PAYMENT_PROCESSING,
-    what:       "a buy-now-pay-later payment service",
     confidence: "MEDIUM",
   },
   {
