@@ -5,6 +5,7 @@ import { isBlacklisted } from "./rules/blacklist";
 import { refineTransaction } from "./gemini/refineTransaction";
 import { classifyTransaction } from "./gemini/classifyTransaction";
 import { logClassificationSummary } from "./classificationAudit";
+import { CATEGORIES } from "./rules/categories";
 import type { ClassificationAuditEntry } from "./classificationAudit";
 import type { DeductionMatch } from "./rules/types";
 import type { IngestionRow } from "./ingestion/types";
@@ -25,7 +26,7 @@ export type PipelineResult = {
 // rather than silently dropped — the user can confirm or reject.
 function safeFallbackMatch(amount: number): DeductionMatch {
   return {
-    category:         "Uncategorised Possible Deduction",
+    category:         CATEGORIES.UNCATEGORISED,
     confidence:       "LOW",
     reason:           "This expense wasn't matched by any deduction rule. Review to check if it has a work-related purpose.",
     confidenceReason: "No rule or AI match found. Confirm manually whether this is a deductible expense.",
@@ -179,16 +180,33 @@ export async function runImportPipeline(
     (c) => !existingCandidateTxIds.has(c.transactionId)
   );
 
+  console.log("[Import] classified candidates", candidates.length);
+  console.log("[Import] candidates before save", candidates.map((c) => {
+    const tx = savedTransactions.find((t) => t.id === c.transactionId);
+    return {
+      merchant:   tx?.normalizedMerchant ?? tx?.description ?? c.transactionId,
+      category:   c.category,
+      confidence: c.confidence,
+    };
+  }));
+
   if (newCandidates.length > 0) {
     await db.deductionCandidate.createMany({
       data: newCandidates.map((c) => ({ ...c, userId })),
     });
   }
 
+  console.log("[Import] saved candidates count", newCandidates.length);
+
+  const skipped = candidates.length - newCandidates.length;
+  if (skipped > 0) {
+    console.log(`[Import] ${skipped} candidates skipped (already in DB from a previous import)`);
+  }
+
   logClassificationSummary(auditEntries);
 
   const txById = new Map(savedTransactions.map((t) => [t.id, t]));
-  const totalValue = candidates.reduce(
+  const totalValue = newCandidates.reduce(
     (sum, c) => sum + Math.abs(txById.get(c.transactionId)?.amount ?? 0),
     0,
   );
@@ -197,7 +215,7 @@ export async function runImportPipeline(
     batchId:    batch.id,
     inserted:   newRows.length,
     duplicates,
-    flagged:    candidates.length,
+    flagged:    newCandidates.length,
     totalValue,
   };
 }

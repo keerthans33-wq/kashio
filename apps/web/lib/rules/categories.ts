@@ -13,6 +13,7 @@ export const CATEGORIES = {
   ACCOUNTING:              "Accounting & Business",
   WEBSITE_DOMAINS:         "Website & Domains",
   PAYMENT_PROCESSING:      "Payment Processing",
+  UNCATEGORISED:           "Uncategorised Possible Deduction",
 } as const;
 
 // All categories that at least one active rule can produce.
@@ -30,6 +31,7 @@ export const ACTIVE_CATEGORIES: string[] = [
   CATEGORIES.ACCOUNTING,
   CATEGORIES.WEBSITE_DOMAINS,
   CATEGORIES.PAYMENT_PROCESSING,
+  CATEGORIES.UNCATEGORISED,
 ];
 
 // Category priority order for sorting within a confidence band.
@@ -48,6 +50,7 @@ export const CATEGORY_PRIORITY_BY_USER_TYPE: Record<string, string[]> = {
     CATEGORIES.WEBSITE_DOMAINS,
     CATEGORIES.PAYMENT_PROCESSING,
     // MEALS intentionally omitted — not surfaced for employees
+    CATEGORIES.UNCATEGORISED,
   ],
   contractor: [
     CATEGORIES.MARKETING,
@@ -62,6 +65,7 @@ export const CATEGORY_PRIORITY_BY_USER_TYPE: Record<string, string[]> = {
     CATEGORIES.PHONE_INTERNET,
     CATEGORIES.MEALS,
     CATEGORIES.WORK_CLOTHING,
+    CATEGORIES.UNCATEGORISED,
   ],
   sole_trader: [
     CATEGORIES.MARKETING,
@@ -76,6 +80,7 @@ export const CATEGORY_PRIORITY_BY_USER_TYPE: Record<string, string[]> = {
     CATEGORIES.PHONE_INTERNET,
     CATEGORIES.MEALS,
     CATEGORIES.WORK_CLOTHING,
+    CATEGORIES.UNCATEGORISED,
   ],
 };
 

@@ -85,7 +85,21 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
   const isPro = isProUser(plan);
   const reviewLimit = getReviewLimit(plan);
+
+  console.log("[Review] loaded candidates count", rawAll.length);
   const all = rawAll.filter((c) => allowedCategories.includes(c.category));
+  console.log("[Review] visible candidates count (after category filter)", all.length);
+
+  const dropped = rawAll.filter((c) => !allowedCategories.includes(c.category));
+  if (dropped.length > 0) {
+    console.table(dropped.map((c) => ({
+      merchant:     c.transaction.normalizedMerchant,
+      category:     c.category,
+      confidence:   c.confidence,
+      status:       c.status,
+      droppedReason: `category "${c.category}" not in allowedCategories for userType "${userType}"`,
+    })));
+  }
 
   const filtered = all.filter((c) => {
     if (category   && c.category   !== category)   return false;
