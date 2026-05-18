@@ -105,6 +105,7 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   ["invoice2go",      { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "mobile invoicing software" }],
   ["hnry",            { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "a contractor tax and invoicing service" }],
   ["rounded",         { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "an invoicing and income management tool for freelancers" }],
+  ["asic",            { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "the Australian Securities and Investments Commission — business registration and compliance fees" }],
 
   // ── Website & Domains ──────────────────────────────────────────────────────
   // NOTE: squarespace must precede square so "Squarespace" doesn't match the shorter key first.
@@ -257,6 +258,7 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   ["safetyquip",      { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "a safety equipment and workwear supplier" }],
   ["protector alsafe", { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "a safety equipment and workwear supplier" }],
   ["workwearhub",     { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "an online workwear retailer" }],
+  ["tradies",         { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "a workwear and safety clothing retailer" }],
 
   // ── Apple Services ────────────────────────────────────────────────────────
   // Canonical name produced by normalizeMerchant for APPLE.COM/* descriptors.

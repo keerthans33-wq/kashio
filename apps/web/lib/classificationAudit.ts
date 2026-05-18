@@ -22,7 +22,7 @@ export type ClassificationAuditEntry = {
   matchedAlias?:         string;
   reason?:               string;
   // Populated when decision === "hidden"
-  hiddenReason?:         "credit_or_zero" | "excluded" | "blacklisted" | "parse_error";
+  hiddenReason?:         "credit_or_zero" | "excluded" | "blacklisted" | "no_business_context" | "parse_error";
 };
 
 /**

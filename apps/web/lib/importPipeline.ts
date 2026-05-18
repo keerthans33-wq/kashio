@@ -1,7 +1,7 @@
 import { db } from "./db";
 import { detectDeduction } from "./rules";
 import { isExcluded } from "./rules/shared";
-import { isBlacklisted } from "./rules/blacklist";
+import { getPersonalExpenseBlockReason } from "./rules/blacklist";
 import { refineTransaction } from "./gemini/refineTransaction";
 import { classifyTransaction } from "./gemini/classifyTransaction";
 import { logClassificationSummary } from "./classificationAudit";
@@ -9,6 +9,27 @@ import { CATEGORIES } from "./rules/categories";
 import type { ClassificationAuditEntry } from "./classificationAudit";
 import type { DeductionMatch } from "./rules/types";
 import type { IngestionRow } from "./ingestion/types";
+
+// Tokens that signal a transaction might be a business expense even if the
+// merchant is unknown. The safe fallback only fires when at least one matches.
+const BIZ_TOKENS = [
+  "software", "subscription", "cloud", "hosting", "domain",
+  "advertising", "marketing", "crm", "accounting",
+  "invoice", "fee", "merchant", "processing",
+  "office", "supplies", "tools", "equipment", "workwear",
+  "ppe", "training", "course", "membership", "professional",
+  "asic", "abn", "saas", "license", "licence", "renewal",
+];
+
+function hasBizToken(tx: { normalizedMerchant: string; description: string }): string | null {
+  const combined = `${tx.normalizedMerchant} ${tx.description}`.toLowerCase();
+  const plain = BIZ_TOKENS.find((t) => combined.includes(t));
+  if (plain) return plain;
+  if (/\bads\b/.test(combined))    return "ads";
+  if (/\btax\b/.test(combined))    return "tax";
+  if (/\bsafety\b/.test(combined)) return "safety";
+  return null;
+}
 
 export type TransactionSource = "CSV" | "DEMO_BANK" | "BASIQ";
 export type PipelineRow = IngestionRow;
@@ -116,16 +137,24 @@ export async function runImportPipeline(
           return null;
         }
 
-        // Explicit personal-expense blacklist.
-        if (isBlacklisted(tx, userType)) {
+        // Personal-expense suppression — runs before rules engine and AI.
+        const blockReason = getPersonalExpenseBlockReason(tx, userType);
+        if (blockReason !== null) {
+          console.log("[Import:hidden]", {
+            merchant:              t.normalizedMerchant,
+            normalizedDescription: t.description,
+            amount:                t.amount,
+            hiddenReason:          blockReason,
+            source:                "personal_expense_suppression",
+          });
           auditEntries.push({ ...baseAudit, hiddenReason: "blacklisted" });
           return null;
         }
 
         // Rules engine — if it matches, Gemini optionally refines wording/confidence.
         // If it misses, Gemini classifies from scratch as a LOW-confidence fallback.
-        // If both miss, the safety fallback surfaces the expense for manual review
-        // rather than silently hiding it.
+        // If both miss, the safety fallback fires ONLY when at least one business-like
+        // token is present — random personal expenses are silently dropped instead.
         const rawMatch = detectDeduction(tx, userType);
         let match: DeductionMatch;
         let matchSource: ClassificationAuditEntry["source"];
@@ -139,8 +168,20 @@ export async function runImportPipeline(
             matchSource = "gemini";
             match = classified;
           } else {
-            // Safety fallback: this expense has no explicit reason to be hidden.
-            // Surface it for review rather than silently dropping it.
+            // Safe fallback only fires when there is at least one business-like token.
+            // Without it, the expense has no signal that it could be deductible.
+            const bizToken = hasBizToken(tx);
+            if (bizToken === null) {
+              auditEntries.push({ ...baseAudit, hiddenReason: "no_business_context" });
+              return null;
+            }
+            console.log("[Import:fallback]", {
+              merchant:              t.normalizedMerchant,
+              normalizedDescription: t.description,
+              amount:                t.amount,
+              includedReason:        bizToken,
+              source:                "business_token_fallback",
+            });
             matchSource = "safe_fallback";
             match = safeFallbackMatch(t.amount);
           }

@@ -1,13 +1,25 @@
 // Personal-expense blacklist — checked before any rule or AI pass.
-// A match causes detectDeduction to return null immediately.
+//
+// Two tiers:
+//   Hard blocks  — always suppressed; no business-context override.
+//   Soft blocks  — suppressed unless the transaction description contains
+//                  a recognisable business-context token (client, invoice, etc.).
 //
 // Philosophy: only suppress what is CLEARLY personal and non-deductible.
-// When in doubt, leave it out — let the rules engine surface it for review.
-// The user confirms or rejects; Kashio should not silently hide marginal cases.
+// For ambiguous cases (hotel, restaurant) keep the soft block so a
+// "Hotel Grand Chancellor conference invoice" can still surface.
 
 import type { TransactionInput } from "./types";
 
-// ── Personal streaming / entertainment subscriptions ──────────────────────────
+// ── Hard blocks — gambling ────────────────────────────────────────────────────
+const GAMBLING_HARD = [
+  "lotterywest", "lottery", "lotto",
+  "sportsbet", "pointsbet", "ladbrokes", "bet365", "neds", "beteasy",
+  "betfair", "unibet", "palmerbet",
+];
+// "tab" matched with word boundary (avoids "tableau" etc.)
+
+// ── Hard blocks — streaming / entertainment subscriptions ─────────────────────
 const STREAMING = [
   "netflix", "spotify", "disney plus", "disney+", "stan australia",
   "binge", "paramount plus", "paramount+", "apple tv plus", "apple tv+",
@@ -16,7 +28,61 @@ const STREAMING = [
   "foxtel now", "kayo sports",
 ];
 
-// ── Fast food (pure personal; restaurants with wait-staff are not blocked) ─────
+// ── Hard blocks — alcohol specialty ───────────────────────────────────────────
+const ALCOHOL = [
+  "dan murphy", "bws", "liquorland", "first choice liquor",
+  "bottle-o", "vintage cellars", "wine selectors", "naked wines",
+];
+
+// ── Hard blocks — gym / personal fitness ──────────────────────────────────────
+const FITNESS = [
+  "fitness first", "anytime fitness", "f45 training", "planet fitness",
+  "goodlife health", "snap fitness", "virgin active", "vision personal training",
+  "crossfit",
+];
+
+// ── Hard blocks — physical entertainment venues ───────────────────────────────
+// These have no plausible business deduction use.
+const ENTERTAINMENT_HARD = [
+  "event cinemas", "hoyts", "ticketek", "ticketmaster", "village cinema",
+  "village cinemas",
+];
+
+// ── Hard blocks — generic bank fees / interest ────────────────────────────────
+// Matched as phrases to avoid catching "Business Loan Interest Expense".
+const BANK_FEE_PHRASES = [
+  "purchase interest", "cash advance interest",
+  "overdrawn fee", "late payment fee", "account keeping fee",
+];
+// "interest" matched standalone on merchant name below.
+
+// ── Hard blocks — ATM / cash ──────────────────────────────────────────────────
+const ATM_PHRASES = ["cash advance", "cash withdrawal", "cash out"];
+// "atm" matched with word boundary below.
+
+// ── Hard blocks — grocery (user-type specific) ────────────────────────────────
+// Woolworths / Coles handled by merchants.ts forUserTypes for sole traders.
+const GROCERY_ALWAYS = ["aldi"];
+
+// ── Hard blocks — income / transfers / personal finance ───────────────────────
+const INCOME_KEYWORDS = [
+  "salary credit", "payroll deposit", "wages credit",
+  "income tax refund", "ato refund", "centrelink payment", "jobkeeper",
+];
+const TRANSFER_KEYWORDS = [
+  "inter account transfer", "internal transfer",
+  "own account transfer", "bank transfer ref",
+];
+const PERSONAL_FINANCE_KEYWORDS = [
+  "home loan repayment", "mortgage repayment",
+  "personal loan repayment", "car loan repayment",
+  "health insurance premium",
+];
+const PERSONAL_KEYWORDS = [
+  "gambling", "casino deposit", "poker", "lottery ticket",
+];
+
+// ── Soft blocks — fast food (can be overridden but rarely needed) ─────────────
 const FAST_FOOD = [
   "mcdonald", "hungry jacks", "kfc", "subway restaurants",
   "dominos pizza", "pizza hut", "nandos", "grill'd", "oporto",
@@ -24,65 +90,174 @@ const FAST_FOOD = [
   "taco bell", "shake shack", "lord of the fries",
 ];
 
-// ── Alcohol specialty retailers ───────────────────────────────────────────────
-const ALCOHOL = [
-  "dan murphy", "bws", "liquorland", "first choice liquor",
-  "bottle-o", "vintage cellars", "wine selectors", "naked wines",
+// ── Soft blocks — restaurants / food (broad) ──────────────────────────────────
+// Specific merchant names that are clearly restaurants.
+const RESTAURANT_SPECIFIC = [
+  "gamagama", "kuafood", "kickin inn", "sizzle n sambar", "sizzle sambar",
 ];
-
-// ── Gambling / betting ────────────────────────────────────────────────────────
-// "tab" and "tatts" omitted — too many false-positive collisions.
-const GAMBLING = [
-  "sportsbet", "pointsbet", "ladbrokes", "bet365", "neds", "beteasy",
-  "betfair", "unibet", "palmerbet",
+// Generic keywords that indicate a food/dining venue.
+const RESTAURANT_KEYWORDS = [
+  "restaurant", "cuisine", "cafe", "bistro", "tavern",
+  "takeaway", "doordash", "uber eats", "menulog", "deliveroo",
 ];
+// "bar", "pub", "coffee", "grill", "food", "pizza", "burger" handled with
+// word-boundary regex against the merchant name only (see below).
 
-// ── Gym / personal fitness ────────────────────────────────────────────────────
-const FITNESS = [
-  "fitness first", "anytime fitness", "f45 training", "planet fitness",
-  "goodlife health", "snap fitness", "virgin active", "vision personal training",
-  "crossfit",
+// ── Soft blocks — personal medical ────────────────────────────────────────────
+const MEDICAL_SPECIFIC = [
+  "nextclinic", "chemist warehouse", "chemistwarehouse",
+  "priceline pharmacy", "terrywhite", "amcal", "blooms the chemist",
 ];
+const MEDICAL_KEYWORDS = ["medical centre", "gp clinic", "bulk bill"];
+// "clinic", "pharmacy", "doctor" handled with word-boundary regex below.
 
-// ── Pure grocery retailers (personal for employees and contractors) ────────────
-// Woolworths and Coles are NOT here — merchants.ts forUserTypes handles them so
-// sole traders still see them. Aldi has no work-related use case so always blocked.
-const GROCERY = ["aldi"];
-
-// ── Personal financial products ───────────────────────────────────────────────
-const PERSONAL_FINANCE_KEYWORDS = [
-  "home loan repayment", "mortgage repayment",
-  "personal loan repayment", "car loan repayment",
-  "health insurance premium",
+// ── Soft blocks — personal travel / tourism ───────────────────────────────────
+const TRAVEL_SPECIFIC = [
+  "edreams", "gotogate", "patong", "phuket", "bangkok",
+  "agoda", "airbnb", "hostel",
 ];
+const TRAVEL_KEYWORDS = ["travel agency", "airport lounge", "booking.com"];
+// "hotel", "resort", "tourist" handled with word-boundary regex below.
 
-// ── Income / payroll credits ───────────────────────────────────────────────────
-// Positive amounts are already filtered upstream; these catch negative mislabels.
-const INCOME_KEYWORDS = [
-  "salary credit", "payroll deposit", "wages credit",
-  "income tax refund", "ato refund", "centrelink payment", "jobkeeper",
-];
-
-// ── Pure inter-account transfers (not payments to vendors) ────────────────────
-const TRANSFER_KEYWORDS = [
-  "inter account transfer", "internal transfer",
-  "own account transfer", "bank transfer ref",
-];
-
-// ── Personal keywords (low-risk additions) ─────────────────────────────────────
-const PERSONAL_KEYWORDS = [
-  "gambling", "casino deposit", "poker", "lottery ticket",
+// ── Business-context override tokens ─────────────────────────────────────────
+// Any soft-blocked transaction is rescued if the combined text includes one of
+// these tokens — indicating it was likely a legitimate client/work expense.
+const BUSINESS_OVERRIDE_TOKENS = [
+  "business", "invoice", "client", "conference",
+  "training", "course", "seminar", "abn", "tax invoice",
+  "company", "pty", "contractor",
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function merchantHits(merchant: string, list: string[]): boolean {
-  const lower = merchant.toLowerCase();
-  return list.some((entry) => lower.includes(entry));
+  return list.some((entry) => merchant.includes(entry));
 }
 
 function keywordHits(combined: string, list: string[]): boolean {
   return list.some((kw) => combined.includes(kw));
+}
+
+function wordBoundary(text: string, word: string): boolean {
+  return new RegExp(`(?:^|[^a-z])${word}(?:[^a-z]|$)`).test(text);
+}
+
+function hasBusinessContext(combined: string): boolean {
+  if (BUSINESS_OVERRIDE_TOKENS.some((t) => combined.includes(t))) return true;
+  if (wordBoundary(combined, "work")) return true;
+  if (wordBoundary(combined, "job"))  return true;
+  return false;
+}
+
+function isAtmOrCash(combined: string): boolean {
+  if (/\batm\b/.test(combined)) return true;
+  return ATM_PHRASES.some((p) => combined.includes(p));
+}
+
+function isBankInterest(merchant: string, combined: string): boolean {
+  // Only block "interest" when it's the merchant name itself, or in a known fee phrase.
+  if (/^interest/.test(merchant)) return true;
+  return BANK_FEE_PHRASES.some((p) => combined.includes(p));
+}
+
+function isRestaurantOrFood(merchant: string, combined: string): boolean {
+  if (merchantHits(merchant, RESTAURANT_SPECIFIC))              return true;
+  if (RESTAURANT_KEYWORDS.some((k) => combined.includes(k)))   return true;
+  if (wordBoundary(merchant, "bar"))    return true;
+  if (wordBoundary(merchant, "pub"))    return true;
+  if (wordBoundary(merchant, "coffee")) return true;
+  if (wordBoundary(merchant, "grill"))  return true;
+  if (wordBoundary(merchant, "food"))   return true;
+  if (wordBoundary(merchant, "pizza"))  return true;
+  if (wordBoundary(merchant, "burger")) return true;
+  return false;
+}
+
+function isPersonalMedical(merchant: string, combined: string): boolean {
+  if (merchantHits(merchant, MEDICAL_SPECIFIC))             return true;
+  if (MEDICAL_KEYWORDS.some((k) => combined.includes(k)))  return true;
+  if (wordBoundary(merchant, "clinic"))   return true;
+  if (wordBoundary(merchant, "pharmacy")) return true;
+  if (wordBoundary(merchant, "doctor"))   return true;
+  return false;
+}
+
+function isPersonalTravelTourism(merchant: string, combined: string): boolean {
+  if (merchantHits(merchant, TRAVEL_SPECIFIC))             return true;
+  if (TRAVEL_KEYWORDS.some((k) => combined.includes(k)))  return true;
+  if (wordBoundary(combined, "hotel"))   return true;
+  if (wordBoundary(combined, "resort"))  return true;
+  if (wordBoundary(combined, "tourist")) return true;
+  return false;
+}
+
+function isEntertainmentVenue(merchant: string): boolean {
+  if (merchantHits(merchant, ENTERTAINMENT_HARD)) return true;
+  // "EVENT" alone in bank statements is almost always Event Cinemas.
+  if (/^events?$/.test(merchant.trim())) return true;
+  return false;
+}
+
+// ── Public API ────────────────────────────────────────────────────────────────
+
+export type PersonalExpenseReason =
+  | "gambling"
+  | "atm_cash"
+  | "generic_interest"
+  | "streaming"
+  | "alcohol"
+  | "fitness"
+  | "entertainment"
+  | "restaurant_food"
+  | "personal_medical"
+  | "personal_travel_tourism"
+  | "personal";
+
+/**
+ * Returns a suppression reason if this transaction is clearly personal, or null
+ * if it should proceed to the rules engine.
+ *
+ * Hard blocks are never overridden.
+ * Soft blocks (restaurant, medical, travel) are rescued when the combined text
+ * contains a business-context token (invoice, client, conference, etc.).
+ */
+export function getPersonalExpenseBlockReason(
+  tx: TransactionInput,
+  userType?: string | null,
+): PersonalExpenseReason | null {
+  const merchant = tx.normalizedMerchant.toLowerCase();
+  const combined = `${tx.normalizedMerchant} ${tx.description}`.toLowerCase();
+
+  // ── Hard blocks (no business-context rescue) ──────────────────────────────
+
+  if (merchantHits(merchant, GAMBLING_HARD))     return "gambling";
+  if (wordBoundary(merchant, "tab"))             return "gambling";
+  if (keywordHits(combined, PERSONAL_KEYWORDS))  return "gambling";
+
+  if (isAtmOrCash(combined))                    return "atm_cash";
+  if (isBankInterest(merchant, combined))        return "generic_interest";
+
+  if (merchantHits(merchant, STREAMING))         return "streaming";
+  if (merchantHits(merchant, ALCOHOL))           return "alcohol";
+  if (merchantHits(merchant, FITNESS))           return "fitness";
+  if (isEntertainmentVenue(merchant))            return "entertainment";
+
+  if (keywordHits(combined, INCOME_KEYWORDS))          return "personal";
+  if (keywordHits(combined, TRANSFER_KEYWORDS))        return "personal";
+  if (keywordHits(combined, PERSONAL_FINANCE_KEYWORDS)) return "personal";
+
+  if (userType !== "sole_trader" && merchantHits(merchant, GROCERY_ALWAYS)) return "personal";
+
+  // ── Soft blocks (rescued by business-context token) ───────────────────────
+
+  const bizCtx = hasBusinessContext(combined);
+
+  if (merchantHits(merchant, FAST_FOOD)          && !bizCtx) return "restaurant_food";
+  if (isRestaurantOrFood(merchant, combined)     && !bizCtx) return "restaurant_food";
+  if (isPersonalMedical(merchant, combined)      && !bizCtx) return "personal_medical";
+  if (isPersonalTravelTourism(merchant, combined) && !bizCtx) return "personal_travel_tourism";
+
+  return null;
 }
 
 /**
@@ -90,22 +265,5 @@ function keywordHits(combined: string, list: string[]): boolean {
  * Called as the very first check in detectDeduction, before any rule runs.
  */
 export function isBlacklisted(tx: TransactionInput, userType?: string | null): boolean {
-  const merchant = tx.normalizedMerchant.toLowerCase();
-  const combined = `${tx.normalizedMerchant} ${tx.description}`.toLowerCase();
-
-  if (merchantHits(merchant, STREAMING))   return true;
-  if (merchantHits(merchant, FAST_FOOD))   return true;
-  if (merchantHits(merchant, ALCOHOL))     return true;
-  if (merchantHits(merchant, GAMBLING))    return true;
-  if (merchantHits(merchant, FITNESS))     return true;
-
-  // Grocery stores — only suppress for employee/contractor
-  if (userType !== "sole_trader" && merchantHits(merchant, GROCERY)) return true;
-
-  if (keywordHits(combined, INCOME_KEYWORDS))         return true;
-  if (keywordHits(combined, TRANSFER_KEYWORDS))       return true;
-  if (keywordHits(combined, PERSONAL_FINANCE_KEYWORDS)) return true;
-  if (keywordHits(combined, PERSONAL_KEYWORDS))       return true;
-
-  return false;
+  return getPersonalExpenseBlockReason(tx, userType) !== null;
 }
