@@ -101,7 +101,6 @@ function detect(tx: { normalizedMerchant: string; description: string }, userTyp
   return {
     category:  CATEGORIES.WORK_TRAVEL,
     confidence,
-    mixedUse:  isCommutingRisk || undefined,
     signals:   { isTransport, isFuel, isParking, isAccommodation, keyword, isStrong, commutingRisk: isCommutingRisk },
   };
 }
