@@ -34,20 +34,65 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   ["x ads",           { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "a social media advertising platform" }],
   ["twitter ads",     { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "a social media advertising platform" }],
   ["youtube ads",     { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an online advertising platform" }],
+  ["youtube promote", { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an online advertising platform" }],
   ["pinterest ads",   { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "a social media advertising platform" }],
+  // snap ads must precede snapchat ads so "Snap Ads" display name matches before the longer form.
+  ["snap ads",        { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "a social media advertising platform" }],
   ["snapchat ads",    { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "a social media advertising platform" }],
   ["reddit ads",      { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an online advertising platform" }],
+  // microsoft advertising must precede microsoft ads (longer key wins first-match).
+  ["microsoft advertising", { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an online advertising platform" }],
   ["bing ads",        { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an online advertising platform" }],
   ["microsoft ads",   { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an online advertising platform" }],
+  ["taboola",         { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "a content discovery and native advertising platform" }],
+  ["outbrain",        { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "a content discovery and native advertising platform" }],
+  ["adroll",          { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "a retargeting and digital advertising platform" }],
+  ["criteo",          { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "a commerce media and retargeting advertising platform" }],
+  // ── SEO / analytics ───────────────────────────────────────────────────────
+  ["semrush",         { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an SEO and digital marketing platform" }],
+  ["ahrefs",          { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an SEO analytics platform" }],
+  ["moz pro",         { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an SEO software platform" }],
+  ["moz",             { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an SEO software platform" }],
+  ["ubersuggest",     { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an SEO and keyword research tool" }],
+  ["neilpatel",       { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an SEO and digital marketing platform" }],
+  ["neil patel",      { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an SEO and digital marketing platform" }],
+  // screaming frog must precede screamingfrog (longer key wins).
+  ["screaming frog",  { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an SEO crawling and auditing tool" }],
+  ["screamingfrog",   { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an SEO crawling and auditing tool" }],
+  ["surfer seo",      { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an SEO content optimisation tool" }],
+  ["surferseo",       { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an SEO content optimisation tool" }],
+  ["hotjar",          { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "a website analytics and heatmap tool" }],
+  ["microsoft clarity", { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a website heatmap and analytics tool" }],
+  ["ms clarity",      { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a website heatmap and analytics tool" }],
+  ["mixpanel",        { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a product analytics platform" }],
+  ["amplitude",       { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a product analytics platform" }],
+  ["posthog",         { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an open-source product analytics platform" }],
+  ["fullstory",       { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a digital experience analytics platform" }],
+  // ── Email marketing / CRM ─────────────────────────────────────────────────
   ["mailchimp",       { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an email marketing platform" }],
   ["klaviyo",         { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an email and SMS marketing platform" }],
   ["activecampaign",  { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "a marketing automation and CRM platform" }],
   ["brevo",           { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an email marketing platform" }],
   ["convertkit",      { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an email marketing platform for creators" }],
   ["sendgrid",        { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an email delivery platform" }],
-  ["semrush",         { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an SEO and digital marketing platform" }],
-  ["ahrefs",          { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an SEO analytics platform" }],
-  ["hotjar",          { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "a website analytics and heatmap tool" }],
+  // constant contact must precede constantcontact.
+  ["constant contact", { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an email marketing platform" }],
+  ["constantcontact", { category: CATEGORIES.MARKETING, confidence: "MEDIUM", what: "an email marketing platform" }],
+  // ── CRM / sales / support ─────────────────────────────────────────────────
+  ["hubspot",         { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a CRM and marketing automation platform" }],
+  ["salesforce",      { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a CRM and business software platform" }],
+  // zoho crm must precede zoho.
+  ["zoho crm",        { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a cloud CRM platform" }],
+  ["zoho",            { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a cloud business software platform" }],
+  ["pipedrive",       { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a sales CRM and pipeline management tool" }],
+  ["freshdesk",       { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a customer support and helpdesk platform" }],
+  ["zendesk",         { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a customer service and support platform" }],
+  ["intercom",        { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a customer messaging and support platform" }],
+  // help scout must precede helpscout.
+  ["help scout",      { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a customer support platform" }],
+  ["helpscout",       { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a customer support platform" }],
+  ["drift",           { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a conversational marketing and sales platform" }],
+  ["crisp",           { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a customer messaging platform" }],
 
   // ── Accounting & Business ──────────────────────────────────────────────────
   ["xero",            { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "cloud accounting software" }],
@@ -59,6 +104,7 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   ["freshbooks",      { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "invoicing and accounting software" }],
   ["invoice2go",      { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "mobile invoicing software" }],
   ["hnry",            { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "a contractor tax and invoicing service" }],
+  ["rounded",         { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "an invoicing and income management tool for freelancers" }],
 
   // ── Website & Domains ──────────────────────────────────────────────────────
   // NOTE: squarespace must precede square so "Squarespace" doesn't match the shorter key first.
@@ -75,7 +121,23 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   ["vercel",          { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a cloud platform for web deployments" }],
   ["netlify",         { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a web hosting and deployment platform" }],
   ["heroku",          { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a cloud application platform" }],
+  // NOTE: hostgator/bluehost/siteground etc. must precede generic "hostinger"
+  // so more-specific keys don't accidentally match the shorter form.
+  ["hostgator",       { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a web hosting provider" }],
+  ["bluehost",        { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a web hosting provider" }],
+  ["siteground",      { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a web hosting provider" }],
+  ["dnsimple",        { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a domain registration and DNS management service" }],
+  ["dreamhost",       { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a web hosting provider" }],
   ["hostinger",       { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a web hosting and domain service" }],
+  ["hostpapa",        { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a web hosting provider" }],
+  ["panthur",         { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "an Australian web hosting provider" }],
+  ["ventraip",        { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "an Australian web hosting and domain provider" }],
+  ["kinsta",          { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a managed WordPress hosting platform" }],
+  // wp engine must precede wpengine.
+  ["wp engine",       { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a managed WordPress hosting platform" }],
+  ["wpengine",        { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a managed WordPress hosting platform" }],
+  ["cloudways",       { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a managed cloud hosting platform" }],
+  ["fly io",          { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a cloud application hosting platform" }],
   ["render",          { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a cloud hosting platform" }],
   ["railway",         { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a cloud infrastructure platform" }],
   ["digitalocean",    { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a cloud hosting provider" }],
@@ -94,28 +156,107 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   ["lemonsqueezy",    { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a digital products and ecommerce platform" }],
   ["gumroad",         { category: CATEGORIES.WEBSITE_DOMAINS, confidence: "MEDIUM", what: "a digital products and creator commerce platform" }],
   ["paddle",          { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a merchant-of-record payment platform" }],
+  // CDN / edge
+  ["bunny cdn",       { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a content delivery network" }],
+  ["bunnycdn",        { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a content delivery network" }],
+  ["fastly",          { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a content delivery network and edge cloud platform" }],
+  ["akamai",          { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a content delivery and cloud security platform" }],
 
   // ── Payment Processing ─────────────────────────────────────────────────────
   // PayPal fee variants — checked before generic "paypal" to return the right category.
-  ["paypal fee",       { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing fee" }],
-  ["paypal merchant",  { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing service" }],
-  ["paypal australia", { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing service" }],
-  ["paypal au",        { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing service" }],
+  ["paypal fee",              { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing fee" }],
+  ["paypal merchant",         { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing service" }],
+  ["paypal australia",        { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing service" }],
+  ["paypal au",               { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing service" }],
   // Square — squarespace entry above must remain earlier in the list (longer key wins via first-match).
-  ["squareup",         { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing and POS platform" }],
-  ["square payments",  { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing platform" }],
-  ["square pos",       { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a point of sale system" }],
-  ["square au",        { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing platform" }],
-  ["square up",        { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing and POS platform" }],
-  ["square",           { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing and POS platform" }],
-  ["stripe",           { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing platform" }],
-  ["airwallex",        { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a global business payment platform" }],
-  ["tyro",             { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "an Australian business payment terminal provider" }],
-  ["wise",             { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "an international business payment platform" }],
+  ["squareup",                { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing and POS platform" }],
+  ["square payments",         { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing platform" }],
+  ["square pos",              { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a point of sale system" }],
+  ["square au",               { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing platform" }],
+  ["square up",               { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing and POS platform" }],
+  ["square",                  { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing and POS platform" }],
+  ["stripe",                  { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment processing platform" }],
+  ["airwallex",               { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a global business payment platform" }],
+  ["tyro",                    { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "an Australian business payment terminal provider" }],
+  ["wise",                    { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "an international business payment platform" }],
+  // EFTPOS Air — MERCHANT_ALIASES preserves display name before PREFIXES strips EFTPOS.
+  ["eftpos air",              { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a wireless EFTPOS terminal service" }],
+  // Afterpay merchant — more specific forms must precede generic.
+  ["afterpay merchant fee",   { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a buy-now-pay-later merchant processing fee" }],
+  ["afterpay merchant",       { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a buy-now-pay-later merchant processing fee" }],
+  // Zip — more specific forms must precede generic.
+  ["zip merchant",            { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a buy-now-pay-later merchant processing fee" }],
+  ["zip co",                  { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a buy-now-pay-later payment service" }],
+  ["zip pay",                 { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a buy-now-pay-later payment service" }],
+  ["zeller",                  { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "an Australian business banking and payment platform" }],
+  ["sumup",                   { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a card payment and POS platform" }],
+  ["smartpay",                { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment terminal service" }],
 
-  // ── Equipment — trade & tool retailers ────────────────────────────────────
+  // ── Equipment — trade, tool, and computer hardware retailers ─────────────
   ["sydney tools",    { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a trade tools and equipment retailer" }],
   ["sydneytools",     { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a trade tools and equipment retailer" }],
+  // msy technology must precede msy (longer key wins).
+  ["msy technology",  { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a computer hardware and electronics retailer" }],
+  ["msy",             { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a computer hardware and electronics retailer" }],
+  // centre com must precede centrecom.
+  ["centre com",      { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a computer hardware retailer" }],
+  ["centrecom",       { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a computer hardware retailer" }],
+  ["mwave",           { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a computer hardware retailer" }],
+  ["computer alliance", { category: CATEGORIES.EQUIPMENT, confidence: "MEDIUM", what: "a computer hardware retailer" }],
+  ["ple computers",   { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a computer hardware retailer" }],
+  ["pccasegear",      { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a computer hardware and gaming retailer" }],
+  ["jw computers",    { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a computer hardware retailer" }],
+  ["umart",           { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a computer hardware and electronics retailer" }],
+  ["scorptec",        { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a computer hardware retailer" }],
+  ["jaycar",          { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "an electronics and tech components retailer" }],
+  ["dell",            { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a computer and technology hardware brand" }],
+  ["lenovo",          { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a computer and technology hardware brand" }],
+
+  // ── Professional Development ──────────────────────────────────────────────
+  // linkedin learning must precede linkedin ads/premium (longer key wins).
+  ["linkedin learning", { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "an online learning platform for professional skills" }],
+  ["general assembly",  { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "a tech and digital skills training provider" }],
+  ["tax institute",     { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "a professional tax body offering education and membership" }],
+  ["acs australia",     { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "the Australian Computer Society professional membership" }],
+  ["acs",               { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "the Australian Computer Society professional membership" }],
+  ["project management institute", { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "a professional project management membership body" }],
+  ["project management inst",      { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "a professional project management membership body" }],
+  ["pmi membership",    { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "a professional project management membership" }],
+  ["cpa australia",     { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "a professional accounting membership body" }],
+  ["chartered accountants anz", { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "a professional accounting membership body" }],
+  ["ca anz",            { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "the Chartered Accountants Australia and New Zealand membership" }],
+  ["engineers australia", { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "the Engineers Australia professional membership" }],
+  ["aicd",              { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "the Australian Institute of Company Directors membership" }],
+  ["ausimm",            { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "the Australasian Institute of Mining and Metallurgy membership" }],
+  ["ahri",              { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "the Australian HR Institute professional membership" }],
+  ["governance institute", { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "a governance and risk professional membership body" }],
+  ["institute of public accountants", { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "a professional accounting membership body" }],
+  ["pluralsight",       { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "a tech skills learning platform" }],
+  ["domestika",         { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "an online creative skills learning platform" }],
+  ["edx",               { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "an online education platform" }],
+
+  // ── Work Clothing — workwear, PPE, and safety footwear ───────────────────
+  // rsea safety must precede rsea (longer key wins).
+  ["rsea safety",     { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "a safety and workwear retailer" }],
+  ["rsea",            { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "a safety and workwear retailer" }],
+  // totally workwear must precede totallyworkwear.
+  ["totally workwear", { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "a workwear and safety clothing retailer" }],
+  ["totallyworkwear",  { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "a workwear and safety clothing retailer" }],
+  ["worklocker",      { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "a workwear retailer" }],
+  ["hip pocket workwear", { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "a workwear retailer" }],
+  ["hip pocket",      { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "a workwear retailer" }],
+  ["blackwoods",      { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "an industrial safety and workwear supplier" }],
+  ["bisley workwear", { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "a workwear brand" }],
+  ["bisley",          { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "a workwear brand" }],
+  ["hard yakka",      { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "a workwear brand" }],
+  ["kinggee",         { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "a workwear brand" }],
+  ["steel blue",      { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "a safety footwear brand" }],
+  ["mongrel boots",   { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "a safety footwear brand" }],
+  ["redback boots",   { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "a safety footwear brand" }],
+  ["puma safety",     { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "a safety footwear brand" }],
+  ["safetyquip",      { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "a safety equipment and workwear supplier" }],
+  ["protector alsafe", { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "a safety equipment and workwear supplier" }],
+  ["workwearhub",     { category: CATEGORIES.WORK_CLOTHING, confidence: "MEDIUM", what: "an online workwear retailer" }],
 
   // ── Apple Services ────────────────────────────────────────────────────────
   // Canonical name produced by normalizeMerchant for APPLE.COM/* descriptors.

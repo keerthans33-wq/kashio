@@ -72,6 +72,16 @@ const DELTAS: Record<string, Record<UserType, Delta>> = {
     contractor: +1,
     sole_trader: +1,
   },
+  [CATEGORIES.WORK_CLOTHING]: {
+    employee:    0,   // must be occupation-specific, not general clothing
+    contractor: +1,
+    sole_trader: +1,
+  },
+  [CATEGORIES.PROFESSIONAL_DEVELOPMENT]: {
+    employee:    0,   // must relate to current role; self-education rules apply
+    contractor: +1,
+    sole_trader: +1,
+  },
 };
 
 /**

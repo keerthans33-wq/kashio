@@ -49,10 +49,12 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   [/^INSTAGRAM\s+ADS?\b/i,                       "Meta Ads"],
 
   // ── Microsoft / Bing ───────────────────────────────────────────────────────
-  // MSFT abbreviation variants — must precede MICROSOFT entries
+  // MSFT abbreviation variants — must precede MICROSOFT entries.
+  // MSFT-ADVERTISING/BING*AU uses hyphens/slashes that bypass PREFIXES.
   [/^MSFT\s*[\*\s]\s*AZURE\b/i,                  "Microsoft Azure"],
   [/^MSFT\s*[\*\s]\s*365\b/i,                    "Microsoft 365"],
   [/^MICROSOFT\s*[\*\s]\s*365\b/i,               "Microsoft 365"],
+  [/^MSFT[-\s*\/]+(?:ADVERTISING|ADS?)\b/i,      "Microsoft Ads"],
   [/^MICROSOFT\s*[\*\s]\s*ADS?\b/i,              "Microsoft Ads"],
   [/^BING\s+ADS?\b/i,                            "Bing Ads"],
   [/^MICROSOFT\s+AZURE\b/i,                      "Microsoft Azure"],
@@ -66,12 +68,19 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   [/^X\.COM\s+ADS?\b/i,                          "X Ads"],
 
   // ── LinkedIn ───────────────────────────────────────────────────────────────
+  // LEARNING must precede PREM/ADS so the specific entry wins.
+  [/^LINKEDIN\s+LEARNING\b/i,                    "LinkedIn Learning"],
   [/^LINKEDIN\s+PREM\b/i,                        "LinkedIn Premium"],
   [/^LINKEDIN\s+ADS?\b/i,                        "LinkedIn Ads"],
 
   // ── YouTube / Pinterest / Snapchat / Reddit ────────────────────────────────
+  // YouTube Promote* descriptors (YOUTUBE PROMOTE*GOOG etc.) must be caught
+  // before TERMINAL_CODE strips the product token.
   [/^YOUTUBE\s+ADS?\b/i,                         "YouTube Ads"],
+  [/^YOUTUBE\s+PROMOT/i,                         "YouTube Ads"],
   [/^PINTEREST\s+ADS?\b/i,                       "Pinterest Ads"],
+  // SNAP*ADS MANAGER — "SNAP" without "CHAT" must map to Snapchat Ads.
+  [/^SNAP\s*\*?\s*ADS?\b/i,                      "Snapchat Ads"],
   [/^SNAPCHAT\s+ADS?\b/i,                        "Snapchat Ads"],
   [/^REDDIT\s+ADS?\b/i,                          "Reddit Ads"],
 
@@ -82,6 +91,76 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   [/^MIDJOURNEY\b/i,                             "Midjourney"],
   [/^ELEVENLABS\b/i,                             "ElevenLabs"],
   [/^PERPLEXITY\b/i,                             "Perplexity"],
+
+  // ── SEO / analytics tools ─────────────────────────────────────────────────
+  // Hyphens, dots, and slashes in these descriptors prevent normal LOCATION_SLUG
+  // stripping and ALIAS_MAP substring matching — resolve here first.
+  [/^SCREAMING[\s-]*FROG\b/i,                    "Screaming Frog"],
+  [/^SURFERSEO\b/i,                              "Surfer SEO"],
+  [/^SURFER\s+SEO\b/i,                           "Surfer SEO"],
+  [/^MS\s+CLARITY\b/i,                           "Microsoft Clarity"],
+  [/^UBERSUGGEST\b/i,                            "Ubersuggest"],
+  [/^MOZ\b/i,                                    "Moz"],
+  [/^TABOOLA\b/i,                                "Taboola"],
+  [/^OUTBRAIN\b/i,                               "Outbrain"],
+  [/^ADROLL\b/i,                                 "Adroll"],
+  [/^CRITEO\b/i,                                 "Criteo"],
+
+  // ── CRM / support tools ───────────────────────────────────────────────────
+  // ACTIVE-CAMPAIGN.COM has a hyphen that blocks ALIAS_MAP substring match.
+  [/^ACTIVE[-\s]*CAMPAIGN\b/i,                   "ActiveCampaign"],
+  [/^CONSTANTCONTACT\b/i,                        "Constant Contact"],
+  // ZOHO*CRM — TERMINAL_CODE strips *CRM; re-resolve before that happens.
+  [/^ZOHO\s*\*\s*CRM\b/i,                        "Zoho CRM"],
+  [/^FRESHDESK\b/i,                              "Freshdesk"],
+  [/^PIPEDRIVE\b/i,                              "Pipedrive"],
+
+  // ── Payment / accounting edge cases ──────────────────────────────────────
+  // EFTPOS AIR — must run before PREFIXES strips the EFTPOS token at step 1.
+  [/^EFTPOS\s+AIR\b/i,                           "EFTPOS Air"],
+  [/^AFTERPAY\s+MERCHANT\b/i,                    "Afterpay Merchant Fee"],
+  [/^ZIP\s+(?:CO|PAY|MERCHANT)\b/i,              "Zip"],
+  [/^ROUNDED\b/i,                                "Rounded"],
+  [/^ZELLER\b/i,                                 "Zeller"],
+  [/^SUMUP\b/i,                                  "SumUp"],
+
+  // ── Hosting / DNS providers ───────────────────────────────────────────────
+  // .COM / .COM.AU suffixes on these descriptors survive LOCATION_SLUG because
+  // the dot is not a space; ALIAS_MAP substring still matches, but we resolve
+  // here for cleaner display names.
+  [/^HOSTGATOR\b/i,                              "Hostgator"],
+  [/^BLUEHOST\b/i,                               "Bluehost"],
+  [/^SITEGROUND\b/i,                             "Siteground"],
+  [/^DNSIMPLE\b/i,                               "Dnsimple"],
+  [/^KINSTA\b/i,                                 "Kinsta"],
+  [/^WPENGINE\b/i,                               "WP Engine"],
+  [/^WP\s+ENGINE\b/i,                            "WP Engine"],
+  [/^CLOUDWAYS\b/i,                              "Cloudways"],
+  [/^VENTRAIP\b/i,                               "VentraIP"],
+
+  // ── Professional bodies / education ──────────────────────────────────────
+  // LOCATION_SLUG strips trailing words like ASSEMBLY, INSTITUTE, MANAGEMENT
+  // causing the display normaliser to lose the meaningful part of the name.
+  [/^GENERAL\s+ASSEMBLY\b/i,                     "General Assembly"],
+  [/^TAX\s+INSTITUTE\b/i,                        "Tax Institute"],
+  [/^ACS\s+AUSTRALIA\b/i,                        "ACS Australia"],
+  [/^PROJECT\s+MANAGEMENT\b/i,                   "Project Management Institute"],
+  [/^CPA\s+AUSTRALIA\b/i,                        "CPA Australia"],
+  [/^CHARTERED\s+ACCOUNTANTS\b/i,                "Chartered Accountants ANZ"],
+  [/^CA\s+ANZ\b/i,                               "CA ANZ"],
+  [/^ENGINEERS\s+AUSTRALIA\b/i,                  "Engineers Australia"],
+
+  // ── Workwear / safety ─────────────────────────────────────────────────────
+  // RSEA SAFETY #PERTH — TERMINAL_CODE strips #PERTH but LOCATION_SLUG then
+  // strips SAFETY; resolve to canonical display name before either step fires.
+  [/^RSEA\s+SAFETY\b/i,                          "RSEA Safety"],
+  [/^TOTALLY[\s-]*WORKWEAR\b/i,                  "Totally Workwear"],
+  [/^BLACKWOODS\b/i,                             "Blackwoods"],
+  [/^HARD\s+YAKKA\b/i,                           "Hard Yakka"],
+
+  // ── Hardware / tech retailers ─────────────────────────────────────────────
+  // MSY TECHNOLOGY — LOCATION_SLUG strips TECHNOLOGY, leaving just "Msy".
+  [/^MSY\s+TECH(?:NOLOGY)?\b/i,                  "MSY Technology"],
 
   // ── Accounting ─────────────────────────────────────────────────────────────
   [/^XERO\s+AU\b/i,                              "Xero"],
