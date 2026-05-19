@@ -8,10 +8,11 @@ export type MerchantEntry = {
   category:    string;
   description: string;
   // Optional sub-group within the category, used by rules that distinguish tiers.
-  // travel:    "transport" | "fuel" | "convenience"
+  // travel:    "transport" | "fuel" | "convenience" | "parking" | "accommodation"
   // equipment: "trade_only" | "general" | "tech_retailer"
   // software:  "specific" | "broad"
-  // office:    "specialist"
+  // office:    "specialist" | "broad_retailer"
+  //   broad_retailer = general merchandise store; item unknown; locked at LOW confidence.
   tier?: string;
   // If set, this merchant is only included for the listed user types.
   // Omit to include for all user types.
@@ -287,6 +288,16 @@ export const MERCHANTS: Record<string, MerchantEntry> = {
     category:    CATEGORIES.EQUIPMENT,
     tier:        "tech_retailer",
     description: "Computers, phones, tablets, and accessories.",
+  },
+  // "apple services" is the normalised form of APPLE.COM/* and APPLE SERVICES
+  // bank descriptors — app-store and media charges, not hardware. This longer
+  // key overrides the "apple" entry via getMerchantInfo's longest-match rule,
+  // locking confidence at LOW (broad_retailer → no canUpgrade in detectFallback)
+  // so detectMerchantAlias's app-store handling always wins.
+  "apple services": {
+    category:    CATEGORIES.SOFTWARE,
+    tier:        "broad_retailer",
+    description: "Apple app-store and subscription charges (iCloud, Apple One, App Store).",
   },
   "dell": {
     category:    CATEGORIES.EQUIPMENT,
@@ -942,12 +953,19 @@ export const MERCHANTS: Record<string, MerchantEntry> = {
     category:    CATEGORIES.PROFESSIONAL_DEVELOPMENT,
     description: "Bookseller. Professional and technical books are deductible.",
   },
-  "amazon": {
-    category:    CATEGORIES.PROFESSIONAL_DEVELOPMENT,
-    description: "Online retailer. Professional books and work-related items may be deductible.",
-  },
-
   // ── General retailers (mixed-use — always surfaced at LOW for review) ───────
+  // tier: "broad_retailer" = general merchandise; item is unknown; locked at LOW
+  // regardless of user type (canUpgrade forced false in detectFallback).
+  "amazon": {
+    category:    CATEGORIES.OFFICE_SUPPLIES,
+    tier:        "broad_retailer",
+    description: "Online general retailer. Work-related purchases may qualify — item review required.",
+  },
+  "ebay": {
+    category:    CATEGORIES.OFFICE_SUPPLIES,
+    tier:        "broad_retailer",
+    description: "Online marketplace. Work-related purchases may qualify — item review required.",
+  },
   "kmart": {
     category:    CATEGORIES.OFFICE_SUPPLIES,
     description: "General merchandise retailer. Work-related office, stationery, or equipment purchases may qualify.",

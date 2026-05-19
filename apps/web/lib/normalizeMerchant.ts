@@ -273,6 +273,18 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   // Must be caught before stripping so the canonical name is preserved.
   [/^13\s+CABS?\b/i,                             "13cabs"],
 
+  // ── General retailers ─────────────────────────────────────────────────────
+  // Multi-word brand names where LOCATION_SLUG swallows the second token.
+  // "BIG W STORE" → LOCATION_SLUG matches " W STORE" (W + STORE = valid slug) → "BIG".
+  // "HARVEY NORMAN CARINGBAH" → matches " NORMAN CARINGBAH" (spaces allowed) → "HARVEY".
+  // "THE GOOD GUYS NUNAWADING" → matches " GOOD GUYS NUNAWADING" → "THE".
+  [/^BIG\s+W\b/i,                                "Big W"],
+  [/^HARVEY\s+NORMAN\b/i,                        "Harvey Norman"],
+  [/^THE\s+GOOD\s+GUYS\b/i,                      "The Good Guys"],
+  // "EBAY AU" / "EBAY*" — "AU" (2 chars) evades LOCATION_SLUG; asterisk variants
+  // also survive. Normalise all to "eBay" so getMerchantInfo finds the key.
+  [/^EBAY\b/i,                                   "eBay"],
+
   // ── Company legal suffixes (≤2 chars, not caught by LOCATION_SLUG) ─────────
   [/^UBER\s+BV\b/i,                              "Uber"],
   [/^CANVA\s+PTY\b/i,                            "Canva"],

@@ -124,11 +124,18 @@ function detect(tx: { normalizedMerchant: string; description: string }, userTyp
 
     // Surface all known merchants at LOW confidence as a safety net.
     // Specific rules win via the confidence/priority ordering in detectDeduction.
-    // canUpgrade: false — a lone merchant match without a keyword is too weak to promote.
+    //
+    // canUpgrade: allow the user-type +1 delta for physical domain-specific merchants
+    // (hardware stores, trade suppliers, tech retailers, specialist office stores).
+    // Software-specific tiers ("specific", "broad") are excluded — detectSoftware
+    // and detectAmbiguousPayment handle those with better category precision.
+    // Broad/general retailers stay locked at LOW because the item is unknown.
+    const UPGRADEABLE_TIERS = new Set(["tech_retailer", "specialist", "general", "trade_only"]);
+    const canUpgrade = UPGRADEABLE_TIERS.has(info.tier ?? "");
     return {
       category:   info.category,
       confidence: "LOW",
-      canUpgrade: false,
+      canUpgrade,
       signals:    { merchantMatch: true },
     };
   }

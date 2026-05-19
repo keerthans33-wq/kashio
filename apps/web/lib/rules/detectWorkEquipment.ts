@@ -40,8 +40,11 @@ function detect(tx: { normalizedMerchant: string; description: string }, userTyp
 
   const keyword  = ALL_KEYWORDS.find((k) => combined.includes(k));
 
-  // Tech retailer with no keyword — flag at LOW confidence so purchases at
-  // JB Hi-Fi, Harvey Norman, Officeworks etc. are always surfaced for review.
+  // Tech retailer with no keyword — flag at LOW so the purchase is always
+  // surfaced for review. canUpgrade:false here; detectFallback (which also
+  // fires for tech_retailer merchants) handles the contractor +1 upgrade,
+  // avoiding a false MEDIUM for platform descriptors like APPLE.COM/BILL
+  // that match "apple" as a substring.
   if (!keyword) {
     if (!techMerchant) return null;
     return {
@@ -59,9 +62,15 @@ function detect(tx: { normalizedMerchant: string; description: string }, userTyp
   // keyword present in the description (not just in the merchant name).
   if (!isStrong && !techMerchant && !inDesc) return null;
 
+  // When the keyword appears in the description and no tech merchant is present,
+  // use MEDIUM: the bank explicitly named the item and there's no "gaming/personal
+  // purchase from a specialist store" ambiguity. This lets Equipment compete with
+  // Office Supplies (also MEDIUM for specialist merchants) and win by priority (5 > 4).
+  // When a tech merchant IS present, keep LOW — the item is still commonly personal.
+  const boostForDescription = inDesc && !techMerchant;
   return {
     category:   CATEGORIES.EQUIPMENT,
-    confidence: isStrong ? "MEDIUM" : "LOW",
+    confidence: isStrong || boostForDescription ? "MEDIUM" : "LOW",
     canUpgrade: isStrong,
     signals:    { keyword, inDesc, isStrong, techMerchant, merchantOnly: false },
   };

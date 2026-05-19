@@ -75,13 +75,15 @@ function detect(tx: { normalizedMerchant: string; description: string }, userTyp
 
   const supplyKeyword = SUPPLY_KEYWORDS.find((k) => combined.includes(k));
 
-  // Specialist office retailer with no keyword — flag at LOW so Officeworks
-  // purchases without a description are still surfaced for review.
+  // Specialist office retailer with no keyword — MEDIUM because stores like
+  // Officeworks and Staples primarily serve work/business buyers. Even without
+  // an item keyword in the description, the purchase is more likely work-related
+  // than personal. canUpgrade:false prevents a further +1 push to HIGH.
   if (!supplyKeyword) {
     if (!merchantMatch) return null;
     return {
       category:   CATEGORIES.OFFICE_SUPPLIES,
-      confidence: "LOW",
+      confidence: "MEDIUM",
       canUpgrade: false,
       signals:    { merchantMatch: true, keyword: undefined, merchantOnly: true },
     };
