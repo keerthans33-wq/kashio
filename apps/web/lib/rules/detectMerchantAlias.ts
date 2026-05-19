@@ -107,6 +107,9 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   ["hnry",            { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "a contractor tax and invoicing service" }],
   ["rounded",         { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "an invoicing and income management tool for freelancers" }],
   ["asic",            { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "the Australian Securities and Investments Commission — business registration and compliance fees" }],
+  // ATO fees (BAS lodgment, PAYG, business registration) are deductible for businesses;
+  // routine income-tax payments are not — the LOW→MEDIUM path flags for human review.
+  ["ato",             { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "the Australian Taxation Office — business registration or compliance fees" }],
 
   // ── Website & Domains ──────────────────────────────────────────────────────
   // NOTE: squarespace must precede square so "Squarespace" doesn't match the shorter key first.
@@ -409,6 +412,21 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   ["zapier",          { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a workflow automation platform" }],
   ["make",            { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a visual workflow automation platform" }],
   ["airtable",        { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a cloud database and collaboration platform" }],
+  ["dropbox",         { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a cloud storage and file sharing service" }],
+
+  // ── Software & Subscriptions — AI companies ───────────────────────────────
+  // NOTE: anthropic must precede claude ai so the company billing name matches first.
+  ["anthropic",       { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI company — Claude AI subscription" }],
+  // "CLAUDE AI" normalises to "Claude Ai"; "CLAUDE.AI" normalises to "Claude AI"
+  // via a normalizeMerchant alias — both lowercase to "claude ai".
+  ["claude ai",       { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI assistant subscription (Claude by Anthropic)" }],
+
+  // ── Software & Subscriptions — CRM / marketing automation ────────────────
+  // NOTE: gohighlevel must precede highlevel so the longer key wins.
+  // normalizeMerchant maps "GO HIGH LEVEL" → "GoHighLevel" before LOCATION_SLUG strips it.
+  ["gohighlevel",     { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a CRM and marketing automation platform" }],
+  ["go high level",   { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a CRM and marketing automation platform" }],
+  ["highlevel",       { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a CRM and marketing automation platform" }],
 
 ];
 
@@ -472,8 +490,8 @@ function detect(tx: { normalizedMerchant: string; description: string }, _userTy
         const displayName = isAppleServices ? "Apple Services" : "Google Play";
         return {
           category:   CATEGORIES.SOFTWARE,
-          confidence: "LOW",
-          canUpgrade: false,
+          confidence: "MEDIUM",
+          canUpgrade: true,
           signals: {
             appStore:    true,
             displayName,

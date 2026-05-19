@@ -25,8 +25,10 @@ export function computeScore(params: {
   // Strong signal: matched a known merchant alias
   if (signals.aliasMatch) score += 7;
 
-  // App-store / marketplace catch-all — likely personal
-  if (signals.appStore) score = Math.min(score, 28);
+  // App-store / marketplace catch-all — historically capped at LOW.
+  // Now that appStore returns MEDIUM/HIGH for contractors (canUpgrade), the cap
+  // only applies when confidence stayed LOW (no user-type upgrade fired).
+  if (signals.appStore && confidence === "LOW") score = Math.min(score, 28);
 
   // Fuel and parking are high-commuting-risk: deductible only for work travel,
   // not daily commutes. Penalise so MEDIUM (60) - mixedUse (5) - commutingRisk (20)

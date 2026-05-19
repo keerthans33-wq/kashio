@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { confirmCandidate, rejectCandidate, resetCandidate, saveEvidence, saveWorkPercent } from "./actions";
+import {
+  confirmWithDetails, rejectCandidate, resetCandidate,
+  saveEvidence, saveWorkPercent, confirmSimilarByMerchant,
+} from "./actions";
 import { Button } from "@/components/ui/button";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -24,10 +27,23 @@ export type CandidateCardProps = {
   score:                  number;
   reviewRequired:         boolean;
   excludeFromEstimate:    boolean;
+  similarCount?:          number;
   transaction:            { normalizedMerchant: string; amount: number; date: string; description: string };
   userType?:              string | null;
   onStatusChange?:        (id: string, next: Status) => void;
 };
+
+// ── Unsafe merchants — never offer "apply to similar" ─────────────────────────
+// These merchants are high-risk for bulk-confirming because the same merchant
+// can represent very different personal/work transactions.
+const UNSAFE_APPLY_MERCHANTS = new Set([
+  "Wise", "Western Union", "MoneyGram", "Remitly",
+  "Afterpay", "Zip", "ZipPay", "Laybuy", "Humm", "OpenPay", "Latitude",
+  "Coles", "Woolworths", "ALDI", "IGA", "Harris Farm",
+  "Netflix", "Disney+", "Spotify", "Stan", "Paramount+",
+  "TAB", "Sportsbet", "Bet365", "Ladbrokes", "Neds",
+  "ATM",
+]);
 
 // ── Visual constants ───────────────────────────────────────────────────────────
 
@@ -49,7 +65,6 @@ const CARD_BORDER: Record<Status, string> = {
   NEEDS_REVIEW: "rgba(255, 255, 255, 0.06)",
 };
 
-/** Short single-word labels — fast to scan */
 const CONFIDENCE_LABEL: Record<Confidence, string> = {
   HIGH:   "Likely",
   MEDIUM: "Possible",
@@ -62,12 +77,15 @@ const CONFIDENCE_COLOR: Record<Confidence, string> = {
   LOW:    "#6B7280",
 };
 
+type ConfirmStep = "idle" | "choosing" | "partial";
+
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function CandidateCard({
   id, status: initialStatus, confidence, category, reason, confidenceReason,
-  mixedUse, hasEvidence, evidenceNote, workPercent: initialWorkPercent, transaction,
-  reviewRequired, excludeFromEstimate, onStatusChange,
+  mixedUse, hasEvidence, evidenceNote, workPercent: initialWorkPercent,
+  transaction, reviewRequired, excludeFromEstimate, similarCount,
+  onStatusChange,
 }: CandidateCardProps) {
   const [status, setStatus]                 = useState<Status>(initialStatus);
   const [expanded, setExpanded]             = useState(false);
@@ -80,6 +98,13 @@ export function CandidateCard({
   const [workPct, setWorkPct]               = useState<string>(initialWorkPercent != null ? String(initialWorkPercent) : "");
   const [pctSaving, setPctSaving]           = useState(false);
   const [pctSaved, setPctSaved]             = useState(false);
+
+  // ── Classification step state ──────────────────────────────────────────────
+  const [confirmStep, setConfirmStep]   = useState<ConfirmStep>("idle");
+  const [pendingPct, setPendingPct]     = useState<string>("50");
+  const [showSimilar, setShowSimilar]   = useState(false);
+  const [similarSaving, setSimilarSaving] = useState(false);
+  const [appliedCount, setAppliedCount] = useState<number | null>(null);
 
   function flashSaved(msg: string) {
     setEvidenceSaved(msg);
@@ -105,13 +130,48 @@ export function CandidateCard({
     }
   }
 
-  const handleConfirm = () => save(() => confirmCandidate(id), "CONFIRMED");
-  const handleReject  = () => save(() => rejectCandidate(id),  "REJECTED");
+  async function handleConfirmWithPct(pct: number | null) {
+    setConfirmStep("idle");
+    if (pct !== null) setWorkPct(String(pct));
+    await save(() => confirmWithDetails(id, pct), "CONFIRMED");
+    // Offer to apply to similar if appropriate
+    const isSafe = !UNSAFE_APPLY_MERCHANTS.has(transaction.normalizedMerchant);
+    if (isSafe && similarCount && similarCount > 0 && confidence !== "LOW") {
+      setShowSimilar(true);
+    }
+  }
+
+  async function handleConfirmPartial() {
+    const parsed = parseInt(pendingPct, 10);
+    if (isNaN(parsed) || parsed < 1 || parsed > 100) return;
+    await handleConfirmWithPct(parsed);
+  }
+
+  async function handleConfirmSimilar() {
+    const pct = workPct !== "" ? Number(workPct) : null;
+    setSimilarSaving(true);
+    try {
+      const count = await confirmSimilarByMerchant(transaction.normalizedMerchant, pct);
+      setAppliedCount(count);
+      setShowSimilar(false);
+    } catch {
+      setError("Could not apply to similar. Try again.");
+    } finally {
+      setSimilarSaving(false);
+    }
+  }
+
+  const handleReject  = () => { setConfirmStep("idle"); save(() => rejectCandidate(id),  "REJECTED"); };
   const handleReset   = () => save(() => resetCandidate(id),   "NEEDS_REVIEW");
 
   const accentColor = settled
     ? (status === "CONFIRMED" ? "#22C55E" : "transparent")
     : ACCENT_BY_CONFIDENCE[confidence];
+
+  // Preset % buttons for the partial step
+  const presets = [25, 50, 75];
+  const pendingPctNum = parseInt(pendingPct, 10);
+  const isPreset = presets.includes(pendingPctNum);
 
   return (
     <motion.div
@@ -191,7 +251,7 @@ export function CandidateCard({
         </div>
 
         {/* Row 3: short reason — single line */}
-        {!settled && (
+        {!settled && confirmStep === "idle" && (
           <p
             className="mt-2 text-[12px] leading-snug line-clamp-1"
             style={{ color: "var(--text-muted)" }}
@@ -205,26 +265,179 @@ export function CandidateCard({
           {error && <p className="mb-2 text-xs text-red-400">{error}</p>}
 
           {settled ? (
-            <div className="flex items-center justify-between gap-2">
-              <span
-                className="text-[12px] font-medium"
-                style={{ color: status === "CONFIRMED" ? "#22C55E" : "var(--text-muted)" }}
+            // ── Settled state ──────────────────────────────────────────────────
+            <>
+              <div className="flex items-center justify-between gap-2">
+                <span
+                  className="text-[12px] font-medium"
+                  style={{ color: status === "CONFIRMED" ? "#22C55E" : "var(--text-muted)" }}
+                >
+                  {status === "CONFIRMED"
+                    ? workPct !== "" ? `✓ Confirmed · ${workPct}% work` : "✓ Confirmed"
+                    : "Skipped"}
+                </span>
+                <div className="flex items-center gap-3 shrink-0">
+                  <Button variant="ghost" size="xs" onClick={() => setExpanded((v) => !v)}>
+                    {expanded ? "Less" : "Details"}
+                  </Button>
+                  <Button variant="ghost" size="xs" onClick={handleReset} disabled={isSaving}>
+                    {isSaving ? "…" : "Undo"}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Apply-to-similar offer */}
+              {status === "CONFIRMED" && showSimilar && (
+                <div
+                  className="mt-3 rounded-xl px-3.5 py-3"
+                  style={{ backgroundColor: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.12)" }}
+                >
+                  <p className="text-[12px] font-medium" style={{ color: "var(--text-secondary)" }}>
+                    Apply to {similarCount} other {transaction.normalizedMerchant} transaction{similarCount !== 1 ? "s" : ""}?
+                  </p>
+                  <div className="flex gap-2 mt-2.5">
+                    <Button size="xs" disabled={similarSaving} onClick={handleConfirmSimilar}>
+                      {similarSaving ? "Saving…" : "Yes, confirm all"}
+                    </Button>
+                    <Button variant="ghost" size="xs" onClick={() => setShowSimilar(false)}>
+                      No thanks
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Applied confirmation */}
+              {status === "CONFIRMED" && appliedCount !== null && appliedCount > 0 && (
+                <p className="mt-2 text-[12px]" style={{ color: "#22C55E" }}>
+                  ✓ Applied to {appliedCount} more transaction{appliedCount !== 1 ? "s" : ""}
+                </p>
+              )}
+            </>
+
+          ) : confirmStep === "choosing" ? (
+            // ── Classification choice ─────────────────────────────────────────
+            <div>
+              <p className="mb-2.5 text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>
+                How work-related is this?
+              </p>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  className="rounded-xl py-2.5 text-[13px] font-medium transition-all duration-150 hover:opacity-90"
+                  style={{ backgroundColor: "rgba(34,197,94,0.10)", border: "1px solid rgba(34,197,94,0.22)", color: "#22C55E" }}
+                  onClick={() => handleConfirmWithPct(null)}
+                  disabled={isSaving}
+                >
+                  Work-related
+                </button>
+                <button
+                  className="rounded-xl py-2.5 text-[13px] font-medium transition-all duration-150 hover:opacity-90"
+                  style={{ backgroundColor: "rgba(20,184,166,0.10)", border: "1px solid rgba(20,184,166,0.22)", color: "#14B8A6" }}
+                  onClick={() => setConfirmStep("partial")}
+                  disabled={isSaving}
+                >
+                  Partially
+                </button>
+                <button
+                  className="rounded-xl py-2.5 text-[13px] font-medium transition-all duration-150 hover:opacity-90"
+                  style={{ backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "var(--text-secondary)" }}
+                  onClick={handleReject}
+                  disabled={isSaving}
+                >
+                  Personal
+                </button>
+                <button
+                  className="rounded-xl py-2.5 text-[13px] font-medium transition-all duration-150 hover:opacity-90"
+                  style={{ backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "var(--text-secondary)" }}
+                  onClick={() => handleConfirmWithPct(null)}
+                  disabled={isSaving}
+                >
+                  Unsure
+                </button>
+              </div>
+              <button
+                className="mt-2.5 text-[12px] transition-colors duration-150"
+                style={{ color: "var(--text-muted)" }}
+                onClick={() => setConfirmStep("idle")}
               >
-                {status === "CONFIRMED" ? "✓ Confirmed" : "Skipped"}
-              </span>
-              <div className="flex items-center gap-3 shrink-0">
-                <Button variant="ghost" size="xs" onClick={() => setExpanded((v) => !v)}>
-                  {expanded ? "Less" : "Details"}
-                </Button>
-                <Button variant="ghost" size="xs" onClick={handleReset} disabled={isSaving}>
-                  {isSaving ? "…" : "Undo"}
+                ← Back
+              </button>
+            </div>
+
+          ) : confirmStep === "partial" ? (
+            // ── Partial % picker ──────────────────────────────────────────────
+            <div>
+              <p className="mb-2.5 text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>
+                What % is work-related?
+              </p>
+              <div className="flex gap-1.5 mb-3">
+                {presets.map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPendingPct(String(p))}
+                    className="flex-1 rounded-xl py-2 text-[13px] font-medium transition-all duration-150"
+                    style={{
+                      backgroundColor: pendingPctNum === p ? "rgba(20,184,166,0.15)" : "rgba(255,255,255,0.05)",
+                      border:          `1px solid ${pendingPctNum === p ? "rgba(20,184,166,0.35)" : "rgba(255,255,255,0.08)"}`,
+                      color:           pendingPctNum === p ? "#14B8A6" : "var(--text-secondary)",
+                    }}
+                  >
+                    {p}%
+                  </button>
+                ))}
+                <div className="relative flex-1">
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={isPreset ? "" : pendingPct}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "" || (Number(v) >= 1 && Number(v) <= 100)) setPendingPct(v || "0");
+                    }}
+                    placeholder="Other"
+                    className="w-full rounded-xl py-2 px-3 text-[13px] text-center focus:outline-none focus:ring-1 focus:ring-[#14B8A6] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    style={{
+                      backgroundColor: "rgba(255,255,255,0.05)",
+                      border:          `1px solid ${!isPreset && pendingPct !== "0" ? "rgba(20,184,166,0.35)" : "rgba(255,255,255,0.08)"}`,
+                      color:           "var(--text-primary)",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {pendingPctNum > 0 && pendingPctNum <= 100 && (
+                <p className="mb-3 text-[12px]" style={{ color: "var(--text-muted)" }}>
+                  <span style={{ color: "#14B8A6", fontWeight: 600 }}>
+                    ${(Math.abs(transaction.amount) * pendingPctNum / 100).toFixed(2)}
+                  </span>{" "}
+                  claimable
+                </p>
+              )}
+
+              <div className="flex items-center gap-2">
+                <button
+                  className="shrink-0 text-[12px] px-1 transition-colors duration-150"
+                  style={{ color: "var(--text-muted)" }}
+                  onClick={() => setConfirmStep("choosing")}
+                >
+                  ← Back
+                </button>
+                <Button
+                  size="sm"
+                  className="flex-1"
+                  disabled={isSaving || pendingPctNum < 1 || pendingPctNum > 100}
+                  onClick={handleConfirmPartial}
+                >
+                  {isSaving ? "Saving…" : `Confirm ${pendingPct}%`}
                 </Button>
               </div>
             </div>
+
           ) : (
+            // ── Idle state — Confirm / Skip ───────────────────────────────────
             <div className="flex items-center gap-2">
-              <Button size="sm" className="flex-1" onClick={handleConfirm} disabled={isSaving}>
-                {isSaving ? "Saving…" : "Confirm"}
+              <Button size="sm" className="flex-1" onClick={() => setConfirmStep("choosing")} disabled={isSaving}>
+                Confirm
               </Button>
               <Button variant="secondary" size="sm" className="flex-1" onClick={handleReject} disabled={isSaving}>
                 Skip

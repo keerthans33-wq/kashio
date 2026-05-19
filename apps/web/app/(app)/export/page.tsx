@@ -82,8 +82,17 @@ export default async function Export({
     row: mapExportRow(c),
   }));
 
+  // Split by confidence tier for the report
+  const likelyTotal   = allItems.filter(i => i.row.confidence === "HIGH")
+    .reduce((sum, i) => sum + i.row.amount, 0);
+  const reviewTotal   = allItems.filter(i => i.row.confidence === "MEDIUM")
+    .reduce((sum, i) => sum + i.row.amount, 0);
+  const excludedTotal = allItems.filter(i => i.row.confidence === "LOW")
+    .reduce((sum, i) => sum + i.row.amount, 0);
+
+  // Estimated saving only reflects high-confidence items (MEDIUM/LOW may be personal)
+  const estimatedSaving = Math.round(likelyTotal * 0.325);
   const total           = allItems.reduce((sum, c) => sum + c.row.amount, 0);
-  const estimatedSaving = Math.round(total * 0.325);
 
   const catTotals = new Map<string, number>();
   for (const item of allItems) {
@@ -150,7 +159,7 @@ export default async function Export({
       <FadeIn delay={0.06} className="mb-6">
         <div className={`grid gap-3 ${wfhYtdHours > 0 ? "grid-cols-2" : "grid-cols-1"}`}>
 
-          {/* Deductions */}
+          {/* Likely deductions */}
           <div
             className="relative rounded-2xl overflow-hidden px-5 py-5 flex flex-col"
             style={{
@@ -161,22 +170,31 @@ export default async function Export({
           >
             <div className="absolute inset-x-0 top-0 h-[3px]" style={{ backgroundColor: "#22C55E", opacity: 0.6 }} />
             <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>
-              {(userType && TOTAL_LABEL[userType]) ?? "Total deductions"}
+              Likely deduction amount
             </p>
             <p className="text-[28px] font-bold tabular-nums leading-none tracking-tight" style={{ color: "#FFFFFF" }}>
-              {fmtRound(total)}
+              {fmtRound(likelyTotal > 0 ? likelyTotal : total)}
             </p>
-            <div
-              className="mt-3 inline-flex items-center self-start rounded-lg px-2 py-0.5"
-              style={{ backgroundColor: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.18)" }}
-            >
-              <span className="text-[11px] font-semibold" style={{ color: "#22C55E" }}>
-                ~{fmtRound(estimatedSaving)} saved
-              </span>
-            </div>
-            <p className="mt-2 text-[11px]" style={{ color: "var(--text-muted)" }}>
-              {confirmed.length} item{confirmed.length !== 1 ? "s" : ""} confirmed
-            </p>
+            {estimatedSaving > 0 && (
+              <div
+                className="mt-3 inline-flex items-center self-start rounded-lg px-2 py-0.5"
+                style={{ backgroundColor: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.18)" }}
+              >
+                <span className="text-[11px] font-semibold" style={{ color: "#22C55E" }}>
+                  ~{fmtRound(estimatedSaving)} estimated saving
+                </span>
+              </div>
+            )}
+            {reviewTotal > 0 && (
+              <p className="mt-2 text-[11px]" style={{ color: "var(--text-muted)" }}>
+                +{fmtRound(reviewTotal)} needs review
+              </p>
+            )}
+            {estimatedSaving === 0 && reviewTotal === 0 && (
+              <p className="mt-2 text-[11px]" style={{ color: "var(--text-muted)" }}>
+                {confirmed.length} item{confirmed.length !== 1 ? "s" : ""} confirmed
+              </p>
+            )}
           </div>
 
           {/* WFH — same surface family, same size */}
@@ -207,9 +225,12 @@ export default async function Export({
       {/* 3 — Breakdown + download (paywalled) */}
       <PaywallGate
         reportUnlocked={reportUnlocked}
-        allItems={allItems.map((i) => ({ id: i.id, merchant: i.row.merchant, date: i.row.date, amount: i.row.amount, category: i.row.category }))}
-        categoryGroups={categoryGroups.map((g) => ({ cat: g.cat, catTotal: g.catTotal, items: g.items.map((i) => ({ id: i.id, merchant: i.row.merchant, date: i.row.date, amount: i.row.amount, category: i.row.category })) }))}
+        allItems={allItems.map((i) => ({ id: i.id, merchant: i.row.merchant, date: i.row.date, amount: i.row.amount, category: i.row.category, confidence: i.row.confidence, reason: i.row.reason }))}
+        categoryGroups={categoryGroups.map((g) => ({ cat: g.cat, catTotal: g.catTotal, items: g.items.map((i) => ({ id: i.id, merchant: i.row.merchant, date: i.row.date, amount: i.row.amount, category: i.row.category, confidence: i.row.confidence, reason: i.row.reason })) }))}
         total={total}
+        likelyTotal={likelyTotal}
+        reviewTotal={reviewTotal}
+        excludedTotal={excludedTotal}
         confirmedCount={confirmed.length}
         wfhYtdHours={wfhYtdHours}
         wfhYtdEst={wfhYtdEst}

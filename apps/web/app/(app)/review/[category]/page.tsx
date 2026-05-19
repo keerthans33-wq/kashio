@@ -21,9 +21,13 @@ function toCardProps(c: {
   hasEvidence: boolean; evidenceNote: string | null; workPercent: number | null;
   score: number;
   transaction: { normalizedMerchant: string; amount: number; date: string; description: string };
-}, userType: string | null): CandidateCardProps {
+}, userType: string | null, needsReviewMerchantCounts: Map<string, number>): CandidateCardProps {
   const reviewRequired      = computeReviewRequired(c.score, c.mixedUse);
   const excludeFromEstimate = computeExcludeFromEstimate(c.score);
+  const merchantName = c.transaction.normalizedMerchant;
+  const similarCount = c.status === "NEEDS_REVIEW"
+    ? Math.max(0, (needsReviewMerchantCounts.get(merchantName) ?? 0) - 1)
+    : 0;
   return {
     id:                  c.id,
     status:              c.status,
@@ -38,6 +42,7 @@ function toCardProps(c: {
     score:               c.score,
     reviewRequired,
     excludeFromEstimate,
+    similarCount,
     transaction:         c.transaction,
     userType,
   };
@@ -62,6 +67,14 @@ export default async function CategoryReview({ params }: Props) {
     include: { transaction: true },
     orderBy: { transaction: { date: "desc" } },
   });
+
+  const needsReviewMerchantCounts = new Map<string, number>();
+  for (const c of all) {
+    if (c.status === "NEEDS_REVIEW") {
+      const m = c.transaction.normalizedMerchant;
+      needsReviewMerchantCounts.set(m, (needsReviewMerchantCounts.get(m) ?? 0) + 1);
+    }
+  }
 
   const needsReview = all.filter((c) => c.status === "NEEDS_REVIEW");
   const confirmed   = all.filter((c) => c.status === "CONFIRMED");
@@ -160,9 +173,9 @@ export default async function CategoryReview({ params }: Props) {
       ) : (
         <FadeIn delay={0.12}>
           <ReviewList
-            needsReview={needsReview.map((c) => toCardProps(c, userType))}
-            confirmed={confirmed.map((c) => toCardProps(c, userType))}
-            rejected={rejected.map((c) => toCardProps(c, userType))}
+            needsReview={needsReview.map((c) => toCardProps(c, userType, needsReviewMerchantCounts))}
+            confirmed={confirmed.map((c) => toCardProps(c, userType, needsReviewMerchantCounts))}
+            rejected={rejected.map((c) => toCardProps(c, userType, needsReviewMerchantCounts))}
             missingEvidence={missingReceipts}
           />
         </FadeIn>

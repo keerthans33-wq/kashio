@@ -57,40 +57,40 @@ describe("extractMerchantTokens", () => {
   });
 });
 
-// ─── Generic app-store charges — LOW / needs_context ─────────────────────────
+// ─── Generic app-store charges — MEDIUM for employees, HIGH for contractors ───
 describe("detectDeduction — generic app-store charges (needs_context)", () => {
 
-  it("APPLE.COM/BILL → Software & Subscriptions LOW (no specific app identified)", () => {
+  it("APPLE.COM/BILL → Software & Subscriptions MEDIUM for employee", () => {
     const result = detectDeduction(tx("APPLE.COM/BILL"), "employee");
     expect(result).not.toBeNull();
     expect(result?.category).toBe("Software & Subscriptions");
-    expect(result?.confidence).toBe("LOW");
+    expect(result?.confidence).toBe("MEDIUM");
   });
 
-  it("APPLE SERVICES → Software & Subscriptions LOW", () => {
+  it("APPLE SERVICES → Software & Subscriptions MEDIUM for employee", () => {
     const result = detectDeduction(tx("APPLE SERVICES"), "employee");
     expect(result).not.toBeNull();
     expect(result?.category).toBe("Software & Subscriptions");
-    expect(result?.confidence).toBe("LOW");
+    expect(result?.confidence).toBe("MEDIUM");
   });
 
-  it("GOOGLE PLAY → Software & Subscriptions LOW", () => {
+  it("GOOGLE PLAY → Software & Subscriptions MEDIUM for employee", () => {
     const result = detectDeduction(tx("GOOGLE PLAY"), "employee");
     expect(result).not.toBeNull();
     expect(result?.category).toBe("Software & Subscriptions");
-    expect(result?.confidence).toBe("LOW");
+    expect(result?.confidence).toBe("MEDIUM");
   });
 
-  it("GOOGLE PLAY STORE → Software & Subscriptions LOW", () => {
+  it("GOOGLE PLAY STORE → Software & Subscriptions MEDIUM for employee", () => {
     const result = detectDeduction(tx("GOOGLE PLAY STORE"), "employee");
     expect(result).not.toBeNull();
     expect(result?.category).toBe("Software & Subscriptions");
-    expect(result?.confidence).toBe("LOW");
+    expect(result?.confidence).toBe("MEDIUM");
   });
 
-  it("APPLE.COM/BILL stays LOW even for contractor (canUpgrade: false)", () => {
+  it("APPLE.COM/BILL → HIGH for contractor (app-store subscriptions are treated as work tools)", () => {
     const result = detectDeduction(tx("APPLE.COM/BILL"), "contractor");
-    expect(result?.confidence).toBe("LOW");
+    expect(result?.confidence).toBe("HIGH");
   });
 
   it("APPLE.COM/BILL reason mentions reviewing the receipt", () => {

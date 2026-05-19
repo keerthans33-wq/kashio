@@ -120,7 +120,11 @@ export function findMerchantAliasMatch(
 
       const exactIncludes =
         normalized.includes(normalizedAlias) ||
-        normalizedAlias.includes(normalized);
+        // Reverse direction: alias contains the descriptor. Guard with a minimum
+        // length of 5 to prevent short abbreviations (e.g. "ato", "asic") from
+        // false-matching longer aliases that happen to contain them as substrings
+        // (e.g. "hostgator" contains "ato" → false Hostgator match for ATO).
+        (normalized.length >= 5 && normalizedAlias.includes(normalized));
 
       const allAliasTokensPresent =
         aliasTokens.length > 0 &&

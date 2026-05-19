@@ -233,6 +233,11 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   [/^APPLE\s+SERVICES?\b/i,                      "Apple Services"],
   [/^APPLE\.COM\b/i,                             "Apple Services"],
 
+  // ── Anthropic / Claude ────────────────────────────────────────────────────
+  // "CLAUDE.AI" — the dot causes toTitleCase to produce "Claude.Ai", which
+  // breaks ALIAS_MAP "claude ai" matching. Resolve before any stripping runs.
+  [/^CLAUDE\.AI\b/i,                             "Claude AI"],
+
   // ── Sponsored / branded venues ────────────────────────────────────────────
   // Physical venues whose names begin with a telco or brand sponsor.
   // Must be caught before LOCATION_SLUG strips the venue word (e.g. "STADIUM",
@@ -272,6 +277,13 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   // "13 CABS" — LOCATION_SLUG strips "CABS" → "13" (not a recognisable merchant).
   // Must be caught before stripping so the canonical name is preserved.
   [/^13\s+CABS?\b/i,                             "13cabs"],
+
+  // ── GoHighLevel ───────────────────────────────────────────────────────────
+  // "GO HIGH LEVEL" — LOCATION_SLUG strips " HIGH LEVEL" → "GO", losing the brand.
+  // Resolve to a compact form before stripping so the ALIAS_MAP key matches.
+  [/^GO[\s-]+HIGH[\s-]+LEVEL\b/i,                "GoHighLevel"],
+  // "GHL" is GoHighLevel's common abbreviation on billing descriptors.
+  [/^GHL\b/i,                                    "GoHighLevel"],
 
   // ── General retailers ─────────────────────────────────────────────────────
   // Multi-word brand names where LOCATION_SLUG swallows the second token.

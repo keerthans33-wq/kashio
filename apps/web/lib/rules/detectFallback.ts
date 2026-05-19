@@ -22,6 +22,19 @@ import { getMerchantInfo, type MerchantEntry } from "../merchants";
 // Only include keywords that are unambiguous enough to be worth surfacing at LOW confidence.
 const KEYWORD_CATEGORIES: { category: string; keywords: string[] }[] = [
   {
+    category: CATEGORIES.ACCOUNTING,
+    keywords: [
+      "accountant",
+      "bookkeeper",
+      "bookkeeping",
+      "tax agent",
+      "tax preparation",
+      "bas preparation",
+      "bas lodgment",
+      "business registration",
+    ],
+  },
+  {
     category: CATEGORIES.SOFTWARE,
     keywords: [
       "subscription",

@@ -48,10 +48,18 @@ type Candidate = Awaited<ReturnType<typeof db.deductionCandidate.findMany>>[numb
   mixedUse?:         boolean;
 };
 
-function toCardProps(c: Candidate, userType: string | null): CandidateCardProps {
+function toCardProps(
+  c: Candidate,
+  userType: string | null,
+  needsReviewMerchantCounts: Map<string, number>,
+): CandidateCardProps {
   const score              = c.score;
   const reviewRequired     = computeReviewRequired(score, c.mixedUse ?? false);
   const excludeFromEstimate = computeExcludeFromEstimate(score);
+  const merchantName = c.transaction.normalizedMerchant;
+  const similarCount = c.status === "NEEDS_REVIEW"
+    ? Math.max(0, (needsReviewMerchantCounts.get(merchantName) ?? 0) - 1)
+    : 0;
   return {
     id:                  c.id,
     status:              c.status,
@@ -66,6 +74,7 @@ function toCardProps(c: Candidate, userType: string | null): CandidateCardProps 
     score,
     reviewRequired,
     excludeFromEstimate,
+    similarCount,
     transaction:         c.transaction,
     userType,
   };
@@ -92,6 +101,15 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
 
   const isPro = isProUser(plan);
   const reviewLimit = getReviewLimit(plan);
+
+  // Count NEEDS_REVIEW candidates per merchant for the "apply to similar" feature
+  const needsReviewMerchantCounts = new Map<string, number>();
+  for (const c of rawAll) {
+    if (c.status === "NEEDS_REVIEW") {
+      const m = c.transaction.normalizedMerchant;
+      needsReviewMerchantCounts.set(m, (needsReviewMerchantCounts.get(m) ?? 0) + 1);
+    }
+  }
 
   console.log("[Review] loaded candidates count", rawAll.length);
   const all = rawAll.filter((c) => allowedCategories.includes(c.category));
@@ -312,9 +330,9 @@ export default async function Review({ searchParams }: { searchParams: Promise<S
       ) : (
         <div className="mt-6">
           <ReviewList
-            needsReview={needsReview.map((c) => toCardProps(c, userType))}
-            confirmed={confirmed.map((c) => toCardProps(c, userType))}
-            rejected={rejected.map((c) => toCardProps(c, userType))}
+            needsReview={needsReview.map((c) => toCardProps(c, userType, needsReviewMerchantCounts))}
+            confirmed={confirmed.map((c) => toCardProps(c, userType, needsReviewMerchantCounts))}
+            rejected={rejected.map((c) => toCardProps(c, userType, needsReviewMerchantCounts))}
             missingEvidence={missingEvidence}
           />
           {hiddenCount > 0 && (

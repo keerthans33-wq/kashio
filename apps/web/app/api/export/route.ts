@@ -38,6 +38,14 @@ export async function GET() {
   const rows  = candidates.map((c) => mapExportRow(c));
   const total = rows.reduce((s, r) => s + r.amount, 0);
 
+  const likelyRows   = rows.filter(r => r.confidence === "HIGH");
+  const reviewRows   = rows.filter(r => r.confidence === "MEDIUM");
+  const excludedRows = rows.filter(r => r.confidence === "LOW");
+
+  const likelyTotal   = likelyRows.reduce((s, r) => s + r.amount, 0);
+  const reviewTotal   = reviewRows.reduce((s, r) => s + r.amount, 0);
+  const excludedTotal = excludedRows.reduce((s, r) => s + r.amount, 0);
+
   const catTotals = new Map<string, number>();
   for (const r of rows) catTotals.set(r.category, (catTotals.get(r.category) ?? 0) + r.amount);
   const catRows = [...catTotals.entries()].sort((a, b) => b[1] - a[1]);
@@ -170,12 +178,14 @@ export async function GET() {
   // ── Section 1: Summary ────────────────────────────────────────────────────
   sectionHead("Summary");
 
-  kv("Total deductions",                  `$${total.toFixed(2)}`,               { bold: true, large: true });
-  kv("Estimated tax saving (32.5% rate)", `~$${Math.round(total * 0.325)}`,     { valueColor: MID });
+  kv("Likely deduction amount",               `$${likelyTotal.toFixed(2)}`,                { bold: true, large: true });
+  kv("Estimated tax saving (32.5% — likely)", `~$${Math.round(likelyTotal * 0.325)}`,      { valueColor: MID });
+  if (reviewTotal > 0)   kv("Needs review amount",   `$${reviewTotal.toFixed(2)}`,         { valueColor: MID });
+  if (excludedTotal > 0) kv("Excluded from estimate", `$${excludedTotal.toFixed(2)}`,      { valueColor: DIM });
   if (wfhHours > 0) {
-    kv("Work from home",                  `~$${wfhEst.toFixed(2)}`,             { valueColor: MID });
+    kv("Work from home",                      `~$${wfhEst.toFixed(2)}`,                    { valueColor: MID });
   }
-  kv("Confirmed items",                   `${rows.length}`,                     { valueColor: DIM  });
+  kv("Total confirmed items",                 `${rows.length}`,                            { valueColor: DIM });
 
   gap(10);
 
@@ -189,30 +199,55 @@ export async function GET() {
     r.getCell(3).alignment = { horizontal: "right" };
   }
 
-  // ── Section 2: Deductions ─────────────────────────────────────────────────
-  sectionHead("Deductions");
+  // ── Section 2: Potential Deductions (split by confidence) ────────────────
+  sectionHead("Potential Deductions");
 
-  const byCategory = new Map<string, typeof rows>();
-  for (const r of rows) {
-    if (!byCategory.has(r.category)) byCategory.set(r.category, []);
-    byCategory.get(r.category)!.push(r);
-  }
-  const sortedCats = [...byCategory.entries()].sort(
-    (a, b) => b[1].reduce((s, r) => s + r.amount, 0) - a[1].reduce((s, r) => s + r.amount, 0),
-  );
+  function writeTier(tierRows: typeof rows, tierLabel: string, tierTotal: number) {
+    if (tierRows.length === 0) return;
 
-  for (const [cat, items] of sortedCats) {
-    catHead(cat);
-    for (const r of items) {
-      txRow(r.merchant, r.date, r.amount);
+    // Tier heading
+    gap(6);
+    const headRow = s.addRow([tierLabel]);
+    s.mergeCells(`A${headRow.number}:C${headRow.number}`);
+    headRow.getCell(1).font = { name: "Calibri", size: 10, bold: true, color: { argb: DARK } };
+    headRow.height = 18;
+
+    const byCategory = new Map<string, typeof rows>();
+    for (const r of tierRows) {
+      if (!byCategory.has(r.category)) byCategory.set(r.category, []);
+      byCategory.get(r.category)!.push(r);
     }
-    catTotal(items.reduce((s, r) => s + r.amount, 0));
+    const sortedCats = [...byCategory.entries()].sort(
+      (a, b) => b[1].reduce((s, r) => s + r.amount, 0) - a[1].reduce((s, r) => s + r.amount, 0),
+    );
+
+    for (const [cat, items] of sortedCats) {
+      catHead(cat);
+      for (const r of items) {
+        txRow(r.merchant, r.date, r.amount);
+      }
+      catTotal(items.reduce((s, r) => s + r.amount, 0));
+    }
+
+    gap(6);
+    const subTot = s.addRow([`${tierLabel} total`, "", tierTotal]);
+    s.mergeCells(`A${subTot.number}:B${subTot.number}`);
+    subTot.height = 20;
+    subTot.getCell(1).font      = { name: "Calibri", size: 10, bold: true, color: { argb: MID } };
+    subTot.getCell(3).font      = { name: "Calibri", size: 10, bold: true, color: { argb: DARK } };
+    subTot.getCell(3).numFmt    = '"$"#,##0.00';
+    subTot.getCell(3).alignment = { horizontal: "right" };
+    subTot.getCell(3).border    = { top: { style: "thin", color: { argb: RULE } } };
   }
+
+  writeTier(likelyRows,   "Likely deductions",        likelyTotal);
+  writeTier(reviewRows,   "Needs review",              reviewTotal);
+  writeTier(excludedRows, "Excluded from estimate",    excludedTotal);
 
   gap(10);
 
-  // Grand total
-  const totRow = s.addRow(["Total", "", total]);
+  // Grand total (all confirmed)
+  const totRow = s.addRow(["Total confirmed", "", total]);
   s.mergeCells(`A${totRow.number}:B${totRow.number}`);
   totRow.height = 22;
   totRow.getCell(1).font      = { name: "Calibri", size: 11, bold: true, color: { argb: DARK } };
@@ -234,7 +269,7 @@ export async function GET() {
   // ── Footer ─────────────────────────────────────────────────────────────────
   divider();
 
-  const note1 = s.addRow(["Estimated tax saving assumes a 32.5% marginal rate. Actual saving depends on individual circumstances — verify with a registered tax adviser."]);
+  const note1 = s.addRow(["Estimated tax saving is based on likely (high-confidence) deductions only at a 32.5% marginal rate. Needs review and excluded items are not counted. Verify all claims with a registered tax adviser."]);
   s.mergeCells(`A${note1.number}:C${note1.number}`);
   note1.getCell(1).font = { name: "Calibri", size: 8, italic: true, color: { argb: DIM } };
   note1.height = 16;

@@ -32,6 +32,13 @@ export default async function ExportReport() {
   const withEvidence = rows.filter((r) => r.hasEvidence).length;
   const missing      = rows.length - withEvidence;
 
+  const likelyRows   = rows.filter(r => r.confidence === "HIGH");
+  const reviewRows   = rows.filter(r => r.confidence === "MEDIUM");
+  const excludedRows = rows.filter(r => r.confidence === "LOW");
+  const likelyTotal  = likelyRows.reduce((s, r) => s + r.amount, 0);
+  const reviewTotal  = reviewRows.reduce((s, r) => s + r.amount, 0);
+  const estimatedSaving = Math.round(likelyTotal * 0.325);
+
   const { ytdHours: wfhHours, ytdEst: wfhEst, fyLabel: wfhFyLabel } = calcWfhSummary(wfhEntries);
 
   const categoryTotals = Object.entries(
@@ -147,15 +154,15 @@ export default async function ExportReport() {
           <tbody>
             <tr>
               {[
-                { label: "Confirmed deductions", value: String(rows.length), sub: "items" },
-                { label: "Evidence attached",    value: String(withEvidence), sub: missing > 0 ? `${missing} still missing` : "all ready" },
-                { label: "Total claimed",        value: `$${total.toFixed(2)}`, sub: "AUD" },
+                { label: "Likely deduction amount", value: `$${likelyTotal.toFixed(2)}`, sub: `${likelyRows.length} high-confidence item${likelyRows.length !== 1 ? "s" : ""}`, accent: true },
+                { label: "Needs review",             value: reviewTotal > 0 ? `$${reviewTotal.toFixed(2)}` : "—", sub: reviewTotal > 0 ? `${reviewRows.length} item${reviewRows.length !== 1 ? "s" : ""}` : "none", accent: false },
+                { label: "Est. tax saving (32.5%)",  value: estimatedSaving > 0 ? `~$${estimatedSaving}` : "—", sub: "likely deductions only", accent: true },
               ].map((s, i) => (
                 <td key={i} className="summary-cell">
-                  <div style={{ border: i === 2 ? "1px solid #ddd6fe" : "1px solid #e5e7eb", borderRadius: 6, padding: "10px 14px", background: i === 2 ? "#f5f3ff" : "#fff" }}>
-                    <div style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: i === 2 ? "#7c3aed" : "#9ca3af" }}>{s.label}</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: i === 2 ? "#6d28d9" : "#111827", margin: "4px 0 2px" }}>{s.value}</div>
-                    <div style={{ fontSize: 10, color: i === 2 ? "#a78bfa" : "#9ca3af" }}>{s.sub}</div>
+                  <div style={{ border: s.accent ? "1px solid #bbf7d0" : "1px solid #e5e7eb", borderRadius: 6, padding: "10px 14px", background: s.accent ? "#f0fdf4" : "#fff" }}>
+                    <div style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: s.accent ? "#15803d" : "#9ca3af" }}>{s.label}</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: s.accent ? "#166534" : "#111827", margin: "4px 0 2px" }}>{s.value}</div>
+                    <div style={{ fontSize: 10, color: s.accent ? "#4ade80" : "#9ca3af" }}>{s.sub}</div>
                   </div>
                 </td>
               ))}
@@ -205,56 +212,80 @@ export default async function ExportReport() {
           </div>
         )}
 
-        {/* ── Deductions table ───────────────────────────────────── */}
+        {/* ── Potential Deductions (split by confidence) ─────────── */}
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#9ca3af" }}>All Deductions</div>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#9ca3af" }}>Potential Deductions</div>
             {missing > 0 && (
               <div style={{ fontSize: 10, color: "#b45309" }}>— amber rows are missing evidence</div>
             )}
           </div>
-          <div style={{ border: "1px solid #e5e7eb", borderRadius: 6, overflow: "hidden" }}>
-          <div className="table-scroll">
-            <table className="ded-table">
-              <colgroup>
-                <col className="col-date" />
-                <col className="col-merchant" />
-                <col className="col-category" />
-                <col className="col-amount" />
-                <col className="col-evidence" />
-                <col className="col-note" />
-              </colgroup>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Merchant</th>
-                  <th>Category</th>
-                  <th style={{ textAlign: "right" }}>Amount</th>
-                  <th>Evidence</th>
-                  <th>Note</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r, i) => (
-                  <tr key={i} className={r.hasEvidence ? "" : "missing-row"}>
-                    <td style={{ color: "#6b7280", whiteSpace: "nowrap" }}>{r.date}</td>
-                    <td className="merchant"><span className="truncate-cell">{r.merchant}</span></td>
-                    <td style={{ color: "#6b7280" }}><span className="truncate-cell">{r.category}</span></td>
-                    <td className="amount">${r.amount.toFixed(2)}</td>
-                    <td className={r.hasEvidence ? "evidence-ready" : "evidence-missing"}>
-                      {r.hasEvidence ? "✓ Ready" : "⚠ Missing"}
-                    </td>
-                    <td style={{ color: "#9ca3af", fontSize: 10 }}>{r.note ?? ""}</td>
-                  </tr>
-                ))}
-                <tr className="total-row">
-                  <td colSpan={3} style={{ textAlign: "right", color: "#374151" }}>Total</td>
-                  <td className="amount">${total.toFixed(2)}</td>
-                  <td colSpan={2} />
-                </tr>
-              </tbody>
-            </table>
-          </div>
+
+          {/* Tier table renderer */}
+          {(
+            [
+              { tierRows: likelyRows, label: "Likely deductions", headerBg: "#14532d", headerColor: "#fff", noteBg: undefined },
+              { tierRows: reviewRows, label: "Needs review — verify before claiming", headerBg: "#78350f", headerColor: "#fff", noteBg: "#fffbeb" },
+              { tierRows: excludedRows, label: "Excluded from estimate — low confidence", headerBg: "#374151", headerColor: "#fff", noteBg: "#f9fafb" },
+            ] as const
+          ).map(({ tierRows, label, headerBg, headerColor, noteBg }) => tierRows.length > 0 && (
+            <div key={label} style={{ marginBottom: 16, border: "1px solid #e5e7eb", borderRadius: 6, overflow: "hidden" }}>
+              <div style={{ background: headerBg, color: headerColor, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", padding: "6px 10px" }}>
+                {label}
+              </div>
+              <div className="table-scroll">
+                <table className="ded-table">
+                  <colgroup>
+                    <col className="col-date" />
+                    <col className="col-merchant" />
+                    <col className="col-category" />
+                    <col className="col-amount" />
+                    <col className="col-evidence" />
+                    <col className="col-note" />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Merchant</th>
+                      <th>Category</th>
+                      <th style={{ textAlign: "right" }}>Amount</th>
+                      <th>Evidence</th>
+                      <th>Reason</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tierRows.map((r, i) => (
+                      <tr key={i} className={r.hasEvidence ? "" : "missing-row"}
+                        style={noteBg && !r.hasEvidence ? { background: noteBg } : noteBg ? { background: noteBg } : {}}>
+                        <td style={{ color: "#6b7280", whiteSpace: "nowrap" }}>{r.date}</td>
+                        <td className="merchant"><span className="truncate-cell">{r.merchant}</span></td>
+                        <td style={{ color: "#6b7280" }}><span className="truncate-cell">{r.category}</span></td>
+                        <td className="amount">${r.amount.toFixed(2)}</td>
+                        <td className={r.hasEvidence ? "evidence-ready" : "evidence-missing"}>
+                          {r.hasEvidence ? "✓ Ready" : "⚠ Missing"}
+                        </td>
+                        <td style={{ color: "#9ca3af", fontSize: 10 }}>
+                          {r.reason ? r.reason.slice(0, 80) + (r.reason.length > 80 ? "…" : "") : (r.note ?? "")}
+                        </td>
+                      </tr>
+                    ))}
+                    <tr className="total-row">
+                      <td colSpan={3} style={{ textAlign: "right", color: "#374151" }}>
+                        {tierRows.length} item{tierRows.length !== 1 ? "s" : ""}
+                      </td>
+                      <td className="amount">${tierRows.reduce((s, r) => s + r.amount, 0).toFixed(2)}</td>
+                      <td colSpan={2} />
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ))}
+
+          {/* Grand total row */}
+          <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "baseline", gap: 12, padding: "6px 2px", borderTop: "2px solid #e5e7eb", marginTop: 4 }}>
+            <span style={{ fontSize: 11, color: "#374151" }}>Total confirmed</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>${total.toFixed(2)}</span>
           </div>
         </div>
 

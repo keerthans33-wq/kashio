@@ -213,13 +213,13 @@ describe("Equipment keyword in description at a non-tech retailer → Equipment 
 
 describe("broad retailers → excludeFromEstimate via LOW score", () => {
   it("Amazon LOW (no mixedUse) → score < 40 → excludeFromEstimate", () => {
-    const score = computeScore({ confidence: "LOW", mixedUse: false, needsReceipt: false, signals: {} });
+    const score = computeScore({ confidence: "LOW", mixedUse: false, needsReceipt: false, signals: {}, source: "engine" });
     expect(score).toBeLessThan(40);
     expect(computeExcludeFromEstimate(score)).toBe(true);
   });
 
   it("Officeworks MEDIUM for contractor → score ≥ 40 → included in estimate", () => {
-    const score = computeScore({ confidence: "MEDIUM", mixedUse: true, needsReceipt: false, signals: {} });
+    const score = computeScore({ confidence: "MEDIUM", mixedUse: true, needsReceipt: false, signals: {}, source: "engine" });
     expect(score).toBeGreaterThanOrEqual(40);
     expect(computeExcludeFromEstimate(score)).toBe(false);
   });

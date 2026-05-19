@@ -12,12 +12,14 @@ import { IOSPaywall } from "@/components/shared/IOSPaywall";
 import { useRevenueCat } from "@/components/providers/RevenueCatProvider";
 import { FALLBACK_PRICE, ANNUAL_SAVING_PCT } from "@/lib/pricing";
 
-type Item = {
-  id:       string;
-  merchant: string;
-  date:     string;
-  amount:   number;
-  category: string;
+export type Item = {
+  id:         string;
+  merchant:   string;
+  date:       string;
+  amount:     number;
+  category:   string;
+  confidence: string;
+  reason:     string;
 };
 
 type CategoryGroup = {
@@ -31,6 +33,9 @@ type Props = {
   allItems:       Item[];
   categoryGroups: CategoryGroup[];
   total:          number;
+  likelyTotal:    number;
+  reviewTotal:    number;
+  excludedTotal:  number;
   confirmedCount: number;
   wfhYtdHours:   number;
   wfhYtdEst:     number;
@@ -39,28 +44,48 @@ type Props = {
 
 type Interval = "month" | "year";
 
-
 const fmt = (n: number) =>
   n.toLocaleString("en-AU", { style: "currency", currency: "AUD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const fmtRound = (n: number) =>
   n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 
+function confidenceBadge(confidence: string) {
+  if (confidence === "HIGH") return (
+    <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
+      style={{ backgroundColor: "rgba(34,197,94,0.12)", color: "#22C55E", border: "1px solid rgba(34,197,94,0.20)" }}>
+      High
+    </span>
+  );
+  if (confidence === "MEDIUM") return (
+    <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
+      style={{ backgroundColor: "rgba(251,191,36,0.10)", color: "#FBBF24", border: "1px solid rgba(251,191,36,0.22)" }}>
+      Review
+    </span>
+  );
+  return (
+    <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
+      style={{ backgroundColor: "rgba(156,163,175,0.10)", color: "#9CA3AF", border: "1px solid rgba(156,163,175,0.20)" }}>
+      Low
+    </span>
+  );
+}
+
 // ── Export-specific locked preview with real user data ─────────────────────────
-// Shows visible summary stats + sample rows, then blurs the full report.
 
 type PreviewProps = {
   allItems:       Item[];
   categoryGroups: CategoryGroup[];
-  total:          number;
+  likelyTotal:    number;
+  reviewTotal:    number;
   confirmedCount: number;
 };
 
-function ExportLockedPreview({ allItems, categoryGroups, total, confirmedCount }: PreviewProps) {
-  const estimatedSaving  = Math.round(total * 0.325);
-  const top3             = categoryGroups.slice(0, 3);
-  const sampleItems      = allItems.slice(0, 3);
-  const hasRealData      = confirmedCount > 0;
+function ExportLockedPreview({ allItems, categoryGroups, likelyTotal, reviewTotal, confirmedCount }: PreviewProps) {
+  const estimatedSaving = Math.round(likelyTotal * 0.325);
+  const top3            = categoryGroups.slice(0, 3);
+  const sampleItems     = allItems.slice(0, 3);
+  const hasRealData     = confirmedCount > 0;
 
   return (
     <div className="mb-5">
@@ -77,28 +102,28 @@ function ExportLockedPreview({ allItems, categoryGroups, total, confirmedCount }
         </span>
       </div>
 
-      {/* ── Visible summary stats (not blurred) ────────────────────────────── */}
+      {/* ── Visible summary stats ───────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-2 mb-4">
-        <div
-          className="rounded-xl px-3 py-3"
-          style={{ backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
-        >
-          <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "var(--text-muted)" }}>
-            Transactions reviewed
-          </p>
-          <p className="text-[20px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
-            {hasRealData ? confirmedCount : "—"}
-          </p>
-        </div>
         <div
           className="rounded-xl px-3 py-3"
           style={{ backgroundColor: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.16)" }}
         >
           <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "rgba(34,197,94,0.70)" }}>
-            Potential claim
+            Likely deductions
           </p>
           <p className="text-[20px] font-bold tabular-nums" style={{ color: "#22C55E" }}>
-            {hasRealData ? fmtRound(total) : "—"}
+            {hasRealData ? fmtRound(likelyTotal) : "—"}
+          </p>
+        </div>
+        <div
+          className="rounded-xl px-3 py-3"
+          style={{ backgroundColor: "rgba(251,191,36,0.05)", border: "1px solid rgba(251,191,36,0.15)" }}
+        >
+          <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "rgba(251,191,36,0.70)" }}>
+            Needs review
+          </p>
+          <p className="text-[20px] font-bold tabular-nums" style={{ color: "#FBBF24" }}>
+            {hasRealData && reviewTotal > 0 ? fmtRound(reviewTotal) : hasRealData ? "—" : "—"}
           </p>
         </div>
       </div>
@@ -109,7 +134,9 @@ function ExportLockedPreview({ allItems, categoryGroups, total, confirmedCount }
           className="mb-4 flex items-center justify-between rounded-xl px-3 py-2.5"
           style={{ backgroundColor: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.12)" }}
         >
-          <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>Estimated tax saving (32.5%)</p>
+          <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>
+            Estimated tax saving (32.5%) — likely deductions only
+          </p>
           <p className="text-[13px] font-semibold tabular-nums" style={{ color: "#22C55E" }}>~{fmtRound(estimatedSaving)}</p>
         </div>
       )}
@@ -133,14 +160,11 @@ function ExportLockedPreview({ allItems, categoryGroups, total, confirmedCount }
         </div>
       )}
 
-      {/* ── Sample rows (visible, not blurred) ──────────────────────────────── */}
+      {/* Sample rows */}
       {sampleItems.length > 0 && (
         <div className="mb-4">
           <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "var(--text-muted)" }}>Sample entries</p>
-          <div
-            className="rounded-xl overflow-hidden"
-            style={{ border: "1px solid rgba(255,255,255,0.07)" }}
-          >
+          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
             {sampleItems.map((item, i) => (
               <div
                 key={item.id}
@@ -163,16 +187,12 @@ function ExportLockedPreview({ allItems, categoryGroups, total, confirmedCount }
         </div>
       )}
 
-      {/* ── Blurred full report + frosted lock overlay ──────────────────────── */}
+      {/* Blurred full report + lock overlay */}
       <div className="relative rounded-xl overflow-hidden">
-        <div
-          style={{ filter: "blur(4px)", userSelect: "none", pointerEvents: "none" }}
-          aria-hidden="true"
-        >
-          {/* Blurred category breakdown rows */}
+        <div style={{ filter: "blur(4px)", userSelect: "none", pointerEvents: "none" }} aria-hidden="true">
           <div style={{ backgroundColor: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
             <p className="px-3 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.30)" }}>
-              Full category breakdown
+              Full potential deductions breakdown
             </p>
             {(categoryGroups.length > 0 ? categoryGroups : [
               { cat: "Home Office / WFH", catTotal: 1140 },
@@ -180,67 +200,61 @@ function ExportLockedPreview({ allItems, categoryGroups, total, confirmedCount }
               { cat: "Professional Development", catTotal: 499 },
               { cat: "Work Travel", catTotal: 385 },
             ]).map((g, i) => (
-              <div
-                key={g.cat}
-                className="flex items-center justify-between px-3 py-1.5"
-                style={{ borderTop: i > 0 ? "1px solid rgba(255,255,255,0.04)" : "none" }}
-              >
+              <div key={g.cat} className="flex items-center justify-between px-3 py-1.5"
+                style={{ borderTop: i > 0 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
                 <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{g.cat}</p>
                 <p className="text-[12px] font-medium tabular-nums" style={{ color: "#22C55E" }}>{fmtRound(g.catTotal)}</p>
               </div>
             ))}
           </div>
-
-          {/* Blurred export buttons */}
-          <div
-            className="flex gap-2 px-3 py-3"
-            style={{ backgroundColor: "rgba(255,255,255,0.02)", borderTop: "1px solid rgba(255,255,255,0.06)" }}
-          >
+          <div className="flex gap-2 px-3 py-3"
+            style={{ backgroundColor: "rgba(255,255,255,0.02)", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
             <div className="flex-1 h-9 rounded-xl" style={{ backgroundColor: "rgba(34,197,94,0.18)", border: "1px solid rgba(34,197,94,0.25)" }} />
             <div className="flex-1 h-9 rounded-xl" style={{ backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }} />
           </div>
         </div>
-
-        {/* Frosted lock overlay */}
-        <div
-          className="absolute inset-0 flex flex-col items-center justify-center gap-2"
-          style={{
-            background:     "linear-gradient(to bottom, rgba(5,7,14,0.35) 0%, rgba(5,7,14,0.72) 100%)",
-            backdropFilter: "blur(1px)",
-          }}
-        >
-          <div
-            className="flex h-9 w-9 items-center justify-center rounded-full"
-            style={{ backgroundColor: "rgba(34,197,94,0.14)", border: "1px solid rgba(34,197,94,0.30)" }}
-          >
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2"
+          style={{ background: "linear-gradient(to bottom, rgba(5,7,14,0.35) 0%, rgba(5,7,14,0.72) 100%)", backdropFilter: "blur(1px)" }}>
+          <div className="flex h-9 w-9 items-center justify-center rounded-full"
+            style={{ backgroundColor: "rgba(34,197,94,0.14)", border: "1px solid rgba(34,197,94,0.30)" }}>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} style={{ color: "#22C55E" }}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
             </svg>
           </div>
-          <p className="text-[12px] font-medium" style={{ color: "rgba(255,255,255,0.65)" }}>
-            Unlock your full tax report
-          </p>
+          <p className="text-[12px] font-medium" style={{ color: "rgba(255,255,255,0.65)" }}>Unlock your full tax report</p>
         </div>
       </div>
     </div>
   );
 }
 
+// ── Unlocked section row ───────────────────────────────────────────────────────
+
+function SectionHeading({ label, total, color }: { label: string; total: number; color: string }) {
+  return (
+    <div className="flex items-baseline justify-between pb-2 mb-1"
+      style={{ borderBottom: `1px solid rgba(255,255,255,0.08)` }}>
+      <span className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
+        {label}
+      </span>
+      <span className="text-[14px] font-semibold tabular-nums" style={{ color }}>
+        {fmtRound(total)}
+      </span>
+    </div>
+  );
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
-export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, confirmedCount, wfhYtdHours, wfhYtdEst, email }: Props) {
+export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, likelyTotal, reviewTotal, excludedTotal, confirmedCount, wfhYtdHours, wfhYtdEst, email }: Props) {
   const { isIOS, platformReady, isPro } = useRevenueCat();
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
   const [interval, setInterval] = useState<Interval>("year");
 
-  // Treat the user as unlocked if the server confirmed it (DB) OR if the
-  // RevenueCat client just confirmed a purchase / restore this session.
-  // The RC SDK is authoritative immediately after purchase; the server-side
-  // DB sync can lag by several seconds due to Apple → RC propagation delay.
   const isUnlocked = reportUnlocked || isPro;
 
   async function handleUnlock() {
-    if (isIOS) return; // hard guard — Stripe must never open inside iOS app
+    if (isIOS) return;
     setLoading(true);
     setError(null);
     try {
@@ -250,10 +264,7 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
         body:    JSON.stringify({ interval, cancelPath: "/export" }),
       });
       const body = await res.json();
-      if (!res.ok || !body.url) {
-        setError("Something went wrong. Please try again.");
-        return;
-      }
+      if (!res.ok || !body.url) { setError("Something went wrong. Please try again."); return; }
       window.location.href = body.url;
     } catch {
       setError("Something went wrong. Please try again.");
@@ -264,6 +275,21 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
 
   // ── Unlocked: full breakdown + download ───────────────────────────────────
   if (isUnlocked) {
+    const likelyItems   = allItems.filter(i => i.confidence === "HIGH");
+    const reviewItems   = allItems.filter(i => i.confidence === "MEDIUM");
+    const excludedItems = allItems.filter(i => i.confidence === "LOW");
+
+    // Build per-section category groups
+    function groupByCategory(items: Item[]) {
+      const map = new Map<string, Item[]>();
+      for (const item of items) {
+        if (!map.has(item.category)) map.set(item.category, []);
+        map.get(item.category)!.push(item);
+      }
+      return [...map.entries()]
+        .sort((a, b) => b[1].reduce((s, i) => s + i.amount, 0) - a[1].reduce((s, i) => s + i.amount, 0));
+    }
+
     return (
       <motion.div
         className="space-y-8"
@@ -271,37 +297,130 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
       >
-        {/* Category breakdown */}
+        {/* ── Potential Deductions breakdown ─────────────────────────── */}
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-widest mb-5" style={{ color: "var(--text-muted)" }}>
-            Breakdown
+            Potential Deductions
           </p>
-          <div className="space-y-6">
-            {categoryGroups.map(({ cat, catTotal, items }) => (
-              <div key={cat}>
-                <div
-                  className="flex items-baseline justify-between pb-2.5 mb-2"
-                  style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
-                >
-                  <span className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
-                    {cat}
-                  </span>
-                  <span className="text-[14px] font-semibold tabular-nums" style={{ color: "var(--text-secondary)" }}>
-                    {fmtRound(catTotal)}
-                  </span>
-                </div>
-                {items.map((item, idx) => (
-                  <div
-                    key={item.id}
-                    className="flex items-baseline justify-between gap-4 py-2.5"
-                    style={{ borderBottom: idx < items.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}
-                  >
-                    <p className="truncate text-[13px]" style={{ color: "var(--text-primary)" }}>{item.merchant}</p>
-                    <span className="shrink-0 text-[13px] tabular-nums" style={{ color: "var(--text-secondary)" }}>{fmt(item.amount)}</span>
+
+          {/* Likely deductions */}
+          {likelyItems.length > 0 && (
+            <div className="mb-6">
+              <SectionHeading label="Likely deductions" total={likelyTotal} color="#22C55E" />
+              <div className="mt-2 space-y-0">
+                {groupByCategory(likelyItems).map(([cat, items]) => (
+                  <div key={cat} className="mb-4">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest mb-1.5 mt-3" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
+                      {cat}
+                    </p>
+                    {items.map((item, idx) => (
+                      <div key={item.id} className="flex items-baseline justify-between gap-4 py-2"
+                        style={{ borderBottom: idx < items.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+                        <div className="min-w-0 flex items-center gap-2">
+                          <p className="truncate text-[13px]" style={{ color: "var(--text-primary)" }}>{item.merchant}</p>
+                          {confidenceBadge(item.confidence)}
+                        </div>
+                        <span className="shrink-0 text-[13px] tabular-nums" style={{ color: "var(--text-secondary)" }}>
+                          {fmt(item.amount)}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>
-            ))}
+            </div>
+          )}
+
+          {/* Needs review */}
+          {reviewItems.length > 0 && (
+            <div className="mb-6">
+              <SectionHeading label="Needs review" total={reviewTotal} color="#FBBF24" />
+              <p className="text-[11px] mt-1 mb-3" style={{ color: "var(--text-muted)" }}>
+                These are confirmed but may not be fully deductible — check with your accountant before claiming.
+              </p>
+              {groupByCategory(reviewItems).map(([cat, items]) => (
+                <div key={cat} className="mb-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
+                    {cat}
+                  </p>
+                  {items.map((item, idx) => (
+                    <div key={item.id} className="flex items-start justify-between gap-4 py-2"
+                      style={{ borderBottom: idx < items.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <p className="truncate text-[13px]" style={{ color: "var(--text-primary)" }}>{item.merchant}</p>
+                          {confidenceBadge(item.confidence)}
+                        </div>
+                        {item.reason && (
+                          <p className="text-[10px] leading-snug" style={{ color: "var(--text-muted)" }}>
+                            {item.reason.length > 80 ? item.reason.slice(0, 80) + "…" : item.reason}
+                          </p>
+                        )}
+                      </div>
+                      <span className="shrink-0 text-[13px] tabular-nums" style={{ color: "var(--text-muted)" }}>
+                        {fmt(item.amount)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Excluded */}
+          {excludedItems.length > 0 && (
+            <div className="mb-6">
+              <SectionHeading label="Excluded from estimate" total={excludedTotal} color="var(--text-muted)" />
+              <p className="text-[11px] mt-1 mb-3" style={{ color: "var(--text-muted)" }}>
+                Low confidence — these are not counted in the estimated tax saving. Verify with your accountant.
+              </p>
+              {groupByCategory(excludedItems).map(([cat, items]) => (
+                <div key={cat} className="mb-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
+                    {cat}
+                  </p>
+                  {items.map((item, idx) => (
+                    <div key={item.id} className="flex items-baseline justify-between gap-4 py-2"
+                      style={{ borderBottom: idx < items.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none", opacity: 0.6 }}>
+                      <div className="min-w-0 flex items-center gap-2">
+                        <p className="truncate text-[13px]" style={{ color: "var(--text-secondary)" }}>{item.merchant}</p>
+                        {confidenceBadge(item.confidence)}
+                      </div>
+                      <span className="shrink-0 text-[13px] tabular-nums" style={{ color: "var(--text-muted)" }}>
+                        {fmt(item.amount)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Summary row */}
+          <div className="rounded-xl px-4 py-3 space-y-1"
+            style={{ backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            <div className="flex justify-between text-[12px]">
+              <span style={{ color: "var(--text-muted)" }}>Likely deductions</span>
+              <span className="tabular-nums font-medium" style={{ color: "#22C55E" }}>{fmtRound(likelyTotal)}</span>
+            </div>
+            {reviewTotal > 0 && (
+              <div className="flex justify-between text-[12px]">
+                <span style={{ color: "var(--text-muted)" }}>Needs review</span>
+                <span className="tabular-nums" style={{ color: "#FBBF24" }}>{fmtRound(reviewTotal)}</span>
+              </div>
+            )}
+            {excludedTotal > 0 && (
+              <div className="flex justify-between text-[12px]">
+                <span style={{ color: "var(--text-muted)" }}>Excluded</span>
+                <span className="tabular-nums" style={{ color: "var(--text-muted)" }}>{fmtRound(excludedTotal)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-[12px] pt-1" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+              <span style={{ color: "var(--text-muted)" }}>Estimated tax saving (32.5%, likely only)</span>
+              <span className="tabular-nums font-semibold" style={{ color: "#22C55E" }}>
+                ~{fmtRound(Math.round(likelyTotal * 0.325))}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -317,18 +436,16 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
             boxShadow:       "0 2px 8px rgba(0,0,0,0.4), 0 0 40px rgba(34,197,94,0.06)",
           }}
         >
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{ background: "radial-gradient(ellipse 80% 50% at 50% 100%, rgba(34,197,94,0.06) 0%, transparent 100%)" }}
-          />
+          <div className="pointer-events-none absolute inset-0"
+            style={{ background: "radial-gradient(ellipse 80% 50% at 50% 100%, rgba(34,197,94,0.06) 0%, transparent 100%)" }} />
           <p className="text-[11px] font-semibold uppercase tracking-widest mb-1" style={{ color: "#22C55E" }}>
-            Ready to lodge
+            Ready to share
           </p>
           <p className="text-[18px] font-semibold leading-snug mb-1" style={{ color: "var(--text-primary)" }}>
             Your report is ready
           </p>
           <p className="text-[13px] mb-8" style={{ color: "var(--text-muted)" }}>
-            Download your summary — share it with your accountant or use it to lodge your return.
+            Download your summary — share it with your accountant or use it to prepare your return.
           </p>
           <div className="space-y-3">
             <ExportButton />
@@ -336,6 +453,9 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
               allItems={allItems}
               categoryGroups={categoryGroups}
               total={total}
+              likelyTotal={likelyTotal}
+              reviewTotal={reviewTotal}
+              excludedTotal={excludedTotal}
               confirmedCount={confirmedCount}
               wfhYtdHours={wfhYtdHours}
               wfhYtdEst={wfhYtdEst}
@@ -347,15 +467,13 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
     );
   }
 
-  // Wait until platform is known — prevents web prices flashing on iOS
+  // Wait until platform is known
   if (!platformReady) return null;
 
-  // ── iOS locked: blurred preview + RevenueCat paywall card ───────────────
-  // Layout intentionally mirrors the web locked state for consistency.
+  // ── iOS locked ────────────────────────────────────────────────────────────
   if (isIOS) {
     return (
       <>
-        {/* Blurred category preview — same as web */}
         <motion.div
           className="mb-5 relative overflow-hidden rounded-2xl"
           style={{ pointerEvents: "none", userSelect: "none" }}
@@ -365,7 +483,7 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
         >
           <div style={{ filter: "blur(5px)", opacity: 0.4 }}>
             <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--text-muted)" }}>
-              Breakdown
+              Potential Deductions
             </p>
             <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}>
               <div className="px-5 py-3 flex items-center justify-between" style={{ borderBottom: "1px solid var(--bg-border)" }}>
@@ -375,11 +493,8 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
                 <span className="text-[14px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>$—</span>
               </div>
               {allItems.slice(0, 4).map((item, i) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between gap-4 px-5 py-2.5"
-                  style={{ borderTop: i > 0 ? "1px solid rgba(255,255,255,0.04)" : "none" }}
-                >
+                <div key={item.id} className="flex items-center justify-between gap-4 px-5 py-2.5"
+                  style={{ borderTop: i > 0 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
                   <div className="min-w-0">
                     <p className="truncate text-[13px]" style={{ color: "var(--text-primary)" }}>{item.merchant}</p>
                     <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>{item.date}</p>
@@ -391,13 +506,10 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
               ))}
             </div>
           </div>
-          <div
-            className="absolute inset-x-0 bottom-0 h-20"
-            style={{ background: "linear-gradient(to bottom, transparent, var(--bg-app))" }}
-          />
+          <div className="absolute inset-x-0 bottom-0 h-20"
+            style={{ background: "linear-gradient(to bottom, transparent, var(--bg-app))" }} />
         </motion.div>
 
-        {/* iOS paywall card — same visual container as web, RevenueCat inside */}
         <motion.div
           className="mb-8 rounded-2xl px-6 py-7"
           initial={{ opacity: 0, y: 12 }}
@@ -415,10 +527,10 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
     );
   }
 
-  // ── Web locked: blurred real preview + Stripe paywall ────────────────────
+  // ── Web locked ────────────────────────────────────────────────────────────
   return (
     <>
-      {/* Blurred preview of real user data */}
+      {/* Blurred preview */}
       <motion.div
         className="mb-5 relative overflow-hidden rounded-2xl"
         style={{ pointerEvents: "none", userSelect: "none" }}
@@ -428,7 +540,7 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
       >
         <div style={{ filter: "blur(5px)", opacity: 0.4 }}>
           <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--text-muted)" }}>
-            Breakdown
+            Potential Deductions
           </p>
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}>
             <div className="px-5 py-3 flex items-center justify-between" style={{ borderBottom: "1px solid var(--bg-border)" }}>
@@ -455,7 +567,7 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
           style={{ background: "linear-gradient(to bottom, transparent, var(--bg-app))" }} />
       </motion.div>
 
-      {/* Web Stripe paywall card */}
+      {/* Stripe paywall card */}
       <motion.div
         className="mb-8 rounded-2xl px-6 py-7"
         initial={{ opacity: 0, y: 12 }}
@@ -467,7 +579,6 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
           boxShadow:       "0 2px 8px rgba(0,0,0,0.5), 0 0 48px rgba(34,197,94,0.07)",
         }}
       >
-        {/* Lock icon */}
         <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-full"
           style={{ backgroundColor: "rgba(34,197,94,0.10)", border: "1px solid rgba(34,197,94,0.20)" }}>
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} style={{ color: "#22C55E" }}>
@@ -481,7 +592,7 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, c
         </p>
 
         <ul className="mb-6 space-y-2.5">
-          {["Full deduction review", "Export-ready tax summary", "WFH deduction tools", "Up to 100 receipt uploads"].map((item) => (
+          {["Full potential deductions breakdown", "Export-ready tax summary", "WFH deduction tools", "Up to 100 receipt uploads"].map((item) => (
             <li key={item} className="flex items-center gap-2.5 text-[13px]" style={{ color: "var(--text-secondary)" }}>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" style={{ color: "#22C55E" }}>
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
