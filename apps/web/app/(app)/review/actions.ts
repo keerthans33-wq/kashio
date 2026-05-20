@@ -16,9 +16,24 @@ export async function rejectCandidate(id: string) {
   revalidatePath("/review");
 }
 
+export async function maybeCandidate(id: string) {
+  const userId = await requireUser();
+  await db.deductionCandidate.update({ where: { id, userId }, data: { status: "MAYBE" } });
+  revalidatePath("/review");
+}
+
 export async function resetCandidate(id: string) {
   const userId = await requireUser();
   await db.deductionCandidate.update({ where: { id, userId }, data: { status: "NEEDS_REVIEW" } });
+  revalidatePath("/review");
+}
+
+export async function confirmWithDetails(id: string, workPercent: number | null) {
+  const userId = await requireUser();
+  await db.deductionCandidate.update({
+    where: { id, userId },
+    data:  { status: "CONFIRMED", workPercent },
+  });
   revalidatePath("/review");
 }
 
@@ -34,10 +49,38 @@ export async function bulkRejectCandidates(ids: string[]) {
   revalidatePath("/review");
 }
 
+export async function bulkMaybeCandidates(ids: string[]) {
+  const userId = await requireUser();
+  await db.deductionCandidate.updateMany({ where: { id: { in: ids }, userId }, data: { status: "MAYBE" } });
+  revalidatePath("/review");
+}
+
 export async function bulkResetCandidates(ids: string[]) {
   const userId = await requireUser();
   await db.deductionCandidate.updateMany({ where: { id: { in: ids }, userId }, data: { status: "NEEDS_REVIEW" } });
   revalidatePath("/review");
+}
+
+/** Claim all unreviewed high-confidence (LIKELY_WORK_RELATED) candidates. Returns claimed count. */
+export async function claimAllHighConfidence(): Promise<number> {
+  const userId = await requireUser();
+  const result = await db.deductionCandidate.updateMany({
+    where: { userId, status: "NEEDS_REVIEW", suggestionLevel: "LIKELY_WORK_RELATED" },
+    data:  { status: "CONFIRMED" },
+  });
+  revalidatePath("/review");
+  return result.count;
+}
+
+/** Ignore all unreviewed probably-personal candidates. Returns ignored count. */
+export async function ignoreAllPersonal(): Promise<number> {
+  const userId = await requireUser();
+  const result = await db.deductionCandidate.updateMany({
+    where: { userId, status: "NEEDS_REVIEW", suggestionLevel: "PROBABLY_PERSONAL" },
+    data:  { status: "REJECTED" },
+  });
+  revalidatePath("/review");
+  return result.count;
 }
 
 export async function saveEvidence(id: string, hasEvidence: boolean, evidenceNote: string) {
@@ -55,15 +98,6 @@ export async function saveWorkPercent(id: string, workPercent: number | null) {
   await db.deductionCandidate.update({
     where: { id, userId },
     data:  { workPercent },
-  });
-  revalidatePath("/review");
-}
-
-export async function confirmWithDetails(id: string, workPercent: number | null) {
-  const userId = await requireUser();
-  await db.deductionCandidate.update({
-    where: { id, userId },
-    data:  { status: "CONFIRMED", workPercent },
   });
   revalidatePath("/review");
 }

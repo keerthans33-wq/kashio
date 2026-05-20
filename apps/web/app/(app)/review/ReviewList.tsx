@@ -7,7 +7,7 @@ import { bulkConfirmCandidates, bulkRejectCandidates, bulkResetCandidates } from
 import { Button } from "@/components/ui/button";
 import { cancelNotification, scheduleExportReminder, NOTIF_ID } from "@/lib/notifications";
 
-type Status = "NEEDS_REVIEW" | "CONFIRMED" | "REJECTED";
+type Status = "NEEDS_REVIEW" | "CONFIRMED" | "REJECTED" | "MAYBE";
 
 type Props = {
   needsReview:     CandidateCardProps[];

@@ -14,12 +14,13 @@
 import { cn } from "@/lib/utils";
 import type { HTMLAttributes } from "react";
 
-type MaxWidth = "sm" | "md" | "lg";
+type MaxWidth = "sm" | "md" | "lg" | "xl";
 
 const MAX: Record<MaxWidth, string> = {
   sm: "max-w-[430px]",
   md: "max-w-[560px]",
   lg: "max-w-3xl",
+  xl: "max-w-5xl",
 };
 
 interface MobileScreenProps extends HTMLAttributes<HTMLElement> {

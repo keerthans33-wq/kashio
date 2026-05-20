@@ -103,12 +103,14 @@ export default async function Dashboard() {
   const isPro = isProUser(plan);
 
   const allowed   = (userType ? CATEGORIES_BY_USER_TYPE[userType] : null) ?? ACTIVE_CATEGORIES;
-  const active    = candidates.filter((c) => allowed.includes(c.category) && c.status !== "REJECTED");
+  const active    = candidates.filter((c) => allowed.includes(c.category));
   const confirmed = active.filter((c) => c.status === "CONFIRMED");
   const pending   = active.filter((c) => c.status === "NEEDS_REVIEW");
 
-  const potentialTotal  = active.reduce((s, c) => s + Math.abs(c.transaction.amount), 0);
-  const estimatedSaving = Math.round(potentialTotal * 0.325);
+  // Only claimed (CONFIRMED) transactions count toward estimated saving.
+  const claimedTotal    = confirmed.reduce((s, c) => s + Math.abs(c.transaction.amount), 0);
+  const estimatedSaving = Math.round(claimedTotal * 0.325);
+  const potentialTotal  = claimedTotal; // hero card shows claimed total
 
   const { ytdHours: wfhHours, ytdEst: wfhEst, fyLabel } = calcWfhSummary(wfhEntries);
 
@@ -190,7 +192,7 @@ export default async function Dashboard() {
         </FadeIn>
 
         <p className="mt-6 text-[11px] text-center" style={{ color: "var(--text-muted)", opacity: 0.4 }}>
-          Not tax advice — check with your accountant before lodging.
+          Kashio does not provide tax advice. Verify with a registered tax agent before lodging.
         </p>
       </MobileScreen>
     );
@@ -305,7 +307,7 @@ export default async function Dashboard() {
             className="text-[10px] font-semibold uppercase tracking-widest mb-2"
             style={{ color: "var(--text-muted)" }}
           >
-            Potential deductions found
+            Claimed deductions
           </p>
 
           {/* Amount + savings badge on same row */}
@@ -335,7 +337,9 @@ export default async function Dashboard() {
           <p className="mt-2 text-[12px]" style={{ color: "var(--text-secondary)" }}>
             {active.length === 0
               ? "No transactions imported yet"
-              : `${confirmed.length} confirmed deduction${confirmed.length !== 1 ? "s" : ""} ready for export`}
+              : confirmed.length === 0
+                ? "Review transactions on the Review page and claim what applies"
+                : `${confirmed.length} transaction${confirmed.length !== 1 ? "s" : ""} claimed · ready for export`}
           </p>
           {pending.length > 0 && (
             <p className="mt-0.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
@@ -345,7 +349,7 @@ export default async function Dashboard() {
 
           {/* Disclaimer */}
           <p className="mt-3 text-[10px]" style={{ color: "rgba(255,255,255,0.20)" }}>
-            Estimate only — not tax advice. Consult your accountant.
+            Estimate based on claimed transactions only. Kashio does not provide tax advice — verify with a registered tax agent.
           </p>
         </div>
       </FadeIn>
@@ -584,7 +588,7 @@ export default async function Dashboard() {
         className="mb-10 text-[11px] text-center"
         style={{ color: "var(--text-muted)", opacity: 0.4 }}
       >
-        Not tax advice — check with your accountant before lodging.
+        Kashio does not provide tax advice. Suggestions are based on transaction descriptions only. Verify with a registered tax agent before lodging.
       </p>
 
     </MobileScreen>

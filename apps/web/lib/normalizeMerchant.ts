@@ -86,6 +86,9 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   [/^SNAPCHAT\s+ADS?\b/i,                        "Snapchat Ads"],
   [/^REDDIT\s+ADS?\b/i,                          "Reddit Ads"],
 
+  // ── Developer tools ───────────────────────────────────────────────────────
+  [/^GITHUB\b/i,                                 "GitHub"],
+
   // ── AI tools ───────────────────────────────────────────────────────────────
   [/^CHATGPT\b/i,                                "ChatGPT"],
   [/^OPENAI\b/i,                                 "OpenAI"],
@@ -183,12 +186,19 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   [/^TOTAL\s+TOOLS?\b/i,                         "Total Tools"],
 
   // ── Hardware / tech retailers ─────────────────────────────────────────────
+  // JB HI-FI variants — LOCATION_SLUG can strip "HI-FI" or leave "Jb Hi Fi"
+  [/^JB[\s-]*HI[\s-]*FI\b/i,                    "JB Hi-Fi"],
   // MSY TECHNOLOGY — LOCATION_SLUG strips TECHNOLOGY, leaving just "Msy".
   [/^MSY\s+TECH(?:NOLOGY)?\b/i,                  "MSY Technology"],
 
   // ── Accounting ─────────────────────────────────────────────────────────────
+  // H&R Block — various descriptor formats
+  [/^H\s*[&AND]+\s*R\s+BLOCK\b/i,                "H&R Block"],
+  [/^HR\s+BLOCK\b/i,                             "H&R Block"],
+  [/^H\s*R\s+BLOCK\b/i,                          "H&R Block"],
   [/^XERO\s+AU\b/i,                              "Xero"],
   [/^XERO\s+AUSTRALIA\b/i,                       "Xero"],
+  [/^MYOB\b/i,                                   "MYOB"],
 
   // ── QuickBooks / Intuit ────────────────────────────────────────────────────
   // Must run before TERMINAL_CODE (Step 2) strips "*QUICKBOOKS" off "INTUIT*QUICKBOOKS".

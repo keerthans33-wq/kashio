@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-type Status     = "NEEDS_REVIEW" | "CONFIRMED" | "REJECTED";
+type Status     = "NEEDS_REVIEW" | "CONFIRMED" | "REJECTED" | "MAYBE";
 type Confidence = "LOW" | "MEDIUM" | "HIGH";
 
 export type CandidateCardProps = {
@@ -57,12 +57,14 @@ const CARD_BG: Record<Status, string> = {
   CONFIRMED:    "rgba(17, 33, 24, 0.78)",
   REJECTED:     "rgba(17, 24, 39, 0.38)",
   NEEDS_REVIEW: "rgba(17, 24, 39, 0.72)",
+  MAYBE:        "rgba(30, 20, 10, 0.72)",
 };
 
 const CARD_BORDER: Record<Status, string> = {
   CONFIRMED:    "rgba(34, 197, 94, 0.18)",
   REJECTED:     "rgba(255, 255, 255, 0.03)",
   NEEDS_REVIEW: "rgba(255, 255, 255, 0.06)",
+  MAYBE:        "rgba(245, 158, 11, 0.18)",
 };
 
 const CONFIDENCE_LABEL: Record<Confidence, string> = {

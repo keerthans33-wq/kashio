@@ -82,11 +82,19 @@ enum Confidence {
   HIGH
 }
 
+// Classifier suggestion: how work-related the transaction appears.
+enum SuggestionLevel {
+  LIKELY_WORK_RELATED
+  POSSIBLE_WORK_RELATED
+  PROBABLY_PERSONAL
+}
+
 // What the user has decided about this candidate.
 enum DeductionStatus {
   NEEDS_REVIEW
   CONFIRMED
   REJECTED
+  MAYBE
 }
 
 model WfhLog {
@@ -136,6 +144,7 @@ model DeductionCandidate {
   reason              String          // short explanation, e.g. "Matches known software subscription"
   confidenceReason    String?         // explains why confidence is LOW/MEDIUM/HIGH
   mixedUse            Boolean         @default(false) // true if category may include personal use
+  suggestionLevel     SuggestionLevel @default(PROBABLY_PERSONAL)
   status        DeductionStatus @default(NEEDS_REVIEW)
   hasEvidence   Boolean         @default(false)
   evidenceNote  String?         // optional free text, e.g. "Bunnings receipt Feb 2025"

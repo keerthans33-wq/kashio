@@ -12,8 +12,98 @@ import type { DeductionMatch } from "./rules/types";
 import type { ScoringSource } from "./rules/scoring";
 import type { IngestionRow } from "./ingestion/types";
 
-// Tokens that signal a transaction might be a business expense even if the
-// merchant is unknown. The safe fallback only fires when at least one matches.
+export type TransactionSource = "CSV" | "DEMO_BANK" | "BASIQ";
+export type PipelineRow = IngestionRow;
+
+export type PipelineResult = {
+  batchId:    string | null;
+  inserted:   number;
+  duplicates: number;
+  flagged:    number;
+  totalValue: number;
+};
+
+type SuggestionLevel = "LIKELY_WORK_RELATED" | "POSSIBLE_WORK_RELATED" | "PROBABLY_PERSONAL";
+
+function confidenceToSuggestionLevel(confidence: "LOW" | "MEDIUM" | "HIGH"): SuggestionLevel {
+  if (confidence === "HIGH")   return "LIKELY_WORK_RELATED";
+  if (confidence === "MEDIUM") return "POSSIBLE_WORK_RELATED";
+  return "PROBABLY_PERSONAL";
+}
+
+// Personal reason → user-facing suggestion reason
+const BLOCK_REASON_LABELS: Record<string, string> = {
+  gambling:               "Likely personal expense — gambling",
+  atm_cash:               "ATM or cash withdrawal — not a deductible expense",
+  generic_interest:       "Bank interest or fee — not a deductible expense",
+  streaming:              "Likely personal streaming or entertainment subscription",
+  alcohol:                "Likely personal alcohol purchase",
+  fitness:                "Likely personal gym or fitness expense",
+  entertainment:          "Likely personal entertainment venue",
+  restaurant_food:        "Likely personal meal or food delivery",
+  personal_medical:       "Likely personal medical or pharmacy expense",
+  personal_travel_tourism:"Likely personal travel or tourism expense",
+  personal_transfer:      "Personal bank transfer — not a deductible expense",
+  rent:                   "Likely personal rent payment",
+  personal:               "Likely personal expense",
+};
+
+function personalBlockMatch(amount: number, reason: string): DeductionMatch {
+  const label = BLOCK_REASON_LABELS[reason] ?? "Likely personal expense";
+  return {
+    category:         CATEGORIES.UNCATEGORISED,
+    confidence:       "LOW",
+    reason:           label,
+    confidenceReason: "Classified as probably personal based on merchant or description.",
+    mixedUse:         false,
+    needsReceipt:     false,
+    canUpgrade:       false,
+    signals:          { personalBlock: reason },
+  };
+}
+
+function creditOrRefundMatch(isCredit: boolean): DeductionMatch {
+  return {
+    category:         CATEGORIES.UNCATEGORISED,
+    confidence:       "LOW",
+    reason:           isCredit
+      ? "Credit or income — not a deductible expense"
+      : "Refund or reversal — not a deductible expense",
+    confidenceReason: "Credits, refunds, and reversals are not deductible.",
+    mixedUse:         false,
+    needsReceipt:     false,
+    canUpgrade:       false,
+    signals:          { creditOrRefund: true },
+  };
+}
+
+function noContextMatch(): DeductionMatch {
+  return {
+    category:         CATEGORIES.UNCATEGORISED,
+    confidence:       "LOW",
+    reason:           "No work-related pattern detected — review if this was a business expense",
+    confidenceReason: "No rule or business-context match found. Confirm manually if deductible.",
+    mixedUse:         false,
+    needsReceipt:     false,
+    canUpgrade:       false,
+    signals:          { noContext: true },
+  };
+}
+
+function bizFallbackMatch(amount: number): DeductionMatch {
+  return {
+    category:         CATEGORIES.UNCATEGORISED,
+    confidence:       "LOW",
+    reason:           "Possible business expense — no specific rule matched, but description contains business-like terms. Review before claiming.",
+    confidenceReason: "Business-context token detected but no specific category rule matched.",
+    mixedUse:         true,
+    needsReceipt:     Math.abs(amount) > 82.50,
+    canUpgrade:       false,
+    signals:          { bizFallback: true },
+  };
+}
+
+// Tokens that signal a transaction might be a business expense.
 const BIZ_TOKENS = [
   "software", "subscription", "cloud", "hosting", "domain",
   "advertising", "marketing", "crm", "accounting",
@@ -23,41 +113,13 @@ const BIZ_TOKENS = [
   "asic", "abn", "saas", "license", "licence", "renewal",
 ];
 
-function hasBizToken(tx: { normalizedMerchant: string; description: string }): string | null {
+function hasBizToken(tx: { normalizedMerchant: string; description: string }): boolean {
   const combined = `${tx.normalizedMerchant} ${tx.description}`.toLowerCase();
-  const plain = BIZ_TOKENS.find((t) => combined.includes(t));
-  if (plain) return plain;
-  if (/\bads\b/.test(combined))    return "ads";
-  if (/\btax\b/.test(combined))    return "tax";
-  if (/\bsafety\b/.test(combined)) return "safety";
-  return null;
-}
-
-export type TransactionSource = "CSV" | "DEMO_BANK" | "BASIQ";
-export type PipelineRow = IngestionRow;
-
-export type PipelineResult = {
-  batchId: string | null;
-  inserted: number;
-  duplicates: number;
-  flagged: number;
-  totalValue: number;
-};
-
-// Returned when both the rules engine and Gemini produce no match for an
-// expense that is not blacklisted and not excluded. Surfaced for user review
-// rather than silently dropped — the user can confirm or reject.
-function safeFallbackMatch(amount: number): DeductionMatch {
-  return {
-    category:         CATEGORIES.UNCATEGORISED,
-    confidence:       "LOW",
-    reason:           "This expense wasn't matched by any deduction rule. Review to check if it has a work-related purpose.",
-    confidenceReason: "No rule or AI match found. Confirm manually whether this is a deductible expense.",
-    mixedUse:         true,
-    needsReceipt:     Math.abs(amount) > 82.50,
-    canUpgrade:       false,
-    signals:          { safeFallback: true },
-  };
+  if (BIZ_TOKENS.some((t) => combined.includes(t))) return true;
+  if (/\bads\b/.test(combined))    return true;
+  if (/\btax\b/.test(combined))    return true;
+  if (/\bsafety\b/.test(combined)) return true;
+  return false;
 }
 
 export async function runImportPipeline(
@@ -67,11 +129,9 @@ export async function runImportPipeline(
   userId: string,
   userType?: string | null,
 ): Promise<PipelineResult> {
-  // Check for duplicates against transactions from PREVIOUS uploads only.
-  // Rows within the same CSV are never deduplicated against each other —
-  // two identical charges on the same day in one file are real distinct transactions.
+  // Deduplicate against previous uploads (within-batch duplicates are kept intentionally).
   const existing = await db.transaction.findMany({
-    where: { userId },
+    where:  { userId },
     select: { date: true, description: true, amount: true },
   });
 
@@ -83,7 +143,6 @@ export async function runImportPipeline(
     (r) => !existingKeys.has(`${r.date}|${r.description}|${r.amount}`)
   );
 
-  // duplicates = rows skipped because they already exist from a previous upload
   const duplicates = rows.length - newRows.length;
 
   if (newRows.length === 0) {
@@ -100,7 +159,7 @@ export async function runImportPipeline(
 
   await db.importBatch.update({
     where: { id: batch.id },
-    data: { insertedCount: newRows.length },
+    data:  { insertedCount: newRows.length },
   });
 
   const savedTransactions = await db.transaction.findMany({
@@ -127,77 +186,69 @@ export async function runImportPipeline(
           decision:              "hidden",
         };
 
-        // Credits and zero-amount entries are not expenses.
-        if (t.amount >= 0) {
-          auditEntries.push({ ...baseAudit, hiddenReason: "credit_or_zero" });
-          return null;
-        }
-
-        // Refunds, reversals, reimbursements, cashback.
-        if (isExcluded(tx)) {
-          auditEntries.push({ ...baseAudit, hiddenReason: "excluded" });
-          return null;
-        }
-
-        // Personal-expense suppression — runs before rules engine and AI.
-        const blockReason = getPersonalExpenseBlockReason(tx, userType);
-        if (blockReason !== null) {
-          console.log("[Import:hidden]", {
-            merchant:              t.normalizedMerchant,
-            normalizedDescription: t.description,
-            amount:                t.amount,
-            hiddenReason:          blockReason,
-            source:                "personal_expense_suppression",
-          });
-          auditEntries.push({ ...baseAudit, hiddenReason: "blacklisted" });
-          return null;
-        }
-
-        // Rules engine — if it matches, Gemini optionally refines wording/confidence.
-        // If it misses, Gemini classifies from scratch as a LOW-confidence fallback.
-        // If both miss, the safety fallback fires ONLY when at least one business-like
-        // token is present — random personal expenses are silently dropped instead.
-        const rawMatch = detectDeduction(tx, userType);
         let match: DeductionMatch;
-        let matchSource: ClassificationAuditEntry["source"];
+        let suggestionLevel: SuggestionLevel;
+        let matchSource: ClassificationAuditEntry["source"] = "engine";
 
-        if (rawMatch) {
-          matchSource = "engine";
-          match = await refineTransaction(rawMatch, tx, userType);
-        } else {
-          const classified = await classifyTransaction(tx, userType);
-          if (classified !== null) {
-            matchSource = "gemini";
-            match = classified;
+        // ── Credits (income, not expenses) ─────────────────────────────────
+        if (t.amount >= 0) {
+          match          = creditOrRefundMatch(true);
+          suggestionLevel = "PROBABLY_PERSONAL";
+          auditEntries.push({ ...baseAudit, decision: "included", category: match.category, confidence: match.confidence, source: "engine", reason: match.reason });
+        }
+        // ── Refunds / reversals ────────────────────────────────────────────
+        else if (isExcluded(tx)) {
+          match          = creditOrRefundMatch(false);
+          suggestionLevel = "PROBABLY_PERSONAL";
+          auditEntries.push({ ...baseAudit, decision: "included", category: match.category, confidence: match.confidence, source: "engine", reason: match.reason });
+        }
+        // ── Personal expense suppression → PROBABLY_PERSONAL ──────────────
+        else {
+          const blockReason = getPersonalExpenseBlockReason(tx, userType);
+
+          if (blockReason !== null) {
+            match          = personalBlockMatch(t.amount, blockReason);
+            suggestionLevel = "PROBABLY_PERSONAL";
+            auditEntries.push({ ...baseAudit, decision: "included", category: match.category, confidence: match.confidence, source: "engine", reason: match.reason });
           } else {
-            // Safe fallback only fires when there is at least one business-like token.
-            // Without it, the expense has no signal that it could be deductible.
-            const bizToken = hasBizToken(tx);
-            if (bizToken === null) {
-              auditEntries.push({ ...baseAudit, hiddenReason: "no_business_context" });
-              return null;
+            // ── Rules engine ─────────────────────────────────────────────
+            const rawMatch = detectDeduction(tx, userType);
+
+            if (rawMatch) {
+              matchSource     = "engine";
+              match           = await refineTransaction(rawMatch, tx, userType);
+              suggestionLevel = confidenceToSuggestionLevel(match.confidence);
+            } else {
+              // ── Gemini fallback ─────────────────────────────────────────
+              const classified = await classifyTransaction(tx, userType);
+              if (classified !== null) {
+                matchSource     = "gemini";
+                match           = classified;
+                suggestionLevel = confidenceToSuggestionLevel(match.confidence);
+              } else if (hasBizToken(tx)) {
+                // Business-context fallback → POSSIBLE, not buried in Personal
+                matchSource     = "safe_fallback";
+                match           = bizFallbackMatch(t.amount);
+                suggestionLevel = "POSSIBLE_WORK_RELATED";
+              } else {
+                // No signal at all → PROBABLY_PERSONAL
+                matchSource     = "engine";
+                match           = noContextMatch();
+                suggestionLevel = "PROBABLY_PERSONAL";
+              }
             }
-            console.log("[Import:fallback]", {
-              merchant:              t.normalizedMerchant,
-              normalizedDescription: t.description,
-              amount:                t.amount,
-              includedReason:        bizToken,
-              source:                "business_token_fallback",
+
+            auditEntries.push({
+              ...baseAudit,
+              decision:     "included",
+              category:     match.category,
+              confidence:   match.confidence,
+              source:       matchSource,
+              matchedAlias: match.signals.aliasMatch as string | undefined,
+              reason:       match.reason,
             });
-            matchSource = "safe_fallback";
-            match = safeFallbackMatch(t.amount);
           }
         }
-
-        auditEntries.push({
-          ...baseAudit,
-          decision:     "included",
-          category:     match.category,
-          confidence:   match.confidence,
-          source:       matchSource,
-          matchedAlias: match.signals.aliasMatch as string | undefined,
-          reason:       match.reason,
-        });
 
         const score = computeScore({
           confidence:   match.confidence,
@@ -210,20 +261,21 @@ export async function runImportPipeline(
         return {
           transactionId:    t.id,
           category:         match.category,
-          confidence:       match.confidence,
+          confidence:       match.confidence as "LOW" | "MEDIUM" | "HIGH",
           reason:           match.reason,
-          confidenceReason: match.confidenceReason,
+          confidenceReason: match.confidenceReason ?? null,
           mixedUse:         match.mixedUse ?? false,
+          suggestionLevel,
           score,
         };
       }),
     )
   ).filter((c): c is NonNullable<typeof c> => c !== null);
 
-  // Check which transactions already have a candidate to avoid duplicates
+  // Avoid duplicating candidates that already exist from previous imports.
   const existingCandidateTxIds = new Set(
     (await db.deductionCandidate.findMany({
-      where: { userId },
+      where:  { userId },
       select: { transactionId: true },
     })).map((c) => c.transactionId)
   );
@@ -233,14 +285,6 @@ export async function runImportPipeline(
   );
 
   console.log("[Import] classified candidates", candidates.length);
-  console.log("[Import] candidates before save", candidates.map((c) => {
-    const tx = savedTransactions.find((t) => t.id === c.transactionId);
-    return {
-      merchant:   tx?.normalizedMerchant ?? tx?.description ?? c.transactionId,
-      category:   c.category,
-      confidence: c.confidence,
-    };
-  }));
 
   if (newCandidates.length > 0) {
     await db.deductionCandidate.createMany({
@@ -250,15 +294,13 @@ export async function runImportPipeline(
 
   console.log("[Import] saved candidates count", newCandidates.length);
 
-  const skipped = candidates.length - newCandidates.length;
-  if (skipped > 0) {
-    console.log(`[Import] ${skipped} candidates skipped (already in DB from a previous import)`);
-  }
-
   logClassificationSummary(auditEntries);
 
-  const txById = new Map(savedTransactions.map((t) => [t.id, t]));
-  const totalValue = newCandidates.reduce(
+  const txById      = new Map(savedTransactions.map((t) => [t.id, t]));
+  const workRelated = newCandidates.filter(
+    (c) => c.suggestionLevel === "LIKELY_WORK_RELATED" || c.suggestionLevel === "POSSIBLE_WORK_RELATED"
+  );
+  const totalValue  = workRelated.reduce(
     (sum, c) => sum + Math.abs(txById.get(c.transactionId)?.amount ?? 0),
     0,
   );
@@ -267,7 +309,7 @@ export async function runImportPipeline(
     batchId:    batch.id,
     inserted:   newRows.length,
     duplicates,
-    flagged:    newCandidates.length,
+    flagged:    workRelated.length,
     totalValue,
   };
 }

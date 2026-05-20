@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 const DISCLAIMER = "Not tax advice — check with your accountant before lodging.";
 
 function toCardProps(c: {
-  id: string; status: "NEEDS_REVIEW" | "CONFIRMED" | "REJECTED";
+  id: string; status: "NEEDS_REVIEW" | "CONFIRMED" | "REJECTED" | "MAYBE";
   confidence: "LOW" | "MEDIUM" | "HIGH"; category: string;
   reason: string; confidenceReason: string | null; mixedUse: boolean;
   hasEvidence: boolean; evidenceNote: string | null; workPercent: number | null;
@@ -76,7 +76,7 @@ export default async function CategoryReview({ params }: Props) {
     }
   }
 
-  const needsReview = all.filter((c) => c.status === "NEEDS_REVIEW");
+  const needsReview = all.filter((c) => c.status === "NEEDS_REVIEW" || c.status === "MAYBE");
   const confirmed   = all.filter((c) => c.status === "CONFIRMED");
   const rejected    = all.filter((c) => c.status === "REJECTED");
 

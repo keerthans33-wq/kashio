@@ -96,8 +96,11 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   ["crisp",           { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a customer messaging platform" }],
 
   // ── Accounting & Business ──────────────────────────────────────────────────
-  ["xero",            { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "cloud accounting software" }],
-  ["myob",            { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "accounting and payroll software" }],
+  ["xero",            { category: CATEGORIES.ACCOUNTING, confidence: "HIGH",   what: "cloud accounting software" }],
+  ["myob",            { category: CATEGORIES.ACCOUNTING, confidence: "HIGH",   what: "accounting and payroll software" }],
+  // h&r block must precede shorter variants
+  ["h&r block",       { category: CATEGORIES.ACCOUNTING, confidence: "HIGH",   what: "a tax and accounting services provider" }],
+  ["hr block",        { category: CATEGORIES.ACCOUNTING, confidence: "HIGH",   what: "a tax and accounting services provider" }],
   ["quickbooks",      { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "accounting and invoicing software" }],
   ["quick books",     { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "accounting and invoicing software" }],
   ["intuit",          { category: CATEGORIES.ACCOUNTING, confidence: "MEDIUM", what: "accounting software (QuickBooks)" }],
@@ -200,12 +203,18 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   ["sumup",                   { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a card payment and POS platform" }],
   ["smartpay",                { category: CATEGORIES.PAYMENT_PROCESSING, confidence: "MEDIUM", what: "a payment terminal service" }],
 
+  // ── Equipment — general electronics retailers ────────────────────────────
+  // jb hi-fi must precede shorter "jb" if any; checked against normalized merchant
+  ["jb hi-fi",        { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "an electronics and technology retailer" }],
+  ["harvey norman",   { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "an electronics and home goods retailer" }],
+  ["the good guys",   { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "an electronics and appliance retailer" }],
+
   // ── Equipment — trade, tool, and computer hardware retailers ─────────────
   ["sydney tools",    { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a trade tools and equipment retailer" }],
   ["sydneytools",     { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a trade tools and equipment retailer" }],
   ["total tools",     { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a trade tools and equipment retailer" }],
-  // bunnings is a general hardware store — LOW confidence since purchases may be personal.
-  ["bunnings",        { category: CATEGORIES.EQUIPMENT,  confidence: "LOW",    what: "a hardware and building supplies retailer" }],
+  // bunnings — MEDIUM since purchases may be personal but hardware work use is common.
+  ["bunnings",        { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a hardware and building supplies retailer" }],
   // msy technology must precede msy (longer key wins).
   ["msy technology",  { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a computer hardware and electronics retailer" }],
   ["msy",             { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a computer hardware and electronics retailer" }],
@@ -224,6 +233,7 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   ["lenovo",          { category: CATEGORIES.EQUIPMENT,  confidence: "MEDIUM", what: "a computer and technology hardware brand" }],
 
   // ── Professional Development ──────────────────────────────────────────────
+  ["tafe",              { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "HIGH",   what: "a TAFE vocational education and training provider" }],
   // linkedin learning must precede linkedin ads/premium (longer key wins).
   ["linkedin learning", { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "an online learning platform for professional skills" }],
   ["general assembly",  { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "a tech and digital skills training provider" }],
@@ -245,10 +255,11 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   ["pluralsight",       { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "a tech skills learning platform" }],
   ["domestika",         { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "an online creative skills learning platform" }],
   ["edx",               { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "an online education platform" }],
-  ["coursera",          { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "an online learning and professional development platform" }],
-  ["udemy",             { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "MEDIUM", what: "an online learning and professional development platform" }],
+  ["coursera",          { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "HIGH",   what: "an online learning and professional development platform" }],
+  ["udemy",             { category: CATEGORIES.PROFESSIONAL_DEVELOPMENT, confidence: "HIGH",   what: "an online learning and professional development platform" }],
 
   // ── Office Supplies ───────────────────────────────────────────────────────
+  ["officeworks",      { category: CATEGORIES.OFFICE_SUPPLIES, confidence: "HIGH",   what: "an office supplies and technology retailer" }],
   // big w office must precede any shorter "big w" entry (longer key wins).
   ["big w office",     { category: CATEGORIES.OFFICE_SUPPLIES, confidence: "MEDIUM", what: "an office supplies section of Big W" }],
   ["office choice",    { category: CATEGORIES.OFFICE_SUPPLIES, confidence: "MEDIUM", what: "an office supplies retailer" }],
@@ -370,9 +381,10 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   ["microsoft azure", { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "Microsoft Azure cloud platform" }],
 
   // ── Software & Subscriptions — Design / assets / content ──────────────────
-  ["canva",           { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a graphic design and content creation platform" }],
+  ["canva",           { category: CATEGORIES.SOFTWARE, confidence: "HIGH",   what: "a graphic design and content creation platform" }],
   // NOTE: adobe creative cloud must precede any standalone adobe entry.
-  ["adobe creative cloud", { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "Adobe Creative Cloud suite" }],
+  ["adobe creative cloud", { category: CATEGORIES.SOFTWARE, confidence: "HIGH",   what: "Adobe Creative Cloud suite" }],
+  ["adobe",           { category: CATEGORIES.SOFTWARE, confidence: "HIGH",   what: "Adobe software and Creative Cloud subscription" }],
   // NOTE: envato elements must precede envato.
   ["envato elements", { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a creative asset subscription service" }],
   ["envato",          { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a creative digital assets marketplace" }],
@@ -390,11 +402,23 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   ["creative market", { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a digital design asset marketplace" }],
   ["placeit",         { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a branding and mockup design platform" }],
 
+  // ── Software & Subscriptions — Phone & Internet ───────────────────────────
+  ["telstra",         { category: CATEGORIES.PHONE_INTERNET, confidence: "HIGH",   what: "an Australian telecommunications provider" }],
+  ["optus",           { category: CATEGORIES.PHONE_INTERNET, confidence: "HIGH",   what: "an Australian telecommunications provider" }],
+  ["vodafone",        { category: CATEGORIES.PHONE_INTERNET, confidence: "HIGH",   what: "an Australian telecommunications provider" }],
+  ["tpg",             { category: CATEGORIES.PHONE_INTERNET, confidence: "HIGH",   what: "an Australian internet and phone provider" }],
+  ["aussie broadband",{ category: CATEGORIES.PHONE_INTERNET, confidence: "HIGH",   what: "an Australian internet service provider" }],
+  ["iinet",           { category: CATEGORIES.PHONE_INTERNET, confidence: "HIGH",   what: "an Australian internet service provider" }],
+  ["internode",       { category: CATEGORIES.PHONE_INTERNET, confidence: "HIGH",   what: "an Australian internet service provider" }],
+  ["superloop",       { category: CATEGORIES.PHONE_INTERNET, confidence: "HIGH",   what: "an Australian internet service provider" }],
+
   // ── Software & Subscriptions — Business productivity / communication ───────
-  ["slack",           { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a team messaging and collaboration platform" }],
-  ["zoom",            { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a video conferencing and collaboration platform" }],
-  ["google workspace",{ category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "Google's suite of business productivity tools" }],
-  ["microsoft 365",   { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "Microsoft's suite of business productivity tools" }],
+  ["slack",           { category: CATEGORIES.SOFTWARE, confidence: "HIGH",   what: "a team messaging and collaboration platform" }],
+  ["zoom",            { category: CATEGORIES.SOFTWARE, confidence: "HIGH",   what: "a video conferencing and collaboration platform" }],
+  ["google workspace",{ category: CATEGORIES.SOFTWARE, confidence: "HIGH",   what: "Google's suite of business productivity tools" }],
+  ["microsoft 365",   { category: CATEGORIES.SOFTWARE, confidence: "HIGH",   what: "Microsoft's suite of business productivity tools" }],
+  ["notion",          { category: CATEGORIES.SOFTWARE, confidence: "HIGH",   what: "a team workspace and knowledge management platform" }],
+  ["github",          { category: CATEGORIES.SOFTWARE, confidence: "HIGH",   what: "a code hosting and developer collaboration platform" }],
   // NOTE: microsoft teams must precede teams.
   ["microsoft teams", { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a business communication and collaboration platform" }],
   ["loom",            { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an async video messaging platform" }],
@@ -412,14 +436,17 @@ const ALIAS_MAP: [string, AliasEntry][] = [
   ["zapier",          { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a workflow automation platform" }],
   ["make",            { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a visual workflow automation platform" }],
   ["airtable",        { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a cloud database and collaboration platform" }],
-  ["dropbox",         { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "a cloud storage and file sharing service" }],
+  ["dropbox",         { category: CATEGORIES.SOFTWARE, confidence: "HIGH",   what: "a cloud storage and file sharing service" }],
 
   // ── Software & Subscriptions — AI companies ───────────────────────────────
+  // NOTE: openai must precede chatgpt (longer key convention)
+  ["openai",          { category: CATEGORIES.SOFTWARE, confidence: "HIGH",   what: "an AI platform — OpenAI API or ChatGPT subscription" }],
+  ["chatgpt",         { category: CATEGORIES.SOFTWARE, confidence: "HIGH",   what: "an AI assistant subscription (ChatGPT by OpenAI)" }],
   // NOTE: anthropic must precede claude ai so the company billing name matches first.
-  ["anthropic",       { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI company — Claude AI subscription" }],
+  ["anthropic",       { category: CATEGORIES.SOFTWARE, confidence: "HIGH",   what: "an AI company — Claude AI subscription" }],
   // "CLAUDE AI" normalises to "Claude Ai"; "CLAUDE.AI" normalises to "Claude AI"
   // via a normalizeMerchant alias — both lowercase to "claude ai".
-  ["claude ai",       { category: CATEGORIES.SOFTWARE, confidence: "MEDIUM", what: "an AI assistant subscription (Claude by Anthropic)" }],
+  ["claude ai",       { category: CATEGORIES.SOFTWARE, confidence: "HIGH",   what: "an AI assistant subscription (Claude by Anthropic)" }],
 
   // ── Software & Subscriptions — CRM / marketing automation ────────────────
   // NOTE: gohighlevel must precede highlevel so the longer key wins.
