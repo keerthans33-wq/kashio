@@ -9,7 +9,7 @@ import { TransactionCard } from "./TransactionCard";
 type Status          = "NEEDS_REVIEW" | "CONFIRMED" | "REJECTED" | "MAYBE";
 type SuggestionLevel = "LIKELY_WORK_RELATED" | "POSSIBLE_WORK_RELATED" | "PROBABLY_PERSONAL";
 type Confidence      = "LOW" | "MEDIUM" | "HIGH";
-type Tab             = "suggested" | "personal";
+type Tab             = "suggested" | "personal" | "claimed";
 
 export type ReviewCandidate = {
   id:              string;
@@ -48,6 +48,7 @@ function matchesTab(item: ReviewCandidate & { status: Status }, tab: Tab): boole
       item.status === "NEEDS_REVIEW"
     );
   }
+  if (tab === "claimed") return item.status === "CONFIRMED";
   return item.suggestionLevel === "PROBABLY_PERSONAL" && item.status === "NEEDS_REVIEW";
 }
 
@@ -259,34 +260,40 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
       {/* ── Segmented control ───────────────────────────────────────────────── */}
       {!noData && (
         <div
-          className="mb-5 grid grid-cols-2 gap-1 rounded-xl p-1"
+          className="mb-5 grid grid-cols-3 gap-1 rounded-xl p-1"
           style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}
         >
-          {(["suggested", "personal"] as Tab[]).map((tab) => {
+          {(["suggested", "personal", "claimed"] as Tab[]).map((tab) => {
             const isActive = activeTab === tab;
             const count    = tabCounts[tab];
-            const isGreen  = tab === "suggested";
+            const accentColor =
+              tab === "suggested" ? "#22C55E"
+              : tab === "claimed"  ? "#22C55E"
+              : null;
+            const LABELS: Record<Tab, string> = {
+              suggested: "Suggested",
+              personal:  "Personal",
+              claimed:   "Claimed",
+            };
             return (
               <button
                 key={tab}
                 onClick={() => handleTabChange(tab)}
-                className="flex items-center justify-center gap-2 rounded-lg py-2.5 text-[13px] font-medium transition-all duration-150"
+                className="flex items-center justify-center gap-1.5 rounded-lg py-2 text-[12px] font-medium transition-all duration-150"
                 style={{
                   backgroundColor: isActive ? "rgba(255,255,255,0.07)" : "transparent",
                   color:           isActive ? "var(--text-primary)" : "var(--text-muted)",
                   boxShadow:       isActive ? "0 1px 3px rgba(0,0,0,0.3)" : "none",
                 }}
               >
-                {tab === "suggested" ? "Suggested" : "Personal"}
+                {LABELS[tab]}
                 <span
-                  className="flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-bold tabular-nums"
+                  className="flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums"
                   style={{
-                    backgroundColor: isActive
-                      ? isGreen ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.08)"
+                    backgroundColor: isActive && accentColor
+                      ? `${accentColor}20`
                       : "rgba(255,255,255,0.05)",
-                    color: isActive
-                      ? isGreen ? "#22C55E" : "var(--text-secondary)"
-                      : "var(--text-muted)",
+                    color: isActive && accentColor ? accentColor : "var(--text-muted)",
                   }}
                 >
                   {count}
@@ -323,7 +330,7 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
       )}
 
       {/* ── Subtle bulk action row ──────────────────────────────────────────── */}
-      {!noData && !debouncedQuery && (
+      {!noData && !debouncedQuery && activeTab !== "claimed" && (
         <div className="mb-4 min-h-[20px]">
           {activeTab === "suggested" && tabCounts.suggested > 0 && (
             <button
@@ -397,6 +404,8 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
               ? `No results for "${debouncedQuery}"`
               : activeTab === "suggested"
               ? "All done — no suggested transactions to review."
+              : activeTab === "claimed"
+              ? "Nothing claimed yet. Claim transactions from the Suggested tab."
               : "No personal transactions found."
             }
           </p>
