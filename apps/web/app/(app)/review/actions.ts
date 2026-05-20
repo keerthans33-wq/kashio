@@ -102,6 +102,15 @@ export async function saveWorkPercent(id: string, workPercent: number | null) {
   revalidatePath("/review");
 }
 
+export async function saveCategory(id: string, category: string) {
+  const userId = await requireUser();
+  await db.deductionCandidate.update({
+    where: { id, userId },
+    data:  { category },
+  });
+  revalidatePath("/review");
+}
+
 /** Confirm all remaining NEEDS_REVIEW candidates with the same merchant name. Returns count confirmed. */
 export async function confirmSimilarByMerchant(merchantName: string, workPercent: number | null): Promise<number> {
   const userId = await requireUser();
