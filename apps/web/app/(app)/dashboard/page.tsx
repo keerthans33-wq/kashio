@@ -48,8 +48,8 @@ const CATEGORY_GROUPS: CategoryGroup[] = [
   {
     label:   "Home Office",
     Icon:    Home,
-    color:   "#A78BFA",
-    bg:      "rgba(167,139,250,0.10)",
+    color:   "#4ADE80",
+    bg:      "rgba(74,222,128,0.10)",
     matches: [CATEGORIES.OFFICE_SUPPLIES],
   },
   {
@@ -62,22 +62,22 @@ const CATEGORY_GROUPS: CategoryGroup[] = [
   {
     label:   "Education",
     Icon:    BookOpen,
-    color:   "#34D399",
-    bg:      "rgba(52,211,153,0.10)",
+    color:   "#FBBF24",
+    bg:      "rgba(251,191,36,0.10)",
     matches: [CATEGORIES.PROFESSIONAL_DEVELOPMENT],
   },
   {
     label:   "Phone & Internet",
     Icon:    Smartphone,
-    color:   "#22C55E",
-    bg:      "rgba(34,197,94,0.10)",
+    color:   "#06B6D4",
+    bg:      "rgba(6,182,212,0.10)",
     matches: [CATEGORIES.PHONE_INTERNET],
   },
   {
     label:   "Other Claims",
     Icon:    Layers,
-    color:   "#FB923C",
-    bg:      "rgba(251,146,60,0.10)",
+    color:   "#A78BFA",
+    bg:      "rgba(167,139,250,0.10)",
     matches: [CATEGORIES.SOFTWARE, CATEGORIES.MEALS, CATEGORIES.WORK_CLOTHING],
   },
 ];
