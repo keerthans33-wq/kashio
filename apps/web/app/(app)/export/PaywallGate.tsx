@@ -259,9 +259,6 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, l
 
   // ── Unlocked: full breakdown + download ───────────────────────────────────
   if (isUnlocked) {
-    const likelyItems   = allItems.filter(i => i.confidence === "HIGH");
-    const excludedItems = allItems.filter(i => i.confidence === "LOW");
-
     // Build per-section category groups
     function groupByCategory(items: Item[]) {
       const map = new Map<string, Item[]>();
@@ -280,18 +277,17 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, l
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
       >
-        {/* ── Potential Deductions breakdown ─────────────────────────── */}
+        {/* ── Claimed Deductions breakdown ─────────────────────────────── */}
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-widest mb-5" style={{ color: "var(--text-muted)" }}>
-            Potential Deductions
+            Claimed Deductions
           </p>
 
-          {/* Likely deductions */}
-          {likelyItems.length > 0 && (
+          {allItems.length > 0 && (
             <div className="mb-6">
-              <SectionHeading label="Likely deductions" total={likelyTotal} color="#22C55E" />
+              <SectionHeading label="Claimed deductions" total={total} color="#22C55E" />
               <div className="mt-2 space-y-0">
-                {groupByCategory(likelyItems).map(([cat, items]) => (
+                {groupByCategory(allItems).map(([cat, items]) => (
                   <div key={cat} className="mb-4">
                     <p className="text-[10px] font-semibold uppercase tracking-widest mb-1.5 mt-3" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
                       {cat}
@@ -299,10 +295,7 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, l
                     {items.map((item, idx) => (
                       <div key={item.id} className="flex items-baseline justify-between gap-4 py-2"
                         style={{ borderBottom: idx < items.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
-                        <div className="min-w-0 flex items-center gap-2">
-                          <p className="truncate text-[13px]" style={{ color: "var(--text-primary)" }}>{item.merchant}</p>
-                          {confidenceBadge(item.confidence)}
-                        </div>
+                        <p className="truncate text-[13px] min-w-0" style={{ color: "var(--text-primary)" }}>{item.merchant}</p>
                         <span className="shrink-0 text-[13px] tabular-nums" style={{ color: "var(--text-secondary)" }}>
                           {fmt(item.amount)}
                         </span>
@@ -314,52 +307,17 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, l
             </div>
           )}
 
-          {/* Excluded */}
-          {excludedItems.length > 0 && (
-            <div className="mb-6">
-              <SectionHeading label="Excluded from estimate" total={excludedTotal} color="var(--text-muted)" />
-              <p className="text-[11px] mt-1 mb-3" style={{ color: "var(--text-muted)" }}>
-                Low confidence — these are not counted in the estimated tax saving. Verify with your accountant.
-              </p>
-              {groupByCategory(excludedItems).map(([cat, items]) => (
-                <div key={cat} className="mb-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
-                    {cat}
-                  </p>
-                  {items.map((item, idx) => (
-                    <div key={item.id} className="flex items-baseline justify-between gap-4 py-2"
-                      style={{ borderBottom: idx < items.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none", opacity: 0.6 }}>
-                      <div className="min-w-0 flex items-center gap-2">
-                        <p className="truncate text-[13px]" style={{ color: "var(--text-secondary)" }}>{item.merchant}</p>
-                        {confidenceBadge(item.confidence)}
-                      </div>
-                      <span className="shrink-0 text-[13px] tabular-nums" style={{ color: "var(--text-muted)" }}>
-                        {fmt(item.amount)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
-
           {/* Summary row */}
           <div className="rounded-xl px-4 py-3 space-y-1"
             style={{ backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
             <div className="flex justify-between text-[12px]">
-              <span style={{ color: "var(--text-muted)" }}>Likely deductions</span>
-              <span className="tabular-nums font-medium" style={{ color: "#22C55E" }}>{fmtRound(likelyTotal)}</span>
+              <span style={{ color: "var(--text-muted)" }}>Claimed deductions</span>
+              <span className="tabular-nums font-medium" style={{ color: "#22C55E" }}>{fmtRound(total)}</span>
             </div>
-            {excludedTotal > 0 && (
-              <div className="flex justify-between text-[12px]">
-                <span style={{ color: "var(--text-muted)" }}>Excluded</span>
-                <span className="tabular-nums" style={{ color: "var(--text-muted)" }}>{fmtRound(excludedTotal)}</span>
-              </div>
-            )}
             <div className="flex justify-between text-[12px] pt-1" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-              <span style={{ color: "var(--text-muted)" }}>Estimated tax saving (32.5%, likely only)</span>
+              <span style={{ color: "var(--text-muted)" }}>Estimated tax saving (32.5%)</span>
               <span className="tabular-nums font-semibold" style={{ color: "#22C55E" }}>
-                ~{fmtRound(Math.round(likelyTotal * 0.325))}
+                ~{fmtRound(Math.round(total * 0.325))}
               </span>
             </div>
           </div>

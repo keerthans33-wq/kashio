@@ -37,7 +37,7 @@ export function TaxPdfButton({ allItems, categoryGroups, total, likelyTotal, rev
   const year       = now.getFullYear();
   const fy         = `FY${String(year - 1).slice(2)}–${String(year).slice(2)}`;
   const fyFilename = `${year - 1}-${year}`;
-  const estimatedSaving = Math.round(likelyTotal * 0.325);
+  const estimatedSaving = Math.round(total * 0.325);
 
   async function handleDownload() {
     if (allItems.length === 0) return;
@@ -49,12 +49,10 @@ export function TaxPdfButton({ allItems, categoryGroups, total, likelyTotal, rev
       const doc = new jsPDF({ unit: "mm", format: "a4" });
       const W   = doc.internal.pageSize.getWidth();
 
-      const colDark:   [number, number, number] = [15, 20, 35];
-      const colGreen:  [number, number, number] = [34, 197, 94];
-      const colAmber:  [number, number, number] = [217, 119, 6];
-      const colMuted:  [number, number, number] = [110, 120, 140];
-      const colLight:  [number, number, number] = [247, 249, 252];
-      const colAmberBg:[number, number, number] = [255, 251, 235];
+      const colDark:  [number, number, number] = [15, 20, 35];
+      const colGreen: [number, number, number] = [34, 197, 94];
+      const colMuted: [number, number, number] = [110, 120, 140];
+      const colLight: [number, number, number] = [247, 249, 252];
 
       // ── Header bar ──────────────────────────────────────────────────────────
       doc.setFillColor(...colDark);
@@ -85,7 +83,7 @@ export function TaxPdfButton({ allItems, categoryGroups, total, likelyTotal, rev
       doc.setTextColor(...colMuted);
       doc.text("Prepared for",        14,  y);
       doc.text("Financial year",      90,  y);
-      doc.text("Likely deductions",   145, y);
+      doc.text("Claimed deductions",  145, y);
       doc.text("Estimated saving",    175, y);
 
       y += 5.5;
@@ -97,19 +95,8 @@ export function TaxPdfButton({ allItems, categoryGroups, total, likelyTotal, rev
       doc.text(fy,           90, y);
 
       doc.setTextColor(...colGreen);
-      doc.text(`$${likelyTotal.toFixed(2)}`, 145, y);
+      doc.text(`$${total.toFixed(2)}`, 145, y);
       doc.text(estimatedSaving > 0 ? `~$${estimatedSaving}` : "—", 175, y);
-
-      if (reviewTotal > 0 || excludedTotal > 0) {
-        y += 6;
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(...colMuted);
-        const parts: string[] = [];
-        if (reviewTotal > 0)   parts.push(`$${reviewTotal.toFixed(2)} needs review`);
-        if (excludedTotal > 0) parts.push(`$${excludedTotal.toFixed(2)} excluded`);
-        doc.text(parts.join(" · "), 14, y);
-      }
 
       // Divider
       y += 9;
@@ -126,11 +113,9 @@ export function TaxPdfButton({ allItems, categoryGroups, total, likelyTotal, rev
       y += 4;
 
       const summaryBody: [string, string][] = [
-        ["Likely deduction amount", `$${likelyTotal.toFixed(2)}`],
+        ["Claimed deductions", `$${total.toFixed(2)}`],
+        ["Estimated tax saving (32.5%)", estimatedSaving > 0 ? `~$${estimatedSaving}` : "—"],
       ];
-      if (reviewTotal > 0)   summaryBody.push(["Needs review amount", `$${reviewTotal.toFixed(2)}`]);
-      if (excludedTotal > 0) summaryBody.push(["Excluded from estimate", `$${excludedTotal.toFixed(2)}`]);
-      summaryBody.push(["Estimated tax saving (32.5% — likely only)", estimatedSaving > 0 ? `~$${estimatedSaving}` : "—"]);
 
       autoTable(doc, {
         startY:  y,
@@ -212,80 +197,45 @@ export function TaxPdfButton({ allItems, categoryGroups, total, likelyTotal, rev
         y = (doc as any).lastAutoTable.finalY + 10;
       }
 
-      // ── Transaction tables — split by confidence tier ───────────────────────
+      // ── Transaction table — all claimed deductions ─────────────────────────
 
-      const tiers: { label: string; items: Item[]; tierTotal: number; headFill: [number,number,number]; note?: string }[] = [];
-
-      const likelyItems   = allItems.filter(i => i.confidence === "HIGH");
-      const reviewItems   = allItems.filter(i => i.confidence === "MEDIUM");
-      const excludedItems = allItems.filter(i => i.confidence === "LOW");
-
-      if (likelyItems.length > 0) {
-        tiers.push({ label: "LIKELY DEDUCTIONS", items: likelyItems, tierTotal: likelyTotal, headFill: [20, 80, 45] });
-      }
-      if (reviewItems.length > 0) {
-        tiers.push({
-          label: "NEEDS REVIEW", items: reviewItems, tierTotal: reviewTotal, headFill: [120, 80, 20],
-          note: "These are confirmed but may not be fully deductible — verify with your accountant before claiming.",
-        });
-      }
-      if (excludedItems.length > 0) {
-        tiers.push({
-          label: "EXCLUDED FROM ESTIMATE", items: excludedItems, tierTotal: excludedTotal, headFill: [60, 65, 75],
-          note: "Low confidence — not counted in estimated saving. Verify with your accountant.",
-        });
-      }
-
-      for (const tier of tiers) {
+      if (allItems.length > 0) {
         if (y > doc.internal.pageSize.getHeight() - 60) { doc.addPage(); y = 20; }
 
         doc.setFontSize(8);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(...colMuted);
-        doc.text(tier.label, 14, y);
+        doc.text("CLAIMED DEDUCTIONS", 14, y);
         y += 4;
-
-        if (tier.note) {
-          doc.setFontSize(7.5);
-          doc.setFont("helvetica", "normal");
-          doc.setTextColor(...colMuted);
-          doc.text(tier.note, 14, y);
-          y += 5;
-        }
 
         autoTable(doc, {
           startY:  y,
           margin:  { left: 14, right: 14 },
-          head: [["Date", "Merchant", "Category", "Confidence", "Amount"]],
-          body: tier.items.map((item) => [
+          head: [["Date", "Merchant", "Category", "Amount"]],
+          body: allItems.map((item) => [
             fmtDate(item.date),
             item.merchant,
             item.category,
-            item.confidence,
             `$${item.amount.toFixed(2)}`,
           ]),
           headStyles: {
-            fillColor: tier.headFill, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 9,
+            fillColor: [20, 80, 45], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 9,
             cellPadding: { top: 4, bottom: 4, left: 5, right: 5 },
           },
-          bodyStyles: {
-            fontSize: 9, textColor: colDark, cellPadding: { top: 3.5, bottom: 3.5, left: 5, right: 5 },
-            fillColor: tier.headFill === colAmber ? colAmberBg : undefined,
-          },
-          alternateRowStyles: { fillColor: tier.headFill === colAmber ? [255, 248, 220] : colLight },
+          bodyStyles: { fontSize: 9, textColor: colDark, cellPadding: { top: 3.5, bottom: 3.5, left: 5, right: 5 } },
+          alternateRowStyles: { fillColor: colLight },
           columnStyles: {
             0: { cellWidth: 25 },
             1: { cellWidth: "auto" },
             2: { cellWidth: 45 },
-            3: { cellWidth: 22 },
-            4: { cellWidth: 25, halign: "right" },
+            3: { cellWidth: 25, halign: "right" },
           },
           tableLineColor: [220, 225, 232],
           tableLineWidth: 0.2,
           foot: [[
-            `${tier.items.length} item${tier.items.length !== 1 ? "s" : ""}`,
-            "", "", "",
-            `$${tier.tierTotal.toFixed(2)}`,
+            `${allItems.length} item${allItems.length !== 1 ? "s" : ""}`,
+            "", "",
+            `$${total.toFixed(2)}`,
           ]],
           footStyles: {
             fillColor: [234, 250, 241], textColor: [20, 100, 50], fontStyle: "bold", fontSize: 9,

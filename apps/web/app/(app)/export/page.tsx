@@ -3,7 +3,6 @@ import { db } from "../../../lib/db";
 import { requireUserWithType, getUserWithEmail } from "../../../lib/auth";
 import { fetchUserPlan, shouldShowExportPaywall } from "../../../lib/plan";
 import { mapExportRow } from "../../../lib/export/mapExportRow";
-import { ACTIVE_CATEGORIES, CATEGORIES_BY_USER_TYPE } from "../../../lib/rules/categories";
 import { calcWfhSummary } from "../../../lib/wfhSummary";
 import { PaywallGate } from "./PaywallGate";
 import { Button } from "@/components/ui/button";
@@ -54,7 +53,6 @@ export default async function Export({
   searchParams: Promise<Record<string, string>>;
 }) {
   const { id: userId, userType } = await requireUserWithType();
-  const allowedCategories = (userType && CATEGORIES_BY_USER_TYPE[userType]) ?? ACTIVE_CATEGORIES;
 
   const [confirmedRaw, wfhEntries, plan, emailData] = await Promise.all([
     db.deductionCandidate.findMany({
@@ -75,24 +73,21 @@ export default async function Export({
   const { ytdHours: wfhYtdHours, ytdEst: wfhYtdEst } = calcWfhSummary(wfhEntries);
   const userEmail = emailData?.email ?? "";
 
-  const confirmed = confirmedRaw.filter((c) => allowedCategories.includes(c.category));
+  // All claimed transactions — no category filter (user decision is authoritative)
+  const confirmed = confirmedRaw;
 
   const allItems = confirmed.map((c) => ({
     id:  c.id,
     row: mapExportRow(c),
   }));
 
-  // Split by confidence tier for the report
-  const likelyTotal   = allItems.filter(i => i.row.confidence === "HIGH")
-    .reduce((sum, i) => sum + i.row.amount, 0);
-  const reviewTotal   = allItems.filter(i => i.row.confidence === "MEDIUM")
-    .reduce((sum, i) => sum + i.row.amount, 0);
-  const excludedTotal = allItems.filter(i => i.row.confidence === "LOW")
-    .reduce((sum, i) => sum + i.row.amount, 0);
+  const total          = allItems.reduce((sum, c) => sum + c.row.amount, 0);
+  const estimatedSaving = Math.round(total * 0.325);
 
-  // Estimated saving only reflects high-confidence items (MEDIUM/LOW may be personal)
-  const estimatedSaving = Math.round(likelyTotal * 0.325);
-  const total           = allItems.reduce((sum, c) => sum + c.row.amount, 0);
+  // Keep tier totals for downstream components that still receive them as props
+  const likelyTotal   = allItems.filter(i => i.row.confidence === "HIGH").reduce((sum, i) => sum + i.row.amount, 0);
+  const reviewTotal   = 0;
+  const excludedTotal = allItems.filter(i => i.row.confidence === "LOW").reduce((sum, i) => sum + i.row.amount, 0);
 
   const catTotals = new Map<string, number>();
   for (const item of allItems) {
@@ -170,10 +165,10 @@ export default async function Export({
           >
             <div className="absolute inset-x-0 top-0 h-[3px]" style={{ backgroundColor: "#22C55E", opacity: 0.6 }} />
             <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>
-              Likely deduction amount
+              Claimed deductions
             </p>
             <p className="text-[28px] font-bold tabular-nums leading-none tracking-tight" style={{ color: "#FFFFFF" }}>
-              {fmtRound(likelyTotal > 0 ? likelyTotal : total)}
+              {fmtRound(total)}
             </p>
             {estimatedSaving > 0 && (
               <div

@@ -201,30 +201,6 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
 
   // ── Bulk actions ─────────────────────────────────────────────────────────────
 
-  async function handleClaimAllSuggested() {
-    const ids = effectiveItems
-      .filter(
-        (c) =>
-          (c.suggestionLevel === "LIKELY_WORK_RELATED" ||
-            c.suggestionLevel === "POSSIBLE_WORK_RELATED") &&
-          c.status === "NEEDS_REVIEW",
-      )
-      .map((c) => c.id);
-    if (!ids.length) return;
-    setIsBulkSaving(true);
-    setError(null);
-    ids.forEach((id) => setStatusOverrides((prev) => new Map(prev).set(id, "CONFIRMED")));
-    try {
-      await bulkConfirmCandidates(ids);
-      showToast(`${ids.length} suggested transaction${ids.length !== 1 ? "s" : ""} claimed`);
-    } catch {
-      ids.forEach((id) => setStatusOverrides((prev) => { const m = new Map(prev); m.delete(id); return m; }));
-      setError("Could not save. Please try again.");
-    } finally {
-      setIsBulkSaving(false);
-    }
-  }
-
   async function handleHidePersonal() {
     const ids = effectiveItems
       .filter((c) => c.suggestionLevel === "PROBABLY_PERSONAL" && c.status === "NEEDS_REVIEW")
@@ -305,7 +281,7 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
   const reviewedTotal = reviewedFiltered.claimed.length + reviewedFiltered.ignored.length;
 
   return (
-    <div className="pb-28">
+    <div className="pb-10">
 
       {/* ── Search bar ──────────────────────────────────────────────────────── */}
       <div className="mb-4">
@@ -395,16 +371,6 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
       {/* ── Subtle bulk action row ──────────────────────────────────────────── */}
       {!noData && !debouncedQuery && activeTab !== "reviewed" && (
         <div className="mb-4 flex flex-col gap-1.5 min-h-[20px]">
-          {activeTab === "suggested" && tabCounts.suggested > 0 && (
-            <button
-              disabled={isBulkSaving}
-              onClick={handleClaimAllSuggested}
-              className="text-left text-[12px] font-medium transition-opacity disabled:opacity-40"
-              style={{ color: "#22C55E" }}
-            >
-              Claim all suggested →
-            </button>
-          )}
           {activeTab === "personal" && tabCounts.personal > 0 && (
             <button
               disabled={isBulkSaving}
@@ -560,6 +526,31 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
               )}
             </div>
 
+            {/* ── Inline bulk action bar — appears above cards when items selected ── */}
+            {selectedIds.size > 0 && (
+              <div
+                className="mb-4 flex items-center gap-3 rounded-2xl px-4 py-3 sticky top-2 z-20"
+                style={{ backgroundColor: "var(--bg-card)", border: "1px solid rgba(34,197,94,0.25)", boxShadow: "0 2px 16px rgba(0,0,0,0.4)" }}
+              >
+                <span className="shrink-0 text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>
+                  {selectedIds.size} selected
+                </span>
+                <Button size="sm" onClick={handleClaimSelected} disabled={isBulkSaving}>
+                  {isBulkSaving ? "Saving…" : "Claim selected"}
+                </Button>
+                <Button variant="secondary" size="sm" onClick={handleIgnoreSelected} disabled={isBulkSaving}>
+                  Ignore selected
+                </Button>
+                <button
+                  onClick={() => setSelectedIds(new Set())}
+                  className="ml-auto text-[12px]"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+
             <div className="space-y-3">
               {paginated.map((c) => (
                 <div key={c.id} className="flex items-start gap-3">
@@ -608,38 +599,6 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
       <p className="mt-10 text-[11px] leading-relaxed" style={{ color: "var(--text-muted)", opacity: 0.5 }}>
         {DISCLAIMER}
       </p>
-
-      {/* ── Multi-select action bar ─────────────────────────────────────────── */}
-      {selectedIds.size > 0 && (
-        <div
-          className="fixed bottom-0 inset-x-0 z-40 px-4 pb-6 pt-4"
-          style={{ background: "linear-gradient(to top, var(--bg-app) 75%, transparent)" }}
-        >
-          <div
-            className="rounded-2xl px-4 py-3.5 flex items-center gap-3"
-            style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)" }}
-          >
-            <span className="shrink-0 text-[13px]" style={{ color: "var(--text-muted)" }}>
-              {selectedIds.size} selected
-            </span>
-            <div className="flex-1 flex items-center gap-2">
-              <Button size="sm" className="flex-1" onClick={handleClaimSelected} disabled={isBulkSaving}>
-                {isBulkSaving ? "Saving…" : "Claim selected"}
-              </Button>
-              <Button variant="secondary" size="sm" className="flex-1" onClick={handleIgnoreSelected} disabled={isBulkSaving}>
-                Ignore selected
-              </Button>
-            </div>
-            <button
-              onClick={() => setSelectedIds(new Set())}
-              className="shrink-0 text-[12px] font-medium"
-              style={{ color: "var(--text-muted)" }}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
