@@ -1,18 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  bulkConfirmCandidates, bulkRejectCandidates, bulkMaybeCandidates,
-  bulkResetCandidates, claimAllHighConfidence, ignoreAllPersonal,
-} from "./actions";
+import { useMemo, useRef, useState } from "react";
+import { bulkConfirmCandidates, bulkRejectCandidates } from "./actions";
 import { TransactionCard } from "./TransactionCard";
-import { Button } from "@/components/ui/button";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-type Status         = "NEEDS_REVIEW" | "CONFIRMED" | "REJECTED" | "MAYBE";
+type Status          = "NEEDS_REVIEW" | "CONFIRMED" | "REJECTED" | "MAYBE";
 type SuggestionLevel = "LIKELY_WORK_RELATED" | "POSSIBLE_WORK_RELATED" | "PROBABLY_PERSONAL";
 type Confidence      = "LOW" | "MEDIUM" | "HIGH";
+type Tab             = "suggested" | "personal";
 
 export type ReviewCandidate = {
   id:              string;
@@ -35,8 +32,6 @@ export type ReviewCandidate = {
   };
 };
 
-type Tab = "suggested" | "possible" | "personal" | "claimed" | "ignored" | "maybe" | "all";
-
 const PAGE_SIZE = 50;
 
 const DISCLAIMER =
@@ -46,15 +41,14 @@ const DISCLAIMER =
 // ── Tab matching ───────────────────────────────────────────────────────────────
 
 function matchesTab(item: ReviewCandidate & { status: Status }, tab: Tab): boolean {
-  switch (tab) {
-    case "suggested": return item.suggestionLevel === "LIKELY_WORK_RELATED"   && item.status === "NEEDS_REVIEW";
-    case "possible":  return item.suggestionLevel === "POSSIBLE_WORK_RELATED" && item.status === "NEEDS_REVIEW";
-    case "personal":  return item.suggestionLevel === "PROBABLY_PERSONAL"      && item.status === "NEEDS_REVIEW";
-    case "claimed":   return item.status === "CONFIRMED";
-    case "ignored":   return item.status === "REJECTED";
-    case "maybe":     return item.status === "MAYBE";
-    case "all":       return true;
+  if (tab === "suggested") {
+    return (
+      (item.suggestionLevel === "LIKELY_WORK_RELATED" ||
+        item.suggestionLevel === "POSSIBLE_WORK_RELATED") &&
+      item.status === "NEEDS_REVIEW"
+    );
   }
+  return item.suggestionLevel === "PROBABLY_PERSONAL" && item.status === "NEEDS_REVIEW";
 }
 
 // ── Search ─────────────────────────────────────────────────────────────────────
@@ -63,7 +57,6 @@ function matchesSearch(item: ReviewCandidate, q: string): boolean {
   if (!q) return true;
   const query = q.toLowerCase().trim();
 
-  // Amount comparison: >100 or <50
   const amtMatch = query.match(/^([><])(\d+(?:\.\d+)?)$/);
   if (amtMatch) {
     const op  = amtMatch[1];
@@ -86,16 +79,6 @@ function matchesSearch(item: ReviewCandidate, q: string): boolean {
 const fmtAUD = (n: number) =>
   n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 
-const TAB_LABELS: Record<Tab, string> = {
-  suggested: "Suggested",
-  possible:  "Possible",
-  personal:  "Personal",
-  claimed:   "Claimed",
-  ignored:   "Ignored",
-  maybe:     "Maybe",
-  all:       "All",
-};
-
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) {
@@ -105,9 +88,16 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
   const [page, setPage]                     = useState(1);
   const [statusOverrides, setStatusOverrides] = useState<Map<string, Status>>(new Map());
   const [isBulkSaving, setIsBulkSaving]     = useState(false);
-  const [bulkMsg, setBulkMsg]               = useState<string | null>(null);
+  const [toast, setToast]                   = useState<string | null>(null);
   const [error, setError]                   = useState<string | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function showToast(msg: string) {
+    setToast(msg);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 3000);
+  }
 
   function handleSearch(value: string) {
     setSearchInput(value);
@@ -121,10 +111,15 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
   function handleTabChange(tab: Tab) {
     setActiveTab(tab);
     setPage(1);
+    setSearchInput("");
+    setDebouncedQuery("");
   }
 
   function handleStatusChange(id: string, next: Status) {
     setStatusOverrides((prev) => new Map(prev).set(id, next));
+    if (next === "CONFIRMED")    showToast("Transaction claimed");
+    else if (next === "REJECTED") showToast("Transaction hidden");
+    else if (next === "NEEDS_REVIEW") showToast("Decision reset");
   }
 
   // Effective items with optimistic overrides
@@ -135,22 +130,20 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
 
   // Tab counts
   const tabCounts = useMemo(() => {
-    const counts: Record<Tab, number> = {
-      suggested: 0, possible: 0, personal: 0,
-      claimed: 0, ignored: 0, maybe: 0, all: effectiveItems.length,
-    };
+    let suggested = 0, personal = 0, claimed = 0;
     for (const item of effectiveItems) {
-      if (item.suggestionLevel === "LIKELY_WORK_RELATED"   && item.status === "NEEDS_REVIEW") counts.suggested++;
-      if (item.suggestionLevel === "POSSIBLE_WORK_RELATED" && item.status === "NEEDS_REVIEW") counts.possible++;
-      if (item.suggestionLevel === "PROBABLY_PERSONAL"      && item.status === "NEEDS_REVIEW") counts.personal++;
-      if (item.status === "CONFIRMED") counts.claimed++;
-      if (item.status === "REJECTED")  counts.ignored++;
-      if (item.status === "MAYBE")     counts.maybe++;
+      if (
+        (item.suggestionLevel === "LIKELY_WORK_RELATED" ||
+          item.suggestionLevel === "POSSIBLE_WORK_RELATED") &&
+        item.status === "NEEDS_REVIEW"
+      ) suggested++;
+      if (item.suggestionLevel === "PROBABLY_PERSONAL" && item.status === "NEEDS_REVIEW")
+        personal++;
+      if (item.status === "CONFIRMED") claimed++;
     }
-    return counts;
+    return { suggested, personal, claimed };
   }, [effectiveItems]);
 
-  // Tab + search filtered
   const tabFiltered = useMemo(
     () => effectiveItems.filter((item) => matchesTab(item, activeTab)),
     [effectiveItems, activeTab],
@@ -160,82 +153,82 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
     [tabFiltered, debouncedQuery],
   );
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const totalPages  = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const paginated   = useMemo(
     () => filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
     [filtered, currentPage],
   );
 
-  const visibleIds = filtered.map((c) => c.id);
-
-  // Claimed total (only CONFIRMED)
   const claimedTotal = useMemo(
-    () => effectiveItems
-      .filter((c) => c.status === "CONFIRMED")
-      .reduce((s, c) => s + Math.abs(c.transaction.amount), 0),
+    () =>
+      effectiveItems
+        .filter((c) => c.status === "CONFIRMED")
+        .reduce((s, c) => s + Math.abs(c.transaction.amount), 0),
     [effectiveItems],
   );
 
-  // ── Bulk helpers ─────────────────────────────────────────────────────────────
+  // ── Bulk actions ─────────────────────────────────────────────────────────────
 
-  async function doBulk(
-    action: (ids: string[]) => Promise<void>,
-    ids: string[],
-    nextStatus: Status,
-    msg: string,
-  ) {
+  async function handleClaimAllSuggested() {
+    const ids = effectiveItems
+      .filter(
+        (c) =>
+          (c.suggestionLevel === "LIKELY_WORK_RELATED" ||
+            c.suggestionLevel === "POSSIBLE_WORK_RELATED") &&
+          c.status === "NEEDS_REVIEW",
+      )
+      .map((c) => c.id);
+    if (!ids.length) return;
     setIsBulkSaving(true);
     setError(null);
-    setBulkMsg(null);
-    ids.forEach((id) => handleStatusChange(id, nextStatus));
+    ids.forEach((id) =>
+      setStatusOverrides((prev) => new Map(prev).set(id, "CONFIRMED")),
+    );
     try {
-      await action(ids);
-      setBulkMsg(msg);
+      await bulkConfirmCandidates(ids);
+      showToast(
+        `${ids.length} suggested transaction${ids.length !== 1 ? "s" : ""} claimed`,
+      );
     } catch {
-      ids.forEach((id) => setStatusOverrides((prev) => {
-        const next = new Map(prev);
-        next.delete(id);
-        return next;
-      }));
+      ids.forEach((id) =>
+        setStatusOverrides((prev) => {
+          const next = new Map(prev);
+          next.delete(id);
+          return next;
+        }),
+      );
       setError("Could not save. Please try again.");
     } finally {
       setIsBulkSaving(false);
     }
   }
 
-  async function handleClaimAllHighConfidence() {
+  async function handleHidePersonal() {
+    const ids = effectiveItems
+      .filter(
+        (c) => c.suggestionLevel === "PROBABLY_PERSONAL" && c.status === "NEEDS_REVIEW",
+      )
+      .map((c) => c.id);
+    if (!ids.length) return;
     setIsBulkSaving(true);
     setError(null);
-    setBulkMsg(null);
-    const highIds = effectiveItems
-      .filter((c) => c.suggestionLevel === "LIKELY_WORK_RELATED" && c.status === "NEEDS_REVIEW")
-      .map((c) => c.id);
-    highIds.forEach((id) => handleStatusChange(id, "CONFIRMED"));
+    ids.forEach((id) =>
+      setStatusOverrides((prev) => new Map(prev).set(id, "REJECTED")),
+    );
     try {
-      const count = await claimAllHighConfidence();
-      setBulkMsg(`${count} high-confidence suggestion${count !== 1 ? "s" : ""} claimed`);
+      await bulkRejectCandidates(ids);
+      showToast(
+        `${ids.length} personal transaction${ids.length !== 1 ? "s" : ""} hidden`,
+      );
     } catch {
-      highIds.forEach((id) => setStatusOverrides((prev) => { const next = new Map(prev); next.delete(id); return next; }));
-      setError("Could not save. Please try again.");
-    } finally {
-      setIsBulkSaving(false);
-    }
-  }
-
-  async function handleIgnoreAllPersonal() {
-    setIsBulkSaving(true);
-    setError(null);
-    setBulkMsg(null);
-    const personalIds = effectiveItems
-      .filter((c) => c.suggestionLevel === "PROBABLY_PERSONAL" && c.status === "NEEDS_REVIEW")
-      .map((c) => c.id);
-    personalIds.forEach((id) => handleStatusChange(id, "REJECTED"));
-    try {
-      const count = await ignoreAllPersonal();
-      setBulkMsg(`${count} personal transaction${count !== 1 ? "s" : ""} ignored`);
-    } catch {
-      personalIds.forEach((id) => setStatusOverrides((prev) => { const next = new Map(prev); next.delete(id); return next; }));
+      ids.forEach((id) =>
+        setStatusOverrides((prev) => {
+          const next = new Map(prev);
+          next.delete(id);
+          return next;
+        }),
+      );
       setError("Could not save. Please try again.");
     } finally {
       setIsBulkSaving(false);
@@ -245,14 +238,15 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
   const noData = candidates.length === 0;
 
   return (
-    <div>
+    <div className="pb-28">
+
       {/* ── Search bar ──────────────────────────────────────────────────────── */}
       <div className="mb-4">
         <input
           type="text"
           value={searchInput}
           onChange={(e) => handleSearch(e.target.value)}
-          placeholder="Search by merchant, category, amount (e.g. >100), or reason…"
+          placeholder="Search merchant, category, amount…"
           className="w-full rounded-xl px-4 py-3 text-[13px] focus:outline-none focus:ring-1 focus:ring-[#22C55E]"
           style={{
             backgroundColor: "var(--bg-card)",
@@ -262,125 +256,51 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
         />
       </div>
 
-      {/* ── Tabs ────────────────────────────────────────────────────────────── */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1 mb-5 scrollbar-hide">
-        {(["suggested", "possible", "personal", "claimed", "ignored", "maybe", "all"] as Tab[]).map((tab) => {
-          const isActive = activeTab === tab;
-          const count    = tabCounts[tab];
-          const accent   = tab === "suggested" ? "#22C55E"
-                         : tab === "possible"  ? "#14B8A6"
-                         : tab === "personal"  ? "#6B7280"
-                         : tab === "claimed"   ? "#22C55E"
-                         : tab === "ignored"   ? "#6B7280"
-                         : tab === "maybe"     ? "#F59E0B"
-                         : "var(--text-secondary)";
-          return (
-            <button
-              key={tab}
-              onClick={() => handleTabChange(tab)}
-              className="flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-all duration-150"
-              style={{
-                backgroundColor: isActive ? `${accent}18` : "rgba(255,255,255,0.04)",
-                border:          `1px solid ${isActive ? `${accent}40` : "rgba(255,255,255,0.06)"}`,
-                color:           isActive ? accent : "var(--text-secondary)",
-              }}
-            >
-              {TAB_LABELS[tab]}
-              {count > 0 && (
+      {/* ── Segmented control ───────────────────────────────────────────────── */}
+      {!noData && (
+        <div
+          className="mb-5 grid grid-cols-2 gap-1 rounded-xl p-1"
+          style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}
+        >
+          {(["suggested", "personal"] as Tab[]).map((tab) => {
+            const isActive = activeTab === tab;
+            const count    = tabCounts[tab];
+            const isGreen  = tab === "suggested";
+            return (
+              <button
+                key={tab}
+                onClick={() => handleTabChange(tab)}
+                className="flex items-center justify-center gap-2 rounded-lg py-2.5 text-[13px] font-medium transition-all duration-150"
+                style={{
+                  backgroundColor: isActive ? "rgba(255,255,255,0.07)" : "transparent",
+                  color:           isActive ? "var(--text-primary)" : "var(--text-muted)",
+                  boxShadow:       isActive ? "0 1px 3px rgba(0,0,0,0.3)" : "none",
+                }}
+              >
+                {tab === "suggested" ? "Suggested" : "Personal"}
                 <span
-                  className="flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold"
-                  style={{ backgroundColor: `${accent}25`, color: accent }}
+                  className="flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-bold tabular-nums"
+                  style={{
+                    backgroundColor: isActive
+                      ? isGreen ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.08)"
+                      : "rgba(255,255,255,0.05)",
+                    color: isActive
+                      ? isGreen ? "#22C55E" : "var(--text-secondary)"
+                      : "var(--text-muted)",
+                  }}
                 >
                   {count}
                 </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* ── Bulk action bar (when there are results) ────────────────────────── */}
-      {!noData && (
-        <div
-          className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl px-4 py-3"
-          style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}
-        >
-          <span className="text-[11px] font-semibold uppercase tracking-widest mr-1" style={{ color: "var(--text-muted)" }}>
-            Bulk
-          </span>
-          <Button
-            size="xs"
-            variant="secondary"
-            disabled={isBulkSaving || visibleIds.length === 0}
-            onClick={() => doBulk(bulkConfirmCandidates, visibleIds, "CONFIRMED",
-              `${visibleIds.length} transaction${visibleIds.length !== 1 ? "s" : ""} claimed`)}
-          >
-            Claim visible
-          </Button>
-          <Button
-            size="xs"
-            variant="secondary"
-            disabled={isBulkSaving || visibleIds.length === 0}
-            onClick={() => doBulk(bulkRejectCandidates, visibleIds, "REJECTED",
-              `${visibleIds.length} transaction${visibleIds.length !== 1 ? "s" : ""} ignored`)}
-          >
-            Ignore visible
-          </Button>
-          <Button
-            size="xs"
-            variant="secondary"
-            disabled={isBulkSaving || visibleIds.length === 0}
-            onClick={() => doBulk(bulkMaybeCandidates, visibleIds, "MAYBE",
-              `${visibleIds.length} marked as maybe`)}
-          >
-            Maybe visible
-          </Button>
-          <Button
-            size="xs"
-            variant="secondary"
-            disabled={isBulkSaving || visibleIds.length === 0}
-            onClick={() => doBulk(bulkResetCandidates, visibleIds, "NEEDS_REVIEW",
-              `${visibleIds.length} decision${visibleIds.length !== 1 ? "s" : ""} reset`)}
-          >
-            Reset visible
-          </Button>
-          <span className="hidden sm:inline text-[rgba(255,255,255,0.08)]">|</span>
-          <Button
-            size="xs"
-            variant="secondary"
-            disabled={isBulkSaving || tabCounts.suggested === 0}
-            onClick={handleClaimAllHighConfidence}
-          >
-            Claim all suggested
-          </Button>
-          <Button
-            size="xs"
-            variant="secondary"
-            disabled={isBulkSaving || tabCounts.personal === 0}
-            onClick={handleIgnoreAllPersonal}
-          >
-            Ignore all personal
-          </Button>
+              </button>
+            );
+          })}
         </div>
       )}
 
-      {/* ── Feedback messages ────────────────────────────────────────────────── */}
-      {bulkMsg && (
-        <div className="mb-3 flex items-center justify-between rounded-xl px-4 py-2.5" style={{ backgroundColor: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.15)" }}>
-          <p className="text-[13px] font-medium" style={{ color: "#22C55E" }}>{bulkMsg}</p>
-          <button onClick={() => setBulkMsg(null)} className="text-[11px] ml-3" style={{ color: "rgba(255,255,255,0.3)" }}>✕</button>
-        </div>
-      )}
-      {error && (
-        <div className="mb-3 rounded-xl px-4 py-2.5" style={{ backgroundColor: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.15)" }}>
-          <p className="text-[13px]" style={{ color: "#f87171" }}>{error}</p>
-        </div>
-      )}
-
-      {/* ── Claimed summary bar ──────────────────────────────────────────────── */}
+      {/* ── Claimed summary bar ─────────────────────────────────────────────── */}
       {tabCounts.claimed > 0 && (
         <div
-          className="mb-4 flex items-center justify-between rounded-2xl px-5 py-3"
+          className="mb-5 flex items-center justify-between rounded-2xl px-5 py-3.5"
           style={{ backgroundColor: "rgba(17,33,24,0.78)", border: "1px solid rgba(34,197,94,0.18)" }}
         >
           <div>
@@ -392,7 +312,7 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
             </p>
           </div>
           <div className="text-right">
-            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
               {tabCounts.claimed} transaction{tabCounts.claimed !== 1 ? "s" : ""}
             </p>
             <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
@@ -402,16 +322,69 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
         </div>
       )}
 
+      {/* ── Subtle bulk action row ──────────────────────────────────────────── */}
+      {!noData && !debouncedQuery && (
+        <div className="mb-4 min-h-[20px]">
+          {activeTab === "suggested" && tabCounts.suggested > 0 && (
+            <button
+              disabled={isBulkSaving}
+              onClick={handleClaimAllSuggested}
+              className="text-[12px] font-medium transition-opacity disabled:opacity-40"
+              style={{ color: "#22C55E" }}
+            >
+              Claim all suggested →
+            </button>
+          )}
+          {activeTab === "personal" && tabCounts.personal > 0 && (
+            <button
+              disabled={isBulkSaving}
+              onClick={handleHidePersonal}
+              className="text-[12px] font-medium transition-opacity disabled:opacity-40"
+              style={{ color: "var(--text-muted)" }}
+            >
+              Hide personal transactions →
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* ── Toast ───────────────────────────────────────────────────────────── */}
+      {toast && (
+        <div
+          className="mb-3 flex items-center justify-between rounded-xl px-4 py-2.5"
+          style={{ backgroundColor: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.15)" }}
+        >
+          <p className="text-[13px] font-medium" style={{ color: "#22C55E" }}>{toast}</p>
+          <button
+            onClick={() => setToast(null)}
+            className="ml-3 text-[11px]"
+            style={{ color: "rgba(255,255,255,0.3)" }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+      {error && (
+        <div
+          className="mb-3 rounded-xl px-4 py-2.5"
+          style={{ backgroundColor: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.15)" }}
+        >
+          <p className="text-[13px]" style={{ color: "#f87171" }}>{error}</p>
+        </div>
+      )}
+
       {/* ── Empty states ─────────────────────────────────────────────────────── */}
       {noData ? (
         <div className="py-16 text-center">
-          <p className="text-[15px] font-medium mb-1" style={{ color: "var(--text-primary)" }}>Nothing imported yet</p>
-          <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[15px] font-medium mb-1" style={{ color: "var(--text-primary)" }}>
+            Nothing imported yet
+          </p>
+          <p className="text-[13px] mb-5" style={{ color: "var(--text-muted)" }}>
             Import your bank statement CSV and Kashio will classify each transaction.
           </p>
           <a
             href="/import"
-            className="mt-4 inline-block rounded-xl px-5 py-2.5 text-[13px] font-semibold"
+            className="inline-block rounded-xl px-5 py-2.5 text-[13px] font-semibold"
             style={{ backgroundColor: "#22C55E", color: "#000" }}
           >
             Import CSV →
@@ -420,7 +393,12 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
       ) : filtered.length === 0 ? (
         <div className="py-12 text-center">
           <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>
-            {debouncedQuery ? `No results for "${debouncedQuery}"` : `No ${TAB_LABELS[activeTab].toLowerCase()} transactions`}
+            {debouncedQuery
+              ? `No results for "${debouncedQuery}"`
+              : activeTab === "suggested"
+              ? "All done — no suggested transactions to review."
+              : "No personal transactions found."
+            }
           </p>
           {debouncedQuery && (
             <button
@@ -434,7 +412,7 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
         </div>
       ) : (
         <>
-          {/* Result count + page info */}
+          {/* Result count */}
           <div className="flex items-center justify-between mb-3">
             <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
               {filtered.length} transaction{filtered.length !== 1 ? "s" : ""}
@@ -465,7 +443,11 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
                 disabled={currentPage === 1}
                 onClick={() => setPage((p) => p - 1)}
                 className="rounded-lg px-4 py-2 text-[13px] font-medium transition-opacity disabled:opacity-30"
-                style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", color: "var(--text-secondary)" }}
+                style={{
+                  backgroundColor: "var(--bg-card)",
+                  border:          "1px solid var(--bg-border)",
+                  color:           "var(--text-secondary)",
+                }}
               >
                 ← Prev
               </button>
@@ -476,7 +458,11 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
                 disabled={currentPage === totalPages}
                 onClick={() => setPage((p) => p + 1)}
                 className="rounded-lg px-4 py-2 text-[13px] font-medium transition-opacity disabled:opacity-30"
-                style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", color: "var(--text-secondary)" }}
+                style={{
+                  backgroundColor: "var(--bg-card)",
+                  border:          "1px solid var(--bg-border)",
+                  color:           "var(--text-secondary)",
+                }}
               >
                 Next →
               </button>
@@ -486,7 +472,7 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
       )}
 
       {/* ── Disclaimer ──────────────────────────────────────────────────────── */}
-      <p className="mt-10 text-[11px] leading-relaxed" style={{ color: "var(--text-muted)", opacity: 0.55 }}>
+      <p className="mt-10 text-[11px] leading-relaxed" style={{ color: "var(--text-muted)", opacity: 0.5 }}>
         {DISCLAIMER}
       </p>
     </div>
