@@ -9,7 +9,7 @@ import { TransactionCard } from "./TransactionCard";
 type Status          = "NEEDS_REVIEW" | "CONFIRMED" | "REJECTED" | "MAYBE";
 type SuggestionLevel = "LIKELY_WORK_RELATED" | "POSSIBLE_WORK_RELATED" | "PROBABLY_PERSONAL";
 type Confidence      = "LOW" | "MEDIUM" | "HIGH";
-type Tab             = "suggested" | "personal" | "claimed";
+type Tab             = "suggested" | "personal" | "claimed" | "hidden";
 
 export type ReviewCandidate = {
   id:              string;
@@ -49,6 +49,7 @@ function matchesTab(item: ReviewCandidate & { status: Status }, tab: Tab): boole
     );
   }
   if (tab === "claimed") return item.status === "CONFIRMED";
+  if (tab === "hidden")  return item.status === "REJECTED";
   return item.suggestionLevel === "PROBABLY_PERSONAL" && item.status === "NEEDS_REVIEW";
 }
 
@@ -131,7 +132,7 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
 
   // Tab counts
   const tabCounts = useMemo(() => {
-    let suggested = 0, personal = 0, claimed = 0;
+    let suggested = 0, personal = 0, claimed = 0, hidden = 0;
     for (const item of effectiveItems) {
       if (
         (item.suggestionLevel === "LIKELY_WORK_RELATED" ||
@@ -141,8 +142,9 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
       if (item.suggestionLevel === "PROBABLY_PERSONAL" && item.status === "NEEDS_REVIEW")
         personal++;
       if (item.status === "CONFIRMED") claimed++;
+      if (item.status === "REJECTED")  hidden++;
     }
-    return { suggested, personal, claimed };
+    return { suggested, personal, claimed, hidden };
   }, [effectiveItems]);
 
   const tabFiltered = useMemo(
@@ -260,26 +262,25 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
       {/* ── Segmented control ───────────────────────────────────────────────── */}
       {!noData && (
         <div
-          className="mb-5 grid grid-cols-3 gap-1 rounded-xl p-1"
+          className="mb-5 grid grid-cols-4 gap-1 rounded-xl p-1"
           style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}
         >
-          {(["suggested", "personal", "claimed"] as Tab[]).map((tab) => {
+          {(["suggested", "personal", "claimed", "hidden"] as Tab[]).map((tab) => {
             const isActive = activeTab === tab;
             const count    = tabCounts[tab];
             const accentColor =
-              tab === "suggested" ? "#22C55E"
-              : tab === "claimed"  ? "#22C55E"
-              : null;
+              tab === "suggested" || tab === "claimed" ? "#22C55E" : null;
             const LABELS: Record<Tab, string> = {
               suggested: "Suggested",
               personal:  "Personal",
               claimed:   "Claimed",
+              hidden:    "Hidden",
             };
             return (
               <button
                 key={tab}
                 onClick={() => handleTabChange(tab)}
-                className="flex items-center justify-center gap-1.5 rounded-lg py-2 text-[12px] font-medium transition-all duration-150"
+                className="flex items-center justify-center gap-1 rounded-lg py-2 text-[11px] font-medium transition-all duration-150"
                 style={{
                   backgroundColor: isActive ? "rgba(255,255,255,0.07)" : "transparent",
                   color:           isActive ? "var(--text-primary)" : "var(--text-muted)",
@@ -288,7 +289,7 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
               >
                 {LABELS[tab]}
                 <span
-                  className="flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums"
+                  className="flex h-4 min-w-[14px] items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums"
                   style={{
                     backgroundColor: isActive && accentColor
                       ? `${accentColor}20`
@@ -330,7 +331,7 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
       )}
 
       {/* ── Subtle bulk action row ──────────────────────────────────────────── */}
-      {!noData && !debouncedQuery && activeTab !== "claimed" && (
+      {!noData && !debouncedQuery && activeTab !== "claimed" && activeTab !== "hidden" && (
         <div className="mb-4 min-h-[20px]">
           {activeTab === "suggested" && tabCounts.suggested > 0 && (
             <button
@@ -406,6 +407,8 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
               ? "All done — no suggested transactions to review."
               : activeTab === "claimed"
               ? "Nothing claimed yet. Claim transactions from the Suggested tab."
+              : activeTab === "hidden"
+              ? "No hidden transactions."
               : "No personal transactions found."
             }
           </p>
