@@ -388,7 +388,7 @@ export const FUZZY_ALIAS_GROUPS: FuzzyAliasGroup[] = [
   // ElevenLabs — "ELEVENLABS INC" may lose INC; also appears as STRIPE*ELEVENLABS.
   {
     name:       "ElevenLabs",
-    aliases:    ["elevenlabs", "eleven labs"],
+    aliases:    ["elevenlabs"],
     category:   CATEGORIES.SOFTWARE,
     what:       "an AI voice synthesis platform",
     confidence: "MEDIUM",

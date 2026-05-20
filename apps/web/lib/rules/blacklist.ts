@@ -52,11 +52,12 @@ const ENTERTAINMENT_HARD = [
 // Matched as phrases to avoid catching "Business Loan Interest Expense".
 const BANK_FEE_PHRASES = [
   "purchase interest", "cash advance interest",
-  "overdrawn fee", "late payment fee", "account keeping fee",
+  "overdrawn fee", "overdraw fee", "late payment fee", "account keeping fee",
   // Bank penalty and fx fees — never deductible as a business expense.
   "international transaction fee", "foreign transaction fee",
   "currency conversion fee",
   "insufficient funds fee", "non-sufficient funds", "nsf fee",
+  "exceeding available funds",
   "dishonour fee", "payment dishonour", "honour fee",
   "failed payment fee",
 ];

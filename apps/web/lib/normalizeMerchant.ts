@@ -230,6 +230,9 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   // ── Apple ──────────────────────────────────────────────────────────────────
   // Resolve APPLE.COM/* and the plain "APPLE SERVICES" descriptor before LOCATION_SLUG
   // can strip " SERVICES" (all-caps slug) and before PREFIXES touch anything.
+  // "APPLE APPLE.COM/BILL ML7WNMJW5XA0" — double-APPLE prefix is Apple's in-app
+  // billing descriptor; must precede the bare APPLE.COM entry.
+  [/^APPLE\s+APPLE\.COM\b/i,                     "Apple Services"],
   [/^APPLE\s+SERVICES?\b/i,                      "Apple Services"],
   [/^APPLE\.COM\b/i,                             "Apple Services"],
 
@@ -263,6 +266,13 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   [/^SECURE\s+PARKING\b/i,                       "Secure Parking"],
   [/^CPP\s+PARKING\b/i,                          "CPP Parking"],
   [/^CITY\s+OF\s+PERTH\s+PARKING\b/i,            "City of Perth Parking"],
+
+  // ── Convenience stores ─────────────────────────────────────────────────────
+  // "7 ELEVEN ASCOT AUS CARD XX6303 VALUE DATE: 01/11/" — LOCATION_SLUG fails
+  // because "VALUE DATE: 01/11/" contains colons/slashes, leaving garbage noise
+  // in the fuzzy form. Resolve before any stripping to prevent false positives
+  // (the "eleven" token triggers ElevenLabs alias matching otherwise).
+  [/^7[\s-]*ELEVEN\b/i,                           "7-Eleven"],
 
   // ── Uber variants ─────────────────────────────────────────────────────────
   // "UBER EATS" must be resolved before LOCATION_SLUG strips "EATS" → "Uber",
@@ -300,6 +310,7 @@ const MERCHANT_ALIASES: [RegExp, string][] = [
   // ── Company legal suffixes (≤2 chars, not caught by LOCATION_SLUG) ─────────
   [/^UBER\s+BV\b/i,                              "Uber"],
   [/^CANVA\s+PTY\b/i,                            "Canva"],
+  [/^CANVA\b/i,                                  "Canva"],
   [/^SHOPIFY\s+INC\b/i,                          "Shopify"],
   [/^WISTIA\s+INC\b/i,                           "Wistia"],
   [/^LOOM\s+INC\b/i,                             "Loom"],
@@ -418,6 +429,9 @@ export function normalizeMerchant(description: string): string {
   // 5. Collapse whitespace and title-case.
   result = result.replace(EXTRA_SPACES, " ").trim();
   result = toTitleCase(result);
+
+  // 6. Strip trailing punctuation left by bank formatting (dashes, asterisks).
+  result = result.replace(/[-–—*\s]+$/, "").trim();
 
   // Fall back to raw description if everything was stripped.
   return result || toTitleCase(description.trim());
