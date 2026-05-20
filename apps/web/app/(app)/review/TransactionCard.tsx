@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { confirmWithDetails, rejectCandidate, resetCandidate } from "./actions";
+import { confirmWithDetails, rejectCandidate, resetCandidate, saveCategory } from "./actions";
 import { Button } from "@/components/ui/button";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -103,13 +103,32 @@ export function TransactionCard({
   category: initialCategory, reason,
   transaction, onStatusChange,
 }: TransactionCardProps) {
-  const [status, setStatus]           = useState<Status>(initialStatus);
-  const [expanded, setExpanded]       = useState(false);
-  const [isSaving, setIsSaving]       = useState(false);
-  const [error, setError]             = useState<string | null>(null);
+  const [status, setStatus]             = useState<Status>(initialStatus);
+  const [category, setCategory]         = useState(initialCategory);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [categorySaving, setCategorySaving] = useState(false);
+  const [expanded, setExpanded]         = useState(false);
+  const [isSaving, setIsSaving]         = useState(false);
+  const [error, setError]               = useState<string | null>(null);
 
   const settled = status !== "NEEDS_REVIEW";
-  const info    = catInfo(initialCategory);
+  const info    = catInfo(category);
+
+  async function handleCategoryChange(canonical: string) {
+    if (canonical === category) { setCategoryOpen(false); return; }
+    const prev = category;
+    setCategory(canonical);
+    setCategoryOpen(false);
+    setCategorySaving(true);
+    try {
+      await saveCategory(id, canonical);
+    } catch {
+      setCategory(prev);
+      setError("Could not save category. Try again.");
+    } finally {
+      setCategorySaving(false);
+    }
+  }
 
   async function save(action: () => Promise<void>, next: Status) {
     const prev = status;
@@ -171,26 +190,82 @@ export function TransactionCard({
 
         {/* Row 2: category pill + date */}
         <div className="mt-2 flex items-center gap-2 flex-wrap">
-          {/* Category pill — read-only */}
-          <span
-            className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-            style={{
-              backgroundColor: `${info.color}12`,
-              border:          `1px solid ${info.color}28`,
-              color:           info.color,
-            }}
-          >
+          {/* Category pill — tappable when NEEDS_REVIEW */}
+          {!settled ? (
+            <button
+              onClick={() => setCategoryOpen((v) => !v)}
+              disabled={categorySaving}
+              className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold transition-opacity disabled:opacity-50"
+              style={{
+                backgroundColor: `${info.color}18`,
+                border:          `1px solid ${info.color}40`,
+                color:           info.color,
+              }}
+            >
+              <span
+                className="h-1.5 w-1.5 rounded-full shrink-0"
+                style={{ backgroundColor: info.color }}
+              />
+              {info.label}
+              <span style={{ opacity: 0.6, fontSize: 9 }}>▾</span>
+            </button>
+          ) : (
             <span
-              className="h-1.5 w-1.5 rounded-full shrink-0"
-              style={{ backgroundColor: info.color }}
-            />
-            {info.label}
-          </span>
+              className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+              style={{
+                backgroundColor: `${info.color}12`,
+                border:          `1px solid ${info.color}28`,
+                color:           info.color,
+              }}
+            >
+              <span
+                className="h-1.5 w-1.5 rounded-full shrink-0"
+                style={{ backgroundColor: info.color }}
+              />
+              {info.label}
+            </span>
+          )}
           <span className="shrink-0 text-[12px]" style={{ color: "rgba(255,255,255,0.12)" }}>·</span>
           <span className="shrink-0 text-[12px]" style={{ color: "var(--text-muted)" }}>
             {fmtDate(transaction.date)}
           </span>
+          {categorySaving && (
+            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>saving…</span>
+          )}
         </div>
+
+        {/* Category picker (inline, animated) */}
+        <AnimatePresence>
+          {categoryOpen && !settled && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+              style={{ overflow: "hidden" }}
+            >
+              <div className="mt-2.5 grid grid-cols-3 gap-1.5">
+                {REVIEW_CATEGORIES.map((opt) => {
+                  const isSelected = catInfo(category).value === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      onClick={() => handleCategoryChange(opt.value)}
+                      className="rounded-xl px-2 py-2 text-[11px] font-medium text-center transition-all duration-100"
+                      style={{
+                        backgroundColor: isSelected ? `${opt.color}22` : "rgba(255,255,255,0.04)",
+                        border:          `1px solid ${isSelected ? `${opt.color}50` : "rgba(255,255,255,0.07)"}`,
+                        color:           isSelected ? opt.color : "var(--text-muted)",
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Actions */}
         <div className="mt-3">

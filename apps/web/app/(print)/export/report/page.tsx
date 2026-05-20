@@ -9,14 +9,9 @@ export const dynamic = "force-dynamic";
 export default async function ExportReport() {
   const userId = await requireUser();
 
-  const [claimedCandidates, maybeCandidates, wfhEntries] = await Promise.all([
+  const [claimedCandidates, wfhEntries] = await Promise.all([
     db.deductionCandidate.findMany({
       where:   { status: "CONFIRMED", userId },
-      include: { transaction: true },
-      orderBy: { transaction: { date: "asc" } },
-    }),
-    db.deductionCandidate.findMany({
-      where:   { status: "MAYBE", userId },
       include: { transaction: true },
       orderBy: { transaction: { date: "asc" } },
     }),
@@ -34,14 +29,7 @@ export default async function ExportReport() {
     note:        c.evidenceNote,
   }));
 
-  const maybeRows = maybeCandidates.map((c) => ({
-    ...mapExportRow(c),
-    hasEvidence: c.hasEvidence,
-    note:        c.evidenceNote,
-  }));
-
   const claimedTotal    = claimedRows.reduce((s, r) => s + r.amount, 0);
-  const maybeTotal      = maybeRows.reduce((s, r) => s + r.amount, 0);
   const estimatedSaving = Math.round(claimedTotal * 0.325);
 
   const withEvidence = claimedRows.filter((r) => r.hasEvidence).length;
@@ -159,9 +147,8 @@ export default async function ExportReport() {
           <tbody>
             <tr>
               {[
-                { label: "User-claimed deductions", value: `$${claimedTotal.toFixed(2)}`, sub: `${claimedRows.length} transaction${claimedRows.length !== 1 ? "s" : ""}`, accent: true },
-                { label: "Maybe / suggested for review",  value: maybeTotal > 0 ? `$${maybeTotal.toFixed(2)}` : "—", sub: maybeTotal > 0 ? `${maybeRows.length} item${maybeRows.length !== 1 ? "s" : ""}` : "none", accent: false },
-                { label: "Est. tax saving (32.5%)",       value: estimatedSaving > 0 ? `~$${estimatedSaving}` : "—", sub: "claimed deductions only", accent: true },
+                { label: "Claimed deductions",      value: `$${claimedTotal.toFixed(2)}`, sub: `${claimedRows.length} transaction${claimedRows.length !== 1 ? "s" : ""}`, accent: true },
+                { label: "Est. tax saving (32.5%)", value: estimatedSaving > 0 ? `~$${estimatedSaving}` : "—", sub: "claimed deductions only", accent: true },
               ].map((s, i) => (
                 <td key={i} className="summary-cell">
                   <div style={{ border: s.accent ? "1px solid #bbf7d0" : "1px solid #e5e7eb", borderRadius: 6, padding: "10px 14px", background: s.accent ? "#f0fdf4" : "#fff" }}>
@@ -234,19 +221,6 @@ export default async function ExportReport() {
             <DeductionTable rows={claimedRows} total={claimedTotal} headerBg="#14532d" headerColor="#fff" />
           )}
         </div>
-
-        {/* ── Section 2: Maybe / suggested for review ───────────── */}
-        {maybeRows.length > 0 && (
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#9ca3af", marginBottom: 6 }}>
-              Maybe / Suggested for Review
-            </div>
-            <div style={{ fontSize: 10, color: "#78350f", marginBottom: 8 }}>
-              These transactions are marked as maybe. Confirm with your tax agent before claiming.
-            </div>
-            <DeductionTable rows={maybeRows} total={maybeTotal} headerBg="#78350f" headerColor="#fff" dimBg="#fffbeb" />
-          </div>
-        )}
 
         {/* ── Grand total (claimed only) ─────────────────────────── */}
         {claimedRows.length > 0 && (

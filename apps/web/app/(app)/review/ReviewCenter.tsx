@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { bulkConfirmCandidates, bulkRejectCandidates, bulkResetCandidates } from "./actions";
 import { TransactionCard } from "./TransactionCard";
+import { Button } from "@/components/ui/button";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -89,6 +90,7 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
   const [page, setPage]                     = useState(1);
   const [statusOverrides, setStatusOverrides] = useState<Map<string, Status>>(new Map());
   const [isBulkSaving, setIsBulkSaving]     = useState(false);
+  const [selectedIds, setSelectedIds]       = useState<Set<string>>(new Set());
   const [toast, setToast]                   = useState<string | null>(null);
   const [error, setError]                   = useState<string | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -114,13 +116,23 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
     setPage(1);
     setSearchInput("");
     setDebouncedQuery("");
+    setSelectedIds(new Set());
   }
 
   function handleStatusChange(id: string, next: Status) {
     setStatusOverrides((prev) => new Map(prev).set(id, next));
-    if (next === "CONFIRMED")     showToast("Transaction claimed");
-    else if (next === "REJECTED") showToast("Transaction hidden");
+    setSelectedIds((prev) => { const n = new Set(prev); n.delete(id); return n; });
+    if (next === "CONFIRMED")         showToast("Transaction claimed");
+    else if (next === "REJECTED")     showToast("Transaction hidden");
     else if (next === "NEEDS_REVIEW") showToast("Decision reset");
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
   }
 
   // Effective items with optimistic overrides
@@ -243,6 +255,42 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
     try {
       await bulkResetCandidates(ids);
       showToast(`${ids.length} personal transaction${ids.length !== 1 ? "s" : ""} shown`);
+    } catch {
+      ids.forEach((id) => setStatusOverrides((prev) => { const m = new Map(prev); m.delete(id); return m; }));
+      setError("Could not save. Please try again.");
+    } finally {
+      setIsBulkSaving(false);
+    }
+  }
+
+  async function handleClaimSelected() {
+    const ids = [...selectedIds];
+    if (!ids.length) return;
+    setIsBulkSaving(true);
+    setError(null);
+    setSelectedIds(new Set());
+    ids.forEach((id) => setStatusOverrides((prev) => new Map(prev).set(id, "CONFIRMED")));
+    try {
+      await bulkConfirmCandidates(ids);
+      showToast(`${ids.length} transaction${ids.length !== 1 ? "s" : ""} claimed`);
+    } catch {
+      ids.forEach((id) => setStatusOverrides((prev) => { const m = new Map(prev); m.delete(id); return m; }));
+      setError("Could not save. Please try again.");
+    } finally {
+      setIsBulkSaving(false);
+    }
+  }
+
+  async function handleIgnoreSelected() {
+    const ids = [...selectedIds];
+    if (!ids.length) return;
+    setIsBulkSaving(true);
+    setError(null);
+    setSelectedIds(new Set());
+    ids.forEach((id) => setStatusOverrides((prev) => new Map(prev).set(id, "REJECTED")));
+    try {
+      await bulkRejectCandidates(ids);
+      showToast(`${ids.length} transaction${ids.length !== 1 ? "s" : ""} ignored`);
     } catch {
       ids.forEach((id) => setStatusOverrides((prev) => { const m = new Map(prev); m.delete(id); return m; }));
       setError("Could not save. Please try again.");
@@ -514,7 +562,18 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
 
             <div className="space-y-3">
               {paginated.map((c) => (
-                <TransactionCard key={c.id} {...c} onStatusChange={handleStatusChange} />
+                <div key={c.id} className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(c.id)}
+                    onChange={() => toggleSelect(c.id)}
+                    className="mt-[18px] h-4 w-4 shrink-0 cursor-pointer rounded"
+                    style={{ accentColor: "#22C55E" }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <TransactionCard {...c} onStatusChange={handleStatusChange} />
+                  </div>
+                </div>
               ))}
             </div>
 
@@ -549,6 +608,38 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
       <p className="mt-10 text-[11px] leading-relaxed" style={{ color: "var(--text-muted)", opacity: 0.5 }}>
         {DISCLAIMER}
       </p>
+
+      {/* ── Multi-select action bar ─────────────────────────────────────────── */}
+      {selectedIds.size > 0 && (
+        <div
+          className="fixed bottom-0 inset-x-0 z-40 px-4 pb-6 pt-4"
+          style={{ background: "linear-gradient(to top, var(--bg-app) 75%, transparent)" }}
+        >
+          <div
+            className="rounded-2xl px-4 py-3.5 flex items-center gap-3"
+            style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)" }}
+          >
+            <span className="shrink-0 text-[13px]" style={{ color: "var(--text-muted)" }}>
+              {selectedIds.size} selected
+            </span>
+            <div className="flex-1 flex items-center gap-2">
+              <Button size="sm" className="flex-1" onClick={handleClaimSelected} disabled={isBulkSaving}>
+                {isBulkSaving ? "Saving…" : "Claim selected"}
+              </Button>
+              <Button variant="secondary" size="sm" className="flex-1" onClick={handleIgnoreSelected} disabled={isBulkSaving}>
+                Ignore selected
+              </Button>
+            </div>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="shrink-0 text-[12px] font-medium"
+              style={{ color: "var(--text-muted)" }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

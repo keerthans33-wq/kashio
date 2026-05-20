@@ -57,12 +57,7 @@ function confidenceBadge(confidence: string) {
       High
     </span>
   );
-  if (confidence === "MEDIUM") return (
-    <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
-      style={{ backgroundColor: "rgba(251,191,36,0.10)", color: "#FBBF24", border: "1px solid rgba(251,191,36,0.22)" }}>
-      Review
-    </span>
-  );
+  if (confidence === "MEDIUM") return null;
   return (
     <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
       style={{ backgroundColor: "rgba(156,163,175,0.10)", color: "#9CA3AF", border: "1px solid rgba(156,163,175,0.20)" }}>
@@ -103,27 +98,16 @@ function ExportLockedPreview({ allItems, categoryGroups, likelyTotal, reviewTota
       </div>
 
       {/* ── Visible summary stats ───────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-2 mb-4">
+      <div className="mb-4">
         <div
           className="rounded-xl px-3 py-3"
           style={{ backgroundColor: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.16)" }}
         >
           <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "rgba(34,197,94,0.70)" }}>
-            Likely deductions
+            Claimed deductions
           </p>
           <p className="text-[20px] font-bold tabular-nums" style={{ color: "#22C55E" }}>
             {hasRealData ? fmtRound(likelyTotal) : "—"}
-          </p>
-        </div>
-        <div
-          className="rounded-xl px-3 py-3"
-          style={{ backgroundColor: "rgba(251,191,36,0.05)", border: "1px solid rgba(251,191,36,0.15)" }}
-        >
-          <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "rgba(251,191,36,0.70)" }}>
-            Needs review
-          </p>
-          <p className="text-[20px] font-bold tabular-nums" style={{ color: "#FBBF24" }}>
-            {hasRealData && reviewTotal > 0 ? fmtRound(reviewTotal) : hasRealData ? "—" : "—"}
           </p>
         </div>
       </div>
@@ -276,7 +260,6 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, l
   // ── Unlocked: full breakdown + download ───────────────────────────────────
   if (isUnlocked) {
     const likelyItems   = allItems.filter(i => i.confidence === "HIGH");
-    const reviewItems   = allItems.filter(i => i.confidence === "MEDIUM");
     const excludedItems = allItems.filter(i => i.confidence === "LOW");
 
     // Build per-section category groups
@@ -331,42 +314,6 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, l
             </div>
           )}
 
-          {/* Needs review */}
-          {reviewItems.length > 0 && (
-            <div className="mb-6">
-              <SectionHeading label="Needs review" total={reviewTotal} color="#FBBF24" />
-              <p className="text-[11px] mt-1 mb-3" style={{ color: "var(--text-muted)" }}>
-                These are confirmed but may not be fully deductible — check with your accountant before claiming.
-              </p>
-              {groupByCategory(reviewItems).map(([cat, items]) => (
-                <div key={cat} className="mb-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
-                    {cat}
-                  </p>
-                  {items.map((item, idx) => (
-                    <div key={item.id} className="flex items-start justify-between gap-4 py-2"
-                      style={{ borderBottom: idx < items.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <p className="truncate text-[13px]" style={{ color: "var(--text-primary)" }}>{item.merchant}</p>
-                          {confidenceBadge(item.confidence)}
-                        </div>
-                        {item.reason && (
-                          <p className="text-[10px] leading-snug" style={{ color: "var(--text-muted)" }}>
-                            {item.reason.length > 80 ? item.reason.slice(0, 80) + "…" : item.reason}
-                          </p>
-                        )}
-                      </div>
-                      <span className="shrink-0 text-[13px] tabular-nums" style={{ color: "var(--text-muted)" }}>
-                        {fmt(item.amount)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
-
           {/* Excluded */}
           {excludedItems.length > 0 && (
             <div className="mb-6">
@@ -403,12 +350,6 @@ export function PaywallGate({ reportUnlocked, allItems, categoryGroups, total, l
               <span style={{ color: "var(--text-muted)" }}>Likely deductions</span>
               <span className="tabular-nums font-medium" style={{ color: "#22C55E" }}>{fmtRound(likelyTotal)}</span>
             </div>
-            {reviewTotal > 0 && (
-              <div className="flex justify-between text-[12px]">
-                <span style={{ color: "var(--text-muted)" }}>Needs review</span>
-                <span className="tabular-nums" style={{ color: "#FBBF24" }}>{fmtRound(reviewTotal)}</span>
-              </div>
-            )}
             {excludedTotal > 0 && (
               <div className="flex justify-between text-[12px]">
                 <span style={{ color: "var(--text-muted)" }}>Excluded</span>

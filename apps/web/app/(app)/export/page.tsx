@@ -185,12 +185,7 @@ export default async function Export({
                 </span>
               </div>
             )}
-            {reviewTotal > 0 && (
-              <p className="mt-2 text-[11px]" style={{ color: "var(--text-muted)" }}>
-                +{fmtRound(reviewTotal)} needs review
-              </p>
-            )}
-            {estimatedSaving === 0 && reviewTotal === 0 && (
+            {estimatedSaving === 0 && (
               <p className="mt-2 text-[11px]" style={{ color: "var(--text-muted)" }}>
                 {confirmed.length} item{confirmed.length !== 1 ? "s" : ""} confirmed
               </p>
