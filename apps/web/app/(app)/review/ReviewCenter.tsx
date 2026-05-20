@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { bulkConfirmCandidates, bulkRejectCandidates } from "./actions";
+import { bulkConfirmCandidates, bulkRejectCandidates, bulkResetCandidates } from "./actions";
 import { TransactionCard } from "./TransactionCard";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -9,7 +9,7 @@ import { TransactionCard } from "./TransactionCard";
 type Status          = "NEEDS_REVIEW" | "CONFIRMED" | "REJECTED" | "MAYBE";
 type SuggestionLevel = "LIKELY_WORK_RELATED" | "POSSIBLE_WORK_RELATED" | "PROBABLY_PERSONAL";
 type Confidence      = "LOW" | "MEDIUM" | "HIGH";
-type Tab             = "suggested" | "personal" | "claimed" | "hidden";
+type Tab             = "suggested" | "personal" | "reviewed";
 
 export type ReviewCandidate = {
   id:              string;
@@ -48,8 +48,7 @@ function matchesTab(item: ReviewCandidate & { status: Status }, tab: Tab): boole
       item.status === "NEEDS_REVIEW"
     );
   }
-  if (tab === "claimed") return item.status === "CONFIRMED";
-  if (tab === "hidden")  return item.status === "REJECTED";
+  if (tab === "reviewed") return item.status === "CONFIRMED" || item.status === "REJECTED";
   return item.suggestionLevel === "PROBABLY_PERSONAL" && item.status === "NEEDS_REVIEW";
 }
 
@@ -119,7 +118,7 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
 
   function handleStatusChange(id: string, next: Status) {
     setStatusOverrides((prev) => new Map(prev).set(id, next));
-    if (next === "CONFIRMED")    showToast("Transaction claimed");
+    if (next === "CONFIRMED")     showToast("Transaction claimed");
     else if (next === "REJECTED") showToast("Transaction hidden");
     else if (next === "NEEDS_REVIEW") showToast("Decision reset");
   }
@@ -132,7 +131,7 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
 
   // Tab counts
   const tabCounts = useMemo(() => {
-    let suggested = 0, personal = 0, claimed = 0, hidden = 0;
+    let suggested = 0, personal = 0, reviewed = 0, claimed = 0, hiddenPersonal = 0;
     for (const item of effectiveItems) {
       if (
         (item.suggestionLevel === "LIKELY_WORK_RELATED" ||
@@ -141,14 +140,31 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
       ) suggested++;
       if (item.suggestionLevel === "PROBABLY_PERSONAL" && item.status === "NEEDS_REVIEW")
         personal++;
+      if (item.status === "CONFIRMED" || item.status === "REJECTED") reviewed++;
       if (item.status === "CONFIRMED") claimed++;
-      if (item.status === "REJECTED")  hidden++;
+      if (item.status === "REJECTED" && item.suggestionLevel === "PROBABLY_PERSONAL")
+        hiddenPersonal++;
     }
-    return { suggested, personal, claimed, hidden };
+    return { suggested, personal, reviewed, claimed, hiddenPersonal };
   }, [effectiveItems]);
 
+  // For the Reviewed tab: split into claimed and ignored sections
+  const reviewedFiltered = useMemo(() => {
+    if (activeTab !== "reviewed") return { claimed: [], ignored: [] };
+    const all = effectiveItems
+      .filter((item) => matchesTab(item, "reviewed"))
+      .filter((item) => matchesSearch(item, debouncedQuery));
+    return {
+      claimed: all.filter((c) => c.status === "CONFIRMED"),
+      ignored: all.filter((c) => c.status === "REJECTED"),
+    };
+  }, [effectiveItems, activeTab, debouncedQuery]);
+
+  // For non-reviewed tabs: standard filter + pagination
   const tabFiltered = useMemo(
-    () => effectiveItems.filter((item) => matchesTab(item, activeTab)),
+    () => activeTab === "reviewed"
+      ? []
+      : effectiveItems.filter((item) => matchesTab(item, activeTab)),
     [effectiveItems, activeTab],
   );
   const filtered = useMemo(
@@ -185,22 +201,12 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
     if (!ids.length) return;
     setIsBulkSaving(true);
     setError(null);
-    ids.forEach((id) =>
-      setStatusOverrides((prev) => new Map(prev).set(id, "CONFIRMED")),
-    );
+    ids.forEach((id) => setStatusOverrides((prev) => new Map(prev).set(id, "CONFIRMED")));
     try {
       await bulkConfirmCandidates(ids);
-      showToast(
-        `${ids.length} suggested transaction${ids.length !== 1 ? "s" : ""} claimed`,
-      );
+      showToast(`${ids.length} suggested transaction${ids.length !== 1 ? "s" : ""} claimed`);
     } catch {
-      ids.forEach((id) =>
-        setStatusOverrides((prev) => {
-          const next = new Map(prev);
-          next.delete(id);
-          return next;
-        }),
-      );
+      ids.forEach((id) => setStatusOverrides((prev) => { const m = new Map(prev); m.delete(id); return m; }));
       setError("Could not save. Please try again.");
     } finally {
       setIsBulkSaving(false);
@@ -209,29 +215,36 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
 
   async function handleHidePersonal() {
     const ids = effectiveItems
-      .filter(
-        (c) => c.suggestionLevel === "PROBABLY_PERSONAL" && c.status === "NEEDS_REVIEW",
-      )
+      .filter((c) => c.suggestionLevel === "PROBABLY_PERSONAL" && c.status === "NEEDS_REVIEW")
       .map((c) => c.id);
     if (!ids.length) return;
     setIsBulkSaving(true);
     setError(null);
-    ids.forEach((id) =>
-      setStatusOverrides((prev) => new Map(prev).set(id, "REJECTED")),
-    );
+    ids.forEach((id) => setStatusOverrides((prev) => new Map(prev).set(id, "REJECTED")));
     try {
       await bulkRejectCandidates(ids);
-      showToast(
-        `${ids.length} personal transaction${ids.length !== 1 ? "s" : ""} hidden`,
-      );
+      showToast(`${ids.length} personal transaction${ids.length !== 1 ? "s" : ""} hidden`);
     } catch {
-      ids.forEach((id) =>
-        setStatusOverrides((prev) => {
-          const next = new Map(prev);
-          next.delete(id);
-          return next;
-        }),
-      );
+      ids.forEach((id) => setStatusOverrides((prev) => { const m = new Map(prev); m.delete(id); return m; }));
+      setError("Could not save. Please try again.");
+    } finally {
+      setIsBulkSaving(false);
+    }
+  }
+
+  async function handleShowHiddenPersonal() {
+    const ids = effectiveItems
+      .filter((c) => c.suggestionLevel === "PROBABLY_PERSONAL" && c.status === "REJECTED")
+      .map((c) => c.id);
+    if (!ids.length) return;
+    setIsBulkSaving(true);
+    setError(null);
+    ids.forEach((id) => setStatusOverrides((prev) => new Map(prev).set(id, "NEEDS_REVIEW")));
+    try {
+      await bulkResetCandidates(ids);
+      showToast(`${ids.length} personal transaction${ids.length !== 1 ? "s" : ""} shown`);
+    } catch {
+      ids.forEach((id) => setStatusOverrides((prev) => { const m = new Map(prev); m.delete(id); return m; }));
       setError("Could not save. Please try again.");
     } finally {
       setIsBulkSaving(false);
@@ -239,6 +252,9 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
   }
 
   const noData = candidates.length === 0;
+
+  // Reviewed tab total count for empty-state check
+  const reviewedTotal = reviewedFiltered.claimed.length + reviewedFiltered.ignored.length;
 
   return (
     <div className="pb-28">
@@ -262,25 +278,25 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
       {/* ── Segmented control ───────────────────────────────────────────────── */}
       {!noData && (
         <div
-          className="mb-5 grid grid-cols-4 gap-1 rounded-xl p-1"
+          className="mb-5 grid grid-cols-3 gap-1 rounded-xl p-1"
           style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}
         >
-          {(["suggested", "personal", "claimed", "hidden"] as Tab[]).map((tab) => {
+          {(["suggested", "personal", "reviewed"] as Tab[]).map((tab) => {
             const isActive = activeTab === tab;
-            const count    = tabCounts[tab];
-            const accentColor =
-              tab === "suggested" || tab === "claimed" ? "#22C55E" : null;
+            const count = tab === "suggested" ? tabCounts.suggested
+                        : tab === "personal"  ? tabCounts.personal
+                        : tabCounts.reviewed;
+            const isGreen = tab === "suggested";
             const LABELS: Record<Tab, string> = {
               suggested: "Suggested",
               personal:  "Personal",
-              claimed:   "Claimed",
-              hidden:    "Hidden",
+              reviewed:  "Reviewed",
             };
             return (
               <button
                 key={tab}
                 onClick={() => handleTabChange(tab)}
-                className="flex items-center justify-center gap-1 rounded-lg py-2 text-[11px] font-medium transition-all duration-150"
+                className="flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-[12px] font-medium transition-all duration-150"
                 style={{
                   backgroundColor: isActive ? "rgba(255,255,255,0.07)" : "transparent",
                   color:           isActive ? "var(--text-primary)" : "var(--text-muted)",
@@ -289,12 +305,10 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
               >
                 {LABELS[tab]}
                 <span
-                  className="flex h-4 min-w-[14px] items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums"
+                  className="flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums"
                   style={{
-                    backgroundColor: isActive && accentColor
-                      ? `${accentColor}20`
-                      : "rgba(255,255,255,0.05)",
-                    color: isActive && accentColor ? accentColor : "var(--text-muted)",
+                    backgroundColor: isActive && isGreen ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.05)",
+                    color:           isActive && isGreen ? "#22C55E" : "var(--text-muted)",
                   }}
                 >
                   {count}
@@ -331,13 +345,13 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
       )}
 
       {/* ── Subtle bulk action row ──────────────────────────────────────────── */}
-      {!noData && !debouncedQuery && activeTab !== "claimed" && activeTab !== "hidden" && (
-        <div className="mb-4 min-h-[20px]">
+      {!noData && !debouncedQuery && activeTab !== "reviewed" && (
+        <div className="mb-4 flex flex-col gap-1.5 min-h-[20px]">
           {activeTab === "suggested" && tabCounts.suggested > 0 && (
             <button
               disabled={isBulkSaving}
               onClick={handleClaimAllSuggested}
-              className="text-[12px] font-medium transition-opacity disabled:opacity-40"
+              className="text-left text-[12px] font-medium transition-opacity disabled:opacity-40"
               style={{ color: "#22C55E" }}
             >
               Claim all suggested →
@@ -347,10 +361,20 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
             <button
               disabled={isBulkSaving}
               onClick={handleHidePersonal}
-              className="text-[12px] font-medium transition-opacity disabled:opacity-40"
+              className="text-left text-[12px] font-medium transition-opacity disabled:opacity-40"
               style={{ color: "var(--text-muted)" }}
             >
               Hide personal transactions →
+            </button>
+          )}
+          {activeTab === "personal" && tabCounts.hiddenPersonal > 0 && (
+            <button
+              disabled={isBulkSaving}
+              onClick={handleShowHiddenPersonal}
+              className="text-left text-[12px] font-medium transition-opacity disabled:opacity-40"
+              style={{ color: "var(--text-muted)" }}
+            >
+              Show {tabCounts.hiddenPersonal} hidden personal transaction{tabCounts.hiddenPersonal !== 1 ? "s" : ""} →
             </button>
           )}
         </div>
@@ -381,106 +405,144 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
         </div>
       )}
 
-      {/* ── Empty states ─────────────────────────────────────────────────────── */}
-      {noData ? (
-        <div className="py-16 text-center">
-          <p className="text-[15px] font-medium mb-1" style={{ color: "var(--text-primary)" }}>
-            Nothing imported yet
-          </p>
-          <p className="text-[13px] mb-5" style={{ color: "var(--text-muted)" }}>
-            Import your bank statement CSV and Kashio will classify each transaction.
-          </p>
-          <a
-            href="/import"
-            className="inline-block rounded-xl px-5 py-2.5 text-[13px] font-semibold"
-            style={{ backgroundColor: "#22C55E", color: "#000" }}
-          >
-            Import CSV →
-          </a>
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="py-12 text-center">
-          <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>
-            {debouncedQuery
-              ? `No results for "${debouncedQuery}"`
-              : activeTab === "suggested"
-              ? "All done — no suggested transactions to review."
-              : activeTab === "claimed"
-              ? "Nothing claimed yet. Claim transactions from the Suggested tab."
-              : activeTab === "hidden"
-              ? "No hidden transactions."
-              : "No personal transactions found."
-            }
-          </p>
-          {debouncedQuery && (
-            <button
-              onClick={() => { setSearchInput(""); setDebouncedQuery(""); }}
-              className="mt-3 text-[12px] underline"
-              style={{ color: "var(--text-muted)" }}
-            >
-              Clear search
-            </button>
-          )}
-        </div>
-      ) : (
-        <>
-          {/* Result count */}
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-              {filtered.length} transaction{filtered.length !== 1 ? "s" : ""}
-              {debouncedQuery && ` matching "${debouncedQuery}"`}
+      {/* ── Reviewed tab: two sections ──────────────────────────────────────── */}
+      {activeTab === "reviewed" ? (
+        noData || reviewedTotal === 0 ? (
+          <div className="py-12 text-center">
+            <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>
+              {debouncedQuery
+                ? `No results for "${debouncedQuery}"`
+                : "No reviewed transactions yet."}
             </p>
-            {totalPages > 1 && (
-              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-                Page {currentPage} of {totalPages}
-              </p>
+            {debouncedQuery && (
+              <button
+                onClick={() => { setSearchInput(""); setDebouncedQuery(""); }}
+                className="mt-3 text-[12px] underline"
+                style={{ color: "var(--text-muted)" }}
+              >
+                Clear search
+              </button>
             )}
           </div>
+        ) : (
+          <div>
+            {/* Claimed section */}
+            {reviewedFiltered.claimed.length > 0 && (
+              <div className="mb-6">
+                <p
+                  className="text-[11px] font-semibold uppercase tracking-widest mb-3"
+                  style={{ color: "#22C55E", opacity: 0.8 }}
+                >
+                  Claimed · {reviewedFiltered.claimed.length}
+                </p>
+                <div className="space-y-3">
+                  {reviewedFiltered.claimed.map((c) => (
+                    <TransactionCard key={c.id} {...c} onStatusChange={handleStatusChange} />
+                  ))}
+                </div>
+              </div>
+            )}
 
-          {/* Cards */}
-          <div className="space-y-3">
-            {paginated.map((c) => (
-              <TransactionCard
-                key={c.id}
-                {...c}
-                onStatusChange={handleStatusChange}
-              />
-            ))}
+            {/* Ignored section */}
+            {reviewedFiltered.ignored.length > 0 && (
+              <div>
+                <p
+                  className="text-[11px] font-semibold uppercase tracking-widest mb-3"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  Ignored · {reviewedFiltered.ignored.length}
+                </p>
+                <div className="space-y-3">
+                  {reviewedFiltered.ignored.map((c) => (
+                    <TransactionCard key={c.id} {...c} onStatusChange={handleStatusChange} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-6 flex items-center justify-center gap-3">
+        )
+      ) : (
+        /* ── Suggested / Personal tabs ────────────────────────────────────── */
+        noData ? (
+          <div className="py-16 text-center">
+            <p className="text-[15px] font-medium mb-1" style={{ color: "var(--text-primary)" }}>
+              Nothing imported yet
+            </p>
+            <p className="text-[13px] mb-5" style={{ color: "var(--text-muted)" }}>
+              Import your bank statement CSV and Kashio will classify each transaction.
+            </p>
+            <a
+              href="/import"
+              className="inline-block rounded-xl px-5 py-2.5 text-[13px] font-semibold"
+              style={{ backgroundColor: "#22C55E", color: "#000" }}
+            >
+              Import CSV →
+            </a>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="py-12 text-center">
+            <p className="text-[14px]" style={{ color: "var(--text-muted)" }}>
+              {debouncedQuery
+                ? `No results for "${debouncedQuery}"`
+                : activeTab === "suggested"
+                ? "All done — no suggested transactions to review."
+                : "No personal transactions to review."}
+            </p>
+            {debouncedQuery && (
               <button
-                disabled={currentPage === 1}
-                onClick={() => setPage((p) => p - 1)}
-                className="rounded-lg px-4 py-2 text-[13px] font-medium transition-opacity disabled:opacity-30"
-                style={{
-                  backgroundColor: "var(--bg-card)",
-                  border:          "1px solid var(--bg-border)",
-                  color:           "var(--text-secondary)",
-                }}
+                onClick={() => { setSearchInput(""); setDebouncedQuery(""); }}
+                className="mt-3 text-[12px] underline"
+                style={{ color: "var(--text-muted)" }}
               >
-                ← Prev
+                Clear search
               </button>
-              <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-                {currentPage} / {totalPages}
-              </span>
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => setPage((p) => p + 1)}
-                className="rounded-lg px-4 py-2 text-[13px] font-medium transition-opacity disabled:opacity-30"
-                style={{
-                  backgroundColor: "var(--bg-card)",
-                  border:          "1px solid var(--bg-border)",
-                  color:           "var(--text-secondary)",
-                }}
-              >
-                Next →
-              </button>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+                {filtered.length} transaction{filtered.length !== 1 ? "s" : ""}
+                {debouncedQuery && ` matching "${debouncedQuery}"`}
+              </p>
+              {totalPages > 1 && (
+                <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+                  Page {currentPage} of {totalPages}
+                </p>
+              )}
             </div>
-          )}
-        </>
+
+            <div className="space-y-3">
+              {paginated.map((c) => (
+                <TransactionCard key={c.id} {...c} onStatusChange={handleStatusChange} />
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="mt-6 flex items-center justify-center gap-3">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setPage((p) => p - 1)}
+                  className="rounded-lg px-4 py-2 text-[13px] font-medium transition-opacity disabled:opacity-30"
+                  style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", color: "var(--text-secondary)" }}
+                >
+                  ← Prev
+                </button>
+                <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+                  {currentPage} / {totalPages}
+                </span>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                  className="rounded-lg px-4 py-2 text-[13px] font-medium transition-opacity disabled:opacity-30"
+                  style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)", color: "var(--text-secondary)" }}
+                >
+                  Next →
+                </button>
+              </div>
+            )}
+          </>
+        )
       )}
 
       {/* ── Disclaimer ──────────────────────────────────────────────────────── */}
