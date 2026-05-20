@@ -536,10 +536,10 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
                   {selectedIds.size} selected
                 </span>
                 <Button size="sm" onClick={handleClaimSelected} disabled={isBulkSaving}>
-                  {isBulkSaving ? "Saving…" : "Claim selected"}
+                  {isBulkSaving ? "Saving…" : "Claim"}
                 </Button>
                 <Button variant="secondary" size="sm" onClick={handleIgnoreSelected} disabled={isBulkSaving}>
-                  Ignore selected
+                  Ignore
                 </Button>
                 <button
                   onClick={() => setSelectedIds(new Set())}
