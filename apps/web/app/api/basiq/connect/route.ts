@@ -1,7 +1,7 @@
 // POST /api/basiq/connect
 //
 // Called when the user wants to connect their bank via Basiq.
-// 1. Looks up or creates a BasiqConnection record (one per app install for MVP).
+// 1. Looks up or creates a BankConnection record for this user.
 // 2. Generates a Basiq consent URL.
 // 3. Returns the URL so the client can redirect the user to it.
 
@@ -33,18 +33,28 @@ export async function POST(req: NextRequest) {
   const digits = rawMobile.replace(/[\s\-().]/g, "");
   const mobile = digits.startsWith("+") ? digits : `+61${digits.replace(/^0/, "")}`;
 
-
   try {
-    // Check if this user already has a Basiq connection.
-    let connection = await db.basiqConnection.findUnique({ where: { userId } });
+    // Look up an existing Basiq connection for this user.
+    let connection = await db.bankConnection.findUnique({
+      where: { userId_provider: { userId, provider: "basiq" } },
+    });
 
     if (!connection) {
       const basiqUserId = await createBasiqUserForKashioUser(email, mobile);
-      connection = await db.basiqConnection.create({ data: { basiqUserId, userId } });
+      connection = await db.bankConnection.create({
+        data: { userId, provider: "basiq", basiqUserId },
+      });
     } else {
       // Always update the stored mobile so Basiq pre-fills the correct number
       // on their desktop consent page (which reads from the user record).
+      if (!connection.basiqUserId) {
+        return NextResponse.json({ error: "Connection is missing a Basiq user ID." }, { status: 500 });
+      }
       await updateBasiqUser(connection.basiqUserId, mobile);
+    }
+
+    if (!connection.basiqUserId) {
+      return NextResponse.json({ error: "Could not resolve Basiq user ID." }, { status: 500 });
     }
 
     const authLink = await getAuthLink(connection.basiqUserId, redirectUrl, mobile);

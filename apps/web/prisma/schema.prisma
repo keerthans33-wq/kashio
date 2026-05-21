@@ -32,11 +32,41 @@ model Receipt {
   @@map("receipts")
 }
 
-model BasiqConnection {
-  id          String   @id @default(cuid())
-  userId      String   @unique   // one connection per Supabase user
-  basiqUserId String   @unique
-  createdAt   DateTime @default(now())
+// BankConnection replaces the earlier BasiqConnection model.
+// Keyed by (userId, provider) so the same user can link multiple providers later.
+// status values: "active" | "disconnected" | "error"
+model BankConnection {
+  id              String        @id @default(cuid())
+  userId          String        @map("user_id")
+  provider        String        @default("basiq")   @map("provider")
+  basiqUserId     String?       @map("basiq_user_id") // null for non-Basiq providers
+  status          String        @default("active")   @map("status")
+  institutionName String?       @map("institution_name")
+  lastSyncAt      DateTime?     @map("last_sync_at") @db.Timestamptz
+  createdAt       DateTime      @default(now())      @map("created_at") @db.Timestamptz
+  updatedAt       DateTime      @updatedAt           @map("updated_at") @db.Timestamptz
+  syncLogs        BankSyncLog[]
+
+  @@unique([userId, provider])
+  @@map("bank_connections")
+}
+
+// BankSyncLog records every sync attempt for a BankConnection.
+// status values: "started" | "success" | "error"
+model BankSyncLog {
+  id                   String         @id @default(cuid())
+  userId               String         @map("user_id")
+  connectionId         String         @map("connection_id")
+  status               String         @default("started")  @map("status")
+  message              String?        @map("message")
+  transactionsImported Int            @default(0)          @map("transactions_imported")
+  startedAt            DateTime       @default(now())      @map("started_at")   @db.Timestamptz
+  completedAt          DateTime?      @map("completed_at") @db.Timestamptz
+  connection           BankConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([connectionId])
+  @@map("bank_sync_logs")
 }
 
 model ImportBatch {
@@ -62,9 +92,21 @@ model Transaction {
   importBatchId      String?
   deductionCandidate DeductionCandidate?
 
+  // Bank-specific fields — nullable so CSV rows are unaffected.
+  // merchant_clean: intentionally omitted — normalizedMerchant already stores the
+  //   cleaned name, using Basiq's merchant.businessName when available.
+  // source enum: existing CSV | DEMO_BANK | BASIQ covers 'csv' | 'bank' distinction.
+  providerTransactionId String? // Basiq transaction ID; unique per user when set
+  rawProviderData       Json?   // raw Basiq response payload for auditing
+  isPending             Boolean @default(false) // true for pending/unsettled transactions
+  accountId             String? // bank account ID from the provider
+  transactionHash       String? // content-based hash for dedup when providerTransactionId is unavailable
+
   // No unique constraint here — within-batch duplicates are intentionally allowed
   // (e.g. two identical $9.99 charges on the same day in one CSV are real distinct transactions).
   // Cross-batch duplicate detection is done at the application level in importPipeline.ts.
+  // Bank dedup uses partial unique indexes on providerTransactionId and transactionHash
+  // (WHERE NOT NULL), defined in the migration SQL.
   @@index([userId, date, description, amount])
 }
 

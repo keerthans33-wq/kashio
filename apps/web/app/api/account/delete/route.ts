@@ -43,7 +43,7 @@ export async function DELETE() {
       db.wfhLog.deleteMany({ where: { userId } }),
       db.payment.deleteMany({ where: { userId } }),
       db.userEntitlement.deleteMany({ where: { userId } }),
-      db.basiqConnection.deleteMany({ where: { userId } }),
+      db.bankConnection.deleteMany({ where: { userId } }),
     ]);
 
     // UserProfile last (other models may reference it indirectly via userId)

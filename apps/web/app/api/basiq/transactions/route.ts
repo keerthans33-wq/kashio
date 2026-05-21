@@ -21,11 +21,19 @@ export async function POST(req: Request) {
   const from: string | undefined = typeof body.from === "string" ? body.from : undefined;
 
   // Look up the stored Basiq user ID.
-  const connection = await db.basiqConnection.findUnique({ where: { userId } });
+  const connection = await db.bankConnection.findUnique({
+    where: { userId_provider: { userId, provider: "basiq" } },
+  });
   if (!connection) {
     return NextResponse.json(
       { error: "No bank connected. Go to Connect and link your bank first." },
       { status: 400 },
+    );
+  }
+  if (!connection.basiqUserId) {
+    return NextResponse.json(
+      { error: "Bank connection is missing a Basiq user ID." },
+      { status: 500 },
     );
   }
 
