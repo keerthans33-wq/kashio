@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "../../../../lib/db";
-import { createBasiqUser, updateBasiqUser, getAuthLink } from "../../../../lib/basiq/client";
+import { createBasiqUserForKashioUser, updateBasiqUser, getAuthLink } from "../../../../lib/basiq/client";
 import { getUser } from "../../../../lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     let connection = await db.basiqConnection.findUnique({ where: { userId } });
 
     if (!connection) {
-      const basiqUserId = await createBasiqUser(email, mobile);
+      const basiqUserId = await createBasiqUserForKashioUser(email, mobile);
       connection = await db.basiqConnection.create({ data: { basiqUserId, userId } });
     } else {
       // Always update the stored mobile so Basiq pre-fills the correct number

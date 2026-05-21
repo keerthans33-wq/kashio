@@ -1,110 +1,188 @@
-// Basiq API v3 client
-// All calls are server-side only — BASIQ_API_KEY is never exposed to the browser.
+// Basiq API v3 client — server-side only.
+// BASIQ_API_KEY is never read on the client; this module must not be imported
+// from any "use client" file or Next.js page that ships to the browser.
 
-const BASE_URL = "https://au-api.basiq.io";
+// ─── Config ───────────────────────────────────────────────────────────────────
 
-// ─── Token ────────────────────────────────────────────────────────────────────
+function getBaseUrl(): string {
+  return (process.env.BASIQ_API_BASE_URL ?? "https://au-api.basiq.io").replace(/\/$/, "");
+}
 
-async function getToken(): Promise<string> {
-  const apiKey = process.env.BASIQ_API_KEY;
-  if (!apiKey) throw new Error("BASIQ_API_KEY environment variable is not set.");
+function getApiKey(): string {
+  const key = process.env.BASIQ_API_KEY;
+  if (!key) {
+    throw new BasiqError(0, "config", "BASIQ_API_KEY is not set. Add it to your environment variables.");
+  }
+  return key;
+}
 
-  const res = await fetch(`${BASE_URL}/token`, {
+// ─── Error ────────────────────────────────────────────────────────────────────
+
+export class BasiqError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly context: string,
+    public readonly detail: string,
+  ) {
+    super(`Basiq error ${status} [${context}]: ${detail}`);
+    this.name = "BasiqError";
+  }
+}
+
+// ─── Token cache ──────────────────────────────────────────────────────────────
+
+// Module-level cache — survives across calls within a warm serverless invocation.
+// On cold starts the token is re-fetched (acceptable). This eliminates redundant
+// token requests within a single paginated fetch (N pages → 1 token request).
+interface TokenEntry {
+  token: string;
+  expiresAt: number; // ms since epoch
+}
+
+let _tokenCache: TokenEntry | null = null;
+
+// getBasiqAccessToken returns a valid SERVER_ACCESS token, fetching a fresh one
+// if the cache is empty or within 60 s of expiry.
+export async function getBasiqAccessToken(): Promise<string> {
+  const now = Date.now();
+  if (_tokenCache && _tokenCache.expiresAt > now + 60_000) {
+    return _tokenCache.token;
+  }
+
+  const apiKey = getApiKey();
+
+  const res = await fetch(`${getBaseUrl()}/token`, {
     method: "POST",
     headers: {
-      // Basiq API keys are already base64-encoded — use directly as the Basic auth value.
+      // Basiq API keys are pre-encoded; pass directly as the Basic auth credential.
       Authorization: `Basic ${apiKey}`,
       "Content-Type": "application/x-www-form-urlencoded",
       "basiq-version": "3.0",
     },
     body: "scope=SERVER_ACCESS",
+    cache: "no-store",
   });
 
+  if (res.status === 401) {
+    throw new BasiqError(401, "/token", "Invalid API key. Verify BASIQ_API_KEY in your environment.");
+  }
   if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Basiq token request failed (${res.status}): ${body}`);
+    const detail = await res.text();
+    throw new BasiqError(res.status, "/token", detail);
   }
 
   const data = await res.json();
-  return data.access_token as string;
+  const expiresIn: number = typeof data.expires_in === "number" ? data.expires_in : 3600;
+  _tokenCache = { token: data.access_token as string, expiresAt: now + expiresIn * 1000 };
+  return _tokenCache.token;
+}
+
+// ─── Core request helper ──────────────────────────────────────────────────────
+
+// basiqRequest makes an authenticated request to the Basiq API.
+//
+// `path` may be:
+//   - A bare path starting with "/"  →  prefixed with BASIQ_API_BASE_URL
+//   - A full URL (e.g. pagination links returned by Basiq)  →  path is extracted
+//     and re-prefixed with the configured base URL so sandbox/test overrides apply.
+//
+// Automatically retries once on 401 after clearing the token cache, in case a
+// long-lived token expired between the cache write and this request.
+export async function basiqRequest<T = unknown>(
+  method: string,
+  path: string,
+  body?: unknown,
+  _retried = false,
+): Promise<T> {
+  // If Basiq gave us a full URL (pagination), extract just path+query so the
+  // configured base URL is always used rather than the URL hardcoded in the response.
+  let resolvedPath = path;
+  if (path.startsWith("http")) {
+    const u = new URL(path);
+    resolvedPath = u.pathname + u.search;
+  }
+
+  const url = `${getBaseUrl()}${resolvedPath}`;
+  const token = await getBasiqAccessToken();
+
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    "basiq-version": "3.0",
+  };
+  if (method !== "GET" && method !== "HEAD") {
+    headers["Content-Type"] = "application/json";
+  }
+
+  const res = await fetch(url, {
+    method,
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+    cache: "no-store",
+  });
+
+  // On 401, clear the token cache and retry once — the token may have expired
+  // mid-session even if the cache thought it was still valid.
+  if (res.status === 401 && !_retried) {
+    _tokenCache = null;
+    return basiqRequest<T>(method, path, body, true);
+  }
+
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new BasiqError(res.status, resolvedPath, detail);
+  }
+
+  const json: unknown = await res.json();
+  return json as T;
 }
 
 // ─── Users ────────────────────────────────────────────────────────────────────
 
-// Creates a new Basiq user and returns their Basiq user ID.
+export type BasiqUser = {
+  id: string;
+  email?: string;
+  mobile?: string;
+};
+
+// createBasiqUserForKashioUser creates a Basiq user for the given Kashio user.
 // mobile must be in E.164 format, e.g. "+61412345678".
-export async function createBasiqUser(email: string, mobile: string): Promise<string> {
-  const token = await getToken();
-
-  const res = await fetch(`${BASE_URL}/users`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      "basiq-version": "3.0",
-    },
-    body: JSON.stringify({ email, mobile }),
-  });
-
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Basiq create user failed (${res.status}): ${body}`);
-  }
-
-  const data = await res.json();
-  return data.id as string;
+// Returns the Basiq user ID to store in BasiqConnection.
+export async function createBasiqUserForKashioUser(
+  email: string,
+  mobile: string,
+): Promise<string> {
+  const data = await basiqRequest<{ id: string }>("POST", "/users", { email, mobile });
+  return data.id;
 }
 
-// Updates an existing Basiq user (e.g. to add a mobile number before auth link creation).
-export async function updateBasiqUser(userId: string, mobile: string): Promise<void> {
-  const token = await getToken();
+// getBasiqUser fetches a Basiq user by their Basiq user ID.
+export async function getBasiqUser(basiqUserId: string): Promise<BasiqUser> {
+  return basiqRequest<BasiqUser>("GET", `/users/${basiqUserId}`);
+}
 
-  const res = await fetch(`${BASE_URL}/users/${userId}`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      "basiq-version": "3.0",
-    },
-    body: JSON.stringify({ mobile }),
-  });
-
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Basiq update user failed (${res.status}): ${body}`);
-  }
+// updateBasiqUser updates an existing Basiq user's mobile number.
+// Called before auth link creation so Basiq pre-fills the correct number.
+export async function updateBasiqUser(basiqUserId: string, mobile: string): Promise<void> {
+  await basiqRequest("POST", `/users/${basiqUserId}`, { mobile });
 }
 
 // ─── Auth link ────────────────────────────────────────────────────────────────
 
-// Creates a Basiq consent link. The user opens this URL to connect their bank.
-// After connecting, Basiq redirects them to `redirectUrl`.
-// mobile (E.164 format) is passed directly in the auth link request so it
-// doesn't need to be persisted on the Basiq user record.
+type AuthLinkResponse = { links: { public: string } };
+
+// getAuthLink creates a Basiq consent URL for the user to link their bank.
+// After the user completes the flow, Basiq redirects to redirectUrl.
 export async function getAuthLink(
-  userId: string,
+  basiqUserId: string,
   redirectUrl: string,
   mobile: string,
 ): Promise<string> {
-  const token = await getToken();
-
-  const res = await fetch(`${BASE_URL}/users/${userId}/auth_link`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      "basiq-version": "3.0",
-    },
-    body: JSON.stringify({ redirectUrl, mobile }),
-  });
-
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Basiq auth link failed (${res.status}): ${body}`);
-  }
-
-  const data = await res.json();
-  return data.links.public as string;
+  const data = await basiqRequest<AuthLinkResponse>(
+    "POST",
+    `/users/${basiqUserId}/auth_link`,
+    { redirectUrl, mobile },
+  );
+  return data.links.public;
 }
 
 // ─── Transactions ─────────────────────────────────────────────────────────────
@@ -119,38 +197,35 @@ export type BasiqTransaction = {
   merchant?: { businessName?: string };
 };
 
-// Fetches all posted transactions for the past 12 months, handling pagination.
-export async function getTransactions(userId: string): Promise<BasiqTransaction[]> {
-  const token = await getToken();
+type TransactionPage = {
+  data: BasiqTransaction[];
+  links?: { next?: string };
+};
 
-  const from = new Date();
-  from.setFullYear(from.getFullYear() - 1);
-  const fromStr = from.toISOString().split("T")[0];
+// getTransactions fetches all posted transactions for a Basiq user from `from`
+// (YYYY-MM-DD) to today, following Basiq's pagination automatically.
+// Defaults to 12 months ago if `from` is omitted.
+export async function getTransactions(
+  basiqUserId: string,
+  from?: string,
+): Promise<BasiqTransaction[]> {
+  let fromStr: string;
+  if (from) {
+    fromStr = from;
+  } else {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 1);
+    fromStr = d.toISOString().split("T")[0];
+  }
 
   const all: BasiqTransaction[] = [];
-  let url: string | null =
-    `${BASE_URL}/users/${userId}/transactions?filter=postDate.gte:${fromStr}&limit=500`;
+  let path: string | null =
+    `/users/${basiqUserId}/transactions?filter=postDate.gte:${fromStr}&limit=500`;
 
-  while (url) {
-    const res: Response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "basiq-version": "3.0",
-      },
-    });
-
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`Basiq transactions failed (${res.status}): ${body}`);
-    }
-
-    const data = await res.json();
-    const items = (data.data ?? []) as BasiqTransaction[];
-
-    // Only include posted (settled) transactions.
-    all.push(...items.filter((t) => t.status === "posted"));
-
-    url = (data.links?.next as string | undefined) ?? null;
+  while (path) {
+    const page: TransactionPage = await basiqRequest<TransactionPage>("GET", path);
+    all.push(...page.data.filter((t) => t.status === "posted"));
+    path = page.links?.next ?? null;
   }
 
   return all;

@@ -91,5 +91,45 @@ export function createDemoBankProvider(userId: string): BankProvider {
   };
 }
 
+// ── Basiq (real bank) ─────────────────────────────────────────────────────────
+
+// `from` is a YYYY-MM-DD date baked into the sync call.
+// Create a new provider (or recreate it) whenever the user changes the date range.
+export function createBasiqProvider(userId: string, from?: string): BankProvider {
+  const key = `kashio:basiq-sync-status:${userId}`;
+
+  return {
+    source: "BASIQ",
+    name: "Connected Bank",
+
+    async sync() {
+      const res = await fetch("/api/basiq/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ from }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Bank sync failed.");
+      return data as SyncResult;
+    },
+
+    loadStatus() {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? (JSON.parse(raw) as StoredSyncStatus) : null;
+      } catch {
+        return null;
+      }
+    },
+
+    saveStatus(result) {
+      const value: StoredSyncStatus = { lastSynced: new Date().toISOString(), result };
+      localStorage.setItem(key, JSON.stringify(value));
+    },
+
+    isConnected() { return true; },
+  };
+}
+
 // Fallback for places that haven't loaded the userId yet
 export const demoBankProvider = createDemoBankProvider("anon");

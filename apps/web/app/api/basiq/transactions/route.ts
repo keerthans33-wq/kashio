@@ -12,10 +12,13 @@ import { getUserWithType } from "../../../../lib/auth";
 
 export const dynamic = "force-dynamic";
 
-export async function POST() {
+export async function POST(req: Request) {
   const user = await getUserWithType();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id: userId, userType } = user;
+
+  const body = await req.json().catch(() => ({}));
+  const from: string | undefined = typeof body.from === "string" ? body.from : undefined;
 
   // Look up the stored Basiq user ID.
   const connection = await db.basiqConnection.findUnique({ where: { userId } });
@@ -28,7 +31,7 @@ export async function POST() {
 
   let rawTransactions;
   try {
-    rawTransactions = await getTransactions(connection.basiqUserId);
+    rawTransactions = await getTransactions(connection.basiqUserId, from);
   } catch (err) {
     console.error("Basiq fetch error:", err);
     return NextResponse.json(
@@ -57,6 +60,7 @@ export async function POST() {
       duplicates: result.duplicates,
       invalid: rawTransactions.length - rows.length,
       flagged: result.flagged,
+      totalValue: result.totalValue,
     });
   } catch (err) {
     console.error("DB error during Basiq import:", err);
