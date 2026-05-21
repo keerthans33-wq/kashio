@@ -31,6 +31,12 @@ export async function POST() {
     rawTransactions = await getTransactions(connection.basiqUserId);
   } catch (err) {
     console.error("Basiq fetch error:", err);
+    if (err instanceof Error && err.message === "CONNECTIONS_UNAVAILABLE") {
+      return NextResponse.json(
+        { error: "Bank connections are currently unavailable. Please upload a CSV file instead." },
+        { status: 503 },
+      );
+    }
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Could not fetch transactions from Basiq." },
       { status: 500 },

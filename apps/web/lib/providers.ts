@@ -81,8 +81,10 @@ export function createDemoBankProvider(userId: string): BankProvider {
     },
 
     saveStatus(result) {
-      const value: StoredSyncStatus = { lastSynced: new Date().toISOString(), result };
-      localStorage.setItem(key, JSON.stringify(value));
+      try {
+        const value: StoredSyncStatus = { lastSynced: new Date().toISOString(), result };
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch { /* localStorage unavailable (iOS private mode / WebView restriction) */ }
     },
 
     isConnected() {
@@ -123,8 +125,10 @@ export function createBasiqProvider(userId: string, from?: string): BankProvider
     },
 
     saveStatus(result) {
-      const value: StoredSyncStatus = { lastSynced: new Date().toISOString(), result };
-      localStorage.setItem(key, JSON.stringify(value));
+      try {
+        const value: StoredSyncStatus = { lastSynced: new Date().toISOString(), result };
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch { /* localStorage unavailable (iOS private mode / WebView restriction) */ }
     },
 
     isConnected() { return true; },

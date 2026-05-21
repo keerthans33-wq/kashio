@@ -5,7 +5,7 @@
 
 import { NextResponse } from "next/server";
 import { db } from "../../../../lib/db";
-import { getTransactions, getAccounts } from "../../../../lib/basiq/client";
+import { getTransactions, getAccounts, isAccessDeniedError } from "../../../../lib/basiq/client";
 import { fromBasiq } from "../../../../lib/ingestion/fromBasiq";
 import { runBasiqImportPipeline } from "../../../../lib/importPipeline";
 import { getUserWithType } from "../../../../lib/auth";
@@ -46,7 +46,14 @@ export async function POST(req: Request) {
     ]);
   } catch (err) {
     console.error("Basiq fetch error:", err);
-    // Log the failed sync attempt.
+
+    const accessDenied = isAccessDeniedError(err);
+    const userMessage = accessDenied
+      ? "Bank connections are currently unavailable. Please upload a CSV file instead."
+      : err instanceof Error
+        ? err.message
+        : "Could not fetch transactions from Basiq.";
+
     await db.bankSyncLog.create({
       data: {
         userId,
@@ -56,9 +63,10 @@ export async function POST(req: Request) {
         completedAt: new Date(),
       },
     }).catch(() => { /* non-fatal */ });
+
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Could not fetch transactions from Basiq." },
-      { status: 500 },
+      { error: userMessage },
+      { status: accessDenied ? 503 : 500 },
     );
   }
 
