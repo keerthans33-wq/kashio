@@ -1,13 +1,13 @@
 // POST /api/basiq/transactions
 //
-// Fetches the user's transactions from Basiq, maps them into our format,
-// and saves them to the database exactly like the CSV import does.
+// Fetches the user's accounts and transactions from Basiq, normalises them,
+// and saves them using the bank-specific import pipeline.
 
 import { NextResponse } from "next/server";
 import { db } from "../../../../lib/db";
-import { getTransactions } from "../../../../lib/basiq/client";
+import { getTransactions, getAccounts } from "../../../../lib/basiq/client";
 import { fromBasiq } from "../../../../lib/ingestion/fromBasiq";
-import { runImportPipeline } from "../../../../lib/importPipeline";
+import { runBasiqImportPipeline } from "../../../../lib/importPipeline";
 import { getUserWithType } from "../../../../lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +20,6 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const from: string | undefined = typeof body.from === "string" ? body.from : undefined;
 
-  // Look up the stored Basiq user ID.
   const connection = await db.bankConnection.findUnique({
     where: { userId_provider: { userId, provider: "basiq" } },
   });
@@ -37,41 +36,81 @@ export async function POST(req: Request) {
     );
   }
 
+  // Fetch transactions and accounts in parallel.
   let rawTransactions;
+  let accounts;
   try {
-    rawTransactions = await getTransactions(connection.basiqUserId, from);
+    [rawTransactions, accounts] = await Promise.all([
+      getTransactions(connection.basiqUserId, from),
+      getAccounts(connection.basiqUserId),
+    ]);
   } catch (err) {
     console.error("Basiq fetch error:", err);
+    // Log the failed sync attempt.
+    await db.bankSyncLog.create({
+      data: {
+        userId,
+        connectionId: connection.id,
+        status:      "error",
+        message:     err instanceof Error ? err.message : "Basiq API fetch failed",
+        completedAt: new Date(),
+      },
+    }).catch(() => { /* non-fatal */ });
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Could not fetch transactions from Basiq." },
       { status: 500 },
     );
   }
 
-  // Map Basiq transactions into our format, dropping any that can't be parsed.
+  // Populate institutionName from the first account if not already set.
+  if (accounts.length > 0 && !connection.institutionName) {
+    const name =
+      accounts[0].institution?.shortName ??
+      accounts[0].institution?.name ??
+      null;
+    if (name) {
+      await db.bankConnection.update({
+        where: { id: connection.id },
+        data:  { institutionName: name },
+      }).catch(() => { /* non-fatal — missing label is not a blocker */ });
+    }
+  }
+
+  // Normalise raw Basiq rows into our format, silently dropping unmappable ones.
   const rows = rawTransactions
     .map(fromBasiq)
     .filter((r): r is NonNullable<typeof r> => r !== null);
-
-  if (rows.length === 0) {
-    return NextResponse.json({ inserted: 0, duplicates: 0, invalid: rawTransactions.length, flagged: 0 });
-  }
 
   const today = new Date().toLocaleDateString("en-AU", {
     day: "numeric", month: "short", year: "numeric",
   });
 
   try {
-    const result = await runImportPipeline(rows, `Basiq — bank connection (${today})`, "BASIQ", userId, userType);
+    const result = await runBasiqImportPipeline(
+      rows,
+      `Basiq — bank connection (${today})`,
+      connection.id,
+      userId,
+      userType,
+    );
     return NextResponse.json({
-      inserted: result.inserted,
+      inserted:  result.inserted,
       duplicates: result.duplicates,
-      invalid: rawTransactions.length - rows.length,
-      flagged: result.flagged,
+      invalid:   rawTransactions.length - rows.length,
+      flagged:   result.flagged,
       totalValue: result.totalValue,
     });
   } catch (err) {
     console.error("DB error during Basiq import:", err);
+    await db.bankSyncLog.create({
+      data: {
+        userId,
+        connectionId: connection.id,
+        status:      "error",
+        message:     err instanceof Error ? err.message : "Import pipeline error",
+        completedAt: new Date(),
+      },
+    }).catch(() => { /* non-fatal */ });
     return NextResponse.json(
       { error: "Could not save transactions. The database may be unavailable." },
       { status: 500 },

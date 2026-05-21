@@ -194,6 +194,7 @@ export type BasiqTransaction = {
   amount: string;           // signed string, e.g. "-42.50"
   direction: "debit" | "credit";
   postDate: string;         // YYYY-MM-DD
+  account?: string;         // account ID reference (string in Basiq v3 transaction payload)
   merchant?: { businessName?: string };
 };
 
@@ -201,6 +202,31 @@ type TransactionPage = {
   data: BasiqTransaction[];
   links?: { next?: string };
 };
+
+// ─── Accounts ─────────────────────────────────────────────────────────────────
+
+export type BasiqAccount = {
+  id: string;
+  name?: string;
+  accountNo?: string;
+  institution?: { shortName?: string; name?: string };
+  class?: { product?: string };
+};
+
+type AccountPage = { data: BasiqAccount[]; links?: { next?: string } };
+
+// getAccounts fetches all linked bank accounts for a Basiq user.
+// Used to populate institutionName on BankConnection.
+export async function getAccounts(basiqUserId: string): Promise<BasiqAccount[]> {
+  const all: BasiqAccount[] = [];
+  let path: string | null = `/users/${basiqUserId}/accounts`;
+  while (path) {
+    const page: AccountPage = await basiqRequest<AccountPage>("GET", path);
+    all.push(...(page.data ?? []));
+    path = page.links?.next ?? null;
+  }
+  return all;
+}
 
 // getTransactions fetches all posted transactions for a Basiq user from `from`
 // (YYYY-MM-DD) to today, following Basiq's pagination automatically.
