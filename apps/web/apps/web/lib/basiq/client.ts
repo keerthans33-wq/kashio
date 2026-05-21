@@ -120,26 +120,18 @@ export type BasiqTransaction = {
 };
 
 // Fetches all posted transactions, handling pagination.
-// Tries with a server-side date filter first; falls back to unfiltered + client-side cutoff
-// when Basiq rejects the filter parameter.
+// No server-side date filter — Basiq's filter syntax is undocumented and
+// inconsistently supported. Date cutoff is applied client-side instead.
 export async function getTransactions(userId: string): Promise<BasiqTransaction[]> {
   const from = new Date();
   from.setFullYear(from.getFullYear() - 1);
   const fromStr = from.toISOString().split("T")[0];
-  return _fetchTransactionPages(userId, fromStr, true);
-}
 
-async function _fetchTransactionPages(
-  userId: string,
-  fromStr: string,
-  useFilter: boolean,
-): Promise<BasiqTransaction[]> {
   const token = await getToken();
-  const filterPart = useFilter ? `filter=transaction.postDate.gte(${fromStr})&` : "";
-  const initialUrl = `${BASE_URL}/users/${userId}/transactions?${filterPart}limit=500`;
+  const initialUrl = `${BASE_URL}/users/${userId}/transactions?limit=500`;
 
   if (process.env.NODE_ENV === "development") {
-    console.log(`[Basiq] → GET ${initialUrl}`);
+    console.log(`[Basiq] → GET ${initialUrl} (cutoff: ${fromStr})`);
   }
 
   const all: BasiqTransaction[] = [];
@@ -156,14 +148,6 @@ async function _fetchTransactionPages(
     if (!res.ok) {
       const body = await res.text();
 
-      // Filter rejected — retry without date filter and apply cutoff client-side.
-      if (useFilter && res.status === 400 && body.includes("parameter-not-valid")) {
-        console.warn("[Basiq] Date filter rejected — retrying without filter, applying cutoff client-side");
-        return _fetchTransactionPages(userId, fromStr, false);
-      }
-
-      // Access-denied / connections not enabled — signal with a sentinel so the
-      // route handler can return a friendly message.
       if (
         res.status === 403 ||
         body.includes("access-denied") ||
@@ -182,9 +166,5 @@ async function _fetchTransactionPages(
     url = (data.links?.next as string | undefined) ?? null;
   }
 
-  // Client-side date cutoff when the server didn't apply one.
-  if (!useFilter) {
-    return all.filter((t) => t.postDate >= fromStr);
-  }
-  return all;
+  return all.filter((t) => t.postDate >= fromStr);
 }

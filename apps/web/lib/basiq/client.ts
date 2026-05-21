@@ -230,16 +230,6 @@ export async function getAccounts(basiqUserId: string): Promise<BasiqAccount[]> 
 
 // ─── Error helpers ────────────────────────────────────────────────────────────
 
-// isFilterError returns true when Basiq rejects the filter query parameter.
-function isFilterError(err: BasiqError): boolean {
-  try {
-    const body = JSON.parse(err.detail) as { data?: Array<{ code?: string }> };
-    return (body.data ?? []).some((e) => e.code === "parameter-not-valid");
-  } catch {
-    return err.detail.includes("parameter-not-valid");
-  }
-}
-
 // isAccessDeniedError returns true for 403s and "connections not enabled" responses.
 // Exported so the API route can return a user-friendly message instead of raw JSON.
 export function isAccessDeniedError(err: unknown): boolean {
@@ -248,58 +238,15 @@ export function isAccessDeniedError(err: unknown): boolean {
   try {
     const body = JSON.parse(err.detail) as { data?: Array<{ code?: string }> };
     const denied = ["forbidden-access", "no-production-access", "access-denied"];
-    return (body.data ?? []).some((e) => denied.includes(e.code ?? ""));
-  } catch {
-    const low = err.detail.toLowerCase();
-    return (
-      low.includes("access-denied") ||
-      low.includes("no-production-access") ||
-      low.includes("forbidden-access") ||
-      low.includes("connections not enabled")
-    );
-  }
-}
-
-// ─── Internal fetch helper ────────────────────────────────────────────────────
-
-// Fetches all posted transactions for one pass (with or without server-side filter).
-// When useFilter=true and Basiq rejects the filter, retries with useFilter=false
-// and applies a client-side date cutoff instead.
-async function fetchTransactionPages(
-  basiqUserId: string,
-  fromStr: string,
-  useFilter: boolean,
-): Promise<BasiqTransaction[]> {
-  const filterPart = useFilter ? `filter=transaction.postDate.gte(${fromStr})&` : "";
-  const initialPath = `/users/${basiqUserId}/transactions?${filterPart}limit=500`;
-
-  if (process.env.NODE_ENV === "development") {
-    console.log(`[Basiq] → GET ${getBaseUrl()}${initialPath}`);
-  }
-
-  const all: BasiqTransaction[] = [];
-  let path: string | null = initialPath;
-
-  while (path) {
-    let page: TransactionPage;
-    try {
-      page = await basiqRequest<TransactionPage>("GET", path);
-    } catch (err) {
-      if (useFilter && err instanceof BasiqError && isFilterError(err)) {
-        console.warn("[Basiq] Date filter rejected — retrying without filter, applying cutoff client-side");
-        return fetchTransactionPages(basiqUserId, fromStr, false);
-      }
-      throw err;
-    }
-    all.push(...(page.data ?? []).filter((t) => t.status === "posted"));
-    path = page.links?.next ?? null;
-  }
-
-  // Apply client-side date cutoff when the server didn't do it.
-  if (!useFilter) {
-    return all.filter((t) => t.postDate >= fromStr);
-  }
-  return all;
+    if ((body.data ?? []).some((e) => denied.includes(e.code ?? ""))) return true;
+  } catch { /* fall through to string check */ }
+  const low = err.detail.toLowerCase();
+  return (
+    low.includes("access-denied") ||
+    low.includes("no-production-access") ||
+    low.includes("forbidden-access") ||
+    low.includes("connections not enabled")
+  );
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -307,8 +254,9 @@ async function fetchTransactionPages(
 // getTransactions fetches all posted transactions for a Basiq user from `from`
 // (YYYY-MM-DD) to today, following Basiq's pagination automatically.
 // Defaults to 12 months ago if `from` is omitted.
-// If Basiq rejects the date filter, silently retries unfiltered with a
-// client-side date cutoff so the sync always succeeds.
+//
+// No server-side date filter is used — Basiq's filter syntax is undocumented
+// and inconsistently supported. Date cutoff is applied client-side instead.
 export async function getTransactions(
   basiqUserId: string,
   from?: string,
@@ -321,5 +269,19 @@ export async function getTransactions(
     d.setFullYear(d.getFullYear() - 1);
     fromStr = d.toISOString().split("T")[0];
   }
-  return fetchTransactionPages(basiqUserId, fromStr, true);
+
+  if (process.env.NODE_ENV === "development") {
+    console.log(`[Basiq] → GET ${getBaseUrl()}/users/${basiqUserId}/transactions?limit=500 (cutoff: ${fromStr})`);
+  }
+
+  const all: BasiqTransaction[] = [];
+  let path: string | null = `/users/${basiqUserId}/transactions?limit=500`;
+
+  while (path) {
+    const page: TransactionPage = await basiqRequest<TransactionPage>("GET", path);
+    all.push(...(page.data ?? []).filter((t: BasiqTransaction) => t.status === "posted"));
+    path = page.links?.next ?? null;
+  }
+
+  return all.filter((t) => t.postDate >= fromStr);
 }
