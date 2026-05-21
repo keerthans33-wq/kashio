@@ -129,7 +129,7 @@ export async function getTransactions(userId: string): Promise<BasiqTransaction[
 
   const all: BasiqTransaction[] = [];
   let url: string | null =
-    `${BASE_URL}/users/${userId}/transactions?filter=postDate.gte:${fromStr}&limit=500`;
+    `${BASE_URL}/users/${userId}/transactions?filter=transaction.postDate.gte(${fromStr})&limit=500`;
 
   while (url) {
     const res: Response = await fetch(url, {
