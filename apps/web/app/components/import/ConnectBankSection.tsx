@@ -7,38 +7,69 @@ import type { SyncResult } from "../../../lib/syncState";
 import { createDemoBankProvider, createBasiqProvider } from "../../../lib/providers";
 import type { StoredSyncStatus } from "../../../lib/providers";
 import { supabase } from "../../../lib/supabase";
+import { FALLBACK_PRICE, ANNUAL_SAVING_PCT } from "../../../lib/pricing";
 
-// ── Date range options (Australian FY) ───────────────────────────────────────
+// ── Date range options (Australian financial year) ───────────────────────────
 
 const DATE_OPTIONS = (() => {
-  const now = new Date();
-  // Australian FY runs 1 Jul – 30 Jun; base year = year the current FY started.
+  const now  = new Date();
   const base = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
   const rolling = new Date(now);
   rolling.setFullYear(rolling.getFullYear() - 1);
   return [
-    { label: `This financial year (1 Jul ${base})`,      value: `${base}-07-01` },
-    { label: `Last financial year (1 Jul ${base - 1})`,  value: `${base - 1}-07-01` },
-    { label: "Last 12 months",                           value: rolling.toISOString().split("T")[0] },
+    { label: `This financial year (1 Jul ${base})`,     value: `${base}-07-01` },
+    { label: `Last financial year (1 Jul ${base - 1})`, value: `${base - 1}-07-01` },
+    { label: "Last 12 months",                          value: rolling.toISOString().split("T")[0] },
   ];
 })();
 
-// ── Shared sub-components ─────────────────────────────────────────────────────
+type Interval = "month" | "year";
 
-function Spinner() {
+// ── Shared atoms ──────────────────────────────────────────────────────────────
+
+function Spinner({ className = "h-4 w-4" }: { className?: string }) {
   return (
-    <svg
-      className="inline-block h-4 w-4 shrink-0 animate-spin"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
+    <svg className={`inline-block shrink-0 animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg"
+      fill="none" viewBox="0 0 24 24" aria-hidden="true">
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
     </svg>
   );
 }
+
+function LockIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24"
+      stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round"
+        d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20"
+      fill="currentColor" aria-hidden="true" style={{ color: "#22C55E" }}>
+      <path fillRule="evenodd"
+        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+        clipRule="evenodd" />
+    </svg>
+  );
+}
+
+// ── Trust copy ────────────────────────────────────────────────────────────────
+
+function TrustCopy() {
+  return (
+    <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
+      Connect your bank to automatically import transactions. Kashio uses read-only
+      transaction access through Basiq. You can still upload CSV files manually.
+    </p>
+  );
+}
+
+// ── Date range picker ─────────────────────────────────────────────────────────
 
 function DateRangePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
@@ -48,11 +79,7 @@ function DateRangePicker({ value, onChange }: { value: string; onChange: (v: str
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="h-11 w-full rounded-xl px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#22C55E] transition-colors appearance-none cursor-pointer"
-        style={{
-          backgroundColor: "var(--bg-elevated)",
-          border: "1px solid transparent",
-          color: "var(--text-primary)",
-        }}
+        style={{ backgroundColor: "var(--bg-elevated)", border: "1px solid transparent", color: "var(--text-primary)" }}
       >
         {DATE_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
@@ -61,6 +88,131 @@ function DateRangePicker({ value, onChange }: { value: string; onChange: (v: str
     </div>
   );
 }
+
+// ── Upgrade card (shown inline when free user clicks Connect bank) ─────────────
+
+function UpgradeCard({ cancelPath }: { cancelPath: string }) {
+  const [interval,  setInterval]  = useState<Interval>("year");
+  const [loading,   setLoading]   = useState(false);
+  const [error,     setError]     = useState<string | null>(null);
+
+  async function handleUpgrade() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res  = await fetch("/api/stripe/create-checkout-session", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ interval, cancelPath }),
+      });
+      const body = await res.json();
+      if (!res.ok || !body.url) throw new Error("Something went wrong.");
+      window.location.href = body.url;
+    } catch {
+      setError("Couldn't start checkout. Please try again.");
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div
+      className="rounded-2xl px-5 py-5 space-y-5"
+      style={{
+        backgroundColor: "rgba(13,20,33,0.92)",
+        border:          "1px solid rgba(34,197,94,0.20)",
+        boxShadow:       "0 2px 12px rgba(0,0,0,0.4), 0 0 40px rgba(34,197,94,0.05)",
+      }}
+    >
+      {/* Header */}
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-widest mb-1" style={{ color: "#22C55E" }}>
+          Kashio Pro
+        </p>
+        <p className="text-[17px] font-bold leading-snug" style={{ color: "var(--text-primary)" }}>
+          Bank connection is a Pro feature
+        </p>
+        <p className="mt-1 text-[13px]" style={{ color: "var(--text-secondary)" }}>
+          Upgrade to connect your bank and automatically import transactions every sync.
+        </p>
+      </div>
+
+      {/* Feature list */}
+      <ul className="space-y-2">
+        {[
+          "Automatic bank transaction import",
+          "Full potential deductions breakdown",
+          "Export-ready tax summary",
+          "Up to 100 receipt uploads",
+        ].map((item) => (
+          <li key={item} className="flex items-center gap-2 text-[13px]" style={{ color: "var(--text-secondary)" }}>
+            <CheckIcon />
+            {item}
+          </li>
+        ))}
+      </ul>
+
+      {/* Interval toggle */}
+      <div
+        className="flex rounded-xl p-1"
+        style={{ backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)" }}
+      >
+        {(["month", "year"] as Interval[]).map((i) => (
+          <button
+            key={i}
+            onClick={() => setInterval(i)}
+            className="relative flex-1 rounded-lg py-2 text-[13px] font-medium transition-all duration-150"
+            style={{
+              backgroundColor: interval === i ? "rgba(34,197,94,0.15)" : "transparent",
+              border:          interval === i ? "1px solid rgba(34,197,94,0.25)" : "1px solid transparent",
+              color:           interval === i ? "#22C55E" : "var(--text-muted)",
+            }}
+          >
+            {i === "month" ? "Monthly" : "Annual"}
+            {i === "year" && (
+              <span
+                className="ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold"
+                style={{ backgroundColor: "rgba(34,197,94,0.20)", color: "#22C55E" }}
+              >
+                {ANNUAL_SAVING_PCT}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Price */}
+      <div className="flex items-baseline gap-2">
+        <span className="text-[30px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
+          {interval === "month" ? FALLBACK_PRICE.monthly : FALLBACK_PRICE.annual}
+        </span>
+        <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+          AUD / {interval === "month" ? "month" : "year"}
+        </span>
+      </div>
+
+      {/* CTA */}
+      <button
+        onClick={handleUpgrade}
+        disabled={loading}
+        className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98] disabled:opacity-60"
+        style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
+      >
+        {loading && <Spinner />}
+        {loading ? "Redirecting…" : "Unlock Kashio Pro"}
+      </button>
+
+      {error && (
+        <p className="text-center text-[12px]" style={{ color: "#f87171" }}>{error}</p>
+      )}
+
+      <p className="text-center text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+        CSV upload is always free — upgrade only for bank connection.
+      </p>
+    </div>
+  );
+}
+
+// ── Sync state sub-components ─────────────────────────────────────────────────
 
 function SyncInProgress({ label, detail }: { label: string; detail: string }) {
   return (
@@ -78,13 +230,12 @@ function SyncSuccess({ result, onSyncAgain }: { result: SyncResult; onSyncAgain:
   const fmt = (n: number) =>
     n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 
-  const noneAdded = result.inserted === 0 && result.duplicates > 0;
-
-  if (noneAdded) {
+  if (result.inserted === 0 && result.duplicates > 0) {
     return (
       <div className="rounded-xl px-5 py-5 space-y-4" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
         <div className="flex items-center gap-2">
-          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs" style={{ backgroundColor: "rgba(34,197,94,0.12)", color: "#22C55E" }}>✓</span>
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs"
+            style={{ backgroundColor: "rgba(34,197,94,0.12)", color: "#22C55E" }}>✓</span>
           <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Already up to date</p>
         </div>
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>
@@ -99,7 +250,8 @@ function SyncSuccess({ result, onSyncAgain }: { result: SyncResult; onSyncAgain:
     <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
       <div className="flex items-center justify-between px-5 pt-5 pb-4">
         <div className="flex items-center gap-2">
-          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs" style={{ backgroundColor: "rgba(34,197,94,0.12)", color: "#22C55E" }}>✓</span>
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs"
+            style={{ backgroundColor: "rgba(34,197,94,0.12)", color: "#22C55E" }}>✓</span>
           <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Sync complete</p>
         </div>
         <p className="text-xs tabular-nums" style={{ color: "var(--text-muted)" }}>
@@ -121,7 +273,10 @@ function SyncSuccess({ result, onSyncAgain }: { result: SyncResult; onSyncAgain:
         </div>
       )}
 
-      <div className="px-5 pb-5 flex items-center gap-4" style={result.flagged > 0 ? { borderTop: "1px solid var(--bg-elevated)", paddingTop: "1.25rem" } : {}}>
+      <div
+        className="px-5 pb-5 flex items-center gap-4"
+        style={result.flagged > 0 ? { borderTop: "1px solid var(--bg-elevated)", paddingTop: "1.25rem" } : {}}
+      >
         <a
           href="/review"
           className="flex-1 rounded-xl py-3 text-center text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98]"
@@ -162,35 +317,38 @@ function SyncFailed({ message, onRetry }: { message?: string; onRetry: () => voi
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function ConnectBankSection() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const justConnected = searchParams.get("connected") === "true";
+export default function ConnectBankSection({ isPro }: { isPro: boolean }) {
+  const searchParams   = useSearchParams();
+  const router         = useRouter();
+  const justConnected  = searchParams.get("connected") === "true";
 
   const syncState = useSyncState();
 
-  // Session & connection
+  // Session & connection state
   const [userId, setUserId]               = useState("anon");
-  const [email, setEmail]                 = useState("");
+  const [email,  setEmail]                = useState("");
   const [bankConnected, setBankConnected] = useState(false);
-  const [statusLoaded, setStatusLoaded]   = useState(false);
+  const [statusLoaded,  setStatusLoaded]  = useState(false);
 
   // Date range — defaults to current FY
   const [from, setFrom] = useState(DATE_OPTIONS[0].value);
 
-  // Mobile (first-time connect)
-  const [mobile, setMobile]             = useState("");
-  const [connecting, setConnecting]     = useState(false);
+  // First-time connect inputs
+  const [mobile,       setMobile]       = useState("");
+  const [connecting,   setConnecting]   = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
 
-  // Stored sync statuses (for "last synced" display in idle state)
-  const [demoStatus, setDemoStatus]   = useState<StoredSyncStatus | null>(null);
+  // Free-user upgrade prompt
+  const [showUpgrade, setShowUpgrade] = useState(false);
+
+  // Stored sync statuses (for "last synced" line)
+  const [demoStatus,  setDemoStatus]  = useState<StoredSyncStatus | null>(null);
   const [basiqStatus, setBasiqStatus] = useState<StoredSyncStatus | null>(null);
 
   useEffect(() => {
     async function init() {
       const { data: { session } } = await supabase.auth.getSession();
-      const uid   = session?.user?.id    ?? "anon";
+      const uid    = session?.user?.id    ?? "anon";
       const uEmail = session?.user?.email ?? "";
       setUserId(uid);
       setEmail(uEmail);
@@ -204,7 +362,7 @@ export default function ConnectBankSection() {
           const data = await res.json();
           setBankConnected(data.connected === true);
         }
-      } catch { /* ignore — default stays false */ }
+      } catch { /* ignore — stays false */ }
 
       setStatusLoaded(true);
     }
@@ -237,7 +395,6 @@ export default function ConnectBankSection() {
       setBasiqStatus(provider.loadStatus());
       setBankConnected(true);
       syncState.setSuccess(result);
-      // Strip ?connected=true from URL without reloading
       if (justConnected) router.replace("/import");
     } catch (err) {
       syncState.setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -248,10 +405,10 @@ export default function ConnectBankSection() {
     setConnecting(true);
     setConnectError(null);
     try {
-      const res = await fetch("/api/basiq/connect", {
-        method: "POST",
+      const res  = await fetch("/api/basiq/connect", {
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ redirectPath: "/import", mobile, email }),
+        body:    JSON.stringify({ redirectPath: "/import", mobile, email }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Could not start bank connection.");
@@ -262,25 +419,22 @@ export default function ConnectBankSection() {
     }
   }
 
-  // ── Active sync states ─────────────────────────────────────────────────────
+  // ── Active sync states (take over entire section) ──────────────────────────
 
   if (syncState.sync.status === "connecting") {
     return <SyncInProgress label="Connecting…" detail="This will only take a moment." />;
   }
-
   if (syncState.sync.status === "syncing") {
     return <SyncInProgress label="Importing transactions…" detail="This will only take a moment." />;
   }
-
   if (syncState.sync.status === "success") {
     return <SyncSuccess result={syncState.sync.result} onSyncAgain={syncState.reset} />;
   }
-
   if (syncState.sync.status === "error") {
     return <SyncFailed message={syncState.sync.message} onRetry={syncState.reset} />;
   }
 
-  // ── Idle: post-connect redirect ────────────────────────────────────────────
+  // ── Idle: post-connect redirect (bank just linked) ─────────────────────────
 
   if (justConnected) {
     return (
@@ -291,9 +445,7 @@ export default function ConnectBankSection() {
             Choose a date range, then fetch your transactions.
           </p>
         </div>
-
         <DateRangePicker value={from} onChange={setFrom} />
-
         <button
           onClick={handleBasiqSync}
           className="w-full rounded-xl py-3.5 text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98]"
@@ -306,19 +458,19 @@ export default function ConnectBankSection() {
   }
 
   // ── Idle: bank already connected (returning user) ──────────────────────────
+  // Allow syncing regardless of plan — if they connected, they were Pro at the time.
 
   if (statusLoaded && bankConnected) {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Connected Bank</p>
-          <span className="rounded px-1.5 py-0.5 text-xs font-medium" style={{ backgroundColor: "rgba(34,197,94,0.1)", color: "#22C55E" }}>
+          <span className="rounded px-1.5 py-0.5 text-xs font-medium"
+            style={{ backgroundColor: "rgba(34,197,94,0.1)", color: "#22C55E" }}>
             Connected
           </span>
         </div>
-
         <DateRangePicker value={from} onChange={setFrom} />
-
         <button
           onClick={handleBasiqSync}
           className="w-full rounded-xl py-3.5 text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98]"
@@ -326,7 +478,6 @@ export default function ConnectBankSection() {
         >
           Sync transactions
         </button>
-
         {basiqStatus && (
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
             Last synced {new Date(basiqStatus.lastSynced).toLocaleString("en-AU", {
@@ -345,56 +496,80 @@ export default function ConnectBankSection() {
   return (
     <div className="space-y-4">
 
-      {/* Primary: sample data */}
-      <div>
-        <button
-          onClick={handleDemoSync}
-          className="w-full rounded-xl py-3.5 text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98]"
-          style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
-        >
-          Try with sample data
-        </button>
-        <p className="mt-2 text-xs text-center" style={{ color: "var(--text-muted)" }}>
-          No bank account needed — loads sample transactions instantly.
+      {/* Trust copy */}
+      <TrustCopy />
+
+      {/* Pro: real connection form */}
+      {isPro ? (
+        <div className="space-y-2">
+          <input
+            type="tel"
+            placeholder="Mobile number"
+            value={mobile}
+            onChange={(e) => setMobile(e.target.value)}
+            className="h-11 w-full rounded-xl px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#22C55E] transition-colors"
+            style={{ backgroundColor: "var(--bg-elevated)", border: "1px solid transparent", color: "var(--text-primary)" }}
+          />
+          <button
+            onClick={handleConnect}
+            disabled={connecting || !mobile.trim()}
+            className="flex w-full items-center justify-center gap-2 h-11 rounded-xl text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+            style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
+          >
+            {connecting && <Spinner />}
+            {connecting ? "Connecting…" : "Connect bank securely"}
+          </button>
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+            Your bank sends a verification code to this number. Kashio never sees your login credentials.
+          </p>
+          {connectError && (
+            <div className="rounded-xl px-4 py-3" style={{ backgroundColor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+              <p className="text-sm font-medium text-red-400">Connection failed</p>
+              <p className="mt-0.5 text-sm text-red-400" style={{ opacity: 0.8 }}>{connectError}</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Free: locked button → upgrade card */
+        <div className="space-y-3">
+          <button
+            onClick={() => setShowUpgrade((v) => !v)}
+            className="flex w-full items-center justify-center gap-2 h-11 rounded-xl text-sm font-semibold transition-all duration-150 active:scale-[0.98]"
+            style={{
+              backgroundColor: "var(--bg-elevated)",
+              border:          "1px solid rgba(255,255,255,0.09)",
+              color:           "var(--text-primary)",
+            }}
+          >
+            <LockIcon />
+            Connect bank securely
+            <span
+              className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+              style={{ backgroundColor: "rgba(34,197,94,0.14)", color: "#22C55E", border: "1px solid rgba(34,197,94,0.25)" }}
+            >
+              Pro
+            </span>
+          </button>
+
+          {showUpgrade && <UpgradeCard cancelPath="/import" />}
+        </div>
+      )}
+
+      {/* Demo bank — tertiary, always available */}
+      <div className="pt-1">
+        <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
+          No bank account?{" "}
+          <button
+            onClick={handleDemoSync}
+            className="underline underline-offset-2 transition-colors hover:opacity-80"
+            style={{ color: "var(--text-muted)" }}
+          >
+            Try with sample data
+          </button>
         </p>
       </div>
 
-      {/* Divider */}
-      <div className="flex items-center gap-3">
-        <div className="h-px flex-1" style={{ backgroundColor: "var(--bg-elevated)" }} />
-        <span className="text-xs" style={{ color: "var(--text-muted)" }}>or connect your bank</span>
-        <div className="h-px flex-1" style={{ backgroundColor: "var(--bg-elevated)" }} />
-      </div>
-
-      {/* Real bank */}
-      <div className="space-y-2">
-        <input
-          type="tel"
-          placeholder="Mobile number"
-          value={mobile}
-          onChange={(e) => setMobile(e.target.value)}
-          className="h-11 w-full rounded-xl px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#22C55E] transition-colors"
-          style={{
-            backgroundColor: "var(--bg-elevated)",
-            border: "1px solid transparent",
-            color: "var(--text-primary)",
-          }}
-        />
-        <button
-          onClick={handleConnect}
-          disabled={connecting || !mobile.trim()}
-          className="flex w-full items-center justify-center gap-2 h-11 rounded-xl text-sm font-medium transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
-          style={{ backgroundColor: "var(--bg-elevated)", color: "var(--text-secondary)" }}
-        >
-          {connecting && <Spinner />}
-          {connecting ? "Connecting…" : "Connect bank"}
-        </button>
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          Your bank sends a verification code to this number.
-        </p>
-      </div>
-
-      {/* Demo last-synced status (only if they've run demo before) */}
+      {/* Demo last-synced status (if they've run it before) */}
       {statusLoaded && demoStatus && (
         <div className="rounded-xl px-4 py-3" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-elevated)" }}>
           <div className="flex items-center justify-between gap-4">
@@ -405,7 +580,8 @@ export default function ConnectBankSection() {
                   day: "numeric", month: "short", hour: "numeric", minute: "2-digit",
                 })}
               </p>
-              <button onClick={handleDemoSync} className="text-xs font-medium" style={{ color: "var(--violet-from)" }}>
+              <button onClick={handleDemoSync} className="text-xs font-medium"
+                style={{ color: "var(--violet-from)" }}>
                 Sync again
               </button>
             </div>
@@ -420,12 +596,6 @@ export default function ConnectBankSection() {
         </div>
       )}
 
-      {connectError && (
-        <div className="rounded-xl px-4 py-3" style={{ backgroundColor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
-          <p className="text-sm font-medium text-red-400">Connection failed</p>
-          <p className="mt-0.5 text-sm text-red-400" style={{ opacity: 0.8 }}>{connectError}</p>
-        </div>
-      )}
     </div>
   );
 }

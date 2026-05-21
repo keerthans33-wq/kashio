@@ -4,41 +4,55 @@ import ImportedBatches from "../../components/import/ImportedBatches";
 import ConnectBankSection from "../../components/import/ConnectBankSection";
 import { MobileScreen } from "@/components/layout/mobile-screen";
 import { SectionHeader } from "@/components/ui/section-header";
+import { requireUserWithType } from "@/lib/auth";
+import { fetchUserPlan, isProUser } from "@/lib/plan";
 
-export default function Import() {
+export const dynamic = "force-dynamic";
+
+export default async function Import() {
+  const { id: userId } = await requireUserWithType();
+  const plan   = await fetchUserPlan(userId);
+  const isPro  = isProUser(plan);
+
   return (
     <MobileScreen maxWidth="md">
 
-      {/* Page header */}
       <SectionHeader
-        title="Import transactions"
-        subtitle="Upload your bank's CSV — takes less than a minute."
+        title="Add your transactions"
+        subtitle="Connect your bank or upload a CSV file."
         className="mb-8 text-center"
       />
 
       {/*
-        CSV upload flow: file parsing → column detection → row validation → DB insert.
+        Bank connection — primary path.
+        isPro is fetched server-side so the paywall renders without a client round-trip.
+        Suspense is required: ConnectBankSection reads useSearchParams on the client.
+      */}
+      <Suspense>
+        <ConnectBankSection isPro={isPro} />
+      </Suspense>
+
+      {/*
+        CSV upload — secondary path.
+        Always accessible regardless of plan.
         To support a new bank format or swap the parser, see:
           lib/detectColumns.ts   — auto-mapping logic
           lib/validateCsv.ts     — per-row validation rules
           lib/importRules.ts     — shared parseDate / parseAmount
           app/components/import/CsvUploader.tsx → processFile()
       */}
-      <CsvUploader />
+      <div className="mt-10 pt-6" style={{ borderTop: "1px solid var(--bg-border)" }}>
+        <p
+          className="mb-4 text-xs font-semibold uppercase tracking-widest"
+          style={{ color: "var(--text-muted)" }}
+        >
+          Upload CSV instead
+        </p>
+        <CsvUploader />
+      </div>
 
       {/* Previously imported batches */}
       <ImportedBatches />
-
-      {/* ── Connect your bank ─────────────────────────────────────────────── */}
-      <div className="mt-10 pt-6" style={{ borderTop: "1px solid var(--bg-border)" }}>
-        <p className="mb-4 text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-          Connect your bank
-        </p>
-        {/* Suspense required: ConnectBankSection reads searchParams on the client */}
-        <Suspense>
-          <ConnectBankSection />
-        </Suspense>
-      </div>
 
     </MobileScreen>
   );
