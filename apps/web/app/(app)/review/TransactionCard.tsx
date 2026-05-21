@@ -29,6 +29,7 @@ export type TransactionCardProps = {
     amount:             number;
     date:               string;
     description:        string;
+    source?:            string;
   };
   onStatusChange?: (id: string, next: Status) => void;
 };
@@ -229,6 +230,17 @@ export function TransactionCard({
           <span className="shrink-0 text-[12px]" style={{ color: "var(--text-muted)" }}>
             {fmtDate(transaction.date)}
           </span>
+          {transaction.source && (
+            <>
+              <span className="shrink-0 text-[12px]" style={{ color: "rgba(255,255,255,0.12)" }}>·</span>
+              <span
+                className="shrink-0 text-[10px] font-medium"
+                style={{ color: transaction.source === "CSV" ? "rgba(255,255,255,0.25)" : "rgba(34,197,94,0.55)" }}
+              >
+                {transaction.source === "BASIQ" || transaction.source === "DEMO_BANK" ? "Bank" : "CSV"}
+              </span>
+            </>
+          )}
           {categorySaving && (
             <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>saving…</span>
           )}

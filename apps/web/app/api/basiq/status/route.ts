@@ -12,7 +12,12 @@ export async function GET() {
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const connection = await db.bankConnection.findUnique({
-    where: { userId_provider: { userId, provider: "basiq" } },
+    where:  { userId_provider: { userId, provider: "basiq" } },
+    select: { status: true, institutionName: true },
   });
-  return NextResponse.json({ connected: !!connection });
+  const connected = connection?.status === "active";
+  return NextResponse.json({
+    connected,
+    institutionName: connected ? (connection?.institutionName ?? null) : null,
+  });
 }

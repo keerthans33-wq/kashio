@@ -30,8 +30,11 @@ export type ReviewCandidate = {
     amount:             number;
     date:               string;
     description:        string;
+    source?:            string;
   };
 };
+
+type SourceFilter = "all" | "csv" | "bank";
 
 const PAGE_SIZE = 50;
 
@@ -85,6 +88,7 @@ const fmtAUD = (n: number) =>
 
 export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) {
   const [activeTab, setActiveTab]           = useState<Tab>("suggested");
+  const [sourceFilter, setSourceFilter]     = useState<SourceFilter>("all");
   const [searchInput, setSearchInput]       = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [page, setPage]                     = useState(1);
@@ -95,6 +99,13 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
   const [error, setError]                   = useState<string | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // True if the dataset contains any Bank (BASIQ/DEMO_BANK) transactions.
+  // Only show the source filter when there's actually something to filter on.
+  const hasBankTransactions = useMemo(
+    () => candidates.some((c) => c.transaction.source && c.transaction.source !== "CSV"),
+    [candidates],
+  );
 
   function showToast(msg: string) {
     setToast(msg);
@@ -116,6 +127,12 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
     setPage(1);
     setSearchInput("");
     setDebouncedQuery("");
+    setSelectedIds(new Set());
+  }
+
+  function handleSourceFilter(f: SourceFilter) {
+    setSourceFilter(f);
+    setPage(1);
     setSelectedIds(new Set());
   }
 
@@ -141,10 +158,24 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
     [candidates, statusOverrides],
   );
 
-  // Tab counts
+  // Source filter applied on top of status overrides.
+  // "bank" matches BASIQ and DEMO_BANK; "csv" matches everything else.
+  const sourceFiltered = useMemo(() => {
+    if (sourceFilter === "all") return effectiveItems;
+    if (sourceFilter === "csv") return effectiveItems.filter(
+      (c) => !c.transaction.source || c.transaction.source === "CSV",
+    );
+    return effectiveItems.filter(
+      (c) => c.transaction.source === "BASIQ" || c.transaction.source === "DEMO_BANK",
+    );
+  }, [effectiveItems, sourceFilter]);
+
+  // Tab counts — derived from sourceFiltered so pills match the visible list.
+  // claimed/hiddenPersonal are derived from all effectiveItems so the "Claimed so far"
+  // total and bulk action buttons always reflect the full picture regardless of filter.
   const tabCounts = useMemo(() => {
-    let suggested = 0, personal = 0, reviewed = 0, claimed = 0, hiddenPersonal = 0;
-    for (const item of effectiveItems) {
+    let suggested = 0, personal = 0, reviewed = 0;
+    for (const item of sourceFiltered) {
       if (
         (item.suggestionLevel === "LIKELY_WORK_RELATED" ||
           item.suggestionLevel === "POSSIBLE_WORK_RELATED") &&
@@ -153,31 +184,34 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
       if (item.suggestionLevel === "PROBABLY_PERSONAL" && item.status === "NEEDS_REVIEW")
         personal++;
       if (item.status === "CONFIRMED" || item.status === "REJECTED") reviewed++;
+    }
+    let claimed = 0, hiddenPersonal = 0;
+    for (const item of effectiveItems) {
       if (item.status === "CONFIRMED") claimed++;
       if (item.status === "REJECTED" && item.suggestionLevel === "PROBABLY_PERSONAL")
         hiddenPersonal++;
     }
     return { suggested, personal, reviewed, claimed, hiddenPersonal };
-  }, [effectiveItems]);
+  }, [sourceFiltered, effectiveItems]);
 
   // For the Reviewed tab: split into claimed and ignored sections
   const reviewedFiltered = useMemo(() => {
     if (activeTab !== "reviewed") return { claimed: [], ignored: [] };
-    const all = effectiveItems
+    const all = sourceFiltered
       .filter((item) => matchesTab(item, "reviewed"))
       .filter((item) => matchesSearch(item, debouncedQuery));
     return {
       claimed: all.filter((c) => c.status === "CONFIRMED"),
       ignored: all.filter((c) => c.status === "REJECTED"),
     };
-  }, [effectiveItems, activeTab, debouncedQuery]);
+  }, [sourceFiltered, activeTab, debouncedQuery]);
 
   // For non-reviewed tabs: standard filter + pagination
   const tabFiltered = useMemo(
     () => activeTab === "reviewed"
       ? []
-      : effectiveItems.filter((item) => matchesTab(item, activeTab)),
-    [effectiveItems, activeTab],
+      : sourceFiltered.filter((item) => matchesTab(item, activeTab)),
+    [sourceFiltered, activeTab],
   );
   const filtered = useMemo(
     () => tabFiltered.filter((item) => matchesSearch(item, debouncedQuery)),
@@ -298,6 +332,41 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
           }}
         />
       </div>
+
+      {/* ── Source filter (All / CSV / Bank) — only when mixed sources exist ── */}
+      {!noData && hasBankTransactions && (
+        <div className="mb-3 flex items-center gap-2">
+          {(["all", "csv", "bank"] as SourceFilter[]).map((f) => {
+            const isActive = sourceFilter === f;
+            const label = f === "all" ? "All" : f === "csv" ? "CSV" : "Bank";
+            const count = f === "all"
+              ? effectiveItems.length
+              : f === "csv"
+                ? effectiveItems.filter((c) => !c.transaction.source || c.transaction.source === "CSV").length
+                : effectiveItems.filter((c) => c.transaction.source === "BASIQ" || c.transaction.source === "DEMO_BANK").length;
+            return (
+              <button
+                key={f}
+                onClick={() => handleSourceFilter(f)}
+                className="flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-medium transition-all duration-150"
+                style={{
+                  backgroundColor: isActive ? "rgba(34,197,94,0.12)" : "transparent",
+                  border: isActive ? "1px solid rgba(34,197,94,0.30)" : "1px solid rgba(255,255,255,0.09)",
+                  color:  isActive ? "#22C55E" : "var(--text-muted)",
+                }}
+              >
+                {label}
+                <span
+                  className="text-[10px] tabular-nums"
+                  style={{ color: isActive ? "rgba(34,197,94,0.75)" : "rgba(255,255,255,0.25)" }}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* ── Segmented control ───────────────────────────────────────────────── */}
       {!noData && (

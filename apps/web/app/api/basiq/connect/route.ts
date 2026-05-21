@@ -45,12 +45,17 @@ export async function POST(req: NextRequest) {
         data: { userId, provider: "basiq", basiqUserId },
       });
     } else {
-      // Always update the stored mobile so Basiq pre-fills the correct number
-      // on their desktop consent page (which reads from the user record).
       if (!connection.basiqUserId) {
         return NextResponse.json({ error: "Connection is missing a Basiq user ID." }, { status: 500 });
       }
-      await updateBasiqUser(connection.basiqUserId, mobile);
+      // Update mobile so Basiq pre-fills the correct number, and reactivate if disconnected.
+      await Promise.all([
+        updateBasiqUser(connection.basiqUserId, mobile),
+        db.bankConnection.update({
+          where: { id: connection.id },
+          data:  { status: "active" },
+        }),
+      ]);
     }
 
     if (!connection.basiqUserId) {

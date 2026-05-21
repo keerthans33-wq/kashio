@@ -246,7 +246,7 @@ export async function getTransactions(
 
   const all: BasiqTransaction[] = [];
   let path: string | null =
-    `/users/${basiqUserId}/transactions?filter=postDate.gte:${fromStr}&limit=500`;
+    `/users/${basiqUserId}/transactions?filter=postDate.gte(${fromStr})&limit=500`;
 
   while (path) {
     const page: TransactionPage = await basiqRequest<TransactionPage>("GET", path);

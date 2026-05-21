@@ -10,6 +10,7 @@ export type ExportRow = {
   category:           string;
   confidence:         string;
   reason:             string;
+  source:             string;   // "CSV" | "Bank"
 };
 
 type TransactionFields = {
@@ -17,6 +18,7 @@ type TransactionFields = {
   normalizedMerchant: string;
   description:        string;
   amount:             number;
+  source:             string;
 };
 
 type CandidateFields = {
@@ -25,6 +27,10 @@ type CandidateFields = {
   reason:     string;
   transaction: TransactionFields;
 };
+
+function sourceLabel(source: string): string {
+  return source === "BASIQ" || source === "DEMO_BANK" ? "Bank" : "CSV";
+}
 
 export function mapExportRow(candidate: CandidateFields): ExportRow {
   return {
@@ -35,5 +41,6 @@ export function mapExportRow(candidate: CandidateFields): ExportRow {
     category:    candidate.category,
     confidence:  candidate.confidence,
     reason:      candidate.reason,
+    source:      sourceLabel(candidate.transaction.source),
   };
 }

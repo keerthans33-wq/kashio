@@ -48,11 +48,12 @@ export async function GET() {
 
   const s = wb.addWorksheet("Tax Summary");
 
-  // Columns: label/merchant · date · amount
+  // Columns: label/merchant · date · source · amount
   s.columns = [
     { key: "a", width: 38 },
     { key: "b", width: 14 },
-    { key: "c", width: 16 },
+    { key: "c", width: 8  },
+    { key: "d", width: 14 },
   ];
 
   // No gridlines — document feel, not spreadsheet
@@ -70,7 +71,7 @@ export async function GET() {
   function divider() {
     gap(4);
     const r = s.addRow([]);
-    s.mergeCells(`A${r.number}:C${r.number}`);
+    s.mergeCells(`A${r.number}:D${r.number}`);
     r.getCell(1).border = { bottom: { style: "thin", color: { argb: RULE } } };
     r.height = 2;
     gap(4);
@@ -83,7 +84,7 @@ export async function GET() {
   function sectionHead(text: string) {
     gap(14);
     const r = s.addRow([text]);
-    s.mergeCells(`A${r.number}:C${r.number}`);
+    s.mergeCells(`A${r.number}:D${r.number}`);
     r.getCell(1).font   = { name: "Calibri", size: 11, bold: true, color: { argb: BLACK } };
     r.getCell(1).border = { bottom: { style: "thin", color: { argb: RULE } } };
     r.height = 22;
@@ -91,7 +92,7 @@ export async function GET() {
   }
 
   /**
-   * Label (A:B merged) + right-aligned value (C).
+   * Label (A:C merged) + right-aligned value (D).
    * Used for summary key-value pairs and WFH stats.
    */
   function kv(
@@ -99,13 +100,13 @@ export async function GET() {
     value: string,
     opts: { bold?: boolean; large?: boolean; labelColor?: string; valueColor?: string } = {},
   ) {
-    const r = s.addRow([label, "", value]);
-    s.mergeCells(`A${r.number}:B${r.number}`);
+    const r = s.addRow([label, "", "", value]);
+    s.mergeCells(`A${r.number}:C${r.number}`);
     r.height = opts.large ? 24 : 18;
     const sz = opts.large ? 12 : 10;
     r.getCell(1).font      = { name: "Calibri", size: sz, bold: opts.bold, color: { argb: opts.labelColor ?? MID } };
-    r.getCell(3).font      = { name: "Calibri", size: sz, bold: opts.bold, color: { argb: opts.valueColor ?? BLACK } };
-    r.getCell(3).alignment = { horizontal: "right" };
+    r.getCell(4).font      = { name: "Calibri", size: sz, bold: opts.bold, color: { argb: opts.valueColor ?? BLACK } };
+    r.getCell(4).alignment = { horizontal: "right" };
   }
 
   /**
@@ -115,53 +116,55 @@ export async function GET() {
   function catHead(name: string) {
     gap(8);
     const r = s.addRow([name]);
-    s.mergeCells(`A${r.number}:C${r.number}`);
+    s.mergeCells(`A${r.number}:D${r.number}`);
     r.getCell(1).font = { name: "Calibri", size: 10, bold: true, color: { argb: DARK } };
     r.height = 20;
   }
 
-  /** Single transaction row: merchant (A) · date (B, right-aligned) · amount (C) */
-  function txRow(merchant: string, date: string, amount: number) {
-    const r = s.addRow(["    " + merchant, date, amount]);
+  /** Single transaction row: merchant (A) · date (B) · source (C) · amount (D) */
+  function txRow(merchant: string, date: string, source: string, amount: number) {
+    const r = s.addRow(["    " + merchant, date, source, amount]);
     r.height = 18;
     r.getCell(1).font      = { name: "Calibri", size: 10, color: { argb: DARK } };
     r.getCell(2).font      = { name: "Calibri", size: 9,  color: { argb: DIM  } };
     r.getCell(2).alignment = { horizontal: "right" };
-    r.getCell(3).font      = { name: "Calibri", size: 10, color: { argb: DARK } };
-    r.getCell(3).numFmt    = '"$"#,##0.00';
-    r.getCell(3).alignment = { horizontal: "right" };
+    r.getCell(3).font      = { name: "Calibri", size: 9,  color: { argb: DIM  } };
+    r.getCell(3).alignment = { horizontal: "center" };
+    r.getCell(4).font      = { name: "Calibri", size: 10, color: { argb: DARK } };
+    r.getCell(4).numFmt    = '"$"#,##0.00';
+    r.getCell(4).alignment = { horizontal: "right" };
   }
 
-  /** Category subtotal row — right-aligned, indented label */
+  /** Category subtotal row — right-aligned */
   function catTotal(amount: number) {
     gap(2);
-    const r = s.addRow(["", "", amount]);
+    const r = s.addRow(["", "", "", amount]);
     r.height = 16;
-    r.getCell(2).font      = { name: "Calibri", size: 9, italic: true, color: { argb: DIM } };
-    r.getCell(2).alignment = { horizontal: "right" };
-    r.getCell(3).font      = { name: "Calibri", size: 9, color: { argb: MID } };
-    r.getCell(3).numFmt    = '"$"#,##0.00';
+    r.getCell(3).font      = { name: "Calibri", size: 9, italic: true, color: { argb: DIM } };
     r.getCell(3).alignment = { horizontal: "right" };
-    r.getCell(3).border    = { top: { style: "thin", color: { argb: RULE } } };
+    r.getCell(4).font      = { name: "Calibri", size: 9, color: { argb: MID } };
+    r.getCell(4).numFmt    = '"$"#,##0.00';
+    r.getCell(4).alignment = { horizontal: "right" };
+    r.getCell(4).border    = { top: { style: "thin", color: { argb: RULE } } };
   }
 
   // ── Document header ────────────────────────────────────────────────────────
   gap(14);
 
   const titleRow = s.addRow(["Kashio"]);
-  s.mergeCells(`A${titleRow.number}:C${titleRow.number}`);
+  s.mergeCells(`A${titleRow.number}:D${titleRow.number}`);
   titleRow.getCell(1).font = { name: "Calibri", size: 18, bold: true, color: { argb: BLACK } };
   titleRow.height = 30;
 
   const subRow = s.addRow([`Tax Summary — FY ${fy}`]);
-  s.mergeCells(`A${subRow.number}:C${subRow.number}`);
+  s.mergeCells(`A${subRow.number}:D${subRow.number}`);
   subRow.getCell(1).font = { name: "Calibri", size: 12, color: { argb: MID } };
   subRow.height = 22;
 
   gap(4);
 
   const metaRow = s.addRow([`Generated ${generated}`]);
-  s.mergeCells(`A${metaRow.number}:C${metaRow.number}`);
+  s.mergeCells(`A${metaRow.number}:D${metaRow.number}`);
   metaRow.getCell(1).font = { name: "Calibri", size: 9, color: { argb: DIM } };
   metaRow.height = 16;
 
@@ -181,12 +184,12 @@ export async function GET() {
 
   // Category breakdown within summary
   for (const [cat, amt] of catRows) {
-    const r = s.addRow([cat, "", `$${amt.toFixed(2)}`]);
-    s.mergeCells(`A${r.number}:B${r.number}`);
+    const r = s.addRow([cat, "", "", `$${amt.toFixed(2)}`]);
+    s.mergeCells(`A${r.number}:C${r.number}`);
     r.height = 17;
     r.getCell(1).font      = { name: "Calibri", size: 9, color: { argb: DIM } };
-    r.getCell(3).font      = { name: "Calibri", size: 9, color: { argb: DIM } };
-    r.getCell(3).alignment = { horizontal: "right" };
+    r.getCell(4).font      = { name: "Calibri", size: 9, color: { argb: DIM } };
+    r.getCell(4).alignment = { horizontal: "right" };
   }
 
   // ── Section 2: Claimed Deductions (by category) ──────────────────────────
@@ -204,7 +207,7 @@ export async function GET() {
     for (const [cat, items] of sortedCats) {
       catHead(cat);
       for (const r of items) {
-        txRow(r.merchant, r.date, r.amount);
+        txRow(r.merchant, r.date, r.source, r.amount);
       }
       catTotal(items.reduce((s, r) => s + r.amount, 0));
     }
@@ -213,14 +216,14 @@ export async function GET() {
   gap(10);
 
   // Grand total (all claimed)
-  const totRow = s.addRow(["Total claimed", "", total]);
-  s.mergeCells(`A${totRow.number}:B${totRow.number}`);
+  const totRow = s.addRow(["Total claimed", "", "", total]);
+  s.mergeCells(`A${totRow.number}:C${totRow.number}`);
   totRow.height = 22;
   totRow.getCell(1).font      = { name: "Calibri", size: 11, bold: true, color: { argb: DARK } };
-  totRow.getCell(3).font      = { name: "Calibri", size: 11, bold: true, color: { argb: BLACK } };
-  totRow.getCell(3).numFmt    = '"$"#,##0.00';
-  totRow.getCell(3).alignment = { horizontal: "right" };
-  totRow.getCell(3).border    = { top: { style: "medium", color: { argb: DARK } } };
+  totRow.getCell(4).font      = { name: "Calibri", size: 11, bold: true, color: { argb: BLACK } };
+  totRow.getCell(4).numFmt    = '"$"#,##0.00';
+  totRow.getCell(4).alignment = { horizontal: "right" };
+  totRow.getCell(4).border    = { top: { style: "medium", color: { argb: DARK } } };
 
   // ── Section 3: Work From Home ─────────────────────────────────────────────
   if (wfhHours > 0) {
@@ -236,14 +239,14 @@ export async function GET() {
   divider();
 
   const note1 = s.addRow(["Estimated tax saving is based on all claimed deductions at a 32.5% marginal rate. Verify all claims with a registered tax adviser."]);
-  s.mergeCells(`A${note1.number}:C${note1.number}`);
+  s.mergeCells(`A${note1.number}:D${note1.number}`);
   note1.getCell(1).font = { name: "Calibri", size: 8, italic: true, color: { argb: DIM } };
   note1.height = 16;
 
   gap(2);
 
   const note2 = s.addRow(["Generated by Kashio. The ATO recommends keeping receipts for all claimed deductions over $300."]);
-  s.mergeCells(`A${note2.number}:C${note2.number}`);
+  s.mergeCells(`A${note2.number}:D${note2.number}`);
   note2.getCell(1).font = { name: "Calibri", size: 8, italic: true, color: { argb: DIM } };
   note2.height = 16;
 

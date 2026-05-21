@@ -33,6 +33,7 @@ export default async function Review() {
       amount:             c.transaction.amount,
       date:               c.transaction.date,
       description:        c.transaction.description,
+      source:             c.transaction.source as string,
     },
   }));
 

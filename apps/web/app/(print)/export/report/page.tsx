@@ -27,6 +27,7 @@ export default async function ExportReport() {
     ...mapExportRow(c),
     hasEvidence: c.hasEvidence,
     note:        c.evidenceNote,
+    source:      (c.transaction.source === "BASIQ" || c.transaction.source === "DEMO_BANK") ? "Bank" : "CSV",
   }));
 
   const claimedTotal    = claimedRows.reduce((s, r) => s + r.amount, 0);
@@ -97,9 +98,10 @@ export default async function ExportReport() {
         @media (min-width: 640px) {
           .ded-table { table-layout: fixed; font-size: 11px; min-width: 0; }
           .ded-table .col-date     { width: 10%; }
-          .ded-table .col-merchant { width: 26%; }
-          .ded-table .col-category { width: 22%; }
-          .ded-table .col-amount   { width: 12%; }
+          .ded-table .col-merchant { width: 24%; }
+          .ded-table .col-category { width: 19%; }
+          .ded-table .col-source   { width: 7%; }
+          .ded-table .col-amount   { width: 10%; }
           .ded-table .col-evidence { width: 13%; }
           .ded-table .col-reason   { width: 17%; }
         }
@@ -254,6 +256,7 @@ type ExportRowWithEvidence = {
   reason:      string;
   hasEvidence: boolean;
   note:        string | null | undefined;
+  source:      string;
 };
 
 function DeductionTable({
@@ -273,6 +276,7 @@ function DeductionTable({
             <col className="col-date" />
             <col className="col-merchant" />
             <col className="col-category" />
+            <col className="col-source" />
             <col className="col-amount" />
             <col className="col-evidence" />
             <col className="col-reason" />
@@ -282,6 +286,7 @@ function DeductionTable({
               <th style={{ color: headerColor }}>Date</th>
               <th style={{ color: headerColor }}>Merchant</th>
               <th style={{ color: headerColor }}>Category</th>
+              <th style={{ color: headerColor }}>Source</th>
               <th style={{ color: headerColor, textAlign: "right" }}>Amount</th>
               <th style={{ color: headerColor }}>Evidence</th>
               <th style={{ color: headerColor }}>Reason</th>
@@ -297,6 +302,7 @@ function DeductionTable({
                 <td className="nowrap" style={{ color: "#6b7280" }}>{r.date}</td>
                 <td className="merchant">{r.merchant}</td>
                 <td className="category">{r.category}</td>
+                <td className="nowrap" style={{ color: "#9ca3af", fontSize: 10 }}>{r.source}</td>
                 <td className="amount">${r.amount.toFixed(2)}</td>
                 <td className={r.hasEvidence ? "evidence-ready" : "evidence-missing"}>
                   {r.hasEvidence ? "✓ Ready" : "⚠ Missing"}
@@ -307,7 +313,7 @@ function DeductionTable({
               </tr>
             ))}
             <tr className="total-row">
-              <td colSpan={3} style={{ textAlign: "right", color: "#374151" }}>
+              <td colSpan={4} style={{ textAlign: "right", color: "#374151" }}>
                 {rows.length} item{rows.length !== 1 ? "s" : ""}
               </td>
               <td className="amount">${total.toFixed(2)}</td>

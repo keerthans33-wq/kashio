@@ -23,9 +23,9 @@ export async function POST(req: Request) {
   const connection = await db.bankConnection.findUnique({
     where: { userId_provider: { userId, provider: "basiq" } },
   });
-  if (!connection) {
+  if (!connection || connection.status !== "active") {
     return NextResponse.json(
-      { error: "No bank connected. Go to Connect and link your bank first." },
+      { error: "No bank connected. Go to Import and link your bank first." },
       { status: 400 },
     );
   }

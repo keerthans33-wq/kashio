@@ -325,10 +325,21 @@ export default function ConnectBankSection({ isPro }: { isPro: boolean }) {
   const syncState = useSyncState();
 
   // Session & connection state
-  const [userId, setUserId]               = useState("anon");
-  const [email,  setEmail]                = useState("");
-  const [bankConnected, setBankConnected] = useState(false);
-  const [statusLoaded,  setStatusLoaded]  = useState(false);
+  const [userId, setUserId]                   = useState("anon");
+  const [email,  setEmail]                    = useState("");
+  const [bankConnected, setBankConnected]     = useState(false);
+  const [institutionName, setInstitutionName] = useState<string | null>(null);
+  const [statusLoaded,  setStatusLoaded]      = useState(false);
+
+  // Disconnect
+  const [disconnecting,     setDisconnecting]     = useState(false);
+  const [confirmDisconnect, setConfirmDisconnect] = useState(false);
+
+  // Add another bank
+  const [addingBank,    setAddingBank]    = useState(false);
+  const [addMobile,     setAddMobile]     = useState("");
+  const [addConnecting, setAddConnecting] = useState(false);
+  const [addError,      setAddError]      = useState<string | null>(null);
 
   // Date range — defaults to current FY
   const [from, setFrom] = useState(DATE_OPTIONS[0].value);
@@ -361,6 +372,7 @@ export default function ConnectBankSection({ isPro }: { isPro: boolean }) {
         if (res.ok) {
           const data = await res.json();
           setBankConnected(data.connected === true);
+          setInstitutionName(data.institutionName ?? null);
         }
       } catch { /* ignore — stays false */ }
 
@@ -398,6 +410,39 @@ export default function ConnectBankSection({ isPro }: { isPro: boolean }) {
       if (justConnected) router.replace("/import");
     } catch (err) {
       syncState.setError(err instanceof Error ? err.message : "Something went wrong.");
+    }
+  }
+
+  async function handleDisconnect() {
+    setDisconnecting(true);
+    try {
+      await fetch("/api/basiq/disconnect", { method: "POST" });
+      setBankConnected(false);
+      setInstitutionName(null);
+      setConfirmDisconnect(false);
+    } catch {
+      // non-fatal — page still works
+    } finally {
+      setDisconnecting(false);
+    }
+  }
+
+  async function handleAddBank() {
+    if (!addMobile.trim()) return;
+    setAddConnecting(true);
+    setAddError(null);
+    try {
+      const res  = await fetch("/api/basiq/connect", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ redirectPath: "/import", mobile: addMobile, email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Could not connect bank.");
+      window.location.href = data.authLink;
+    } catch (err) {
+      setAddError(err instanceof Error ? err.message : "Something went wrong.");
+      setAddConnecting(false);
     }
   }
 
@@ -463,14 +508,50 @@ export default function ConnectBankSection({ isPro }: { isPro: boolean }) {
   if (statusLoaded && bankConnected) {
     return (
       <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Connected Bank</p>
-          <span className="rounded px-1.5 py-0.5 text-xs font-medium"
-            style={{ backgroundColor: "rgba(34,197,94,0.1)", color: "#22C55E" }}>
-            Connected
-          </span>
+
+        {/* Bank connected header */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+              {institutionName ?? "Connected Bank"}
+            </p>
+            <span className="rounded px-1.5 py-0.5 text-xs font-medium"
+              style={{ backgroundColor: "rgba(34,197,94,0.1)", color: "#22C55E" }}>
+              Connected
+            </span>
+          </div>
+          {/* Disconnect */}
+          {confirmDisconnect ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs" style={{ color: "var(--text-muted)" }}>Disconnect?</span>
+              <button
+                onClick={handleDisconnect}
+                disabled={disconnecting}
+                className="text-xs font-medium text-red-400 disabled:opacity-50"
+              >
+                {disconnecting ? "…" : "Yes"}
+              </button>
+              <button
+                onClick={() => setConfirmDisconnect(false)}
+                className="text-xs"
+                style={{ color: "var(--text-muted)" }}
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmDisconnect(true)}
+              className="text-xs"
+              style={{ color: "var(--text-muted)" }}
+            >
+              Disconnect
+            </button>
+          )}
         </div>
+
         <DateRangePicker value={from} onChange={setFrom} />
+
         <button
           onClick={handleBasiqSync}
           className="w-full rounded-xl py-3.5 text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98]"
@@ -478,6 +559,7 @@ export default function ConnectBankSection({ isPro }: { isPro: boolean }) {
         >
           Sync transactions
         </button>
+
         {basiqStatus && (
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
             Last synced {new Date(basiqStatus.lastSynced).toLocaleString("en-AU", {
@@ -487,6 +569,53 @@ export default function ConnectBankSection({ isPro }: { isPro: boolean }) {
             {basiqStatus.result.flagged  > 0 && ` · ${basiqStatus.result.flagged} deductions`}
           </p>
         )}
+
+        {/* Add another bank */}
+        <div className="pt-1 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+          {addingBank ? (
+            <div className="space-y-2 pt-3">
+              <p className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>Add another bank account</p>
+              <input
+                type="tel"
+                placeholder="Mobile number"
+                value={addMobile}
+                onChange={(e) => setAddMobile(e.target.value)}
+                className="h-11 w-full rounded-xl px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#22C55E] transition-colors"
+                style={{ backgroundColor: "var(--bg-elevated)", border: "1px solid transparent", color: "var(--text-primary)" }}
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleAddBank}
+                  disabled={addConnecting || !addMobile.trim()}
+                  className="flex flex-1 items-center justify-center gap-2 h-10 rounded-xl text-sm font-semibold text-white transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+                  style={{ background: "linear-gradient(to right, var(--violet-from), var(--violet-to))" }}
+                >
+                  {addConnecting && <Spinner />}
+                  {addConnecting ? "Connecting…" : "Connect bank"}
+                </button>
+                <button
+                  onClick={() => { setAddingBank(false); setAddError(null); setAddMobile(""); }}
+                  className="h-10 rounded-xl px-4 text-sm"
+                  style={{ backgroundColor: "var(--bg-elevated)", color: "var(--text-muted)" }}
+                >
+                  Cancel
+                </button>
+              </div>
+              {addError && (
+                <p className="text-xs text-red-400">{addError}</p>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={() => setAddingBank(true)}
+              className="mt-3 text-xs"
+              style={{ color: "var(--text-muted)" }}
+            >
+              + Add another bank account
+            </button>
+          )}
+        </div>
+
       </div>
     );
   }
