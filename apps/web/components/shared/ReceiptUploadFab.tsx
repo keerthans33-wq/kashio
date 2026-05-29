@@ -81,10 +81,10 @@ export function ReceiptUploadFab() {
           aria-label="Upload receipt"
           className="flex items-center gap-1.5 rounded-full font-semibold"
           style={{
-            paddingLeft:          16,
-            paddingRight:         18,
-            height:               38,
-            fontSize:             13,
+            paddingLeft:          20,
+            paddingRight:         22,
+            height:               44,
+            fontSize:             14,
             color:                "#22C55E",
             backgroundColor:      "rgba(34,197,94,0.12)",
             border:               "1px solid rgba(34,197,94,0.28)",
@@ -96,7 +96,7 @@ export function ReceiptUploadFab() {
           whileHover={{ scale: 1.04 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
         >
-          <Plus size={14} strokeWidth={2.5} />
+          <Plus size={16} strokeWidth={2.5} />
           Receipt
         </motion.button>
       </div>
