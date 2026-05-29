@@ -286,41 +286,16 @@ function ReceiptListItem({
   receipt:  ReceiptRow;
   deleting: boolean;
   onDelete: () => void;
-  onUpdate: (data: { fileName?: string; comment?: string }) => Promise<void>;
+  onUpdate: (data: { comment?: string }) => Promise<void>;
   onView:   () => void;
 }) {
   const isImage = receipt.mimeType.startsWith("image/");
 
-  const [editingName,   setEditingName]   = useState(false);
-  const [nameValue,     setNameValue]     = useState(receipt.fileName);
   const [commentValue,  setCommentValue]  = useState(receipt.comment ?? "");
-  const [savingName,    setSavingName]    = useState(false);
   const [savingComment, setSavingComment] = useState(false);
   const [imgFailed,     setImgFailed]     = useState(false);
 
-  const nameInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => { setNameValue(receipt.fileName); },   [receipt.fileName]);
   useEffect(() => { setCommentValue(receipt.comment ?? ""); }, [receipt.comment]);
-
-  function startEditingName() {
-    setEditingName(true);
-    setTimeout(() => nameInputRef.current?.select(), 0);
-  }
-
-  async function commitName() {
-    const trimmed = nameValue.trim();
-    if (!trimmed) { setNameValue(receipt.fileName); setEditingName(false); return; }
-    if (trimmed === receipt.fileName) { setEditingName(false); return; }
-    setSavingName(true);
-    try { await onUpdate({ fileName: trimmed }); }
-    finally { setSavingName(false); setEditingName(false); }
-  }
-
-  function cancelName() {
-    setNameValue(receipt.fileName);
-    setEditingName(false);
-  }
 
   async function commitComment() {
     const trimmed = commentValue.trim();
@@ -365,45 +340,19 @@ function ReceiptListItem({
 
         {/* Name + meta + comment */}
         <div className="min-w-0 flex-1">
-          {/* Filename — click to rename */}
-          {editingName ? (
-            <input
-              ref={nameInputRef}
-              value={nameValue}
-              onChange={(e) => setNameValue(e.target.value)}
-              onBlur={commitName}
-              onKeyDown={(e) => {
-                if (e.key === "Enter")  { e.preventDefault(); nameInputRef.current?.blur(); }
-                if (e.key === "Escape") { e.preventDefault(); cancelName(); }
-              }}
-              maxLength={255}
-              disabled={savingName}
-              className="w-full rounded-md px-1.5 py-0.5 text-[13px] font-medium leading-tight outline-none"
-              style={{
-                color:           "var(--text-primary)",
-                backgroundColor: "rgba(255,255,255,0.06)",
-                border:          "1px solid rgba(34,197,94,0.35)",
-              }}
-            />
-          ) : (
-            <button
-              onClick={startEditingName}
-              title="Click to rename"
-              className="block w-full truncate text-left text-[13px] font-medium leading-tight transition-opacity hover:opacity-70"
-              style={{ color: "var(--text-primary)" }}
-            >
-              {nameValue}
-            </button>
-          )}
+          {/* Filename — display only */}
+          <p
+            className="truncate text-[13px] font-medium leading-tight"
+            style={{ color: "var(--text-primary)" }}
+          >
+            {receipt.fileName}
+          </p>
 
           {/* Date · type */}
           <p className="mt-0.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
             {formatDate(receipt.createdAt)}
             <span className="mx-1.5 opacity-40">·</span>
             {typeLabel(receipt.mimeType)}
-            {editingName && (
-              <span className="ml-2 opacity-60">Enter to save · Esc to cancel</span>
-            )}
           </p>
 
           {/* Comment field */}
@@ -563,7 +512,7 @@ export function ReceiptDrawer({ open, onOpenChange, usageLabel, onToast, onCount
 
   // ── Update (rename / comment) ───────────────────────────────────────────────
 
-  async function handleUpdate(id: string, data: { fileName?: string; comment?: string }) {
+  async function handleUpdate(id: string, data: { comment?: string }) {
     const res = await fetch(`/api/receipts/${id}`, {
       method:  "PATCH",
       headers: { "Content-Type": "application/json" },
