@@ -96,6 +96,7 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
   const [statusOverrides, setStatusOverrides] = useState<Map<string, Status>>(new Map());
   const [isBulkSaving, setIsBulkSaving]     = useState(false);
   const [selectedIds, setSelectedIds]       = useState<Set<string>>(new Set());
+  const [pendingUndoIds, setPendingUndoIds] = useState<Set<string>>(new Set());
   const [toast, setToast]                   = useState<string | null>(null);
   const [error, setError]                   = useState<string | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -129,6 +130,7 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
     setSearchInput("");
     setDebouncedQuery("");
     setSelectedIds(new Set());
+    setPendingUndoIds(new Set());
   }
 
   function handleSourceFilter(f: SourceFilter) {
@@ -140,6 +142,11 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
   function handleStatusChange(id: string, next: Status) {
     setStatusOverrides((prev) => new Map(prev).set(id, next));
     setSelectedIds((prev) => { const n = new Set(prev); n.delete(id); return n; });
+    if (next !== "NEEDS_REVIEW" && activeTab !== "reviewed") {
+      setPendingUndoIds((prev) => new Set(prev).add(id));
+    } else if (next === "NEEDS_REVIEW") {
+      setPendingUndoIds((prev) => { const n = new Set(prev); n.delete(id); return n; });
+    }
     if (next === "CONFIRMED")         showToast("Transaction claimed");
     else if (next === "REJECTED")     showToast("Transaction hidden");
     else if (next === "NEEDS_REVIEW") showToast("Decision reset");
@@ -207,12 +214,15 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
     };
   }, [sourceFiltered, activeTab, debouncedQuery]);
 
-  // For non-reviewed tabs: standard filter + pagination
+  // For non-reviewed tabs: standard filter + pagination.
+  // Items in pendingUndoIds are kept visible in their original tab so the user can undo.
   const tabFiltered = useMemo(
     () => activeTab === "reviewed"
       ? []
-      : sourceFiltered.filter((item) => matchesTab(item, activeTab)),
-    [sourceFiltered, activeTab],
+      : sourceFiltered.filter(
+          (item) => matchesTab(item, activeTab) || pendingUndoIds.has(item.id),
+        ),
+    [sourceFiltered, activeTab, pendingUndoIds],
   );
   const filtered = useMemo(
     () => tabFiltered.filter((item) => matchesSearch(item, debouncedQuery)),
@@ -436,8 +446,8 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
             </p>
             <Link
               href="/export"
-              className="text-[11px] font-semibold"
-              style={{ color: "#22C55E" }}
+              className="inline-flex items-center gap-1 rounded-xl px-3.5 py-1.5 text-[12px] font-semibold transition-opacity hover:opacity-80"
+              style={{ backgroundColor: "#22C55E", color: "#000" }}
             >
               Export →
             </Link>
