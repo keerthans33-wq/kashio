@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { bulkConfirmCandidates, bulkRejectCandidates, bulkResetCandidates } from "./actions";
 import { TransactionCard } from "./TransactionCard";
 import { Button } from "@/components/ui/button";
@@ -426,13 +427,20 @@ export function ReviewCenter({ candidates }: { candidates: ReviewCandidate[] }) 
               {fmtAUD(claimedTotal)}
             </p>
           </div>
-          <div className="text-right">
+          <div className="text-right flex flex-col items-end gap-1.5">
             <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
               {tabCounts.claimed} transaction{tabCounts.claimed !== 1 ? "s" : ""}
             </p>
-            <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
               ~{fmtAUD(Math.round(claimedTotal * 0.325))} est. saving
             </p>
+            <Link
+              href="/export"
+              className="text-[11px] font-semibold"
+              style={{ color: "#22C55E" }}
+            >
+              Export →
+            </Link>
           </div>
         </div>
       )}
