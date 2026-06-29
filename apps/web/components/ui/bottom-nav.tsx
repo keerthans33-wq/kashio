@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Upload, ClipboardList, FileText, Monitor } from "lucide-react";
+import { LayoutDashboard, Upload, ClipboardList, FileText, Monitor, Settings } from "lucide-react";
 
 const ITEMS = [
   { href: "/dashboard", label: "Dashboard", Icon: LayoutDashboard, exact: true },
@@ -10,6 +10,7 @@ const ITEMS = [
   { href: "/review",    label: "Review",    Icon: ClipboardList                },
   { href: "/export",    label: "Export",    Icon: FileText                     },
   { href: "/wfh",       label: "WFH",       Icon: Monitor                      },
+  { href: "/settings",  label: "Settings",  Icon: Settings                     },
 ];
 
 export function BottomNav() {

@@ -14,6 +14,7 @@ const LINKS: { href: string; label: string; exact?: boolean }[] = [
   { href: "/review",    label: "Review" },
   { href: "/export",    label: "Export" },
   { href: "/wfh",       label: "WFH" },
+  { href: "/settings",  label: "Settings" },
 ];
 
 function usePageTitle(pathname: string): string {

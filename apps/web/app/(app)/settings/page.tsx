@@ -110,7 +110,13 @@ export default function SettingsPage() {
     setDeleteError(null);
 
     try {
-      const res  = await fetchWithTimeout("/api/account/delete", { method: "DELETE", timeoutMs: 30_000 });
+      // Include the Bearer token explicitly — WKWebView (Capacitor iOS) can
+      // sometimes drop cookies on non-GET requests, so this is a belt-and-suspenders.
+      const { data: { session: s } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = {};
+      if (s?.access_token) headers["Authorization"] = `Bearer ${s.access_token}`;
+
+      const res  = await fetchWithTimeout("/api/account/delete", { method: "DELETE", timeoutMs: 30_000, headers });
       const json = await res.json() as { ok?: boolean; error?: string };
 
       if (!res.ok) {

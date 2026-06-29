@@ -15,8 +15,26 @@ function makeAdminClient() {
 // DELETE /api/account/delete
 // Permanently deletes all data for the authenticated user, then deletes the
 // Supabase auth record. The service role key never leaves this server-side route.
-export async function DELETE() {
-  const userId = await getUser();
+// Accepts both cookie-based auth (web) and Bearer token auth (mobile).
+export async function DELETE(request: Request) {
+  // Cookie auth (web)
+  let userId = await getUser();
+
+  // Bearer token auth (mobile)
+  if (!userId) {
+    const authHeader = request.headers.get("Authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.slice(7);
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      if (url && key) {
+        const client = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
+        const { data: { user } } = await client.auth.getUser(token);
+        userId = user?.id ?? null;
+      }
+    }
+  }
+
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -49,38 +67,41 @@ export async function DELETE() {
     // UserProfile last (other models may reference it indirectly via userId)
     await db.userProfile.deleteMany({ where: { userId } });
 
+    // ── 2b. Delete the Supabase public.profiles row (created by old trigger) ──
+    // The old on_auth_user_created trigger wrote to public.profiles.
+    // If that table has a FK to auth.users without CASCADE, deleteUser() will
+    // fail with a FK violation unless we clear the row first.
+    await admin.from("profiles").delete().eq("id", userId);
+
     // ── 3. Delete receipt files from private storage bucket ──────────────────
     if (receipts.length > 0) {
       const filePaths = receipts.map((r) => r.filePath);
-      // Supabase storage remove accepts up to 1 000 paths per call; batch at 200.
       for (let i = 0; i < filePaths.length; i += 200) {
         const { error } = await admin.storage
           .from("receipts")
           .remove(filePaths.slice(i, i + 200));
         if (error) {
-          // Log but don't abort — orphaned files are not a security risk
-          // (bucket is private and the auth user is about to be deleted).
           console.error("[account/delete] storage batch remove error:", error.message);
         }
       }
     }
 
     // ── 4. Delete the Supabase auth user ────────────────────────────────────
-    // Must be last. Once deleted, the user ID is invalid and we can no longer
-    // authenticate requests on their behalf.
     const { error: authErr } = await admin.auth.admin.deleteUser(userId);
     if (authErr) {
-      // All application data is already gone at this point. Log and continue —
-      // a dangling auth record without any data is non-critical, and Supabase
-      // will reject future logins for an account with no matching profile.
       console.error("[account/delete] auth.admin.deleteUser error:", authErr.message);
+      return NextResponse.json(
+        { error: `Auth deletion failed: ${authErr.message}` },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error("[account/delete] unexpected error:", err);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[account/delete] unexpected error:", msg);
     return NextResponse.json(
-      { error: "Something went wrong. Please try again or contact support@kashio.com.au." },
+      { error: msg },
       { status: 500 }
     );
   }

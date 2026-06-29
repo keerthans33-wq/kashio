@@ -9,12 +9,12 @@ export const PRODUCT_IDS = {
 } as const;
 
 export const FALLBACK_PRICE = {
-  monthly: "$5.99",
-  annual:  "$39.99",
+  monthly: "$6.99",
+  annual:  "$49.99",
 } as const;
 
-export const ANNUAL_SAVING_PCT = "Save 44%";
+export const ANNUAL_SAVING_PCT = "Save 40%";
 
 // Display strings for non-paywall UI (dashboard, review, export locked screens)
-export const MONTHLY_PRICE_DISPLAY = "$5.99/month";
-export const YEARLY_PRICE_DISPLAY  = "$39.99/year";
+export const MONTHLY_PRICE_DISPLAY = "$6.99/month";
+export const YEARLY_PRICE_DISPLAY  = "$49.99/year";
