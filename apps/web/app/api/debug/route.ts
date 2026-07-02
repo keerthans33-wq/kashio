@@ -17,7 +17,32 @@ export async function GET() {
     _count: { userId: true },
   });
 
-  return NextResponse.json({ userId, myTransactions, myCandidates, allTransactions, userBreakdown });
+  // Health check: any trigger on auth.users can block sign-up if it throws.
+  // This query surfaces them so we know immediately if something dangerous is wired up.
+  let dangerousTriggers: { trigger_name: string; event_manipulation: string; action_statement: string }[] = [];
+  try {
+    const rows = await db.$queryRaw<{ trigger_name: string; event_manipulation: string; action_statement: string }[]>`
+      SELECT trigger_name, event_manipulation, action_statement
+      FROM information_schema.triggers
+      WHERE event_object_schema = 'auth'
+        AND event_object_table  = 'users'
+    `;
+    dangerousTriggers = rows;
+  } catch {
+    // Non-fatal — user may not have SELECT on information_schema.triggers
+  }
+
+  return NextResponse.json({
+    userId,
+    myTransactions,
+    myCandidates,
+    allTransactions,
+    userBreakdown,
+    dangerousTriggers,
+    ...(dangerousTriggers.length > 0 && {
+      WARNING: `${dangerousTriggers.length} trigger(s) on auth.users detected — these can block sign-up if they throw. Check dangerousTriggers.`,
+    }),
+  });
 }
 
 export async function DELETE() {
