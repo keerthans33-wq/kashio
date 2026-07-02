@@ -42,22 +42,26 @@ export async function DELETE(request: Request) {
   try {
     const admin = makeAdminClient();
 
-    // ── 1. Collect receipt storage paths before wiping DB rows ──────────────
-    const receipts = await db.receipt.findMany({
-      where:  { userId },
-      select: { filePath: true },
-    });
+    // ── 1. Collect receipt storage paths via storage listing (not Prisma) ───
+    // receipts.user_id → auth.users.id has ON DELETE CASCADE, so rows are
+    // removed automatically when deleteUser() fires. We only need the storage
+    // paths here so we can wipe the files from the bucket first.
+    const { data: storageFiles } = await admin.storage
+      .from("receipts")
+      .list(userId);
+    const storagePaths = (storageFiles ?? []).map((f) => `${userId}/${f.name}`);
 
-    // ── 2. Delete DB rows in FK-safe order ───────────────────────────────────
-    // DeductionCandidate.transactionId references Transaction (default RESTRICT),
-    // so candidates must go before transactions.
+    // ── 2. Delete Prisma DB rows in FK-safe order ────────────────────────────
+    // DeductionCandidate.transactionId → Transaction (RESTRICT by default),
+    // so candidates must be deleted before transactions.
     await db.deductionCandidate.deleteMany({ where: { userId } });
     await db.transaction.deleteMany({ where: { userId } });
     await db.importBatch.deleteMany({ where: { userId } });
 
-    // Independent tables — run concurrently
+    // Independent tables — run concurrently.
+    // Note: receipts rows are NOT deleted here — the ON DELETE CASCADE on
+    // receipts.user_id → auth.users.id means deleteUser() (step 4) handles it.
     await Promise.all([
-      db.receipt.deleteMany({ where: { userId } }),
       db.wfhLog.deleteMany({ where: { userId } }),
       db.payment.deleteMany({ where: { userId } }),
       db.userEntitlement.deleteMany({ where: { userId } }),
@@ -74,12 +78,11 @@ export async function DELETE(request: Request) {
     await admin.from("profiles").delete().eq("id", userId);
 
     // ── 3. Delete receipt files from private storage bucket ──────────────────
-    if (receipts.length > 0) {
-      const filePaths = receipts.map((r) => r.filePath);
-      for (let i = 0; i < filePaths.length; i += 200) {
+    if (storagePaths.length > 0) {
+      for (let i = 0; i < storagePaths.length; i += 200) {
         const { error } = await admin.storage
           .from("receipts")
-          .remove(filePaths.slice(i, i + 200));
+          .remove(storagePaths.slice(i, i + 200));
         if (error) {
           console.error("[account/delete] storage batch remove error:", error.message);
         }
@@ -87,6 +90,7 @@ export async function DELETE(request: Request) {
     }
 
     // ── 4. Delete the Supabase auth user ────────────────────────────────────
+    // This also cascades to delete the receipts table rows (via FK CASCADE).
     const { error: authErr } = await admin.auth.admin.deleteUser(userId);
     if (authErr) {
       console.error("[account/delete] auth.admin.deleteUser error:", authErr.message);
