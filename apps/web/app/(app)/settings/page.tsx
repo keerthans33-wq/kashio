@@ -101,7 +101,7 @@ export default function SettingsPage() {
   }
 
   async function handleDelete() {
-    if (confirmText !== "DELETE" || deleting) return;
+    if (confirmText.trim().toUpperCase() !== "DELETE" || deleting) return;
     if (!navigator.onLine) {
       setDeleteError("You're offline. Connect to the internet to delete your account.");
       return;
@@ -117,16 +117,17 @@ export default function SettingsPage() {
       if (s?.access_token) headers["Authorization"] = `Bearer ${s.access_token}`;
 
       const res  = await fetchWithTimeout("/api/account/delete", { method: "DELETE", timeoutMs: 30_000, headers });
-      const json = await res.json() as { ok?: boolean; error?: string };
+      const json = await res.json().catch(() => ({} as { ok?: boolean; error?: string }));
 
       if (!res.ok) {
-        setDeleteError(json.error ?? "Deletion failed. Contact support@kashio.com.au.");
+        setDeleteError(json.error ?? `Deletion failed (${res.status}). Contact support@kashio.com.au.`);
         setDeleting(false);
         return;
       }
 
       // Clear local session then bounce to login.
-      await supabase.auth.signOut();
+      // signOut may return an error (user already deleted server-side) — ignore it and redirect.
+      await supabase.auth.signOut().catch(() => {});
       window.location.href = "/login";
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
@@ -420,7 +421,7 @@ function TypeStep({
   onCancel:       () => void;
   onDelete:       () => void;
 }) {
-  const ready = confirmText === "DELETE";
+  const ready = confirmText.trim().toUpperCase() === "DELETE";
 
   return (
     <div className="space-y-5">
@@ -429,7 +430,7 @@ function TypeStep({
           Final confirmation
         </p>
         <p className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
-          Type <strong style={{ color: "var(--text-primary)", letterSpacing: "0.05em" }}>DELETE</strong> to confirm.
+          Type <strong style={{ color: "var(--text-primary)", letterSpacing: "0.05em" }}>delete</strong> to confirm.
         </p>
       </div>
 
@@ -438,9 +439,9 @@ function TypeStep({
         autoFocus
         autoComplete="off"
         autoCorrect="off"
-        autoCapitalize="characters"
+        autoCapitalize="none"
         spellCheck={false}
-        placeholder="DELETE"
+        placeholder="delete"
         value={confirmText}
         onChange={(e) => setConfirmText(e.target.value)}
         onKeyDown={(e) => { if (e.key === "Enter" && ready) onDelete(); }}
